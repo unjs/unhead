@@ -19,6 +19,51 @@ describe('propsToString', () => {
     props.src = '/app.js'
     expect(propsToString(props)).toStrictEqual(' src="/app.js"')
   })
+  it('escapes < and > in attribute values', () => {
+    expect(propsToString({
+      content: 'a<b>c',
+    })).toStrictEqual(' content="a&lt;b&gt;c"')
+  })
+  it('still escapes quotes', () => {
+    expect(propsToString({
+      content: 'say "hi"',
+    })).toStrictEqual(' content="say &quot;hi&quot;"')
+  })
+  it('preserves pre-escaped entities', () => {
+    expect(propsToString({
+      href: '/a?x=1&amp;y=2',
+    })).toStrictEqual(' href="/a?x=1&amp;y=2"')
+    expect(propsToString({
+      content: 'a&#39;b&#x27;c&copy;',
+    })).toStrictEqual(' content="a&#39;b&#x27;c&copy;"')
+  })
+  it('escapes ampersands that are not entity references', () => {
+    expect(propsToString({
+      href: '/search?q=a&b=2',
+    })).toStrictEqual(' href="/search?q=a&amp;b=2"')
+    expect(propsToString({
+      href: '/_ipx/f_webp&s_4162x6018/header.jpg',
+    })).toStrictEqual(' href="/_ipx/f_webp&amp;s_4162x6018/header.jpg"')
+  })
+  it('link hrefs round-trip to the same value a browser decodes', () => {
+    // legacy no-semicolon sequences: browsers do not decode these, so they must not be preserved as entities
+    expect(propsToString({
+      href: '/search?a=1&lt=b&copy=1',
+    })).toStrictEqual(' href="/search?a=1&amp;lt=b&amp;copy=1"')
+    // unknown named reference with a semicolon: preserved raw, matches pre-change output
+    expect(propsToString({
+      href: '/search?a=1&foo;bar=2',
+    })).toStrictEqual(' href="/search?a=1&foo;bar=2"')
+    // numeric and named references pass through
+    expect(propsToString({
+      href: '/redirect?to=%2Fa&#38;from=%2Fb',
+    })).toStrictEqual(' href="/redirect?to=%2Fa&#38;from=%2Fb"')
+  })
+  it('leaves clean values untouched', () => {
+    expect(propsToString({
+      href: '/images/header.webp',
+    })).toStrictEqual(' href="/images/header.webp"')
+  })
   it('skips invalid own attribute names', () => {
     expect(propsToString({
       'name': 'description',
