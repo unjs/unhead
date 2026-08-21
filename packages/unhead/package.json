@@ -93,6 +93,58 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./v4": {
+      "types": "./dist/v4.d.ts",
+      "default": "./dist/v4.mjs"
+    },
+    "./v4/server": {
+      "types": "./dist/v4/server.d.ts",
+      "default": "./dist/v4/server.mjs"
+    },
+    "./v4/server-compiled": {
+      "types": "./dist/v4/server-compiled.d.ts",
+      "default": "./dist/v4/server-compiled.mjs"
+    },
+    "./v4/server-plans": {
+      "types": "./dist/v4/server-plans.d.ts",
+      "default": "./dist/v4/server-plans.mjs"
+    },
+    "./v4/client": {
+      "types": "./dist/v4/client.d.ts",
+      "default": "./dist/v4/client.mjs"
+    },
+    "./v4/client-compiled": {
+      "types": "./dist/v4/client-compiled.d.ts",
+      "default": "./dist/v4/client-compiled.mjs"
+    },
+    "./v4/client-plans": {
+      "types": "./dist/v4/client-plans.d.ts",
+      "default": "./dist/v4/client-plans.mjs"
+    },
+    "./v4/compile": {
+      "types": "./dist/v4/compile.d.ts",
+      "default": "./dist/v4/compile.mjs"
+    },
+    "./v4/plugins": {
+      "types": "./dist/v4/plugins.d.ts",
+      "default": "./dist/v4/plugins.mjs"
+    },
+    "./v4/seo": {
+      "types": "./dist/v4/seo.d.ts",
+      "default": "./dist/v4/seo.mjs"
+    },
+    "./v4/early-hints": {
+      "types": "./dist/v4/early-hints.d.ts",
+      "default": "./dist/v4/early-hints.mjs"
+    },
+    "./v4/emit": {
+      "types": "./dist/v4/emit.d.ts",
+      "default": "./dist/v4/emit.mjs"
+    },
+    "./v4/record": {
+      "types": "./dist/v4/record.d.ts",
+      "default": "./dist/v4/record.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -147,6 +199,45 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "v4": [
+        "dist/v4.d.ts"
+      ],
+      "v4/server": [
+        "dist/v4/server.d.ts"
+      ],
+      "v4/server-compiled": [
+        "dist/v4/server-compiled.d.ts"
+      ],
+      "v4/server-plans": [
+        "dist/v4/server-plans.d.ts"
+      ],
+      "v4/client": [
+        "dist/v4/client.d.ts"
+      ],
+      "v4/client-compiled": [
+        "dist/v4/client-compiled.d.ts"
+      ],
+      "v4/client-plans": [
+        "dist/v4/client-plans.d.ts"
+      ],
+      "v4/compile": [
+        "dist/v4/compile.d.ts"
+      ],
+      "v4/plugins": [
+        "dist/v4/plugins.d.ts"
+      ],
+      "v4/seo": [
+        "dist/v4/seo.d.ts"
+      ],
+      "v4/early-hints": [
+        "dist/v4/early-hints.d.ts"
+      ],
+      "v4/emit": [
+        "dist/v4/emit.d.ts"
+      ],
+      "v4/record": [
+        "dist/v4/record.d.ts"
       ]
     }
   },

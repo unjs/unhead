@@ -54,6 +54,7 @@ catalog:
   bumpp: ^12.2.0
   citty: ^0.2.2
   devalue: ^5.9.0
+  esbuild: ^0.28.1
   eslint: ^10.8.1
   eslint-plugin-harlanzw: ^0.17.1
   hookable: ^6.1.1

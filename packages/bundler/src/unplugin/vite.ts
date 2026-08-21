@@ -6,8 +6,10 @@ import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransfor
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
+import { V4PlanTransform } from './V4PlanTransform'
 
 export type { VitePluginOptions }
+export { V4PlanTransform }
 
 /**
  * Vite plugin factory that composes the core Unhead build-time transforms
@@ -38,6 +40,10 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       sourcemap: options.sourcemap,
       ...minifyTransformOptions,
     }))
+  }
+  if (options.experimental?.v4Plans && options.experimental.v4Plans.profile === 'compiled') {
+    const v4PlanOpts = options.experimental.v4Plans
+    plugins.push(V4PlanTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...v4PlanOpts }))
   }
 
   // Register runtime plugins into the shared context
