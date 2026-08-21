@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import nodeResolve from '@rollup/plugin-node-resolve'
@@ -129,6 +129,22 @@ export default defineBuildConfig({
       }
     },
     'build:done': async function (ctx) {
+      // The precompiled runtime is built by the separate pass in
+      // precompiled.build.config.ts. A plain `unbuild` run would have wiped it
+      // with `clean` while the export map still points at it, so fail loudly
+      // instead of shipping a package with dead entries.
+      if (!ctx.options.stub) {
+        for (const entry of ['client', 'client-csr', 'client-deferred', 'client-snapshot', 'server', 'server-snapshot', 'server-unique']) {
+          if (!existsSync(resolve(ctx.options.rootDir, `dist/precompiled/${entry}.mjs`))) {
+            throw new Error(
+              `[unhead] dist/precompiled/${entry}.mjs is missing after the build. `
+              + `The precompiled runtime needs its own pass first: run the package build script `
+              + `(\`unbuild --config precompiled.build.config.ts && UNHEAD_PRESERVE_PRECOMPILED=true unbuild\`).`,
+            )
+          }
+        }
+      }
+
       const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
         : await buildIifeFromDist(ctx.options.rootDir)))

@@ -1,4 +1,5 @@
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
+import MagicString from 'magic-string'
 import { describe, expect, it, vi } from 'vitest'
 import { UnheadTransforms } from '../src/unplugin/createTransformPipeline'
 import { MinifyTransform } from '../src/unplugin/MinifyTransform'
@@ -232,16 +233,81 @@ describe('transform pipeline phase ordering', () => {
     expect(result).toContain('console.log(\'kept\')')
   })
 
-  it('throws one contextual error on conflicting edits instead of producing partial output', async () => {
-    // Pathological: the seoMeta rewrite claims the whole useSeoMeta() call while
-    // the minify phase targets an innerHTML literal nested inside it.
-    const code = [
-      'import { useSeoMeta } from \'unhead\'',
-      'useSeoMeta({ title: \'x\', description: (() => useHead({ script: [{ innerHTML: \'// comment\\nvar x = 1;  var y = 2;\' }] }))() })',
-    ].join('\n')
-    await expect(runPlugin(unifiedPlugin(), code, '/app/page.ts', environmentContext('client')))
+  it('degrades gracefully on conflicting edits: keeps the outer edit, skips the overlapping one, warns', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      // Pathological: the seoMeta rewrite claims the whole useSeoMeta() call while
+      // the minify phase targets an innerHTML literal nested inside it.
+      const code = [
+        'import { useSeoMeta } from \'unhead\'',
+        'useSeoMeta({ title: \'x\', description: (() => useHead({ script: [{ innerHTML: \'// comment\\nvar x = 1;  var y = 2;\' }] }))() })',
+      ].join('\n')
+      const result = await runPlugin(unifiedPlugin(), code, '/app/page.ts', environmentContext('client'))
+      // no throw, output produced, seoMeta rewrite applied, minify edit skipped
+      expect(result).toBeDefined()
+      expect(result).toContain('useHead({')
+      expect(result).toContain('// comment\\nvar x = 1;  var y = 2;')
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toMatch(/conflicting transform edits in \/app\/page\.ts.*seoMeta edit.*overlaps.*minify edit.*skipped/s)
+    }
+    finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('still throws when a precompile edit is involved in a conflict', async () => {
+    // The pipeline's range tracking prevents nested claims from reaching
+    // applyEdits, so the invariant is unit-tested directly.
+    const { applyEdits } = await import('../src/unplugin/createTransformPipeline')
+    const s = new MagicString('abcdefgh')
+    const edits = [
+      { start: 1, end: 5, content: 'X', phase: 'seoMeta' },
+      { start: 3, end: 4, content: 'Y', phase: 'precompile' },
+    ]
+    expect(() => applyEdits(s, edits as any, '/app/page.ts'))
+      .toThrow(/conflicting transform edits in \/app\/page\.ts.*seoMeta edit.*overlaps.*precompile edit/s)
+  })
+
+  it('applyEdits skips every edit overlapping the last applied one', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const { applyEdits } = await import('../src/unplugin/createTransformPipeline')
+      const s = new MagicString('0123456789')
+      const edits = [
+        { start: 1, end: 4, content: 'X', phase: 'seoMeta' },
+        { start: 2, end: 3, content: 'Y', phase: 'minify' },
+        { start: 2, end: 8, content: 'Z', phase: 'minify' },
+        { start: 5, end: 6, content: 'W', phase: 'minify' },
+      ]
+      applyEdits(s, edits as any, '/app/a.ts')
+      expect(s.toString()).toBe('0X4W6789')
+      expect(warn).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('resolveId reports a version requirement when a precompiled runtime import cannot resolve', async () => {
+    const plugin = unifiedPlugin({ precompile: { consumer: 'client' } })
+    const resolveId = (plugin as any).resolveId
+    expect(resolveId).toBeDefined()
+    const unresolvable = { resolve: () => Promise.resolve(null) }
+    await expect(resolveId.call(unresolvable, 'unhead/precompiled/client', '/app/page.ts'))
       .rejects
-      .toThrow(/conflicting transform edits in \/app\/page\.ts/)
+      .toThrow(/cannot resolve "unhead\/precompiled\/client".*same version/s)
+    const resolvable = { resolve: () => Promise.resolve({ id: '/node_modules/unhead/dist/precompiled/client.mjs' }) }
+    expect(await resolveId.call(resolvable, 'unhead/precompiled/client', '/app/page.ts')).toBeNull()
+    // unrelated ids pass through without probing
+    expect(await resolveId.call(unresolvable, 'unhead', '/app/page.ts')).toBeNull()
+    // framework subpaths are covered too
+    await expect(resolveId.call(unresolvable, '@unhead/vue/precompiled/client', '/app/page.ts'))
+      .rejects
+      .toThrow(/cannot resolve "@unhead\/vue\/precompiled\/client"/)
+  })
+
+  it('resolveId is not installed when precompile is disabled', () => {
+    expect((unifiedPlugin() as any).resolveId).toBeUndefined()
   })
 
   it('returns undefined on parser failure without partial edits', async () => {

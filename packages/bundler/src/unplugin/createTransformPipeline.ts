@@ -310,25 +310,56 @@ function shouldTransformPrecompileId(options: BaseTransformerTypes, id: string):
   return shouldTransformId(options, id) || splitTransformId(id).pathname.endsWith('.svelte')
 }
 
-function applyEdits(s: MagicString, edits: PipelineEdit[], id: string): void {
+const overlapWarned = new Set<string>()
+
+/** @internal */
+export function applyEdits(s: MagicString, edits: PipelineEdit[], id: string): void {
   edits.sort((a, b) => a.start - b.start || a.end - b.end)
-  for (let i = 1; i < edits.length; i++) {
-    const prev = edits[i - 1]
-    const cur = edits[i]
-    if (cur.start < prev.end) {
-      throw new Error(
-        `[@unhead/bundler] conflicting transform edits in ${id}: `
-        + `${prev.phase} edit [${prev.start}, ${prev.end}) overlaps ${cur.phase} edit [${cur.start}, ${cur.end}). `
-        + `No output was produced for this module. This is a bug in @unhead/bundler, please report it.`,
-      )
-    }
-  }
+  const applied: PipelineEdit[] = []
   for (const edit of edits) {
+    const prev = applied[applied.length - 1]
+    if (prev && edit.start < prev.end) {
+      // A dropped precompile edit can leave a sealed import wired to an
+      // uncompiled call, which crashes the sealed runtime. Fail loudly there.
+      if (prev.phase === 'precompile' || edit.phase === 'precompile') {
+        throw new Error(
+          `[@unhead/bundler] conflicting transform edits in ${id}: `
+          + `${prev.phase} edit [${prev.start}, ${prev.end}) overlaps ${edit.phase} edit [${edit.start}, ${edit.end}). `
+          + `No output was produced for this module. This is a bug in @unhead/bundler, please report it.`,
+        )
+      }
+      // Every other concern is an optimization over already-correct source, so
+      // keep the earlier edit and skip the overlapping one instead of failing
+      // the user's build.
+      const key = `${id}:${prev.start}:${edit.start}`
+      if (!overlapWarned.has(key)) {
+        overlapWarned.add(key)
+        console.warn(
+          `[@unhead/bundler] conflicting transform edits in ${id}: `
+          + `${prev.phase} edit [${prev.start}, ${prev.end}) overlaps ${edit.phase} edit [${edit.start}, ${edit.end}), the ${edit.phase} edit was skipped. `
+          + `This is a bug in @unhead/bundler, please report it.`,
+        )
+      }
+      continue
+    }
+    applied.push(edit)
+  }
+  for (const edit of applied) {
     if (edit.content === null)
       s.remove(edit.start, edit.end)
     else
       s.overwrite(edit.start, edit.end, edit.content)
   }
+}
+
+const PRECOMPILED_RUNTIME_ID_RE = /^(?:unhead\/precompiled\/|@unhead\/[a-z-]+\/precompiled(?:\/|$))/
+
+function precompileRuntimeResolutionError(id: string): Error {
+  return new Error(
+    `[@unhead/bundler] cannot resolve "${id}", a precompile-mode import rewrite. `
+    + `The installed unhead packages do not provide the precompiled runtime. `
+    + `Install the same version of unhead and every @unhead/* package as @unhead/bundler.`,
+  )
 }
 
 export function createTransformPipeline(config: TransformPipelineConfig): UnpluginRawOptions {
@@ -812,6 +843,29 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       for (const modules of uniqueIdentityModules.values())
         modules.delete(id)
     },
+    // The precompile concern rewrites imports to `unhead/precompiled/*` and
+    // `@unhead/<framework>/precompiled/*` subpaths. When the installed unhead
+    // packages predate those exports, the bundler's own resolution error names
+    // the rewritten id with no hint about versions. Probe once per id here and
+    // surface the version requirement instead.
+    ...(precompileOpts
+      ? {
+          resolveId(id: string, importer?: string) {
+            if (!PRECOMPILED_RUNTIME_ID_RE.test(id))
+              return null
+            // `this.resolve` exists on the rollup and vite plugin contexts that
+            // unplugin delegates to. Other bundlers do not support this hook.
+            const resolve = (this as any)?.resolve
+            if (typeof resolve !== 'function')
+              return null
+            return resolve.call(this, id, importer, { skipSelf: true }).then(
+              (resolved: any) => resolved
+                ? null
+                : Promise.reject(precompileRuntimeResolutionError(id)),
+            )
+          },
+        }
+      : {}),
     transformInclude: (id: string) => idPredicates.some(predicate => predicate(id)),
 
     transform: {
