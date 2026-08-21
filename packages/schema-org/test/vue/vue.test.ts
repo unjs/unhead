@@ -177,6 +177,23 @@ describe('schema.org e2e', () => {
     `)
   })
 
+  it('nullish computed input renders nothing until truthy', () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+    const show = ref(false)
+    useSchemaOrg([defineWebSite({ name: 'Site' })], { head })
+    useSchemaOrg(computed(() => show.value ? defineWebPage({ name: 'test' }) : null), { head })
+
+    const initial = renderSSRHead(head).bodyTags
+    expect(initial).toContain('"@type": "WebSite"')
+    expect(initial).not.toContain('"@type": "WebPage"')
+    show.value = true
+    const updated = renderSSRHead(head).bodyTags
+    expect(updated).toContain('"@type": "WebSite"')
+    expect(updated).toContain('"@type": "WebPage"')
+  })
+
   it('keeps resolvers on recomputed and frozen ref values', () => {
     const head = createServerHead({
       disableDefaults: true,

@@ -104,8 +104,10 @@ export interface WebPageSimple extends Thing {
   dateModified?: ResolvableDate
   /**
    * A reference-by-ID to a node representing the page's featured image.
+   *
+   * Pass `false` to opt out of the automatic `primaryImageOfPage` logo inheritance.
    */
-  primaryImageOfPage?: NodeRelation<ImageObject | string>
+  primaryImageOfPage?: NodeRelation<ImageObject | string> | false | null
   /**
    * A reference-by-ID to a node representing the page's breadrumb structure.
    */
@@ -219,6 +221,9 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
         ? node.hasPart.map(resolvePart)
         : resolvePart(node.hasPart)
     }
+    // false is an explicit opt-out, normalise it to the null sentinel so resolvers skip inheritance
+    if (node.primaryImageOfPage === false)
+      node.primaryImageOfPage = null
     node.primaryImageOfPage = resolveRelation(node.primaryImageOfPage, ctx, imageResolver)
     node.speakable = resolveRelation(node.speakable, ctx, speakableSpecificationResolver)
     node.video = resolveRelation(node.video, ctx, videoResolver)
