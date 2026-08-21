@@ -34,6 +34,26 @@ describe('precompiled client runtime', () => {
     expect(render).toHaveBeenCalledTimes(3)
   })
 
+  it('caches resolved tags between renders and invalidates the cache on push and dispose', () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    const entry = head.push([[100, 'title', 'title', {}, 'first']])
+    head.render()
+    const cached = head._r
+    expect(cached).toBeDefined()
+    head.render()
+    expect(head._r).toBe(cached)
+    entry.dispose()
+    // dispose renders immediately, rebuilding the cache for the remaining entries
+    expect(head._r).toEqual([])
+    const batchedPush = head.push as (input: PrecompiledClientInput, batch?: 0) => ReturnType<typeof head.push>
+    batchedPush([[100, 'title', 'title', {}, 'second']], 0)
+    expect(head._r).toBeUndefined()
+    head.render()
+    expect(document.title).toBe('second')
+  })
+
   it('adopts SSR elements once when registering a batch', () => {
     const dom = new JSDOM('<!doctype html><html><head><meta name="description" content="server"></head><body></body></html>')
     vi.stubGlobal('document', dom.window.document)

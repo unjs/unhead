@@ -14,6 +14,9 @@ const DEFAULT_CHARSET = { charset: 'utf-8' }
 const DEFAULT_VIEWPORT = { name: 'viewport', content: 'width=device-width, initial-scale=1' }
 const DEFAULT_INIT = { htmlAttrs: DEFAULT_HTML_ATTRS, meta: [DEFAULT_CHARSET, DEFAULT_VIEWPORT] }
 
+// Per-instance clone in createHead: the precomputed tags are exposed verbatim
+// through the public resolveTags return value, which callers may mutate. A
+// shared array would leak those mutations into other head instances.
 const DEFAULT_INIT_TAGS = [
   { props: DEFAULT_HTML_ATTRS, _w: 100, _d: 'htmlAttrs' },
   { props: DEFAULT_CHARSET, _w: -20, _d: 'charset' },

@@ -31,7 +31,7 @@ export function useHead(input: UseHeadInput, options: { head?: VuePrecompiledCsr
     onBeforeUnmount(() => entry.dispose())
     const setActive = (active: boolean) => {
       if (head._e.has(id)) {
-        head._e.set(id, active ? plan : [])
+        head._set(id, active ? plan : [])
         head.render()
       }
     }

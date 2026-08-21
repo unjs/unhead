@@ -14,24 +14,34 @@ export interface PrecompiledCsrClientHead {
   /** @internal */
   _e: Map<number, PrecompiledClientInput>
   /** @internal */
+  _r?: PrecompiledClientTag[]
+  /** @internal */
+  _set: (id: number, input: PrecompiledClientInput) => void
+  /** @internal */
   _s?: PrecompiledCsrDomState
   push: (input: PrecompiledClientInput) => PrecompiledClientEntry
   render: () => boolean
 }
 
 function resolveTags(head: PrecompiledCsrClientHead): PrecompiledClientTag[] {
+  // Entries only change on push/dispose, both of which drop the cache. Repeated
+  // renders reuse the same sorted, deduped array (readonly shared plan tags).
+  if (head._r)
+    return head._r
   const tags: PrecompiledClientTag[] = []
   for (const plan of head._e.values()) {
     for (const tag of plan) tags.push(tag)
   }
   tags.sort((a, b) => a[0] - b[0])
-  const resolved = new Map<string, PrecompiledClientTag>()
+  const deduped = new Map<string, PrecompiledClientTag>()
   for (const tag of tags) {
-    const previous = resolved.get(tag[1])
+    const previous = deduped.get(tag[1])
     if (!previous || tag[2].endsWith('Attrs') || previous[0] === tag[0])
-      resolved.set(tag[1], tag)
+      deduped.set(tag[1], tag)
   }
-  return [...resolved.values()]
+  const resolved = [...deduped.values()]
+  head._r = resolved
+  return resolved
 }
 
 function render(head: PrecompiledCsrClientHead): boolean {
@@ -159,12 +169,15 @@ function render(head: PrecompiledCsrClientHead): boolean {
 function push(head: PrecompiledCsrClientHead, input: PrecompiledClientInput, shouldRender: boolean): PrecompiledClientEntry {
   const id = ++head._c
   head._e.set(id, input)
+  head._r = undefined
   if (shouldRender)
     head.render()
   return {
     dispose() {
-      if (head._e.delete(id))
+      if (head._e.delete(id)) {
+        head._r = undefined
         head.render()
+      }
     },
   }
 }
@@ -174,6 +187,10 @@ export function createHead(): PrecompiledCsrClientHead {
   const head = {
     _c: 0,
     _e: new Map<number, PrecompiledClientInput>(),
+    _set(id: number, input: PrecompiledClientInput) {
+      head._e.set(id, input)
+      head._r = undefined
+    },
     push(input: PrecompiledClientInput, batch?: 0) {
       return push(head, input, batch !== 0)
     },

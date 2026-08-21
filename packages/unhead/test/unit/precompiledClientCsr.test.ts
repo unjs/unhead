@@ -8,6 +8,23 @@ afterEach(() => {
 })
 
 describe('precompiled CSR client runtime', () => {
+  it('caches resolved tags between renders and invalidates the cache on push and dispose', () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    const entry = head.push([[100, 'title', 'title', {}, 'first']])
+    head.render()
+    const cached = head._r
+    expect(cached).toBeDefined()
+    head.render()
+    expect(head._r).toBe(cached)
+    entry.dispose()
+    // dispose renders immediately, rebuilding the cache for the remaining entries
+    expect(head._r).toEqual([])
+    head.render()
+    expect(document.title).toBe('')
+  })
+
   it('leaves initial DOM nodes unmanaged instead of adopting them', () => {
     const dom = new JSDOM('<!doctype html><html><head><meta name="description" content="server"></head><body></body></html>')
     vi.stubGlobal('document', dom.window.document)

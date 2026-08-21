@@ -44,6 +44,8 @@ export function createHead(): DeferredPrecompiledClientHead {
         continue
       if (record.disposed)
         runtime!._e.delete(record.runtimeId!)
+      // direct _e mutations bypass the runtime's push/dispose cache invalidation
+      runtime!._r = undefined
       for (const tag of record.input) {
         if (active?.has(tag[1]) || tag[2] === 'title')
           continue
@@ -72,7 +74,7 @@ export function createHead(): DeferredPrecompiledClientHead {
       if (!record.disposed && record.active !== active) {
         record.active = active
         if (runtime && record.runtimeId !== undefined) {
-          runtime._e.set(record.runtimeId, active ? record.input : [])
+          runtime._set(record.runtimeId, active ? record.input : [])
           runtime.render()
         }
       }
@@ -80,8 +82,11 @@ export function createHead(): DeferredPrecompiledClientHead {
     dispose() {
       if (!record.disposed) {
         record.disposed = true
-        if (runtime && record.runtimeId !== undefined && runtime._e.delete(record.runtimeId))
+        if (runtime && record.runtimeId !== undefined && runtime._e.delete(record.runtimeId)) {
+          // direct _e mutation bypasses the runtime's push/dispose cache invalidation
+          runtime._r = undefined
           runtime.render()
+        }
       }
     },
   })
