@@ -33,6 +33,27 @@ describe('dom event handlers', () => {
     `)
   })
 
+  it('binds script event handlers without inline attributes (CSP-safe)', () => {
+    const head = useDOMHead()
+    const dom = getActiveDom()!
+    const onLoad = vi.fn()
+    const onError = vi.fn()
+
+    head.push({
+      script: [{ key: 'csp', src: '/csp.js', onload: onLoad, onerror: onError }],
+    })
+
+    const script = dom.window.document.querySelector('script')!
+    expect(script.hasAttribute('onload')).toBe(false)
+    expect(script.hasAttribute('onerror')).toBe(false)
+    expect(script.getAttribute('data-onload')).toBe('')
+    expect(script.getAttribute('data-onerror')).toBe('')
+
+    script.dispatchEvent(new dom.window.Event('load'))
+    expect(onLoad).toHaveBeenCalledOnce()
+    expect(onError).not.toHaveBeenCalled()
+  })
+
   it('replaces element listeners without retaining stale handlers', () => {
     const head = useDOMHead()
     const dom = getActiveDom()!
