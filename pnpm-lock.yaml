@@ -350,6 +350,10 @@ importers:
         version: 6.0.3
 
   examples/nuxt-v4-trial:
+    dependencies:
+      '@unhead/vue':
+        specifier: workspace:*
+        version: link:../../packages/vue
     devDependencies:
       nuxt:
         specifier: ^4.5.2
