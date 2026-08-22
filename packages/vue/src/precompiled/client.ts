@@ -17,14 +17,14 @@ export function createHead(): VuePrecompiledClientHead {
 }
 
 /** Add one build-finalized client plan to the injected head. @experimental */
-export function useHead(input: UseHeadInput, options: { head?: VuePrecompiledClientHead } = {}): PrecompiledClientEntry {
+export function useHead(input: UseHeadInput, options: { bindings?: readonly (() => unknown)[], head?: VuePrecompiledClientHead } = {}): PrecompiledClientEntry {
   const scope = getCurrentScope()
   if (scope && !scope.active)
     return { dispose() {} }
 
   const head = options.head || injectHead() as unknown as VuePrecompiledClientHead
   const plan = input as unknown as PrecompiledClientInput
-  const entry = head.push(plan)
+  const entry = head.push(plan, options.bindings)
   const id = head._c
   if (getCurrentInstance()) {
     onBeforeUnmount(() => entry.dispose())

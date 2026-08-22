@@ -16,10 +16,10 @@ export function createHead(options: PrecompiledHeadOptions = {}): VuePrecompiled
 }
 
 /** Append one build-finalized server plan to the injected head. @experimental */
-export function useHead(input: UseHeadInput, options: { head?: VuePrecompiledServerHead } = {}): void {
+export function useHead(input: UseHeadInput, options: { bindings?: readonly (() => unknown)[], head?: VuePrecompiledServerHead } = {}): void {
   const head = options.head || injectHead() as unknown as VuePrecompiledServerHead
-  head._p.push(input as unknown as PrecompiledHeadInput)
+  head._p.push(options.bindings ? [input as unknown as PrecompiledHeadInput, options.bindings] : input as unknown as PrecompiledHeadInput)
 }
 
 /** Append one build-finalized static SEO plan to the injected head. @experimental */
-export const useSeoMeta = useHead as (input: UseSeoMetaInput, options?: { head?: VuePrecompiledServerHead }) => void
+export const useSeoMeta = useHead as (input: UseSeoMetaInput, options?: { bindings?: readonly (() => unknown)[], head?: VuePrecompiledServerHead }) => void

@@ -3,6 +3,7 @@ import type { PrecompiledClientEntry, PrecompiledClientHead, PrecompiledClientIn
 
 interface DeferredRecord {
   active: boolean
+  bindings?: readonly (() => unknown)[]
   disposed?: boolean
   input: PrecompiledClientInput
   runtimeId?: number
@@ -16,7 +17,7 @@ export interface DeferredPrecompiledClientEntry extends PrecompiledClientEntry {
 export interface DeferredPrecompiledClientHead {
   /** Resolves after the full client runtime has loaded and active plans have replayed. */
   ready: Promise<void>
-  push: (input: PrecompiledClientInput) => DeferredPrecompiledClientEntry
+  push: (input: PrecompiledClientInput, bindings?: readonly (() => unknown)[], batch?: 0) => DeferredPrecompiledClientEntry
   render: () => boolean
 }
 
@@ -32,10 +33,15 @@ export function createHead(): DeferredPrecompiledClientHead {
   let pending: DeferredRecord[] | undefined = []
   let runtime: PrecompiledClientHead | undefined
   const pushRuntimeMany = (batch: DeferredRecord[]) => {
-    const runtimePush = runtime!.push as (input: PrecompiledClientInput, batch?: 0) => PrecompiledClientEntry
+    const runtimePush = runtime!.push as (input: PrecompiledClientInput, bindings?: readonly (() => unknown)[], batch?: 0) => PrecompiledClientEntry
     for (let i = 0; i < batch.length; i++) {
       const record = batch[i]
-      runtimePush(!record.disposed && record.active ? record.input : [], i === batch.length - 1 ? undefined : 0)
+      if (!record.disposed && record.active) {
+        runtimePush(record.input, record.bindings, i === batch.length - 1 ? undefined : 0)
+      }
+      else {
+        runtimePush([], undefined, i === batch.length - 1 ? undefined : 0)
+      }
       record.runtimeId = runtime!._c
     }
     const active = runtime!._s?.tags
@@ -97,11 +103,11 @@ export function createHead(): DeferredPrecompiledClientHead {
       pushRuntimeMany(pending!)
       pending = undefined
     }),
-    push(input) {
-      const record: DeferredRecord = { active: true, input }
+    push(input, bindings, _batch?) {
+      const record: DeferredRecord = { active: true, bindings, input }
       pending?.push(record)
       if (runtime) {
-        runtime.push(input)
+        runtime.push(input, bindings)
         record.runtimeId = runtime._c
       }
       return entry(record)
@@ -112,8 +118,8 @@ export function createHead(): DeferredPrecompiledClientHead {
 }
 
 /** Add one queued build-finalized client entry. @experimental */
-export function useHead(input: ResolvableHead, options: { head: DeferredPrecompiledClientHead }): PrecompiledClientEntry {
-  return options.head.push(input as unknown as PrecompiledClientInput)
+export function useHead(input: ResolvableHead, options: { head: DeferredPrecompiledClientHead, bindings?: readonly (() => unknown)[] }): PrecompiledClientEntry {
+  return options.head.push(input as unknown as PrecompiledClientInput, options.bindings)
 }
 
 /** Add one queued build-finalized static SEO entry. @experimental */

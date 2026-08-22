@@ -96,3 +96,51 @@ describe('sealed precompiled server runtime', () => {
     expect(renderSSRHead(other)).toEqual(expected)
   })
 })
+
+describe('dynamic slots', () => {
+  it('interpolates server bindings with context escaping', () => {
+    const head = createHead({ disableDefaults: true })
+    const plan: PrecompiledHeadInput = [
+      [10, 'title', '<title>\x01T0\x01</title>'],
+      [100, 'meta:description', '<meta name="description" content="\x01A1\x01">'],
+    ]
+    head._p.push([plan, [() => 'Widget "Pro"', () => 'A <widget> & more'] as any])
+    // title text: full escapeHtml; attribute: quote-only, matching static propsToString
+    expect(renderSSRHead(head).headTags).toBe('<title>Widget &quot;Pro&quot;</title><meta name="description" content="A <widget> & more">')
+  })
+
+  it('renders slotted output identical to the normal runtime for escaping cases', () => {
+    const values = { title: 'Widget "Pro"', desc: 'A <widget> & more' }
+    const slotted = createHead({ disableDefaults: true })
+    slotted._p.push([
+      [
+        [10, 'title', '<title>\x01T0\x01</title>'],
+        [100, 'meta:description', '<meta name="description" content="\x01A1\x01">'],
+      ] as PrecompiledHeadInput,
+      [() => values.title, () => values.desc] as any,
+    ])
+    const normal = createNormalHead({ disableDefaults: true })
+    normal.push({ title: values.title, meta: [{ name: 'description', content: values.desc }] })
+    expect(renderSSRHead(slotted).headTags).toBe(renderNormalSSRHead(normal, { omitLineBreaks: true }).headTags)
+  })
+
+  it('null and false slot values render empty', () => {
+    const head = createHead({ disableDefaults: true })
+    head._p.push([[[10, 'title', '<title>\x01T0\x01</title>']] as PrecompiledHeadInput, [() => null] as any])
+    expect(renderSSRHead(head).headTags).toBe('<title></title>')
+  })
+
+  it('static plans keep memoizing while slotted plans re-evaluate', () => {
+    let counter = 0
+    const head = createHead({ disableDefaults: true })
+    head._p.push([[[10, 'title', '<title>\x01T0\x01</title>']] as PrecompiledHeadInput, [() => `n${++counter}`] as any])
+    expect(renderSSRHead(head).headTags).toBe('<title>n1</title>')
+    expect(renderSSRHead(head).headTags).toBe('<title>n2</title>')
+  })
+
+  it('resolves tags without interpolating (resolveTags stays tokenized)', () => {
+    const head = createHead({ disableDefaults: true })
+    head._p.push([[[10, 'title', '<title>\x01T0\x01</title>']] as PrecompiledHeadInput, [() => 'x'] as any])
+    expect(resolveTags(head)[0][2]).toBe('<title>\x01T0\x01</title>')
+  })
+})

@@ -8,10 +8,10 @@ export { createHead, renderDOMHead } from 'unhead/precompiled/client-deferred'
 export type { DeferredPrecompiledClientHead } from 'unhead/precompiled/client-deferred'
 
 /** Queue one build-finalized client plan for the current Svelte component. @experimental */
-export function useHead(input: ResolvableHead, options: { head: DeferredPrecompiledClientHead }): void {
+export function useHead(input: ResolvableHead, options: { bindings?: readonly (() => unknown)[], head: DeferredPrecompiledClientHead }): void {
   const entry = options.head.push(input as unknown as PrecompiledClientInput)
   onDestroy(entry.dispose)
 }
 
 /** Queue one build-finalized SEO plan for the current Svelte component. @experimental */
-export const useSeoMeta = useHead as (input: UseSeoMetaInput, options: { head: DeferredPrecompiledClientHead }) => void
+export const useSeoMeta = useHead as (input: UseSeoMetaInput, options: { bindings?: readonly (() => unknown)[], head: DeferredPrecompiledClientHead }) => void

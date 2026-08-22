@@ -9,6 +9,7 @@ export { renderDOMHead } from 'unhead/precompiled/client'
 export const UnheadContext = /* @__PURE__ */ createContext<PrecompiledClientHead | null>(null)
 
 export interface PrecompiledReactClientEntryOptions {
+  bindings?: readonly (() => unknown)[]
   head?: PrecompiledClientHead
 }
 
@@ -33,7 +34,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactClientEntr
     throw new Error('useHead() was called without a precompiled React client provider.')
   const plan = input as unknown as PrecompiledClientInput
   useEffect(() => {
-    const entry = head.push(plan)
+    const entry = head.push(plan, options.bindings)
     return entry.dispose
   }, [head, plan])
 }

@@ -14,11 +14,11 @@ export function createHead(_options?: { disableDefaults?: boolean }): never {
 }
 
 /** Declare static head input for a target-specific precompiled runtime. @experimental */
-export function useHead(_input: ResolvableHead, _options: { head: PrecompiledSolidHead }): void {
+export function useHead(_input: ResolvableHead, _options: { bindings?: readonly (() => unknown)[], head: PrecompiledSolidHead }): void {
   uncompiled()
 }
 
 /** Declare static SEO input for a target-specific precompiled runtime. @experimental */
-export function useSeoMeta(_input: UseSeoMetaInput, _options: { head: PrecompiledSolidHead }): void {
+export function useSeoMeta(_input: UseSeoMetaInput, _options: { bindings?: readonly (() => unknown)[], head: PrecompiledSolidHead }): void {
   uncompiled()
 }

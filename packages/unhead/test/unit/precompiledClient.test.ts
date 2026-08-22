@@ -243,3 +243,44 @@ describe('precompiled client runtime', () => {
     expect(document.body.querySelector('script')).toBe(headScript)
   })
 })
+
+describe('dynamic slots', () => {
+  it('renders slotted plans and refreshes only changed values', () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    let title = 'First'
+    const plan: PrecompiledClientInput = [
+      [10, 'title', 'title', {}, '\x01T0\x01'],
+      [100, 'meta:description', 'meta', { name: 'description', content: '\x01A1\x01' }],
+    ]
+    head.push(plan, [() => title, () => 'static desc'])
+    expect(document.title).toBe('First')
+    expect(document.head.querySelector('meta')?.getAttribute('content')).toBe('static desc')
+
+    const setAttribute = vi.spyOn(dom.window.Element.prototype, 'setAttribute')
+    // unchanged: no DOM writes beyond the meta element
+    head.render()
+    const metaWrites = setAttribute.mock.calls.filter(call => call[0] === 'content').length
+    expect(metaWrites).toBe(0)
+
+    title = 'Second'
+    head.render()
+    expect(document.title).toBe('Second')
+    expect(document.head.querySelector('meta')?.getAttribute('content')).toBe('static desc')
+    setAttribute.mockRestore()
+  })
+
+  it('disposes slotted entries cleanly', () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    let title = 'X'
+    const entry = head.push([[10, 'title', 'title', {}, '\x01T0\x01']] as PrecompiledClientInput, [() => title])
+    expect(document.title).toBe('X')
+    title = 'Y'
+    entry.dispose()
+    expect(head._b.size).toBe(0)
+    expect(document.title).toBe('')
+  })
+})

@@ -10,6 +10,7 @@ export { renderDOMHead } from 'unhead/precompiled/client-csr'
 export const UnheadContext = /* @__PURE__ */ createContext<PrecompiledCsrClientHead | null>(null)
 
 export interface PrecompiledReactCsrEntryOptions {
+  bindings?: readonly (() => unknown)[]
   head?: PrecompiledCsrClientHead
 }
 
@@ -34,7 +35,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactCsrEntryOp
     throw new Error('useHead() was called without a precompiled React CSR provider.')
   const plan = input as unknown as PrecompiledClientInput
   useEffect(() => {
-    const entry = head.push(plan)
+    const entry = head.push(plan, options.bindings)
     return entry.dispose
   }, [head, plan])
 }

@@ -9,6 +9,7 @@ export { createServerRenderer, renderSSRHead, resolveTags } from 'unhead/precomp
 export const UnheadContext = /* @__PURE__ */ createContext<PrecompiledServerHead | null>(null)
 
 export interface PrecompiledReactServerEntryOptions {
+  bindings?: readonly (() => unknown)[]
   head?: PrecompiledServerHead
 }
 
@@ -31,7 +32,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactServerEntr
   const head = options.head || (context && '_p' in context ? context : undefined)
   if (!head)
     throw new Error('useHead() was called without a precompiled React server provider.')
-  head._p.push(input as unknown as PrecompiledHeadInput)
+  head._p.push(options.bindings ? [input as unknown as PrecompiledHeadInput, options.bindings] : input as unknown as PrecompiledHeadInput)
 }
 
 export const useSeoMeta = useHead as (

@@ -10,6 +10,7 @@ export { renderDOMHead } from 'unhead/precompiled/client-deferred'
 export const UnheadContext = /* @__PURE__ */ createContext<DeferredPrecompiledClientHead | null>(null)
 
 export interface PrecompiledReactDeferredEntryOptions {
+  bindings?: readonly (() => unknown)[]
   head?: DeferredPrecompiledClientHead
 }
 
@@ -34,7 +35,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactDeferredEn
     throw new Error('useHead() was called without a precompiled React deferred provider.')
   const plan = input as unknown as PrecompiledClientInput
   useEffect(() => {
-    const entry = head.push(plan)
+    const entry = head.push(plan, options.bindings)
     return entry.dispose
   }, [head, plan])
 }

@@ -12,13 +12,25 @@ export type PrecompiledTag = readonly [
 /** @internal */
 export type PrecompiledHeadInput = readonly PrecompiledTag[]
 
+/**
+ * Per-call dynamic value getters for a slotted plan. The bundler emits these
+ * inline at the call site so they close over component scope; the plan's html
+ * carries `\x01T<n>\x01` (title-text context) / `\x01A<n>\x01` (attribute
+ * context) tokens that renderSSRHead interpolates with context escaping.
+ * @internal
+ */
+export type PrecompiledBindings = readonly (() => unknown)[]
+
+/** @internal */
+export type PrecompiledServerEntry = PrecompiledHeadInput | readonly [PrecompiledHeadInput, PrecompiledBindings]
+
 export interface PrecompiledHeadOptions {
   disableDefaults?: boolean
 }
 
 export interface PrecompiledServerHead {
   /** @internal */
-  _p: PrecompiledHeadInput[]
+  _p: PrecompiledServerEntry[]
 }
 
 // Plans are immutable module-level consts in compiled output, so resolved tags
@@ -26,7 +38,8 @@ export interface PrecompiledServerHead {
 // the defaults + plan shape the emit produces). Heads are per-request; plans
 // are shared across requests. Hand-written plans that mutate their array after
 // the first render would read a stale cache; the sealed runtime contract makes
-// plans build-finalized.
+// plans build-finalized. Slotted entries (plan + bindings) skip the payload
+// memo: their values are per-request and unbounded.
 // @internal
 const planTagsCache = new WeakMap<PrecompiledHeadInput, readonly PrecompiledTag[]>()
 // @internal
@@ -37,11 +50,25 @@ const pairPayloadCache = new WeakMap<PrecompiledHeadInput, WeakMap<PrecompiledHe
 /** @internal */
 type PayloadStrings = readonly [string, string, string, string, string]
 
+/** @internal */
+// eslint-disable-next-line no-control-regex -- NUL-free slot token delimiter
+const TOKEN_RE = /\x01([TA])(\d+)\x01/g
+const ATTR_ESC_RE = /"/g
+const TITLE_ESC_RE = /[&<>"']/g
+const TITLE_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }
+
+/** @internal */
+function hasBindings(entry: PrecompiledServerEntry): entry is readonly [PrecompiledHeadInput, PrecompiledBindings] {
+  // plans are arrays of tuples (number/string leaves); bindings are functions
+  return typeof (entry as readonly [PrecompiledHeadInput, PrecompiledBindings])[1]?.[0] === 'function'
+}
+
 /**
  * Create a sealed static SSR head.
  *
  * This compile-or-error runtime intentionally excludes dynamic input, hooks,
  * plugins, entry handles, custom weights, framework adapters and streaming.
+ * Dynamic values are supported only through build-emitted slot bindings.
  *
  * @experimental
  */
@@ -73,25 +100,31 @@ function resolvePlans(plans: PrecompiledHeadInput[]): PrecompiledTag[] {
   return [...resolved.values()]
 }
 
+function planOf(entry: PrecompiledServerEntry): PrecompiledHeadInput {
+  return hasBindings(entry) ? entry[0] : entry
+}
+
 /** Resolve build-finalized plans using only runtime execution order. @experimental */
 export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
-  // fresh array per call: callers may mutate the result; the cached array is shared
-  if (head._p.length === 1) {
-    const plan = head._p[0]
+  const single = head._p.length === 1 ? head._p[0] : undefined
+  if (single) {
+    const plan = planOf(single)
     let tags = planTagsCache.get(plan)
     if (!tags) {
       tags = resolvePlans([plan])
       planTagsCache.set(plan, tags)
     }
+    // fresh array per call: callers may mutate the result; the cached array is shared
     return tags.slice()
   }
-  return resolvePlans(head._p)
+  return resolvePlans(head._p.map(planOf))
 }
 
 /** @internal */
 function payloadTags(head: PrecompiledServerHead): readonly PrecompiledTag[] {
-  if (head._p.length === 1) {
-    const plan = head._p[0]
+  const single = head._p.length === 1 ? head._p[0] : undefined
+  if (single) {
+    const plan = planOf(single)
     let tags = planTagsCache.get(plan)
     if (!tags) {
       tags = resolvePlans([plan])
@@ -99,37 +132,7 @@ function payloadTags(head: PrecompiledServerHead): readonly PrecompiledTag[] {
     }
     return tags
   }
-  return resolvePlans(head._p)
-}
-
-/** @internal */
-function payloadStrings(head: PrecompiledServerHead): PayloadStrings {
-  // single plan: the compiled norm with disableDefaults
-  if (head._p.length === 1) {
-    const plan = head._p[0]
-    let strings = planPayloadCache.get(plan)
-    if (!strings) {
-      strings = renderStrings(payloadTags(head))
-      planPayloadCache.set(plan, strings)
-    }
-    return strings
-  }
-  // defaults + one plan: the compiled norm with defaults enabled
-  if (head._p.length === 2) {
-    const [first, second] = head._p
-    let inner = pairPayloadCache.get(first)
-    let strings = inner?.get(second)
-    if (!strings) {
-      strings = renderStrings(payloadTags(head))
-      if (!inner) {
-        inner = new WeakMap()
-        pairPayloadCache.set(first, inner)
-      }
-      inner.set(second, strings)
-    }
-    return strings
-  }
-  return renderStrings(payloadTags(head))
+  return resolvePlans(head._p.map(planOf))
 }
 
 /** @internal */
@@ -140,6 +143,71 @@ function renderStrings(tags: readonly PrecompiledTag[]): PayloadStrings {
     const html = tag[2]
     if (html)
       output[position] += html
+  }
+  return output
+}
+
+/** @internal */
+function interpolate(html: string, values: unknown[]): string {
+  return html.replace(TOKEN_RE, (match, context: string, index: string) => {
+    const v = values[+index]
+    if (context === 'T') {
+      const s = v == null || v === false ? '' : String(v)
+      return s.replace(TITLE_ESC_RE, c => TITLE_ESCAPES[c])
+    }
+    // attribute context: escape the quote only, byte-identical with static
+    // propsToString output (it does not escape & either)
+    return String(v).replace(ATTR_ESC_RE, '&quot;')
+  })
+}
+
+/** @internal */
+function payloadStrings(head: PrecompiledServerHead): PayloadStrings {
+  // slotted entries: evaluate getters once and interpolate; no memo (per-request values)
+  let slotted = false
+  for (const entry of head._p) {
+    if (hasBindings(entry))
+      slotted = true
+  }
+  if (!slotted) {
+    // single plan: the compiled norm with disableDefaults
+    if (head._p.length === 1) {
+      const plan = head._p[0] as PrecompiledHeadInput
+      let strings = planPayloadCache.get(plan)
+      if (!strings) {
+        strings = renderStrings(payloadTags(head))
+        planPayloadCache.set(plan, strings)
+      }
+      return strings
+    }
+    // defaults + one plan: the compiled norm with defaults enabled
+    if (head._p.length === 2) {
+      const [first, second] = head._p as [PrecompiledHeadInput, PrecompiledHeadInput]
+      let inner = pairPayloadCache.get(first)
+      let strings = inner?.get(second)
+      if (!strings) {
+        strings = renderStrings(payloadTags(head))
+        if (!inner) {
+          inner = new WeakMap()
+          pairPayloadCache.set(first, inner)
+        }
+        inner.set(second, strings)
+      }
+      return strings
+    }
+    return renderStrings(payloadTags(head))
+  }
+  const output = [...renderStrings(payloadTags(head))] as [string, string, string, string, string]
+  // token indexes are plan-local: each slotted entry's sweep replaces only its
+  // own tokens against its own values
+  for (const entry of head._p) {
+    if (!hasBindings(entry))
+      continue
+    const values = entry[1].map(getter => getter())
+    for (let p = 0; p < output.length; p++) {
+      if (output[p].includes('\x01'))
+        output[p] = interpolate(output[p], values)
+    }
   }
   return output
 }
@@ -162,11 +230,11 @@ export function createServerRenderer() {
 }
 
 /** SSR composable for build-finalized plans. @experimental */
-export function useHead(input: ResolvableHead, options: { head: PrecompiledServerHead }): void {
-  options.head._p.push(input as unknown as PrecompiledHeadInput)
+export function useHead(input: ResolvableHead, options: { head: PrecompiledServerHead, bindings?: PrecompiledBindings }): void {
+  options.head._p.push(options.bindings ? [input as unknown as PrecompiledHeadInput, options.bindings] : input as unknown as PrecompiledHeadInput)
 }
 
 /** Static SEO input is lowered to the same plan format by the bundler. @experimental */
-export function useSeoMeta(input: UseSeoMetaInput, options: { head: PrecompiledServerHead }): void {
-  options.head._p.push(input as unknown as PrecompiledHeadInput)
+export function useSeoMeta(input: UseSeoMetaInput, options: { head: PrecompiledServerHead, bindings?: PrecompiledBindings }): void {
+  options.head._p.push(options.bindings ? [input as unknown as PrecompiledHeadInput, options.bindings] : input as unknown as PrecompiledHeadInput)
 }

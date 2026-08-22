@@ -18,7 +18,7 @@ export function createHead(): VueDeferredPrecompiledClientHead {
 }
 
 /** Queue one build-finalized client plan on the injected head. @experimental */
-export function useHead(input: UseHeadInput, options: { head?: VueDeferredPrecompiledClientHead } = {}): DeferredPrecompiledClientEntry {
+export function useHead(input: UseHeadInput, options: { bindings?: readonly (() => unknown)[], head?: VueDeferredPrecompiledClientHead } = {}): DeferredPrecompiledClientEntry {
   const scope = getCurrentScope()
   if (scope && !scope.active)
     return { _setActive() {}, dispose() {} }
@@ -34,4 +34,4 @@ export function useHead(input: UseHeadInput, options: { head?: VueDeferredPrecom
 }
 
 /** Queue one build-finalized static SEO plan on the injected head. @experimental */
-export const useSeoMeta = useHead as (input: UseSeoMetaInput, options?: { head?: VueDeferredPrecompiledClientHead }) => DeferredPrecompiledClientEntry
+export const useSeoMeta = useHead as (input: UseSeoMetaInput, options?: { bindings?: readonly (() => unknown)[], head?: VueDeferredPrecompiledClientHead }) => DeferredPrecompiledClientEntry

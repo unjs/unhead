@@ -14,13 +14,83 @@ export interface PrecompiledCsrClientHead {
   /** @internal */
   _e: Map<number, PrecompiledClientInput>
   /** @internal */
+  _b: Map<number, CsrBindings>
+  /** @internal */
   _r?: PrecompiledClientTag[]
   /** @internal */
   _set: (id: number, input: PrecompiledClientInput) => void
   /** @internal */
   _s?: PrecompiledCsrDomState
-  push: (input: PrecompiledClientInput) => PrecompiledClientEntry
+  push: (input: PrecompiledClientInput, bindings?: readonly (() => unknown)[], batch?: 0) => PrecompiledClientEntry
   render: () => boolean
+}
+
+/** @internal */
+interface CsrBindings {
+  getters: readonly (() => unknown)[]
+  values: unknown[]
+  plan: PrecompiledClientInput
+}
+
+/** @internal */
+// eslint-disable-next-line no-control-regex -- NUL-free slot token delimiter
+const CSR_TOKEN_RE = /\x01[TA](\d+)\x01/g
+
+/** Replace slot tokens in a plan with materialized values (fresh tuple refs). @internal */
+function materializePlan(plan: PrecompiledClientInput, values: unknown[]): PrecompiledClientInput {
+  const next = plan.slice()
+  for (let i = 0; i < plan.length; i++) {
+    const tag = plan[i]
+    let clone: any[] | undefined
+    const props = tag[3]
+    if (props) {
+      let propsClone: Record<string, any> | undefined
+      for (const prop in props) {
+        if (typeof props[prop] === 'string' && (props[prop] as string).includes('\x01')) {
+          propsClone ??= { ...props }
+          propsClone[prop] = (props[prop] as string).replace(CSR_TOKEN_RE, ((_m: string, index: string) => values[+index]) as any)
+        }
+      }
+      if (propsClone) {
+        clone ??= [...tag] as any[]
+        clone[3] = propsClone
+      }
+    }
+    if (typeof tag[4] === 'string' && (tag[4] as string).includes('\x01')) {
+      clone ??= [...tag] as any[]
+      clone[4] = (tag[4] as string).replace(CSR_TOKEN_RE, (_, index) => {
+        const val = values[+index]
+        return val == null || val === false ? '' : String(val)
+      })
+    }
+    if (clone)
+      next[i] = clone as unknown as PrecompiledClientTag
+  }
+  return next
+}
+
+/** Evaluate slotted getters, rematerialize changed entries, drop the resolve cache. @internal */
+function refreshSlots(head: PrecompiledCsrClientHead): void {
+  if (!head._b.size)
+    return
+  let changed = false
+  for (const [id, binding] of head._b) {
+    const values = binding.getters.map(getter => getter())
+    let diff = false
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] !== binding.values[i]) {
+        diff = true
+        break
+      }
+    }
+    if (diff) {
+      binding.values = values
+      head._e.set(id, materializePlan(binding.plan, values))
+      changed = true
+    }
+  }
+  if (changed)
+    head._r = undefined
 }
 
 function resolveTags(head: PrecompiledCsrClientHead): PrecompiledClientTag[] {
@@ -62,6 +132,8 @@ function render(head: PrecompiledCsrClientHead): boolean {
   const document = globalThis.document
   if (!document)
     return false
+
+  refreshSlots(head)
 
   let state = head._s
   if (state?.document !== document) {
@@ -166,14 +238,22 @@ function render(head: PrecompiledCsrClientHead): boolean {
   return true
 }
 
-function push(head: PrecompiledCsrClientHead, input: PrecompiledClientInput, shouldRender: boolean): PrecompiledClientEntry {
+function push(head: PrecompiledCsrClientHead, input: PrecompiledClientInput, bindings: readonly (() => unknown)[] | undefined, shouldRender: boolean): PrecompiledClientEntry {
   const id = ++head._c
-  head._e.set(id, input)
+  if (bindings) {
+    const values = bindings.map(getter => getter())
+    head._b.set(id, { getters: bindings, plan: input, values })
+    head._e.set(id, materializePlan(input, values))
+  }
+  else {
+    head._e.set(id, input)
+  }
   head._r = undefined
   if (shouldRender)
     head.render()
   return {
     dispose() {
+      head._b.delete(id)
       if (head._e.delete(id)) {
         head._r = undefined
         head.render()
@@ -186,13 +266,15 @@ function push(head: PrecompiledCsrClientHead, input: PrecompiledClientInput, sho
 export function createHead(): PrecompiledCsrClientHead {
   const head = {
     _c: 0,
+    _b: new Map<number, CsrBindings>(),
     _e: new Map<number, PrecompiledClientInput>(),
     _set(id: number, input: PrecompiledClientInput) {
-      head._e.set(id, input)
+      const binding = head._b.get(id)
+      head._e.set(id, binding && input === binding.plan ? materializePlan(binding.plan, binding.values) : input)
       head._r = undefined
     },
-    push(input: PrecompiledClientInput, batch?: 0) {
-      return push(head, input, batch !== 0)
+    push(input: PrecompiledClientInput, bindingsOrBatch?: readonly (() => unknown)[] | 0, batch?: 0) {
+      return push(head, input, Array.isArray(bindingsOrBatch) ? bindingsOrBatch : undefined, (bindingsOrBatch === 0 ? 0 : batch) !== 0)
     },
     render: () => render(head),
   } as PrecompiledCsrClientHead

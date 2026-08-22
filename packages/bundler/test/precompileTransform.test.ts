@@ -246,7 +246,7 @@ describe('sealed static precompile transform', () => {
     expect(code).toContain('const entry = head.push(__unhead_precompiled_plan_0)')
     await expect(transform([
       'import { useHead } from \'unhead/precompiled/client\'',
-      'useHead({ title: getTitle() }, { head })',
+      'useHead({ ...dynamicInput }, { head })',
     ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
       .rejects
       .toThrow(/dynamic or unsupported value/)
@@ -509,7 +509,7 @@ describe('sealed static precompile transform', () => {
   })
 
   it.each([
-    ['dynamic value', 'const value = getTitle()\nuseHead({ title: value }, { head })', /dynamic or unsupported value/],
+    ['dynamic value', 'useHead({ title: await getTitle() }, { head })', /dynamic or unsupported value/],
     ['computed key', 'useHead({ [\'title\']: \'computed\' }, { head })', /dynamic or unsupported value/],
     ['spread', 'useHead({ ...{ title: \'spread\' } }, { head })', /dynamic or unsupported value/],
     ['getter', 'useHead({ get title() { return \'getter\' } }, { head })', /dynamic or unsupported value/],
@@ -562,9 +562,8 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))).rejects.toThrow(/\/app\/page\.ts:2:17: strict precompile functions must be called directly/)
     await expect(transform([
       'import { useHead } from \'unhead/precompiled/server\'',
-      'const title = getTitle()',
-      'useHead({ title }, { head })',
-    ].join('\n'))).rejects.toThrow(/\/app\/page\.ts:3:9: the head input contains a dynamic or unsupported value/)
+      'useHead({ title: new Title() }, { head })',
+    ].join('\n'))).rejects.toThrow(/\/app\/page\.ts:2:9: the head input contains a dynamic or unsupported value/)
   })
 
   it('allows namespace render/types while keeping strict functions direct', async () => {
@@ -785,5 +784,111 @@ describe('sealed static precompile transform', () => {
         meta: unpackMeta(flatMeta as any),
       }))
     }), { numRuns: 100 })
+  })
+})
+
+describe('dynamic slots', () => {
+  it('compiles a dynamic title and meta content into tokens plus bindings (server)', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'const product = { title: \'Widget\', desc: \'A widget\' }',
+      'useHead({ title: () => product.title, meta: [{ name: \'description\', content: () => product.desc }] }, { head })',
+    ].join('\n'))
+    expect(code).toContain('\\u0001T0\\u0001')
+    expect(code).toContain('\\u0001A1\\u0001')
+    expect(code).toContain('head._p.push([__unhead_precompiled_plan_0, [() => product.title,() => product.desc]])')
+  })
+
+  it('threads bindings through the core client push', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'const title = ref(\'x\')',
+      'useHead({ title }, { head })',
+    ].join('\n'), {}, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain('head.push(__unhead_precompiled_plan_0, [() => (title)])')
+  })
+
+  it('threads bindings through framework adapter options', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'@unhead/vue/precompiled\'',
+      'useSeoMeta({ description: () => product.desc }, { head })',
+    ].join('\n'))
+    expect(code).toContain('{ head: head, bindings: [() => product.desc] }')
+  })
+
+  it('supports template literals, member chains and nullish fallbacks as slots', async () => {
+    // fixture needs a literal ${...} inside a template string; eslint flags it in source
+    // eslint-disable-next-line no-template-curly-in-string
+    const fixture = 'useHead({ title: `${product.title} | Shop`, meta: [{ name: \'description\', content: promo()?.code || \'\' }] }, { head })'
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      fixture,
+    ].join('\n'))
+    expect(code).toMatch(/bindings|, \[/)
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(code).toContain('() => (`${product.title} | Shop`)')
+    expect(code).toContain('() => (promo()?.code || \'\')')
+  })
+
+  it('rejects a dynamic meta name with the identity error', async () => {
+    // eslint-disable-next-line no-template-curly-in-string
+    const fixture = 'useHead({ meta: [{ name: `product-${id}-loaded`, content: \'true\' }] }, { head })'
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      fixture,
+    ].join('\n'))).rejects.toThrow(/dynamic values cannot change tag identity/)
+  })
+
+  it('rejects a dynamic link href whose identity includes it', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ link: [{ rel: \'stylesheet\', href: () => theme.href }] }, { head })',
+    ].join('\n'))).rejects.toThrow(/dynamic values cannot change tag identity/)
+  })
+
+  it('allows a dynamic canonical href (identity is the literal canonical)', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ link: [{ rel: \'canonical\', href: () => route.href }] }, { head })',
+    ].join('\n'))
+    expect(code).toContain('() => route.href')
+  })
+
+  it('rejects dynamic innerHTML', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ script: [{ type: \'application/ld+json\', innerHTML: () => JSON.stringify(data) }] }, { head })',
+    ].join('\n'))).rejects.toThrow(/dynamic innerHTML is not supported/)
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ script: [{ type: \'application/ld+json\', innerHTML: data.json }] }, { head })',
+    ].join('\n'))).rejects.toThrow(/dynamic innerHTML is not supported/)
+  })
+
+  it('rejects dynamic values in snapshot mode', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: () => product.title }, { head })',
+    ].join('\n'), { precompile: { mode: 'snapshot' } })).rejects.toThrow(/snapshot mode finalizes the payload at build time/)
+  })
+
+  it('renders slotted server output identical to the normal runtime', async () => {
+    const product = { title: 'Widget "Pro"', desc: 'A <widget> & more' }
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: () => product.title, meta: [{ name: \'description\', content: () => product.desc }] }, { head })',
+    ].join('\n'))
+    // evaluate the emitted module against the sealed runtime
+    const body = code!.replace(/^import[^\n]*\n?/gm, '')
+    const mod = await import('../../unhead/src/precompiled/server')
+    const head = mod.createHead({ disableDefaults: true })
+    // eslint-disable-next-line no-new-func -- compiled fixture
+    new Function('useHead', 'head', 'product', body)(mod.useHead, head, product)
+    const slotted = mod.renderSSRHead(head)
+    const normal = baseline({
+      title: product.title,
+      meta: [{ name: 'description', content: product.desc }],
+    })
+    expect(slotted).toEqual(normal)
   })
 })

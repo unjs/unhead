@@ -173,6 +173,8 @@ interface PendingPrecompilation {
   batchEnd?: number
   batchSize?: number
   batchStart?: number
+  /** Inline bindings array source for slotted plans (`[() => expr, ...]`). */
+  bindings?: string
   consumer: BuildConsumer
   end: number
   framework?: string
@@ -180,6 +182,8 @@ interface PendingPrecompilation {
   inputEnd: number
   inputStart: number
   name: string
+  optionsEnd?: number
+  optionsStart?: number
   standalone: boolean
   source: Promise<string>
   start: number
@@ -1695,15 +1699,32 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           const arg = node.arguments[0]
           if (!arg || arg.type !== 'ObjectExpression')
             precompileFailure(node, 'the head input must be a static object literal')
-          const decoded = decodeStaticValue(arg)
+          const slots: SlotRecord[] = []
+          const decoded = decodeStaticValue(arg, slots)
           if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
             precompileFailure(arg, 'the head input contains a dynamic or unsupported value')
+          let bindings: string | undefined
+          if (slots.length) {
+            // raw HTML / script-style content cannot be dynamic: identity and XSS
+            for (const slot of slots) {
+              if (slot.key === 'innerHTML' || slot.key === 'textContent')
+                precompileFailure(arg, `dynamic ${slot.key} is not supported in compiled mode`)
+            }
+            // a slot marker in static content would corrupt the token format
+            if (JSON.stringify(decoded).replace(/\\u0001[TA]\d+\\u0001/g, '').includes('\\u0001'))
+              precompileFailure(arg, 'static head content contains a \\u0001 control character, which is reserved for compiled slots')
+            if (precompileOpts?.mode === 'snapshot')
+              precompileFailure(arg, 'snapshot mode finalizes the payload at build time and cannot contain dynamic values')
+            const sources = slots.map(slot => code.slice(slot.start, slot.end))
+            bindings = `[${sources.map(source => source.startsWith('(') || /^\w+\s*=>/.test(source) ? source : `() => (${source})`).join(',')}]`
+          }
 
           const name = `${precompilePrefix}_plan_${pendingPrecompilations.length}`
           pendingPrecompilations.push({
             batchEnd: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.end : undefined,
             batchSize: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.elements.length : undefined,
             batchStart: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.start : undefined,
+            bindings,
             consumer: precompileConsumer!,
             start: node.start,
             end: node.end,
@@ -1712,6 +1733,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             inputStart: arg.start,
             inputEnd: arg.end,
             name,
+            optionsEnd: options ? options.end : undefined,
+            optionsStart: options ? options.start : undefined,
             standalone: parent?.type === 'ExpressionStatement',
             source: (precompileConsumer === 'server' ? compileStaticInput : compileStaticClientInput)(
               decoded as Record<string, DecodedStaticValue>,
@@ -1801,6 +1824,20 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const defaultPlanName = `${precompilePrefix}_defaults`
         let compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
+
+        // identity gate for slotted plans: a token in any identity (or client
+        // adoption identity) would make dedupe/adoption value-dependent
+        for (let i = 0; i < pendingPrecompilations.length; i++) {
+          if (!pendingPrecompilations[i].bindings || !compiledPlans[i].includes('\\u0001'))
+            continue
+          const plan = JSON.parse(compiledPlans[i]) as any[]
+          for (const tag of plan) {
+            if (typeof tag[1] === 'string' && tag[1].includes('\x01'))
+              precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity (meta name/property, link rel/href, or script content); use the normal runtime for this tag')
+            if (typeof tag[7] === 'string' && tag[7].includes('\x01'))
+              precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity; use the normal runtime for this tag')
+          }
+        }
 
         if (precompileOpts?.duplicates === 'error') {
           const moduleIdentities = new Map<string, string>()
@@ -1974,7 +2011,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
                 edits.push({
                   start: first.batchStart,
                   end: first.batchEnd!,
-                  content: `[${indexes.map((index, position) => `${first.head}.push(${pendingPrecompilations[index].name}${position === indexes.length - 1 ? '' : ',0'})`).join(',')}]`,
+                  content: `[${indexes.map((index, position) => `${first.head}.push(${pendingPrecompilations[index].name}${pendingPrecompilations[index].bindings ? `, ${pendingPrecompilations[index].bindings}` : ''}${position === indexes.length - 1 ? '' : ',0'})`).join(',')}]`,
                   phase: 'precompile',
                 })
                 i = cursor
@@ -1988,6 +2025,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
                 content: first.name,
                 phase: 'precompile',
               })
+              if (first.bindings && first.optionsStart !== undefined && first.optionsEnd !== undefined) {
+                edits.push({
+                  start: first.optionsStart,
+                  end: first.optionsEnd,
+                  content: `{ head: ${first.head}, bindings: ${first.bindings} }`,
+                  phase: 'precompile',
+                })
+              }
               i++
               continue
             }
@@ -1995,7 +2040,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               edits.push({
                 start: first.start,
                 end: first.end,
-                content: `${first.head}.push(${first.name})`,
+                content: first.consumer === 'server'
+                  ? `${first.head}._p.push(${first.bindings ? `[${first.name}, ${first.bindings}]` : first.name})`
+                  : `${first.head}.push(${first.name}${first.bindings ? `, ${first.bindings}` : ''})`,
                 phase: 'precompile',
               })
               i++
@@ -2006,6 +2053,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             while (++i < pendingPrecompilations.length) {
               const next = pendingPrecompilations[i]
               if (!next.standalone || next.consumer !== first.consumer || next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
+                break
+              // slotted plans are not coalesced: token indexes are plan-local
+              if (next.bindings || first.bindings)
                 break
               last = next
               indexes.push(i)
@@ -2022,8 +2072,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               start: first.start,
               end: last.end,
               content: first.consumer === 'client'
-                ? `${first.head}.push(${first.name})`
-                : `${first.head}._p.push(${first.name})`,
+                ? `${first.head}.push(${first.name}${first.bindings ? `, ${first.bindings}` : ''})`
+                : `${first.head}._p.push(${first.bindings ? `[${first.name}, ${first.bindings}]` : first.name})`,
               phase: 'precompile',
             })
           }
@@ -2128,6 +2178,58 @@ function isUnsafeObjectKey(key: string): boolean {
 }
 
 /**
+ * One dynamic slot collected while decoding a head input: the source slice of
+ * a pure reactive-leaf expression plus the property key it appeared under
+ * (which decides the server escaping context: `title` text vs attribute).
+ */
+interface SlotRecord {
+  end: number
+  key?: string
+  start: number
+}
+
+/**
+ * Pure reactive-leaf expression test for dynamic slots. Everything reachable
+ * must be read-only: identifiers, member chains (incl. optional chaining),
+ * template literals, conditionals, logical/binary operators, `!`/`void`/
+ * `typeof`/`-`/`+` unary, and arrows with expression bodies. Calls, `new`,
+ * assignment, await, yield, spread and sequences are rejected — purity is
+ * what makes "evaluate per render" sound.
+ */
+function isPureSlotExpr(node: any): boolean {
+  if (!node)
+    return false
+  switch (node.type) {
+    case 'Identifier':
+    case 'ThisExpression':
+    case 'Literal':
+      return true
+    case 'ChainExpression':
+      return isPureSlotExpr(node.expression)
+    case 'MemberExpression':
+      return isPureSlotExpr(node.object) && (!node.computed || isPureSlotExpr(node.property))
+    case 'TemplateLiteral':
+      return node.expressions.every((expression: any) => isPureSlotExpr(expression))
+    case 'CallExpression':
+      // calls are allowed inside slots: a binding IS a per-render call
+      // (`promo()?.code`, i18n `t('title')`). Dangerous sinks stay gated by
+      // the innerHTML key rule and the identity gate.
+      return isPureSlotExpr(node.callee) && node.arguments.every((argument: any) => isPureSlotExpr(argument))
+    case 'ConditionalExpression':
+      return isPureSlotExpr(node.test) && isPureSlotExpr(node.consequent) && isPureSlotExpr(node.alternate)
+    case 'LogicalExpression':
+    case 'BinaryExpression':
+      return isPureSlotExpr(node.left) && isPureSlotExpr(node.right)
+    case 'UnaryExpression':
+      return ['!', 'void', 'typeof', '-', '+'].includes(node.operator) && isPureSlotExpr(node.argument)
+    case 'ArrowFunctionExpression':
+      return node.expression === true && isPureSlotExpr(node.body)
+    default:
+      return false
+  }
+}
+
+/**
  * Safe recursive AST-value decoder. Turns a statically-analyzable expression
  * into the JS value it evaluates to, without ever evaluating source text:
  *
@@ -2140,8 +2242,14 @@ function isUnsafeObjectKey(key: string): boolean {
  * Everything else (spreads, computed keys, getters/setters/methods, unsafe
  * prototype keys, identifiers, calls, member expressions, regexp/bigint
  * literals, array holes) returns the `DECODE_BAIL` sentinel; it never throws.
+ *
+ * With `slots` provided, a leaf that would bail is instead collected as a
+ * dynamic slot when it is a pure reactive-leaf expression: the decoded value
+ * carries a `\x01T<n>\x01` (title text) / `\x01A<n>\x01` (attribute) token
+ * that flows through plan compilation untouched, and `slots` records the
+ * expression source for the emitted bindings array.
  */
-function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
+function decodeStaticValue(node: any, slots?: SlotRecord[], key?: string): DecodedStaticValue | typeof DECODE_BAIL {
   if (!node)
     return DECODE_BAIL
   if (LITERAL_TYPES.has(node.type)) {
@@ -2164,14 +2272,19 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
       || arg.bigint !== undefined
       || typeof arg.value !== 'number'
       || !Number.isFinite(arg.value)) {
+      if (slots && ['!', 'void', 'typeof'].includes(node.operator) && isPureSlotExpr(node))
+        return collectSlot(slots, node, key)
       return DECODE_BAIL
     }
     const value = node.operator === '-' ? -arg.value : arg.value
     return Object.is(value, -0) ? DECODE_BAIL : value
   }
   if (node.type === 'TemplateLiteral') {
-    if (node.expressions.length > 0)
+    if (node.expressions.length > 0) {
+      if (slots && isPureSlotExpr(node))
+        return collectSlot(slots, node, key)
       return DECODE_BAIL
+    }
     const cooked = node.quasis[0]?.value?.cooked
     return typeof cooked === 'string' ? cooked : DECODE_BAIL
   }
@@ -2181,7 +2294,7 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
       // reject holes (`[1, , 2]`) and spreads
       if (!element || element.type === 'SpreadElement')
         return DECODE_BAIL
-      const value = decodeStaticValue(element)
+      const value = decodeStaticValue(element, slots, key)
       if (value === DECODE_BAIL)
         return DECODE_BAIL
       out.push(value)
@@ -2195,17 +2308,29 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
     for (const prop of node.properties) {
       if (prop.type === 'SpreadElement' || prop.computed || prop.method || prop.kind !== 'init')
         return DECODE_BAIL
-      const key = getStaticPropertyKey(prop)
-      if (!key || isUnsafeObjectKey(key))
+      const propKey = getStaticPropertyKey(prop)
+      if (!propKey || isUnsafeObjectKey(propKey))
         return DECODE_BAIL
-      const value = decodeStaticValue(prop.value)
+      const value = decodeStaticValue(prop.value, slots, propKey)
       if (value === DECODE_BAIL)
         return DECODE_BAIL
-      out[key] = value
+      out[propKey] = value
     }
     return out
   }
+  if (slots
+    && (node.type === 'Identifier' || node.type === 'MemberExpression' || node.type === 'ConditionalExpression' || node.type === 'LogicalExpression' || node.type === 'CallExpression' || node.type === 'ArrowFunctionExpression')
+    && isPureSlotExpr(node)) {
+    return collectSlot(slots, node, key)
+  }
   return DECODE_BAIL
+}
+
+/** @internal */
+function collectSlot(slots: SlotRecord[], node: any, key?: string): string {
+  // the caller resolves `code.slice(start, end)` after decode returns
+  slots.push({ end: node.end, key, start: node.start })
+  return `\x01${key === 'title' ? 'T' : 'A'}${slots.length - 1}\x01`
 }
 
 /**
