@@ -17,6 +17,11 @@ overrides:
   # Keep Vite on one peer variant so plugin types share the same module identity.
   '@vitejs/devtools': 0.4.1
   chokidar: 5.0.0
+  # Nuxt resolves its head module from its own dependency tree (published
+  # @unhead/vue); point it at the workspace so examples/nuxt-v4-trial
+  # exercises local changes including compiled mode.
+  nuxt>@unhead/vue: workspace:*
+  nuxt>unhead: workspace:*
   # Keep Rolldown on one peer variant so unplugin resolves a single
   # UnpluginInstance type across the workspace.
   rolldown: 'catalog:'

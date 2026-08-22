@@ -28,6 +28,47 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./precompiled:
+  createHead: function
+  UnheadContext: object
+  UnheadProvider: function
+  useHead: function
+  useSeoMeta: function
+  useUnhead: function
+./precompiled/client:
+  createHead: function
+  renderDOMHead: function
+  UnheadContext: object
+  UnheadProvider: function
+  useHead: function
+  useSeoMeta: function
+  useUnhead: function
+./precompiled/client-csr:
+  createHead: function
+  renderDOMHead: function
+  UnheadContext: object
+  UnheadProvider: function
+  useHead: function
+  useSeoMeta: function
+  useUnhead: function
+./precompiled/client-deferred:
+  createHead: function
+  renderDOMHead: function
+  UnheadContext: object
+  UnheadProvider: function
+  useHead: function
+  useSeoMeta: function
+  useUnhead: function
+./precompiled/server:
+  createHead: function
+  createServerRenderer: function
+  renderSSRHead: function
+  resolveTags: function
+  UnheadContext: object
+  UnheadProvider: function
+  useHead: function
+  useSeoMeta: function
+  useUnhead: function
 ./server:
   createHead: function
   prepareTemplate: function

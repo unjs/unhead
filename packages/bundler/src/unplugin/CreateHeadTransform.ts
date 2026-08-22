@@ -5,6 +5,7 @@ import { SOURCE_FILE_RE } from './utils'
 
 const CREATE_HEAD_RE = /\bcreateHead\b/
 const UNHEAD_SOURCE_RE = /^(?:@unhead\/[^/]+|unhead)(?:\/[^?]*)?$/
+const PRECOMPILED_SOURCE_RE = /(?:^|\/)precompiled(?:\/|$)/
 
 export interface RuntimePluginRegistration {
   /** Import to inject */
@@ -72,8 +73,11 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
           enter(node: any) {
             if (node.type === 'ImportDeclaration') {
               const source = node.source?.value
-              if (typeof source !== 'string' || !UNHEAD_SOURCE_RE.test(source))
+              if (typeof source !== 'string'
+                || !UNHEAD_SOURCE_RE.test(source)
+                || PRECOMPILED_SOURCE_RE.test(source)) {
                 return
+              }
               for (const spec of node.specifiers || []) {
                 if (spec.type === 'ImportSpecifier' && spec.imported?.name === 'createHead')
                   directCreateHeadNames.add(spec.local.name)
