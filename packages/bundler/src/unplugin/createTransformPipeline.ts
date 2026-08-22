@@ -1042,6 +1042,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         const precompiledRanges: [number, number][] = []
         // transparently compiled calls that degraded back to the normal runtime
         const degradedRanges: [number, number][] = []
+        const autoCompileFailed = new Set<number>()
 
         function inRemovedRange(node: any): boolean {
           return removedRanges.some(([start, end]) => node.start >= start && node.end <= end)
@@ -1622,7 +1623,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               standalone: true,
               source: compileStaticClientInput(
                 decoded as Record<string, DecodedStaticValue>,
-                'useHead',
+                resolved.kind,
                 false,
                 inlineScriptTarget,
                 reason => precompileFailure(arg, reason),
@@ -1898,7 +1899,15 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           seoMetaFinalize()
 
         const defaultPlanName = `${precompilePrefix}_defaults`
-        let compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
+        let compiledPlans = await Promise.all(pendingPrecompilations.map((pending, index) =>
+          // transparent (auto) compilation degrades on any compile failure:
+          // the call stays on the normal runtime instead of failing the build
+          pending.auto
+            ? pending.source.catch(() => {
+                autoCompileFailed.add(index)
+                return ''
+              })
+            : pending.source))
 
         // identity gate for slotted plans: a token in any identity (or client
         // adoption identity) would make dedupe/adoption value-dependent.
@@ -1924,7 +1933,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           }
           precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity (meta name/property, link rel/href, or script content); use the normal runtime for this tag')
         }
-        for (const i of autoDegrades) {
+        for (const i of [...autoDegrades, ...autoCompileFailed]) {
           const pending = pendingPrecompilations[i]
           const rangeIndex = precompiledRanges.findIndex(range => range[0] === pending.start && range[1] === pending.end)
           if (rangeIndex !== -1)
