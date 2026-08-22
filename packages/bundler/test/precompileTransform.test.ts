@@ -892,3 +892,66 @@ describe('dynamic slots', () => {
     expect(slotted).toEqual(normal)
   })
 })
+
+describe('transparent auto compilation', () => {
+  const autoClient = (code: string) => transform(code, { frameworkPackage: '@unhead/vue', precompile: { auto: true } }, { environment: { config: { consumer: 'client' } } })
+
+  it('compiles an ordinary imported useHead call transparently', async () => {
+    const code = await autoClient([
+      'import { useHead } from \'@unhead/vue\'',
+      'useHead({ title: \'About\', meta: [{ name: \'description\', content: \'static\' }] })',
+    ].join('\n'))
+    expect(code).toContain('import { createHead as __unhead_auto_create_head } from "@unhead/vue/precompiled/client"')
+    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0)')
+  })
+
+  it('compiles auto-imported (undeclared) useSeoMeta calls', async () => {
+    const code = await autoClient([
+      'useSeoMeta({ title: \'Home\', description: \'static page\' })',
+    ].join('\n'))
+    expect(code).toContain('__unhead_auto_head.push(')
+  })
+
+  it('compiles dynamic values into slots with bindings', async () => {
+    const code = await autoClient([
+      'import { useHead } from \'@unhead/vue\'',
+      'useHead({ title: () => product.title, meta: [{ name: \'description\', content: () => product.desc }] })',
+    ].join('\n'))
+    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0, [() => product.title,() => product.desc])')
+  })
+
+  it('compiles a call expression value into a slot binding', async () => {
+    const code = await autoClient([
+      'import { useHead } from \'@unhead/vue\'',
+      'useHead({ title: getTitle() })',
+    ].join('\n'))
+    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0, [() => (getTitle())])')
+  })
+
+  it('degrades template literals with dynamic identities back to source', async () => {
+    const code = await autoClient([
+      'import { useHead } from \'@unhead/vue\'',
+      // eslint-disable-next-line no-template-curly-in-string
+      'useHead({ meta: [{ name: `tag-${id}`, content: \'x\' }] })',
+    ].join('\n'))
+    // unchanged module: the call stays on the normal runtime verbatim
+    expect(code).toBeUndefined()
+  })
+
+  it('leaves observed return values and options alone', async () => {
+    const code = await autoClient([
+      'import { useHead } from \'@unhead/vue\'',
+      'const entry = useHead({ title: \'x\' })',
+      'useHead({ title: \'y\' }, { head: custom })',
+    ].join('\n'))
+    expect(code).toBeUndefined()
+  })
+
+  it('does not run on server builds', async () => {
+    const code = await transform([
+      'import { useHead } from \'@unhead/vue\'',
+      'useHead({ title: \'About\' })',
+    ].join('\n'), { precompile: { auto: true } }, { environment: { config: { consumer: 'server' } } })
+    expect(code).toBeUndefined()
+  })
+})

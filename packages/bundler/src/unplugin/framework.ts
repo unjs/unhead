@@ -57,7 +57,7 @@ export interface UnheadBundlerFactory {
 
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
 
-function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
+function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[] {
   const common = { filter: options.filter, sourcemap: options.sourcemap }
 
   const treeshake = options.treeshake !== false
@@ -75,7 +75,7 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     return []
 
   // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
-  return [{ instance: UnheadTransforms, options: { consumer, treeshake, seoMeta, precompile, minify } }]
+  return [{ instance: UnheadTransforms, options: { consumer, frameworkPackage: framework, treeshake, seoMeta, precompile, minify } }]
 }
 
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
@@ -138,7 +138,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
         '[@unhead/bundler] framework streaming cannot be combined with experimental precompile because the sealed runtime excludes streaming hooks and replay',
       )
     }
-    const defs = resolveCoreDefs(coreOpts)
+    const defs = resolveCoreDefs(coreOpts, framework)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming
 

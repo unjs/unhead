@@ -35,7 +35,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   const precompileConsumer = typeof precompileOptions === 'object' ? precompileOptions.consumer : undefined
   if (treeshake || seoMeta || precompile || minify) {
     // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
-    plugins.push(UnheadTransforms.vite({ consumer: precompileConsumer, treeshake, seoMeta, precompile, minify }))
+    plugins.push(UnheadTransforms.vite({ consumer: precompileConsumer, frameworkPackage: framework, treeshake, seoMeta, precompile, minify }))
   }
 
   // Register runtime plugins into the shared context

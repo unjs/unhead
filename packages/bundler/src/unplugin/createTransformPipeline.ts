@@ -170,6 +170,8 @@ interface PendingMinification {
 }
 
 interface PendingPrecompilation {
+  /** Package name for transparently compiled ordinary calls (`@unhead/vue`). */
+  auto?: string
   batchEnd?: number
   batchSize?: number
   batchStart?: number
@@ -262,6 +264,8 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
 export interface TransformPipelineOptions {
   /** @internal */
   consumer?: BuildConsumer
+  /** @internal */
+  frameworkPackage?: string
   treeshake?: TreeshakeServerComposablesOptions | false
   seoMeta?: UseSeoMetaTransformOptions | false
   precompile?: PrecompileOptions | false
@@ -1036,6 +1040,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         // the whole module), here enforced per node.
         const removedRanges: [number, number][] = []
         const precompiledRanges: [number, number][] = []
+        // transparently compiled calls that degraded back to the normal runtime
+        const degradedRanges: [number, number][] = []
 
         function inRemovedRange(node: any): boolean {
           return removedRanges.some(([start, end]) => node.start >= start && node.end <= end)
@@ -1567,13 +1573,78 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           }
         }
 
+        /**
+         * Transparent compilation of ordinary calls: same decode + slot rules,
+         * but degrade-not-fail. Anything unsupported leaves the call on the
+         * normal runtime. Client builds only (the auto head is module-level);
+         * calls with explicit options or observed return values are skipped.
+         */
+        function autoPrecompileEnter(node: any, parent: any, resolved: { kind: string } | undefined): boolean {
+          if (!precompileOpts?.auto || !config.frameworkPackage)
+            return false
+          if (precompileConsumer !== 'client')
+            return false
+          if (resolved?.kind !== 'useHead' && resolved?.kind !== 'useSeoMeta')
+            return false
+          // user-provided options (head routing etc) or observed return value
+          if (node.arguments.length > 1 || parent?.type !== 'ExpressionStatement')
+            return false
+          const arg = node.arguments[0]
+          if (!arg || arg.type !== 'ObjectExpression')
+            return false
+          try {
+            const slots: SlotRecord[] = []
+            const decoded = decodeStaticValue(arg, slots)
+            if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
+              return false
+            let bindings: string | undefined
+            if (slots.length) {
+              for (const slot of slots) {
+                if (slot.key === 'innerHTML' || slot.key === 'textContent')
+                  return false
+              }
+              if (JSON.stringify(decoded).replace(/\\u0001[TA]\d+\\u0001/g, '').includes('\\u0001'))
+                return false
+              const sources = slots.map(slot => code.slice(slot.start, slot.end))
+              bindings = `[${sources.map(source => source.startsWith('(') || /^\w+\s*=>/.test(source) ? source : `() => (${source})`).join(',')}]`
+            }
+            const name = `${precompilePrefix}_plan_${pendingPrecompilations.length}`
+            pendingPrecompilations.push({
+              auto: config.frameworkPackage,
+              bindings,
+              consumer: 'client',
+              start: node.start,
+              end: node.end,
+              head: '',
+              inputStart: arg.start,
+              inputEnd: arg.end,
+              name,
+              standalone: true,
+              source: compileStaticClientInput(
+                decoded as Record<string, DecodedStaticValue>,
+                'useHead',
+                false,
+                inlineScriptTarget,
+                reason => precompileFailure(arg, reason),
+              ),
+            })
+            precompiledRanges.push([node.start, node.end])
+            return true
+          }
+          catch {
+            // degrade: any gate failure leaves the call on the normal runtime
+            return false
+          }
+        }
+
         function precompileEnter(node: any, parent: any): boolean {
           if (node.type !== 'CallExpression')
             return false
 
           const resolved = resolvePrecompileFunction(node.callee, scopeTracker)
-          if (!resolved?.strict)
-            return false
+          if (!resolved?.strict) {
+            return autoPrecompileEnter(node, parent, resolved)
+          }
           markStrictCallee(node.callee)
           if (precompileConsumer !== 'client' && precompileConsumer !== 'server')
             precompileFailure(node, 'the build target is unknown; set precompile.consumer to client or server')
@@ -1800,6 +1871,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               return
             if (precompiledRanges.length && inPrecompiledRange(node))
               return
+            // degraded auto calls keep their original source; nested dynamic
+            // slot expressions inside them must not be walked as new slots
+            if (degradedRanges.length && degradedRanges.some(([start, end]) => node.start >= start && node.end <= end))
+              return
 
             // Phase order per call site is load-bearing: server-composable
             // removal first, then seoMeta lowering/precompile, then static
@@ -1826,17 +1901,37 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         let compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
 
         // identity gate for slotted plans: a token in any identity (or client
-        // adoption identity) would make dedupe/adoption value-dependent
+        // adoption identity) would make dedupe/adoption value-dependent.
+        // Transparently compiled (auto) calls degrade back to the normal
+        // runtime instead of failing the build.
+        const autoDegrades = new Set<number>()
         for (let i = 0; i < pendingPrecompilations.length; i++) {
           if (!pendingPrecompilations[i].bindings || !compiledPlans[i].includes('\\u0001'))
             continue
           const plan = JSON.parse(compiledPlans[i]) as any[]
+          let identitySlot = false
           for (const tag of plan) {
             if (typeof tag[1] === 'string' && tag[1].includes('\x01'))
-              precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity (meta name/property, link rel/href, or script content); use the normal runtime for this tag')
+              identitySlot = true
             if (typeof tag[7] === 'string' && tag[7].includes('\x01'))
-              precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity; use the normal runtime for this tag')
+              identitySlot = true
           }
+          if (!identitySlot)
+            continue
+          if (pendingPrecompilations[i].auto) {
+            autoDegrades.add(i)
+            continue
+          }
+          precompileFailure({ start: pendingPrecompilations[i].inputStart } as any, 'dynamic values cannot change tag identity (meta name/property, link rel/href, or script content); use the normal runtime for this tag')
+        }
+        for (const i of autoDegrades) {
+          const pending = pendingPrecompilations[i]
+          const rangeIndex = precompiledRanges.findIndex(range => range[0] === pending.start && range[1] === pending.end)
+          if (rangeIndex !== -1)
+            precompiledRanges.splice(rangeIndex, 1)
+          pendingPrecompilations[i] = { ...pending, auto: undefined, bindings: undefined, name: `__unhead_degraded_${i}` }
+          compiledPlans[i] = ''
+          degradedRanges.push([pending.start, pending.end])
         }
 
         if (precompileOpts?.duplicates === 'error') {
@@ -2036,6 +2131,21 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               i++
               continue
             }
+            // degraded transparent calls: no edit, the original call stays
+            if (first.name.startsWith('__unhead_degraded_')) {
+              i++
+              continue
+            }
+            if (first.auto) {
+              edits.push({
+                start: first.start,
+                end: first.end,
+                content: `__unhead_auto_head.push(${first.name}${first.bindings ? `, ${first.bindings}` : ''})`,
+                phase: 'precompile',
+              })
+              i++
+              continue
+            }
             if (!first.standalone) {
               edits.push({
                 start: first.start,
@@ -2054,8 +2164,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               const next = pendingPrecompilations[i]
               if (!next.standalone || next.consumer !== first.consumer || next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
                 break
-              // slotted plans are not coalesced: token indexes are plan-local
-              if (next.bindings || first.bindings)
+              // slotted plans are not coalesced: token indexes are plan-local;
+              // auto calls target the module auto head individually
+              if (next.bindings || first.bindings || next.auto || first.auto)
                 break
               last = next
               indexes.push(i)
@@ -2094,11 +2205,19 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const s = new MagicString(code)
         applyEdits(s, edits, id)
-        if (snapshotDeclaration || pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
+        const autoPendings = pendingPrecompilations.filter(pending => pending.auto && !pending.name.startsWith('__unhead_degraded_'))
+        const hasAutoHead = autoPendings.length > 0
+        if (snapshotDeclaration || pendingPrecompilations.length || hasAutoHead || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
           const directives = ast.program.body.filter((node: any) => node.type === 'ExpressionStatement' && node.directive)
           const directiveEnd = directives.at(-1)?.end
           const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)
           const declarations = [
+            ...(hasAutoHead
+              ? [`import { createHead as __unhead_auto_create_head } from ${JSON.stringify(`${autoPendings[0].auto}/precompiled/client`)}`,
+                // module-level auto head: rendered eagerly; the framework's
+                // DOM runtime owns identical tags, so adoption dedupes them
+                  'const __unhead_auto_head = __unhead_auto_create_head()']
+              : []),
             ...(snapshotDeclaration ? [snapshotDeclaration] : []),
             ...(!snapshotDeclaration && pendingHeadCreations.some(pending => !pending.disableDefaults)
               ? [`const ${defaultPlanName} = ${JSON.stringify(precompileOpts?.duplicates === 'error' && precompileConsumer === 'server'
@@ -2158,6 +2277,7 @@ export const UnheadTransforms = createUnplugin<TransformPipelineOptions, false>(
     name: 'unhead:transforms',
     framework: meta.framework,
     consumer: options.consumer,
+    frameworkPackage: options.frameworkPackage,
     treeshake: options.treeshake ?? false,
     seoMeta: options.seoMeta ?? false,
     precompile: options.precompile ?? false,

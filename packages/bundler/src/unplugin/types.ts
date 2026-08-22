@@ -12,6 +12,14 @@ export interface BaseTransformerTypes {
 
 export interface PrecompileOptions extends BaseTransformerTypes {
   /**
+   * Compile ordinary `useHead()` / `useSeoMeta()` calls (framework imports or
+   * auto-imports) into sealed plans pushed to an auto-provided sealed client
+   * head. User source stays untouched: calls that cannot compile are simply
+   * left on the normal runtime. Client builds only for now.
+   * @default false
+   */
+  auto?: boolean
+  /**
    * Force the build target for bundlers that cannot expose their build
    * consumer to plugins (notably plain Rollup).
    */
