@@ -317,6 +317,8 @@ function shouldTransformId(options: BaseTransformerTypes, id: string): boolean {
 }
 
 function shouldTransformPrecompileId(options: BaseTransformerTypes, id: string): boolean {
+  if (id.startsWith('virtual:') || id.startsWith('\0'))
+    return false
   return shouldTransformId(options, id) || splitTransformId(id).pathname.endsWith('.svelte')
 }
 
