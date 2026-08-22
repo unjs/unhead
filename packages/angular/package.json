@@ -64,8 +64,8 @@
   },
   "typings": "./dist/types/unhead-angular.d.ts",
   "peerDependencies": {
-    "@angular/common": "^19.0.0 || ^20.0.0 || ^21.0.0",
-    "@angular/core": "^19.0.0 || ^20.0.0 || ^21.0.0"
+    "@angular/common": "^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0"
   },
   "dependencies": {
     "tslib": "catalog:",
