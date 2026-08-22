@@ -987,3 +987,23 @@ describe('auto module runtime includes', () => {
     expect(res?.code).toBeUndefined()
   })
 })
+
+describe('auto options folding', () => {
+  it('folds a static numeric tagPriority option into plan weights', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'@unhead/vue\'',
+      'useSeoMeta({ description: \'static\' }, { tagPriority: -20 })',
+    ].join('\n'), { frameworkPackage: '@unhead/vue', precompile: { auto: true } }, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain('__unhead_auto_use_head(')
+    expect(code).toMatch(/\[\[-20,/)
+  })
+
+  it('skips calls with non-foldable options', async () => {
+    const res = await transform([
+      'import { useSeoMeta } from \'@unhead/vue\'',
+      'useSeoMeta({ description: \'x\' }, { head: other })',
+    ].join('\n'), { frameworkPackage: '@unhead/vue', precompile: { auto: true } }, { environment: { config: { consumer: 'client' } } })
+    // stays on the normal runtime (seoMeta lowering may still rewrite it)
+    expect(res === undefined || !res.includes('__unhead_auto_use_head')).toBe(true)
+  })
+})

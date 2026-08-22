@@ -702,6 +702,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     minifyContents: boolean,
     inlineScriptTarget: BuildOptions['target'],
     fail: (reason: string) => never,
+    entryTagPriority?: number,
   ): Promise<string> {
     const normalizedInput = kind === 'useSeoMeta' ? normalizeStaticSeoMetaInput(input) : input
     const tags = normalizeEntryToTags(normalizedInput, [])
@@ -760,7 +761,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           fail('arrayable meta identities may occur only once per call')
         arrayableIdentities.add(identity)
       }
-      const weight = typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
+      const weight = typeof tag.tagPriority === 'number'
+        ? tag.tagPriority
+        : entryTagPriority !== undefined ? entryTagPriority : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
       if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
         for (const key in tag.props)
           plan.push([weight, `${tag.tag}:${key}`, tag.tag, { [key]: tag.props[key] }])
@@ -1612,12 +1615,28 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             return false
           if (resolved?.kind !== 'useHead' && resolved?.kind !== 'useSeoMeta')
             return false
-          // user-provided options (head routing etc) or observed return value
-          if (node.arguments.length > 1 || parent?.type !== 'ExpressionStatement')
+          // observed return value: the call must be a bare expression statement
+          if (parent?.type !== 'ExpressionStatement')
             return false
           const arg = node.arguments[0]
           if (!arg || arg.type !== 'ObjectExpression')
             return false
+          // a second argument folds in ONLY when it is a static object with a
+          // single numeric tagPriority (nuxtseo's minimalPriority pattern);
+          // anything else (head routing, reactive options) skips the call
+          let entryTagPriority: number | undefined
+          if (node.arguments.length > 1) {
+            const options = node.arguments[1]
+            if (!options || options.type !== 'ObjectExpression')
+              return false
+            const decodedOptions = decodeStaticValue(options)
+            if (decodedOptions === DECODE_BAIL || typeof decodedOptions !== 'object' || decodedOptions === null)
+              return false
+            const keys = Object.keys(decodedOptions)
+            if (keys.length !== 1 || keys[0] !== 'tagPriority' || typeof (decodedOptions as any).tagPriority !== 'number')
+              return false
+            entryTagPriority = (decodedOptions as any).tagPriority
+          }
           try {
             const slots: SlotRecord[] = []
             const decoded = decodeStaticValue(arg, slots)
@@ -1652,6 +1671,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
                 false,
                 inlineScriptTarget,
                 reason => precompileFailure(arg, reason),
+                entryTagPriority,
               ),
             })
             precompiledRanges.push([node.start, node.end])
