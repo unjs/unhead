@@ -310,6 +310,25 @@ describe('transform pipeline phase ordering', () => {
     expect((unifiedPlugin() as any).resolveId).toBeUndefined()
   })
 
+  it('skips the installed sealed runtime files resolved outside node_modules', async () => {
+    const plugin = unifiedPlugin({ precompile: { consumer: 'server' } })
+    // workspace-linked packages resolve to package dist paths; the runtime
+    // shape there (default params, re-exports) must not run strict transforms
+    const sealedPath = '/repo/packages/vue/dist/precompiled/server.mjs'
+    const code = 'export function createHead(options = {}) { return { _p: options.disableDefaults ? [] : [defaults] } }'
+    const ctx = {
+      environment: { config: { consumer: 'server' } },
+      resolve: (id: string) => Promise.resolve(id === '@unhead/vue/precompiled/server' ? { id: sealedPath } : null),
+    }
+    expect(await runPlugin(plugin, code, sealedPath, ctx)).toBeUndefined()
+    // user modules are still transformed
+    const user = await runPlugin(plugin, [
+      'import { useHead } from \'@unhead/vue/precompiled\'',
+      'useHead({ title: \'x\' })',
+    ].join('\n'), '/app/src/page.ts', ctx)
+    expect(user).toContain('unhead_precompiled_plan')
+  })
+
   it('returns undefined on parser failure without partial edits', async () => {
     const code = 'import { useSeoMeta } from \'unhead\'\nuseSeoMeta({ title: \'x\' )' // syntax error
     expect(await runPlugin(unifiedPlugin(), code, '/app/page.ts', environmentContext('client'))).toBeUndefined()

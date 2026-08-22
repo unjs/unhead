@@ -4,6 +4,8 @@ import type { BuildOptions, ConfigEnv, UserConfig } from 'vite'
 import type { MinifyFn, MinifyTransformOptions } from './MinifyTransformTypes'
 import type { BaseTransformerTypes, PrecompileOptions } from './types'
 import type { BuildConsumer } from './utils'
+import { realpathSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { minifyJSON } from 'unhead/minify'
@@ -360,6 +362,75 @@ function precompileRuntimeResolutionError(id: string): Error {
     + `The installed unhead packages do not provide the precompiled runtime. `
     + `Install the same version of unhead and every @unhead/* package as @unhead/bundler.`,
   )
+}
+
+const PRECOMPILED_RUNTIME_SUBPATHS = [
+  'client',
+  'client-csr',
+  'client-deferred',
+  'client-snapshot',
+  'server',
+  'server-snapshot',
+  'server-unique',
+] as const
+
+const PRECOMPILED_FRAMEWORKS = ['@unhead/vue', '@unhead/react', '@unhead/solid-js', '@unhead/svelte'] as const
+
+/**
+ * Resolve the installed sealed runtime entry points to absolute module ids.
+ * Published installs live under node_modules and are filtered already;
+ * workspace-linked monorepo setups (pnpm link, Nuxt dev) resolve to package
+ * dist paths that must not run through the strict transforms — they contain
+ * the runtime shape (default parameters, aliased re-exports) the strict
+ * precompile checker rejects by design.
+ */
+/** Path forms of one sealed runtime entry: as resolved and its realpath. */
+function sealedRuntimePathForms(id: string): string[] {
+  const forms = [id]
+  try {
+    const real = realpathSync(id)
+    if (real !== id)
+      forms.push(real)
+  }
+  catch {
+    // virtual or watch-mode ids have no filesystem path; the raw id still matches
+  }
+  return forms
+}
+
+function resolveSealedRuntimeIds(ctx: unknown): Promise<Set<string>> {
+  const specifiers = [
+    ...PRECOMPILED_RUNTIME_SUBPATHS.map(subpath => `unhead/precompiled/${subpath}`),
+    ...PRECOMPILED_FRAMEWORKS.flatMap(framework =>
+      PRECOMPILED_RUNTIME_SUBPATHS.flatMap((subpath) => {
+        const clientProfiles = ['client', 'client-csr', 'client-deferred']
+        return clientProfiles.includes(subpath)
+          ? [`${framework}/precompiled`, `${framework}/precompiled/${subpath}`]
+          : [`${framework}/precompiled/${subpath}`]
+      })),
+  ]
+  // node-resolution fallback: some bundler contexts (e.g. Nuxt's ssr
+  // environment) cannot resolve bare specifiers through `this.resolve`
+  const nodeResolve = (specifier: string): string[] => {
+    try {
+      return sealedRuntimePathForms(createRequire(import.meta.url).resolve(specifier))
+    }
+    catch {
+      return []
+    }
+  }
+  const resolve = (ctx as { resolve?: (id: string) => Promise<{ id?: string } | string | null> })?.resolve
+  if (typeof resolve !== 'function')
+    return Promise.resolve(new Set(specifiers.flatMap(nodeResolve)))
+  return Promise.all(
+    specifiers.map(specifier =>
+      resolve.call(ctx, specifier)
+        .then((resolved: { id?: string } | string | null | undefined) =>
+          typeof resolved === 'string' ? resolved : resolved?.id)
+        .then(id => (id ? sealedRuntimePathForms(id) : nodeResolve(specifier)))
+        .catch(() => nodeResolve(specifier) as string[]),
+    ),
+  ).then(idGroups => new Set(idGroups.flat()))
 }
 
 export function createTransformPipeline(config: TransformPipelineConfig): UnpluginRawOptions {
@@ -809,6 +880,30 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   // graph between client and SSR renders. Set to false by `vite.apply()` on
   // serve; the pipeline itself still installs when other concerns are active.
   let treeshakeAllowed = true
+  // Absolute ids of the installed sealed runtimes, resolved lazily on the
+  // first transform call (see resolveSealedRuntimeIds). Workspace-linked
+  // packages resolve outside node_modules and must skip the strict transforms.
+  let sealedRuntimeIds: Promise<Set<string>> | undefined
+  const isSealedRuntimeModule = (id: string, ctx: unknown): Promise<boolean> => {
+    sealedRuntimeIds ??= resolveSealedRuntimeIds(ctx)
+    return sealedRuntimeIds.then((ids) => {
+      if (!ids.size)
+        return false
+      // match both the raw id (query stripped) and its realpath, so symlinked
+      // workspace links and realpaths compare equal either way
+      const pathname = splitTransformId(id).pathname
+      if (ids.has(pathname) || ids.has(id))
+        return true
+      if (!pathname.includes('/precompiled'))
+        return false
+      try {
+        return ids.has(realpathSync(pathname))
+      }
+      catch {
+        return false
+      }
+    })
+  }
 
   const idPredicates: ((id: string) => boolean)[] = []
   const codeFilterSources: string[] = []
@@ -877,6 +972,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         id: createJsVueTransformIdFilter(idFilterIncludes),
       },
       async handler(code, id) {
+        // The installed sealed runtimes are infrastructure, never user input.
+        // Workspace links resolve them outside node_modules, so the generic
+        // node_modules filter cannot catch them.
+        if (precompileOpts && await isSealedRuntimeModule(id, this))
+          return
         // Server-only composables are treeshaken from client builds only. On
         // an unknown target (plain rollup, no environment info) we must
         // retain the code, removing it would break SSR output.
