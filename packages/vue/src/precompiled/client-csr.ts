@@ -17,6 +17,31 @@ export function createHead(): VuePrecompiledCsrClientHead {
   return head
 }
 
+/** @internal */
+const autoHead: VuePrecompiledCsrClientHead = createHead()
+
+/**
+ * Push a transparently compiled plan to the shared auto head with component
+ * lifecycle. Emitted by `precompile.auto`; not a public API.
+ * @internal
+ */
+export function useAutoHead(input: PrecompiledClientInput, bindings?: readonly (() => unknown)[]): PrecompiledClientEntry {
+  const entry = autoHead.push(input, bindings)
+  if (getCurrentInstance()) {
+    const id = autoHead._c
+    onBeforeUnmount(() => entry.dispose())
+    const setActive = (active: boolean) => {
+      if (autoHead._e.has(id)) {
+        autoHead._set(id, active ? input : [])
+        autoHead.render()
+      }
+    }
+    onDeactivated(() => setActive(false))
+    onActivated(() => setActive(true))
+  }
+  return entry
+}
+
 /** Add one build-finalized SPA-only client plan to the injected head. @experimental */
 export function useHead(input: UseHeadInput, options: { bindings?: readonly (() => unknown)[], head?: VuePrecompiledCsrClientHead } = {}): PrecompiledClientEntry {
   const scope = getCurrentScope()

@@ -901,15 +901,15 @@ describe('transparent auto compilation', () => {
       'import { useHead } from \'@unhead/vue\'',
       'useHead({ title: \'About\', meta: [{ name: \'description\', content: \'static\' }] })',
     ].join('\n'))
-    expect(code).toContain('import { createHead as __unhead_auto_create_head } from "@unhead/vue/precompiled/client"')
-    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0)')
+    expect(code).toContain('import { useAutoHead as __unhead_auto_use_head } from "@unhead/vue/precompiled/client"')
+    expect(code).toContain('__unhead_auto_use_head(__unhead_precompiled_plan_0)')
   })
 
   it('compiles auto-imported (undeclared) useSeoMeta calls', async () => {
     const code = await autoClient([
       'useSeoMeta({ title: \'Home\', description: \'static page\' })',
     ].join('\n'))
-    expect(code).toContain('__unhead_auto_head.push(')
+    expect(code).toContain('__unhead_auto_use_head(')
   })
 
   it('compiles dynamic values into slots with bindings', async () => {
@@ -917,7 +917,7 @@ describe('transparent auto compilation', () => {
       'import { useHead } from \'@unhead/vue\'',
       'useHead({ title: () => product.title, meta: [{ name: \'description\', content: () => product.desc }] })',
     ].join('\n'))
-    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0, [() => product.title,() => product.desc])')
+    expect(code).toContain('__unhead_auto_use_head(__unhead_precompiled_plan_0, [() => product.title,() => product.desc])')
   })
 
   it('compiles a call expression value into a slot binding', async () => {
@@ -925,7 +925,7 @@ describe('transparent auto compilation', () => {
       'import { useHead } from \'@unhead/vue\'',
       'useHead({ title: getTitle() })',
     ].join('\n'))
-    expect(code).toContain('__unhead_auto_head.push(__unhead_precompiled_plan_0, [() => (getTitle())])')
+    expect(code).toContain('__unhead_auto_use_head(__unhead_precompiled_plan_0, [() => (getTitle())])')
   })
 
   it('degrades template literals with dynamic identities back to source', async () => {
@@ -953,5 +953,37 @@ describe('transparent auto compilation', () => {
       'useHead({ title: \'About\' })',
     ].join('\n'), { precompile: { auto: true } }, { environment: { config: { consumer: 'server' } } })
     expect(code).toBeUndefined()
+  })
+})
+
+describe('auto module runtime includes', () => {
+  it('compiles calls inside included node_modules module runtime', async () => {
+    const plugin = UnheadTransforms.vite({
+      treeshake: false,
+      seoMeta: false,
+      minify: false,
+      frameworkPackage: '@unhead/vue',
+      precompile: { auto: { include: ['nuxt-seo'] } },
+    }) as any
+    const code = [
+      'import { useSeoMeta } from \'#imports\'',
+      'useSeoMeta({ description: () => route.description })',
+    ].join('\n')
+    const id = '/site/node_modules/.pnpm/nuxt-seo@5.3.12/node_modules/nuxt-seo/dist/runtime/applyDefaults.js'
+    const res = await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, code, id)
+    expect(res?.code).toContain('__unhead_auto_use_head(__unhead_precompiled_plan_0')
+    expect(res?.code).toContain('() => route.description')
+  })
+
+  it('leaves non-included node_modules untouched', async () => {
+    const plugin = UnheadTransforms.vite({
+      treeshake: false,
+      seoMeta: false,
+      minify: false,
+      frameworkPackage: '@unhead/vue',
+      precompile: { auto: { include: ['nuxt-seo'] } },
+    }) as any
+    const res = await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, 'useSeoMeta({ title: \'x\' })', '/site/node_modules/other-pkg/dist/runtime.js')
+    expect(res?.code).toBeUndefined()
   })
 })

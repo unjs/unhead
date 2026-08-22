@@ -26,7 +26,7 @@ import {
 import { createUnplugin } from 'unplugin'
 import { transformInlineScriptWithVite } from './InlineScriptTransform'
 import { isMissingParserError, parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 /*
  * Internal unified single-parse transform pipeline.
@@ -446,6 +446,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   const seoMetaOpts = config.seoMeta === false ? undefined : config.seoMeta
   const precompileOpts = config.precompile === false ? undefined : config.precompile
   const minifyOpts = config.minify === false ? undefined : config.minify
+  // module-runtime includes for transparent auto compilation: node_modules ids
+  // matching a pattern run the auto path even though the generic filters
+  // exclude node_modules
+  const autoIncludeRes = precompileOpts?.auto && typeof precompileOpts.auto === 'object'
+    ? precompileOpts.auto.include?.map(pattern => typeof pattern === 'string'
+        ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        : pattern)
+    : undefined
 
   // Strict unique mode is build-wide, including lazy chunks. Keep each
   // module's latest identity set so repeated transforms replace stale state
@@ -969,7 +977,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           },
         }
       : {}),
-    transformInclude: (id: string) => idPredicates.some(predicate => predicate(id)),
+    transformInclude: (id: string) => idPredicates.some(predicate => predicate(id))
+      // auto module-runtime includes bypass the generic node_modules exclusion
+      || (!!autoIncludeRes && NODE_MODULES_RE.test(splitTransformId(id).pathname) && autoIncludeRes.some(re => re.test(id))),
 
     transform: {
       filter: {
@@ -977,9 +987,16 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         // runs natively in Rust and skips the JS hook entirely; per-concern
         // regexes re-gate which phases run inside the handler.
         code: new RegExp(codeFilterSources.join('|')),
-        id: createJsVueTransformIdFilter(idFilterIncludes),
+        id: autoIncludeRes
+          ? { include: [JS_VUE_RE, ...idFilterIncludes, ...autoIncludeRes] }
+          : createJsVueTransformIdFilter(idFilterIncludes),
       },
       async handler(code, id) {
+        // node_modules is excluded unless an auto include pattern matches it
+        const inNodeModules = NODE_MODULES_RE.test(splitTransformId(id).pathname)
+        const autoModule = !!autoIncludeRes && inNodeModules && autoIncludeRes.some(re => re.test(id))
+        if (inNodeModules && !autoModule)
+          return
         // The installed sealed runtimes are infrastructure, never user input.
         // Workspace links resolve them outside node_modules, so the generic
         // node_modules filter cannot catch them.
@@ -997,7 +1014,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           && SEO_META_RE.test(code)
         const precompileConsumer = resolveBuildConsumer(this, fallbackConsumer)
         const runPrecompile = !!precompileOpts
-          && shouldTransformPrecompileId(precompileOpts, id)
+          && (shouldTransformPrecompileId(precompileOpts, id) || autoModule)
           && (PRECOMPILE_RE.test(code) || STRICT_PRECOMPILE_SOURCE_RE.test(code))
         // Escaped identifiers still need parsing because their source does not
         // contain the decoded property name.
@@ -1583,6 +1600,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         function autoPrecompileEnter(node: any, parent: any, resolved: { kind: string } | undefined): boolean {
           if (!precompileOpts?.auto || !config.frameworkPackage)
             return false
+          // nuxt module runtime imports composables from '#imports', which
+          // re-exports framework wrappers around the same unhead calls
+          if (!resolved && node.type === 'CallExpression' && node.callee?.type === 'Identifier' && PRECOMPILE_FN_NAMES.has(node.callee.name)) {
+            const decl = scopeTracker.getDeclaration(node.callee.name)
+            resolved = decl instanceof ScopeTrackerImport && (decl.importNode.source?.value === '#imports' || isValidSeoMetaPackage(decl.importNode.source?.value))
+              ? { kind: node.callee.name }
+              : undefined
+          }
           if (precompileConsumer !== 'client')
             return false
           if (resolved?.kind !== 'useHead' && resolved?.kind !== 'useSeoMeta')
@@ -2149,7 +2174,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               edits.push({
                 start: first.start,
                 end: first.end,
-                content: `__unhead_auto_head.push(${first.name}${first.bindings ? `, ${first.bindings}` : ''})`,
+                content: `__unhead_auto_use_head(${first.name}${first.bindings ? `, ${first.bindings}` : ''})`,
                 phase: 'precompile',
               })
               i++
@@ -2222,10 +2247,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)
           const declarations = [
             ...(hasAutoHead
-              ? [`import { createHead as __unhead_auto_create_head } from ${JSON.stringify(`${autoPendings[0].auto}/precompiled/client`)}`,
-                // module-level auto head: rendered eagerly; the framework's
-                // DOM runtime owns identical tags, so adoption dedupes them
-                  'const __unhead_auto_head = __unhead_auto_create_head()']
+              ? [`import { useAutoHead as __unhead_auto_use_head } from ${JSON.stringify(`${autoPendings[0].auto}/precompiled/client`)}`]
               : []),
             ...(snapshotDeclaration ? [snapshotDeclaration] : []),
             ...(!snapshotDeclaration && pendingHeadCreations.some(pending => !pending.disableDefaults)

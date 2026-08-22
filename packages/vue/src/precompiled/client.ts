@@ -16,6 +16,32 @@ export function createHead(): VuePrecompiledClientHead {
   return head
 }
 
+/** @internal */
+const autoHead: VuePrecompiledClientHead = createHead()
+
+/**
+ * Push a transparently compiled plan to the shared auto head with component
+ * lifecycle: disposal on unmount and KeepAlive activation handling. Emitted by
+ * the bundler's `precompile.auto` transform; not a public API.
+ * @internal
+ */
+export function useAutoHead(input: PrecompiledClientInput, bindings?: readonly (() => unknown)[]): PrecompiledClientEntry {
+  const entry = autoHead.push(input, bindings)
+  const id = autoHead._c
+  if (getCurrentInstance()) {
+    onBeforeUnmount(() => entry.dispose())
+    const setActive = (active: boolean) => {
+      if (autoHead._e.has(id)) {
+        autoHead._set(id, active ? input : [])
+        autoHead.render()
+      }
+    }
+    onDeactivated(() => setActive(false))
+    onActivated(() => setActive(true))
+  }
+  return entry
+}
+
 /** Add one build-finalized client plan to the injected head. @experimental */
 export function useHead(input: UseHeadInput, options: { bindings?: readonly (() => unknown)[], head?: VuePrecompiledClientHead } = {}): PrecompiledClientEntry {
   const scope = getCurrentScope()

@@ -10,6 +10,15 @@ export interface BaseTransformerTypes {
   }
 }
 
+export interface PrecompileAutoOptions {
+  /**
+   * Also transform module runtime inside node_modules (e.g. nuxt-seo,
+   * @nuxt/ui) so their `useHead()` / `useSeoMeta()` calls compile too.
+   * String patterns match as substrings of the module id; regexes as-is.
+   */
+  include?: (RegExp | string)[]
+}
+
 export interface PrecompileOptions extends BaseTransformerTypes {
   /**
    * Compile ordinary `useHead()` / `useSeoMeta()` calls (framework imports or
@@ -18,7 +27,7 @@ export interface PrecompileOptions extends BaseTransformerTypes {
    * left on the normal runtime. Client builds only for now.
    * @default false
    */
-  auto?: boolean
+  auto?: boolean | PrecompileAutoOptions
   /**
    * Force the build target for bundlers that cannot expose their build
    * consumer to plugins (notably plain Rollup).
