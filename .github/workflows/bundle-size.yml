@@ -61,7 +61,7 @@ jobs:
           cp -r bench/bundle/dist /tmp/base-dist
           # measure base perf with the PR's harness against the base-built packages;
           # run from /tmp so the working tree stays clean across the checkout back
-          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
+          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --outputJson /tmp/base-transform-perf.json
           # the base pnpm install may have rewritten the lockfile; discard before switching back
           git checkout -f -
@@ -75,7 +75,7 @@ jobs:
           pnpm test:vue-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
-          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
+          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --outputJson /tmp/pr-transform-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
