@@ -159,7 +159,8 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
         const weight = tag._w ?? weightFn(tag)
         allTags.push({
           tag: tagName,
-          props: { ...tag.props },
+          // wire shape keeps the `props` field name (see SerializedTag); read from the live tag's `attrs`
+          props: { ...tag.attrs },
           innerHTML: tag.innerHTML,
           textContent: tag.textContent,
           position: tag.tagPosition,

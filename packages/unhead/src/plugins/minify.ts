@@ -67,7 +67,7 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
             continue
 
           if (tag.tag === 'script') {
-            const type = tag.props?.type
+            const type = tag.attrs?.type
             if (type && JSON_TYPES.has(type)) {
               if (jsonMinify) {
                 const min = minifyJSON(content)

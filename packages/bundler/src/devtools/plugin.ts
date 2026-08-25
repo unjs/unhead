@@ -51,11 +51,12 @@ export function devtoolsPlugin(): HeadPluginInput {
           // Serialize resolved tags (exclude the devtools payload script itself)
           const tags: any[] = []
           for (const tag of ctx.tags) {
-            if (tag.props?.id === 'unhead:devtools' || tag.props?.id === 'unhead:payload')
+            if (tag.attrs?.id === 'unhead:devtools' || tag.attrs?.id === 'unhead:payload')
               continue
             tags.push({
               tag: tag.tag,
-              props: { ...tag.props },
+              // wire shape keeps the `props` field name (see SerializedTag); read from the live tag's `attrs`
+              props: { ...tag.attrs },
               innerHTML: tag.innerHTML,
               textContent: tag.textContent,
               position: tag.tagPosition,
@@ -65,11 +66,13 @@ export function devtoolsPlugin(): HeadPluginInput {
               mode: 'server',
             })
           }
+          const devtoolsTagAttrs = { id: 'unhead:devtools', type: 'application/json' }
           ctx.tags.push({
             tag: 'script',
             // Escape `<` so a serialized `</script>` cannot close the inline JSON block early
             innerHTML: JSON.stringify({ entries, tags }).replace(/</g, '\\u003C'),
-            props: { id: 'unhead:devtools', type: 'application/json' },
+            attrs: devtoolsTagAttrs,
+            props: devtoolsTagAttrs,
           })
         },
       },
