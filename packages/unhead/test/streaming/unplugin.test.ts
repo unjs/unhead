@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
+  buildStreamingPluginOptions,
   createStreamingPlugin,
   VIRTUAL_CLIENT_ID,
   VIRTUAL_IIFE_ID,
 } from '../../src/stream/unplugin'
+
+// `unhead/stream/iife` is a subpath export that only resolves against a
+// built `dist/`. Mocked here (as `@unhead/vue`'s vite-plugin test does) so
+// `buildStart`'s `loadIifeCode()` works without a build.
+vi.mock('unhead/stream/iife', () => ({
+  streamingIifeCode: 'window.__unhead_test_iife__=true;',
+}))
 
 const RESOLVED_CLIENT_ID = `\0${VIRTUAL_CLIENT_ID}`
 const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
@@ -46,5 +54,177 @@ describe('streaming unplugin', () => {
     expect(callResolve(plugin, VIRTUAL_CLIENT_ID)).toBe(RESOLVED_CLIENT_ID)
     expect(callResolve(plugin, VIRTUAL_IIFE_ID)).toBeUndefined()
     expect(callLoad(plugin, RESOLVED_IIFE_ID)).toBeUndefined()
+  })
+})
+
+// vitejs/ecosystem#15: Vite is moving towards calling
+// `transformIndexHtml(undefined, ctx)` at build time, with no HTML and
+// likely no `ctx.bundle`, to collect the returned tags into a manifest that
+// SSR frameworks (e.g. Nuxt) inject at request time.
+describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#15)', () => {
+  function fakeEmitFile() {
+    const calls: any[] = []
+    const emitFile = (asset: any) => {
+      calls.push(asset)
+      return `ref-${calls.length}`
+    }
+    return { calls, emitFile }
+  }
+
+  async function buildPlugin(options: Parameters<typeof buildStreamingPluginOptions>[0], config: any, hookThis: any) {
+    const plugin = buildStreamingPluginOptions(options) as any
+    plugin.vite.configResolved(config)
+    await plugin.buildStart.call(hookThis)
+    return plugin
+  }
+
+  it('async mode resolves a hashed emitted asset path prefixed with base, with no bundle', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      { command: 'build', base: '/docs/', build: { assetsDir: 'static' } },
+      hookThis,
+    )
+
+    expect(calls).toHaveLength(1)
+    const emittedFileName = calls[0].fileName as string
+    expect(emittedFileName).toMatch(/^static\/unhead-streaming\.[0-9a-f]{8}\.js$/)
+
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+    expect(result[0].tag).toBe('script')
+    expect(result[0].attrs.async).toBe(true)
+    expect(result[0].attrs.src).toBe(`/docs/${emittedFileName}`)
+  })
+
+  it('async mode uses a string returned by experimental.renderBuiltUrl as-is', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const renderBuiltUrl = vi.fn((filename: string) => `https://cdn.example.com/${filename}`)
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      { command: 'build', base: '/', build: { assetsDir: 'assets' }, experimental: { renderBuiltUrl } },
+      hookThis,
+    )
+    const emittedFileName = calls[0].fileName as string
+
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+
+    expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'index.html', hostType: 'html', ssr: false })
+    expect(result[0].attrs.src).toBe(`https://cdn.example.com/${emittedFileName}`)
+    expect(result[0].attrs['data-unhead-asset']).toBeUndefined()
+  })
+
+  it('async mode falls back to base + fileName, and stamps the raw fileName, when renderBuiltUrl returns a runtime expression', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const renderBuiltUrl = vi.fn(() => ({ runtime: 'globalThis.__publicAssetsURL(...)' }))
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      { command: 'build', base: '/docs/', build: { assetsDir: 'static' }, experimental: { renderBuiltUrl } },
+      hookThis,
+    )
+    const emittedFileName = calls[0].fileName as string
+
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+
+    // A `runtime` expression only makes sense inside emitted JS, not a
+    // static HTML attribute, so it falls back to `base + fileName`.
+    expect(result[0].attrs.src).toBe(`/docs/${emittedFileName}`)
+    // The raw fileName is still stamped so a framework reading this from a
+    // manifest can apply its own CDN/base resolution when it renders.
+    expect(result[0].attrs['data-unhead-asset']).toBe(emittedFileName)
+  })
+
+  it('async mode falls back to the base-prefixed virtual module URL outside of a build', async () => {
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      { command: 'serve', base: '/app/', build: { assetsDir: 'assets' } },
+      {},
+    )
+
+    const result = plugin.vite.transformIndexHtml.handler.call({}, undefined, undefined)
+
+    expect(result[0].attrs.src).toBe(`/app/${VIRTUAL_IIFE_ID}`)
+  })
+
+  it('module mode falls back to the async descriptor and warns once during a manifest pass', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const warn = vi.fn()
+    const hookThis = { emitFile, warn }
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'module' },
+      { command: 'build', base: '/', build: { assetsDir: 'assets' } },
+      hookThis,
+    )
+
+    expect(calls).toHaveLength(1)
+    const emittedFileName = calls[0].fileName as string
+
+    const result1 = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+    expect(Array.isArray(result1)).toBe(true)
+    expect(result1[0].tag).toBe('script')
+    expect(result1[0].attrs.src).toBe(`/${emittedFileName}`)
+    expect(result1[0].children).toBeUndefined()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('manifest pass')
+
+    // Second manifest-pass call: the warning fires only once per plugin instance.
+    const result2 = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+    expect(result2[0].attrs.src).toBe(`/${emittedFileName}`)
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('module mode keeps the dynamic import descriptor on a normal (non-manifest) render', async () => {
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'module' },
+      { command: 'build', base: '/', build: { assetsDir: 'assets' } },
+      { emitFile: fakeEmitFile().emitFile, warn: vi.fn() },
+    )
+
+    const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', { bundle: {} })
+
+    expect(result[0].children).toBe(`import("/${VIRTUAL_CLIENT_ID}")`)
+    expect(result[0].attrs.src).toBeUndefined()
+  })
+
+  describe.each([
+    ['async'],
+    ['inline'],
+    ['module'],
+  ] as const)('mode: %s', (mode) => {
+    it('never returns a string, and omits the nonce on a manifest pass (no html, no ctx)', async () => {
+      const { emitFile } = fakeEmitFile()
+      const hookThis = { emitFile, warn: vi.fn() }
+      const plugin = await buildPlugin(
+        { framework: '@unhead/test', mode, nonce: 'the-nonce' },
+        { command: 'build', base: '/', build: { assetsDir: 'assets' } },
+        hookThis,
+      )
+
+      const result = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+
+      expect(Array.isArray(result)).toBe(true)
+      for (const tag of result)
+        expect(tag.attrs?.nonce).toBeUndefined()
+    })
+
+    it('stamps the nonce on a normal (non-manifest) render', async () => {
+      const { emitFile } = fakeEmitFile()
+      const hookThis = { emitFile, warn: vi.fn() }
+      const plugin = await buildPlugin(
+        { framework: '@unhead/test', mode, nonce: 'the-nonce' },
+        { command: 'build', base: '/', build: { assetsDir: 'assets' } },
+        hookThis,
+      )
+
+      const result = plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', { bundle: {} })
+
+      expect(Array.isArray(result)).toBe(true)
+      expect(result.some((tag: any) => tag.attrs?.nonce === 'the-nonce')).toBe(true)
+    })
   })
 })
