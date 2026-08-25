@@ -1,18 +1,8 @@
+import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
 import { escapeHtml } from '../server/util'
 
-/**
- * Structural copy of Vite's `HtmlTagDescriptor`, the shape returned by
- * `transformIndexHtml` and (per vitejs/ecosystem#15) the build manifest.
- *
- * Defined locally so this module has no runtime or type dependency on `vite`.
- */
-export interface HtmlTagDescriptor {
-  tag: string
-  attrs?: Record<string, string | boolean | undefined>
-  children?: string | HtmlTagDescriptor[]
-  injectTo?: 'head' | 'body' | 'head-prepend' | 'body-prepend'
-}
+export type { HtmlTagDescriptor }
 
 const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base', 'title'])
 
