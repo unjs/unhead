@@ -25,7 +25,7 @@ it('connects head state through the DevTools RPC client', async () => {
   ;(window as any).__unhead_devtools__ = {
     entries: new Map([[1, {
       input: { title: 'Home' },
-      _tags: [{ tag: 'title', props: {}, textContent: 'Home' }],
+      _tags: [{ tag: 'title', attrs: {}, textContent: 'Home' }],
     }]]),
     hooks: { hook: vi.fn() },
   }

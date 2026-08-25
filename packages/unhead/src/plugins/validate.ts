@@ -221,20 +221,20 @@ function relTokens(value: unknown): string[] {
 function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
   // `useHeadSafe` drops these outright, so reporting one as "a browser gets
   // it, a bot does not" would be wrong twice over.
-  if (tag._safe && tag.tag === 'link' && relTokens(tag.props.rel).some(rel => SAFE_BLOCKED_RELS.has(rel)))
+  if (tag._safe && tag.tag === 'link' && relTokens(tag.attrs.rel).some(rel => SAFE_BLOCKED_RELS.has(rel)))
     return
-  if (tag.props.body)
+  if (tag.attrs.body)
     tag.tagPosition = 'bodyClose'
   if (tag.tag !== '_flatMeta') {
     yield tag
     return
   }
-  for (const props of unpackMeta(tag.props))
-    yield { ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] }
+  for (const attrs of unpackMeta(tag.attrs))
+    yield { ...tag, tag: 'meta', attrs: attrs as unknown as HeadTag['attrs'], props: attrs as unknown as HeadTag['attrs'] }
 }
 
 function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
-  const props = tag.props
+  const props = tag.attrs
   // Served JSON-LD remains visible as Streamed Body Tags.
   if (tag.tag === 'script')
     return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
@@ -261,7 +261,7 @@ function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
 }
 
 function describeTag(tag: HeadTag): string {
-  const props = tag.props
+  const props = tag.attrs
   if (tag.tag === 'meta')
     return `meta[${props.property ? `property="${props.property}"` : props['http-equiv'] ? `http-equiv="${props['http-equiv']}"` : `name="${props.name}"`}]`
   if (tag.tag === 'link')
@@ -414,20 +414,20 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             if (tag.tag === 'meta') {
               // HTML `meta[name]` is case-insensitive; normalize for cross-tag lookups.
-              const key = tag.props.property || (tag.props.name ? String(tag.props.name).toLowerCase() : undefined)
+              const key = tag.attrs.property || (tag.attrs.name ? String(tag.attrs.name).toLowerCase() : undefined)
               if (key) {
                 metaByKey.set(key, tag)
                 if (key.startsWith('og:'))
                   hasOgTags = true
                 if (key === 'description')
                   hasDescription = true
-                if (key === 'robots' && String(tag.props.content ?? '').toLowerCase().includes('noindex'))
+                if (key === 'robots' && String(tag.attrs.content ?? '').toLowerCase().includes('noindex'))
                   isIndexable = false
               }
             }
 
-            if (tag.tag === 'link' && tag.props.rel === 'canonical')
-              canonicalHref = tag.props.href
+            if (tag.tag === 'link' && tag.attrs.rel === 'canonical')
+              canonicalHref = tag.attrs.href
           }
 
           // Predicate dispatch: per-tag rules whose logic is shared with the
@@ -459,7 +459,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 emitFromPredicates(predicate(tagInput), tag)
             }
             if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-              const inputShape = inputShapeFromRuntime(tag.tag, tag.props)
+              const inputShape = inputShapeFromRuntime(tag.tag, tag.attrs)
               for (const predicate of Object.values(inputShapePredicates))
                 emitFromPredicates(predicate(inputShape), tag)
             }
@@ -541,8 +541,8 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Canonical vs og:url mismatch
           const ogUrl = metaByKey.get('og:url')
-          if (canonicalHref && ogUrl?.props.content && canonicalHref !== ogUrl.props.content)
-            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrl.props.content}".`, 'warn', ogUrl)
+          if (canonicalHref && ogUrl?.attrs.content && canonicalHref !== ogUrl.attrs.content)
+            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrl.attrs.content}".`, 'warn', ogUrl)
 
           // og:image without dimensions
           if (metaByKey.has('og:image') && (!metaByKey.has('og:image:width') || !metaByKey.has('og:image:height')))
@@ -569,19 +569,19 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Too many preloads compete for bandwidth
           const { max: maxPreloads } = resolveOptions(ruleConfig, 'too-many-preloads', { max: 6 })
-          const preloadCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'preload').length
+          const preloadCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.attrs.rel === 'preload').length
           if (preloadCount > maxPreloads)
             report('too-many-preloads', `Found ${preloadCount} preload links — more than ${maxPreloads} preloads compete for bandwidth and can hurt performance.`, 'warn')
 
           // Large prefetch sets may consume speculative bandwidth and cache capacity
           const { max: maxPrefetches } = resolveOptions(ruleConfig, 'too-many-prefetches', { max: 50 })
-          const prefetchCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'prefetch').length
+          const prefetchCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.attrs.rel === 'prefetch').length
           if (prefetchCount > maxPrefetches)
             report('too-many-prefetches', `Found ${prefetchCount} prefetch links. The configured maximum of ${maxPrefetches} is an advisory guardrail, not a standards limit. Large speculative fetch sets can consume bandwidth and cache capacity.`, 'info')
 
           // Too many preconnects waste connections
           const { max: maxPreconnects } = resolveOptions(ruleConfig, 'too-many-preconnects', { max: 4 })
-          const preconnectCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'preconnect').length
+          const preconnectCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.attrs.rel === 'preconnect').length
           if (preconnectCount > maxPreconnects)
             report('too-many-preconnects', `Found ${preconnectCount} preconnect links — each initiates a TCP+TLS handshake, more than ${maxPreconnects} compete for limited connections.`, 'warn')
 
@@ -589,31 +589,31 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const preconnectOrigins = new Set<string>()
           const dnsPrefetchTags: HeadTag[] = []
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.href) {
-              if (tag.props.rel === 'preconnect')
-                preconnectOrigins.add(tag.props.href)
-              else if (tag.props.rel === 'dns-prefetch')
+            if (tag.tag === 'link' && tag.attrs.href) {
+              if (tag.attrs.rel === 'preconnect')
+                preconnectOrigins.add(tag.attrs.href)
+              else if (tag.attrs.rel === 'dns-prefetch')
                 dnsPrefetchTags.push(tag)
             }
           }
           for (const tag of dnsPrefetchTags) {
-            if (preconnectOrigins.has(tag.props.href))
-              report('redundant-dns-prefetch', `dns-prefetch for "${tag.props.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
+            if (preconnectOrigins.has(tag.attrs.href))
+              report('redundant-dns-prefetch', `dns-prefetch for "${tag.attrs.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
           }
 
           // Preload + async/defer script conflict (priority escalation anti-pattern)
           // Skip when the preload has fetchpriority="low" as this is a valid warmup pattern (used by useScript)
           const preloadScriptHrefs = new Map<string, HeadTag>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && tag.props.fetchpriority !== 'low')
-              preloadScriptHrefs.set(tag.props.href, tag)
+            if (tag.tag === 'link' && tag.attrs.rel === 'preload' && tag.attrs.as === 'script' && tag.attrs.href && tag.attrs.fetchpriority !== 'low')
+              preloadScriptHrefs.set(tag.attrs.href, tag)
           }
           for (const tag of tags) {
-            if (tag.tag === 'script' && tag.props.src && (tag.props.async || tag.props.defer)) {
-              const preloadTag = preloadScriptHrefs.get(tag.props.src)
+            if (tag.tag === 'script' && tag.attrs.src && (tag.attrs.async || tag.attrs.defer)) {
+              const preloadTag = preloadScriptHrefs.get(tag.attrs.src)
               if (preloadTag) {
-                const attr = tag.props.async ? 'async' : 'defer'
-                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
+                const attr = tag.attrs.async ? 'async' : 'defer'
+                report('preload-async-defer-conflict', `Script "${tag.attrs.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
               }
             }
           }
@@ -621,12 +621,12 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Prefetch + preload conflict (should be one or the other)
           const preloadHrefs = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.href)
-              preloadHrefs.add(tag.props.href)
+            if (tag.tag === 'link' && tag.attrs.rel === 'preload' && tag.attrs.href)
+              preloadHrefs.add(tag.attrs.href)
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'prefetch' && tag.props.href && preloadHrefs.has(tag.props.href))
-              report('prefetch-preload-conflict', `"${tag.props.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
+            if (tag.tag === 'link' && tag.attrs.rel === 'prefetch' && tag.attrs.href && preloadHrefs.has(tag.attrs.href))
+              report('prefetch-preload-conflict', `"${tag.attrs.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
           }
 
           // === v2 → v3 Migration Checks ===
@@ -656,18 +656,18 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Too many fetchpriority="high" dilutes the signal
           const { max: maxHighPriority } = resolveOptions(ruleConfig, 'too-many-fetchpriority-high', { max: 2 })
-          const highPriorityCount = tags.filter((t: HeadTag) => t.props.fetchpriority === 'high').length
+          const highPriorityCount = tags.filter((t: HeadTag) => t.attrs.fetchpriority === 'high').length
           if (highPriorityCount > maxHighPriority)
             report('too-many-fetchpriority-high', `Found ${highPriorityCount} resources with fetchpriority="high". When everything is high priority, nothing is. Limit to ${maxHighPriority} for the signal to be effective.`, 'warn')
 
           // Duplicate resource hints (same href in multiple preload/preconnect/prefetch)
           const resourceHintsSeen = new Map<string, HeadTag>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.href && (tag.props.rel === 'preload' || tag.props.rel === 'prefetch' || tag.props.rel === 'preconnect')) {
-              const crossoriginSuffix = tag.props.rel === 'preconnect' && 'crossorigin' in tag.props ? ':cors' : ''
-              const key = `${tag.props.rel}:${tag.props.href}${crossoriginSuffix}`
+            if (tag.tag === 'link' && tag.attrs.href && (tag.attrs.rel === 'preload' || tag.attrs.rel === 'prefetch' || tag.attrs.rel === 'preconnect')) {
+              const crossoriginSuffix = tag.attrs.rel === 'preconnect' && 'crossorigin' in tag.attrs ? ':cors' : ''
+              const key = `${tag.attrs.rel}:${tag.attrs.href}${crossoriginSuffix}`
               if (resourceHintsSeen.has(key))
-                report('duplicate-resource-hint', `Duplicate ${tag.props.rel} for "${tag.props.href}".`, 'warn', tag)
+                report('duplicate-resource-hint', `Duplicate ${tag.attrs.rel} for "${tag.attrs.href}".`, 'warn', tag)
               else
                 resourceHintsSeen.set(key, tag)
             }
@@ -686,7 +686,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             let charsetPosition = -1
             for (let i = 0; i < sortedHeadTags.length; i++) {
               const tag = sortedHeadTags[i]
-              if (tag.tag === 'meta' && ('charset' in tag.props || tag.props['http-equiv']?.toLowerCase() === 'content-type')) {
+              if (tag.tag === 'meta' && ('charset' in tag.attrs || tag.attrs['http-equiv']?.toLowerCase() === 'content-type')) {
                 charsetTag = tag
                 charsetPosition = i + 1
                 break
@@ -699,33 +699,33 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // preload as="script" when the actual script is type="module" should use modulepreload
           const moduleScriptSrcs = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'script' && tag.props.type === 'module' && tag.props.src)
-              moduleScriptSrcs.add(tag.props.src)
+            if (tag.tag === 'script' && tag.attrs.type === 'module' && tag.attrs.src)
+              moduleScriptSrcs.add(tag.attrs.src)
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && moduleScriptSrcs.has(tag.props.href))
-              report('preload-not-modulepreload', `"${tag.props.href}" is a module script but uses rel="preload". Use rel="modulepreload" instead to also trigger module parsing.`, 'warn', tag)
+            if (tag.tag === 'link' && tag.attrs.rel === 'preload' && tag.attrs.as === 'script' && tag.attrs.href && moduleScriptSrcs.has(tag.attrs.href))
+              report('preload-not-modulepreload', `"${tag.attrs.href}" is a module script but uses rel="preload". Use rel="modulepreload" instead to also trigger module parsing.`, 'warn', tag)
           }
 
           // Preconnect missing crossorigin for origins that serve CORS resources
           const corsOrigins = new Set<string>()
           const preconnectCorsOrigins = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.href && 'crossorigin' in tag.props) {
-              const origin = extractOrigin(tag.props.href)
+            if (tag.tag === 'link' && tag.attrs.href && 'crossorigin' in tag.attrs) {
+              const origin = extractOrigin(tag.attrs.href)
               if (origin) {
                 corsOrigins.add(origin)
-                if (tag.props.rel === 'preconnect')
+                if (tag.attrs.rel === 'preconnect')
                   preconnectCorsOrigins.add(origin)
               }
             }
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preconnect' && tag.props.href && !('crossorigin' in tag.props)) {
-              const origin = extractOrigin(tag.props.href)
+            if (tag.tag === 'link' && tag.attrs.rel === 'preconnect' && tag.attrs.href && !('crossorigin' in tag.attrs)) {
+              const origin = extractOrigin(tag.attrs.href)
               // Skip if a CORS preconnect already exists for this origin (intentional dual connection pool)
               if (origin && corsOrigins.has(origin) && !preconnectCorsOrigins.has(origin))
-                report('preconnect-missing-crossorigin', `Preconnect to "${tag.props.href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
+                report('preconnect-missing-crossorigin', `Preconnect to "${tag.attrs.href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
             }
           }
 
@@ -738,7 +738,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tag.tagPosition && tag.tagPosition !== 'head')
               continue
             // Estimate rendered tag size
-            const props = Object.entries(tag.props)
+            const props = Object.entries(tag.attrs)
               .filter(([, v]) => v !== false && v != null)
               .map(([k, v]) => v === true || v === '' ? ` ${k}` : ` ${k}="${v}"`)
               .join('')
@@ -747,7 +747,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             const tagSize = `<${tag.tag}${props}>${content}</${tag.tag}>\n`.length
             byteOffset += tagSize
             if (byteOffset > crawlerMaxBytes && tag.tag === 'meta') {
-              const key = tag.props.property || tag.props.name || 'unknown'
+              const key = tag.attrs.property || tag.attrs.name || 'unknown'
               report(
                 'meta-beyond-1mb',
                 `Meta tag "${key}" is rendered ~${(byteOffset / 1024).toFixed(0)}KB into <head>, beyond the ${(crawlerMaxBytes / 1_048_576).toFixed(0)}MB crawler parsing limit. Social crawlers (Facebook, Twitter) may not see it. Use \`tagPriority\` to promote it, or configure a custom \`tagWeight\` to reorder tags for bot requests.`,

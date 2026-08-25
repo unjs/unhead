@@ -22,6 +22,8 @@ export const myPlugin = defineHeadPlugin({
 })
 ```
 
+Each resolved tag exposes its attributes as `tag.attrs`. The old `tag.props` name still works as a deprecated alias for the same object, but new plugins should read and write `attrs`.
+
 Plugins can also be setup functions that receive the `Unhead` instance. Pass a static key as the second argument when setup can have side effects; this lets Unhead deduplicate the plugin before invoking it again.
 
 ```ts

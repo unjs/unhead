@@ -95,7 +95,14 @@ export interface HasTemplateParams {
 
 export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateParams {
   tag: TagKey
-  props: Record<string, string>
+  /**
+   * Attributes for the tag, e.g. `{ rel: 'canonical', href: '/' }` for a `<link>`.
+   */
+  attrs: Record<string, string>
+  /**
+   * @deprecated Use `attrs`. Removed in v5.
+   */
+  props?: Record<string, string>
   processTemplateParams?: boolean
   innerHTML?: string
   textContent?: string

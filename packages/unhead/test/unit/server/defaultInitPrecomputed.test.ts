@@ -72,7 +72,7 @@ describe('default init precomputed tags', () => {
       for (const tag of ctx.tags) {
         seen.push(tag.tag)
         if (tag.tag === 'htmlAttrs')
-          tag.props.lang = 'fr'
+          tag.attrs.lang = 'fr'
       }
     })
     const res = renderSSRHead(head)
@@ -97,8 +97,8 @@ describe('default init precomputed tags', () => {
     const head = createHead()
     head.hooks.hook('tags:resolve', (ctx) => {
       for (const tag of ctx.tags) {
-        if (tag.tag === 'meta' && tag.props.name === 'viewport')
-          tag.props.content = 'mutated'
+        if (tag.tag === 'meta' && tag.attrs.name === 'viewport')
+          tag.attrs.content = 'mutated'
       }
     })
     expect(renderSSRHead(head).headTags).toContain('content="mutated"')
