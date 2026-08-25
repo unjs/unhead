@@ -1,4 +1,5 @@
 import type { SerializableHead } from '../types'
+import { escapeHtml } from '../server/util'
 
 /**
  * Structural copy of Vite's `HtmlTagDescriptor`, the shape returned by
@@ -28,31 +29,36 @@ function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string
   return props
 }
 
+// Only used to render `children` arrays into markup (rare). Escapes attribute
+// values and text so a descriptor can't break out of its own tag.
 function renderTagToHtml(tag: HtmlTagDescriptor): string {
   const props = attrsToProps(tag.attrs)
   const attrString = Object.entries(props)
-    .map(([key, value]) => value === true ? key : `${key}="${String(value)}"`)
+    .map(([key, value]) => value === true ? key : `${key}="${escapeHtml(String(value))}"`)
     .join(' ')
   const open = attrString ? `<${tag.tag} ${attrString}>` : `<${tag.tag}>`
   const inner = typeof tag.children === 'string'
-    ? tag.children
+    ? escapeHtml(tag.children)
     : Array.isArray(tag.children)
       ? tag.children.map(renderTagToHtml).join('')
       : ''
   return `${open}${inner}</${tag.tag}>`
 }
 
-function positionProps(injectTo: HtmlTagDescriptor['injectTo']): Record<string, unknown> {
+// Mirrors Vite's own `transformIndexHtml` switch (packages/vite/src/node/plugins/html.ts):
+// only 'body' and 'body-prepend' get their own branch, explicit 'head' is appended as-is,
+// and everything else -- including an omitted `injectTo` -- is treated as 'head-prepend'.
+function positionProps(injectTo: HtmlTagDescriptor['injectTo']): { tagPosition?: 'head' | 'bodyOpen' | 'bodyClose', tagPriority?: 'high' } {
   switch (injectTo) {
-    case 'head-prepend':
-      return { tagPosition: 'head', tagPriority: 'high' }
+    case 'head':
+      return {}
     case 'body-prepend':
       return { tagPosition: 'bodyOpen' }
     case 'body':
       return { tagPosition: 'bodyClose' }
-    case 'head':
+    case 'head-prepend':
     default:
-      return {}
+      return { tagPosition: 'head', tagPriority: 'high' }
   }
 }
 
@@ -61,6 +67,7 @@ function positionProps(injectTo: HtmlTagDescriptor['injectTo']): Record<string, 
  * into an Unhead `SerializableHead`, so SSR frameworks can push tags a Vite
  * plugin declared through `useHead()` / `head.push()`.
  *
+ * An omitted `injectTo` is treated as `'head-prepend'`, matching Vite's own default.
  * Tag names outside `meta`, `link`, `script`, `style`, `noscript`, `base`, `title`
  * are skipped without throwing.
  */
@@ -81,7 +88,11 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
     const position = positionProps(tag.injectTo)
 
     if (tag.tag === 'base') {
-      head.base = { ...props, ...position }
+      // A document has one <base>; browsers honour only the first href/target.
+      // `base` has no tagPosition, only tagPriority.
+      const { tagPriority } = position
+      const baseProps = tagPriority ? { ...props, tagPriority } : props
+      head.base = head.base ? { ...baseProps, ...head.base } : baseProps
       continue
     }
 

@@ -5,11 +5,11 @@ import { htmlTagsToHead } from '../../src/vite'
 import { createServerHeadWithContext } from '../util'
 
 describe('htmlTagsToHead', () => {
-  it('positions head-prepend before default head, and maps body-prepend/body', () => {
+  it('positions head-prepend before explicit head, and maps body-prepend/body', () => {
     const head = createServerHeadWithContext()
 
     const tags: HtmlTagDescriptor[] = [
-      { tag: 'meta', attrs: { name: 'generator', content: 'vite' } },
+      { tag: 'meta', attrs: { name: 'generator', content: 'vite' }, injectTo: 'head' },
       { tag: 'link', attrs: { rel: 'modulepreload', href: '/entry.js' }, injectTo: 'head-prepend' },
       { tag: 'script', attrs: { src: '/loader.js' }, injectTo: 'body-prepend' },
       { tag: 'script', attrs: { src: '/analytics.js' }, injectTo: 'body' },
@@ -18,10 +18,17 @@ describe('htmlTagsToHead', () => {
     head.push(htmlTagsToHead(tags))
     const { headTags, bodyTags, bodyTagsOpen } = renderSSRHead(head)
 
-    // head-prepend renders before the default-position meta tag
+    // head-prepend renders before the explicit-head meta tag
     expect(headTags.indexOf('modulepreload')).toBeLessThan(headTags.indexOf('generator'))
     expect(bodyTagsOpen).toContain('/loader.js')
     expect(bodyTags).toContain('/analytics.js')
+  })
+
+  it('treats an omitted injectTo as head-prepend, matching Vite\'s own default', () => {
+    const result = htmlTagsToHead([
+      { tag: 'link', attrs: { rel: 'modulepreload', href: '/entry.js' } },
+    ])
+    expect(result.link?.[0]).toMatchObject({ tagPosition: 'head', tagPriority: 'high' })
   })
 
   it('dedupes against a user-pushed identical preload link', () => {
@@ -42,7 +49,7 @@ describe('htmlTagsToHead', () => {
     const head = createServerHeadWithContext()
 
     head.push(htmlTagsToHead([
-      { tag: 'script', children: 'window.__INITIAL__ = {}' },
+      { tag: 'script', children: 'window.__INITIAL__ = {}', injectTo: 'head' },
     ]))
 
     const { headTags } = renderSSRHead(head)
@@ -53,7 +60,7 @@ describe('htmlTagsToHead', () => {
     const head = createServerHeadWithContext()
 
     head.push(htmlTagsToHead([
-      { tag: 'script', attrs: { src: '/x.js', async: true, defer: false, crossorigin: undefined } },
+      { tag: 'script', attrs: { src: '/x.js', async: true, defer: false, crossorigin: undefined }, injectTo: 'head' },
     ]))
 
     const { headTags } = renderSSRHead(head)
@@ -69,7 +76,7 @@ describe('htmlTagsToHead', () => {
 
     const result = htmlTagsToHead([
       { tag: 'div', attrs: { id: 'root' } },
-      { tag: 'meta', attrs: { name: 'generator', content: 'vite' } },
+      { tag: 'meta', attrs: { name: 'generator', content: 'vite' }, injectTo: 'head' },
     ])
     expect(result).toEqual({ meta: [{ name: 'generator', content: 'vite' }] })
   })
@@ -79,11 +86,37 @@ describe('htmlTagsToHead', () => {
       {
         tag: 'script',
         attrs: { type: 'application/json' },
+        injectTo: 'head',
         children: [
           { tag: 'span', attrs: { id: 'a' }, children: 'hi' },
         ],
       },
     ])
     expect(result.script?.[0]?.innerHTML).toBe('<span id="a">hi</span>')
+  })
+
+  it('escapes attribute values and text when rendering nested children', () => {
+    const result = htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { type: 'application/json' },
+        injectTo: 'head',
+        children: [
+          { tag: 'span', attrs: { title: '"><script>alert(1)</script>' }, children: '</span><script>alert(2)</script>' },
+        ],
+      },
+    ])
+    const html = result.script?.[0]?.innerHTML as string
+    expect(html).not.toContain('"><script>')
+    expect(html).not.toContain('</span><script>')
+    expect(html).toBe('<span title="&quot;&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;">&lt;&#x2F;span&gt;&lt;script&gt;alert(2)&lt;&#x2F;script&gt;</span>')
+  })
+
+  it('keeps the first base href and target across multiple descriptors', () => {
+    const result = htmlTagsToHead([
+      { tag: 'base', attrs: { href: '/first/', target: '_self' } },
+      { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
+    ])
+    expect(result.base).toMatchObject({ href: '/first/', target: '_self' })
   })
 })
