@@ -290,15 +290,16 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const { src } = input
       if (!src)
         return
-      const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
+      const isProtocolRelative = src.startsWith('//')
+      const isCrossOrigin = isProtocolRelative || /^https?:\/\//i.test(src)
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
       if (!rel || (isPreconnect && !isCrossOrigin)) {
         return
       }
       if (isPreconnect) {
-        const $url = new URL(src)
-        href = `${$url.protocol}//${$url.host}`
+        const $url = new URL(isProtocolRelative ? `https:${src}` : src)
+        href = isProtocolRelative ? `//${$url.host}` : `${$url.protocol}//${$url.host}`
       }
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.

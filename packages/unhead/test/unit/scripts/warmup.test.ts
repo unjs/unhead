@@ -57,4 +57,32 @@ describe('warmup', () => {
     expect(link.href).toEqual('https://cdn.example.com')
     expect(link.rel).toEqual('dns-prefetch')
   })
+
+  it('skips origin-only warmups for document-relative sources', () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    expect(() => useScript(head, 'script.js', {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })).not.toThrow()
+    expect([...head.entries.values()]).toHaveLength(0)
+  })
+
+  it('supports protocol-relative sources for origin-only warmups', () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    expect(() => useScript(head, '//cdn.example.com/script.js', {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })).not.toThrow()
+
+    // @ts-expect-error untyped
+    const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
+    expect(link.href).toEqual('//cdn.example.com')
+    expect(link.rel).toEqual('preconnect')
+  })
 })
