@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { unheadDevtools } from '../src/devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from '../src/unplugin/CreateHeadTransform'
 
-const IMPORT_RE = /import \{ devtoolsPlugin as __unhead_devtoolsPlugin \} from ("[^"]+")/
+const IMPORT_RE = /import \{ devtoolsPlugin as __unhead_devtoolsPlugin \} from ("(?:[^"\\]|\\.)+")/
 
 const RENDERER = `import { createHead } from '@unhead/vue'\nexport const head = createHead()\n`
 
