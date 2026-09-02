@@ -60,7 +60,7 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
           .map(r => (isServer ? r.server! : r.client!).replace(/__ROOT__/g, rootLiteral))
           .join(',')
         const imports = envRegistrations
-          .map(reg => `import { ${reg.import.name} as ${reg.import.as} } from '${reg.import.source}';\n`)
+          .map(reg => `import { ${reg.import.name} as ${reg.import.as} } from ${JSON.stringify(reg.import.source)};\n`)
           .join('')
         const s = new MagicString(code)
         let transformed = false
