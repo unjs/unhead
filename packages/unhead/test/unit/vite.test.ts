@@ -107,12 +107,23 @@ describe('htmlTagsToHead', () => {
       },
     ])
     const html = result.style?.[0]?.innerHTML as string
-    expect(html).toBe('<style>body { color: <unsafe>; }</style><link rel="stylesheet" href="/app.css">')
+    expect(html).toBe('<style>body { color: <unsafe>; }</style><link rel="stylesheet" href="&#x2F;app.css">')
+  })
+
+  it('escapes nested attribute values while keeping nested children raw', () => {
+    const result = htmlTagsToHead([
+      {
+        tag: 'script',
+        children: [{ tag: 'span', attrs: { title: 'a"&b' }, children: '<raw>' }],
+      },
+    ])
+    expect(result.script?.[0]?.innerHTML).toBe('<span title="a&quot;&amp;b"><raw></span>')
   })
 
   it('keeps the first base href and target across multiple descriptors', () => {
     const result = htmlTagsToHead([
-      { tag: 'base', attrs: { href: '/first/', target: '_self' } },
+      { tag: 'base', attrs: { href: '/first/' } },
+      { tag: 'base', attrs: { target: '_self' } },
       { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
     ])
     expect(result.base).toMatchObject({ href: '/first/', target: '_self' })

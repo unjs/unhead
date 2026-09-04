@@ -1,7 +1,7 @@
 import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
+import { escapeHtml } from '../server/util'
 import { TagConfigKeys } from '../utils/const'
-import { ViteHtmlAttrs } from '../utils/normalize'
 
 export type { HtmlTagDescriptor }
 
@@ -24,7 +24,7 @@ function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string
 function renderTagToHtml(tag: HtmlTagDescriptor): string {
   const props = attrsToProps(tag.attrs)
   const attrString = Object.entries(props)
-    .map(([key, value]) => value === true ? key : `${key}="${String(value)}"`)
+    .map(([key, value]) => value === true ? key : `${key}="${escapeHtml(String(value))}"`)
     .join(' ')
   const open = attrString ? `<${tag.tag} ${attrString}>` : `<${tag.tag}>`
   if (VOID_TAGS.has(tag.tag))
@@ -47,15 +47,12 @@ function vitePositionOrder(tag: HtmlTagDescriptor): number {
 }
 
 function withViteAttrs<T extends Record<string, unknown>>(entry: T, attrs: Record<string, string | boolean>): T {
-  const inertAttrs: Record<string, string | boolean> = {}
   for (const key in attrs) {
     if (TagConfigKeys.has(key))
-      inertAttrs[key] = attrs[key]
+      entry[key.toUpperCase()] = attrs[key]
     else
       entry[key] = attrs[key]
   }
-  if (Object.keys(inertAttrs).length)
-    Object.defineProperty(entry, ViteHtmlAttrs, { value: inertAttrs })
   return entry
 }
 
@@ -102,8 +99,16 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
     const position = positionProps(tag.injectTo)
 
     if (tag.tag === 'base') {
-      if (!head.base)
+      if (!head.base) {
         head.base = withViteAttrs({ ...position }, props)
+      }
+      else {
+        for (const key of ['href', 'target'] as const) {
+          if (head.base[key] === undefined && props[key] !== undefined) {
+            head.base[key] = props[key]
+          }
+        }
+      }
       continue
     }
 

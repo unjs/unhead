@@ -4,8 +4,6 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-export const ViteHtmlAttrs = '__unhead_vite_attrs'
-
 function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
@@ -49,8 +47,6 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
 
   for (const prop in input) {
-    if (prop === ViteHtmlAttrs)
-      continue
     if (isUnsafeKey(prop))
       continue
     const isData = prop.startsWith('data-')
@@ -83,26 +79,6 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       const str = String(value)
       const isMeta = tag.tag === 'meta' && key === 'content'
       tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
-    }
-  }
-  const viteAttrs = input[ViteHtmlAttrs] as Record<string, any> | undefined
-  if (viteAttrs) {
-    for (const prop in viteAttrs) {
-      if (isUnsafeKey(prop))
-        continue
-      const isData = prop.startsWith('data-')
-      const key = isData ? prop : prop.toLowerCase()
-      if (!key || INVALID_ATTR_NAME_RE.test(key))
-        continue
-      const value = viteAttrs[prop]
-      if (prop === 'class' || prop === 'style') {
-        tag.props[prop] = normalizeStyleClassProps(prop, value) as any
-      }
-      else if (value !== undefined) {
-        const str = String(value)
-        const isMeta = tag.tag === 'meta' && key === 'content'
-        tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
-      }
     }
   }
   return tag
