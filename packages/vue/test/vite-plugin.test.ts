@@ -48,41 +48,30 @@ describe('unheadVueStreamingPlugin', () => {
       expect(tags[0].attrs.src).toContain('virtual:@unhead/streaming-iife.js')
     })
 
-    it('injects the emitted iife asset path for async production builds', async () => {
+    it('injects the emitted iife asset path for async production builds, with no bundle', async () => {
+      // vitejs/ecosystem#15: Vite is moving towards calling
+      // `transformIndexHtml(undefined, ctx)` at build time to collect a
+      // manifest, with no HTML and likely no `ctx.bundle`. The emitted
+      // path is computed synchronously in `buildStart` (a deterministic
+      // content hash under `build.assetsDir`), so it doesn't depend on a
+      // bundle or `getFileName` lookup.
       const buildPlugin = unheadVueStreamingPlugin.vite() as any
       buildPlugin.apply({}, { command: 'build', mode: 'production', isSsrBuild: false })
       buildPlugin.configResolved({ command: 'build' })
 
-      const emittedRef = 'asset-ref-1'
       let emittedAsset: any
       await buildPlugin.buildStart.call({
         emitFile(asset: any) {
           emittedAsset = asset
-          return emittedRef
+          return 'asset-ref-1'
         },
       })
 
-      const fileName = 'assets/unhead-streaming.abc123.js'
-      const bundle = {
-        [fileName]: {
-          type: 'asset',
-          name: 'unhead-streaming.js',
-          names: ['unhead-streaming.js'],
-          fileName,
-          source: emittedAsset.source,
-        },
-      }
+      expect(emittedAsset.fileName).toMatch(/^assets\/unhead-streaming\.[0-9a-f]{8}\.js$/)
 
-      const tags = buildPlugin.transformIndexHtml.handler.call({
-        getFileName() {
-          return emittedRef
-        },
-      }, '<html></html>', { bundle })
+      const tags = buildPlugin.transformIndexHtml.handler.call({}, undefined, undefined)
 
-      const src = tags[0].attrs.src
-      expect(src).toBe(`/${fileName}`)
-      expect(src).not.toContain(emittedRef)
-      expect(bundle[src.slice(1) as keyof typeof bundle]).toBeDefined()
+      expect(tags[0].attrs.src).toBe(`/${emittedAsset.fileName}`)
     })
   })
 
