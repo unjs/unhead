@@ -105,18 +105,62 @@ describe('warmup', () => {
     expect(link.href).toEqual(expectedHref)
   })
 
-  it('preserves explicit ports in protocol-relative origin warmups', () => {
+  it.each([
+    ['//cdn.example.com/script.js', '//cdn.example.com'],
+    ['//cdn.example.com:80/script.js', '//cdn.example.com:80'],
+    ['//cdn.example.com:443/script.js', '//cdn.example.com:443'],
+    ['//cdn.example.com:8080/script.js', '//cdn.example.com:8080'],
+  ])('preserves the port in protocol-relative origin warmup %s', (src, expectedHref) => {
     const head = createServerHead({
       disableDefaults: true,
     })
 
-    useScript(head, '//cdn.example.com:443/script.js', {
+    useScript(head, src, {
       trigger: 'manual',
       warmupStrategy: 'preconnect',
     })
 
     // @ts-expect-error untyped
     const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
-    expect(link.href).toEqual('//cdn.example.com:443')
+    expect(link.href).toEqual(expectedHref)
+  })
+
+  it.each([
+    [' https://cdn.example.com/script.js ', 'https://cdn.example.com'],
+    [' //cdn.example.com/script.js ', '//cdn.example.com'],
+    ['https:\\\\cdn.example.com/script.js', 'https://cdn.example.com'],
+  ])('uses the parsed HTTP origin for source %s', (src, expectedHref) => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    useScript(head, src, {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })
+
+    // @ts-expect-error untyped
+    const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
+    expect(link.href).toEqual(expectedHref)
+  })
+
+  it.each([
+    ' https://cdn.example.com/script.js ',
+    ' //cdn.example.com/script.js ',
+    'https:\\\\cdn.example.com/script.js',
+  ])('adds cross-origin privacy defaults for preload source %s', (src) => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    useScript(head, src, {
+      head,
+      trigger: 'client',
+    })
+
+    // @ts-expect-error untyped
+    const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
+    expect(link.crossorigin).toEqual('anonymous')
+    expect(link.referrerpolicy).toEqual('no-referrer')
   })
 })
