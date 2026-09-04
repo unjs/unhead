@@ -101,13 +101,13 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(result[0].attrs.src).toBe(`/docs/${emittedFileName}`)
   })
 
-  it('async mode resolves a relative base from the active HTML path', async () => {
+  it('async mode resolves Vite\'s relative base from the active HTML path', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
     const renderBuiltUrl = vi.fn(() => undefined)
     const plugin = await buildPlugin(
       { framework: '@unhead/test', mode: 'async' },
-      { command: 'build', base: '', build: { assetsDir: 'assets' }, experimental: { renderBuiltUrl } },
+      { command: 'build', base: './', build: { assetsDir: 'assets' }, experimental: { renderBuiltUrl } },
       hookThis,
     )
     const emittedFileName = calls[0].fileName as string
@@ -161,11 +161,11 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(result[0].attrs['data-unhead-asset']).toBe(emittedFileName)
   })
 
-  it('async mode emits at the output root when assetsDir is empty', async () => {
+  it.each(['', '.', './'])('async mode emits at the output root when assetsDir is %j', async (assetsDir) => {
     const { calls, emitFile } = fakeEmitFile()
     await buildPlugin(
       { framework: '@unhead/test', mode: 'async' },
-      { command: 'build', base: '/', build: { assetsDir: '' } },
+      { command: 'build', base: '/', build: { assetsDir } },
       { emitFile },
     )
 
@@ -235,7 +235,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'index.html', hostType: 'html', ssr: true })
   })
 
-  it('async mode falls back to base + fileName, and stamps the raw fileName, when renderBuiltUrl returns a runtime expression', async () => {
+  it('async mode falls back and keeps the asset name when renderBuiltUrl returns runtime for an HTML host', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
     const renderBuiltUrl = vi.fn(() => ({ runtime: 'globalThis.__publicAssetsURL(...)' }))
@@ -246,13 +246,13 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     )
     const emittedFileName = calls[0].fileName as string
 
-    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', {
+      path: '/nested/index.html',
+      filename: '/project/nested/index.html',
+    })
 
-    // A `runtime` expression only makes sense inside emitted JS, not a
-    // static HTML attribute, so it falls back to `base + fileName`.
+    expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'nested/index.html', hostType: 'html', ssr: false })
     expect(result[0].attrs.src).toBe(`/docs/${emittedFileName}`)
-    // The raw fileName is still stamped so a framework reading this from a
-    // manifest can apply its own CDN/base resolution when it renders.
     expect(result[0].attrs['data-unhead-asset']).toBe(emittedFileName)
   })
 

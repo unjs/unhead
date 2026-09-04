@@ -310,7 +310,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
           throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
         const source = configureIifeCode(iifeCode, streamKey)
         const hash = createHash('sha256').update(source).digest('hex').slice(0, 8)
-        const fileName = [state.assetsDir, `unhead-streaming.${hash}.js`].filter(Boolean).join('/')
+        const fileName = posix.join(state.assetsDir, `unhead-streaming.${hash}.js`)
         state.emittedIifeFileId = (this as any).emitFile({
           type: 'asset',
           fileName,
