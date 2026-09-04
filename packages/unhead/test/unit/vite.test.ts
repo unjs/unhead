@@ -283,7 +283,9 @@ describe('htmlTagsToHead', () => {
 
     expect(dom.window.document.head.querySelector('script')).toBe(script)
     expect(script.getAttribute('class')).toBe('shared structured')
-    expect(script.getAttribute('style')).toBe('color:blue;background-color:black')
+    expect(script.style.getPropertyValue('color')).toBe('blue')
+    expect(script.style.getPropertyValue('background-color')).toBe('black')
+    expect(script.style.getPropertyValue('display')).toBe('')
   })
 
   it('updates a stable element from structured attrs to raw Vite class and style attrs', () => {
@@ -330,6 +332,75 @@ describe('htmlTagsToHead', () => {
 
     expect(dom.window.document.head.querySelectorAll('script[src="/vite.js"]')).toHaveLength(1)
     expect(dom.window.document.head.querySelector('script')).toBe(serverScript)
+  })
+
+  it('adopts a server-rendered Vite script with a bare data boolean', () => {
+    const input = htmlTagsToHead([
+      { tag: 'script', attrs: { 'src': '/vite.js', 'data-enabled': true } },
+    ])
+    const ssrHead = createServerHeadWithContext()
+    ssrHead.push(input)
+    const dom = useDom(renderSSRHead(ssrHead))
+    const serverScript = dom.window.document.head.querySelector('script')!
+    const clientHead = createClientHeadWithContext({ document: dom.window.document })
+
+    clientHead.push(input)
+    renderDOMHead(clientHead, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelectorAll('script[src="/vite.js"]')).toHaveLength(1)
+    expect(dom.window.document.head.querySelector('script')).toBe(serverScript)
+  })
+
+  it('keeps distinct raw styles with semicolons inside data URLs', () => {
+    const head = createServerHeadWithContext()
+
+    head.push(htmlTagsToHead([
+      { tag: 'script', attrs: { style: 'background-image:url("data:image/svg+xml;utf8,<svg id=a></svg>");color:red' } },
+      { tag: 'script', attrs: { style: 'background-image:url("data:image/svg+xml;utf8,<svg id=b></svg>");color:red' } },
+    ]))
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags.match(/<script/g)).toHaveLength(2)
+    expect(headTags).toContain('id=a')
+    expect(headTags).toContain('id=b')
+  })
+
+  it('preserves external class and style state on an adopted structured element', () => {
+    const dom = useDom({
+      headTags: '<script id="stable" class="external" style="--external:keep"></script>',
+    })
+    const script = dom.window.document.head.querySelector('script')!
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    const entry = head.push({
+      script: [{
+        id: 'stable',
+        class: { owned: true },
+        style: { color: 'red' },
+      }],
+    } as unknown as ResolvableHead)
+
+    renderDOMHead(head, { document: dom.window.document })
+    expect(script.classList.contains('external')).toBe(true)
+    expect(script.classList.contains('owned')).toBe(true)
+    expect(script.style.getPropertyValue('--external')).toBe('keep')
+    expect(script.style.getPropertyValue('color')).toBe('red')
+
+    entry.patch({
+      script: [{
+        id: 'stable',
+        class: { updated: true },
+        style: { background: 'black' },
+      }],
+    } as unknown as ResolvableHead)
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelector('script')).toBe(script)
+    expect(script.classList.contains('external')).toBe(true)
+    expect(script.classList.contains('owned')).toBe(false)
+    expect(script.classList.contains('updated')).toBe(true)
+    expect(script.style.getPropertyValue('--external')).toBe('keep')
+    expect(script.style.getPropertyValue('color')).toBe('')
+    expect(script.style.getPropertyValue('background')).toBe('black')
   })
 
   it('keeps Vite data boolean attrs bare without changing Unhead semantics', () => {

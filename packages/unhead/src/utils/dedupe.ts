@@ -57,6 +57,8 @@ export function hashTag(tag: HeadTag) {
   let separator = ''
   for (const key of keys) {
     let value: unknown = tag.props[key]
+    if (key.startsWith('data-') && value === true)
+      value = ''
     if ((key === 'class' || key === 'style') && value != null) {
       const normalized = typeof value === 'string' ? normalizeStyleClassProps(key, value) : value
       if (key === 'class' && normalized instanceof Set)

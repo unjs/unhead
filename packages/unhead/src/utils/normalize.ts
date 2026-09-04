@@ -4,6 +4,53 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
+function splitStyleDeclarations(value: string): string[] {
+  const declarations: string[] = []
+  let start = 0
+  let depth = 0
+  let quote = ''
+  let escaped = false
+  let comment = false
+  for (let i = 0; i < value.length; i++) {
+    const char = value[i]
+    if (comment) {
+      if (char === '*' && value[i + 1] === '/') {
+        comment = false
+        i++
+      }
+    }
+    else if (escaped) {
+      escaped = false
+    }
+    else if (char === '\\') {
+      escaped = true
+    }
+    else if (quote) {
+      if (char === quote)
+        quote = ''
+    }
+    else if (char === '/' && value[i + 1] === '*') {
+      comment = true
+      i++
+    }
+    else if (char === '"' || char === '\'') {
+      quote = char
+    }
+    else if (char === '(' || char === '[' || char === '{') {
+      depth++
+    }
+    else if (char === ')' || char === ']' || char === '}') {
+      depth = Math.max(0, depth - 1)
+    }
+    else if (char === ';' && depth === 0) {
+      declarations.push(value.slice(start, i))
+      start = i + 1
+    }
+  }
+  declarations.push(value.slice(start))
+  return declarations
+}
+
 export function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
@@ -22,7 +69,7 @@ export function normalizeStyleClassProps(
     }
   }
   if (typeof value === 'string') {
-    (isStyle ? value.split(';') : [value]).forEach(add)
+    (isStyle ? splitStyleDeclarations(value) : [value]).forEach(add)
   }
   else if (Array.isArray(value)) {
     value.forEach(add)

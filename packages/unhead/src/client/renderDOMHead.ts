@@ -2,7 +2,7 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps } from '../utils/normalize'
+import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
 const WHITESPACE_RE = /\s+/
@@ -167,27 +167,42 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if ((k === 'class' || k === 'style') && v && typeof v !== 'string' && !isAttrsTag) {
-          const value = k === 'class'
-            ? [...v as Iterable<string>].join(' ')
-            : [...v as Iterable<[string, string]>].map(([sk, sv]) => `${sk}:${sv}`).join(';')
-          if ($el.getAttribute(k) !== value)
-            $el.setAttribute(k, value)
-          track(ck, previous[ck] || (() => $el.removeAttribute(k)))
-        }
-        else if (k === 'class' && v && typeof v !== 'string') {
-          for (const c of v as Iterable<string>) {
+        if (k === 'class' && v != null) {
+          const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
+          if (typeof v === 'string' && $el.getAttribute(k) !== v)
+            $el.setAttribute(k, v)
+          let hasClasses = false
+          for (const c of classes as Iterable<string>) {
+            hasClasses = true
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
+          if (!isAttrsTag && (hasClasses || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!$el.classList.length)
+                $el.removeAttribute(k)
+            }))
+          }
         }
-        else if (k === 'style' && v && typeof v !== 'string') {
-          for (const [sk, sv] of v as Iterable<[string, string]>) {
+        else if (k === 'style' && v != null) {
+          const styles = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
+          if (typeof v === 'string' && $el.getAttribute(k) !== v)
+            $el.setAttribute(k, v)
+          let hasStyles = false
+          for (const [sk, sv] of styles as Iterable<[string, string]>) {
+            hasStyles = true
             const key = `${ck}:${sk}`
             track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+            if (typeof v !== 'string')
+              ($el as HTMLElement).style.setProperty(sk, sv)
+          }
+          if (!isAttrsTag && (hasStyles || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!($el as HTMLElement).style.length)
+                $el.removeAttribute(k)
+            }))
           }
         }
         else if (v !== false as any && v !== null) {
