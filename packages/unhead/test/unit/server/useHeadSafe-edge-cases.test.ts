@@ -386,7 +386,7 @@ describe('useHeadSafe edge cases', () => {
       })
       expect(ctx.headTags).toContain('&quot;')
       // < and > are not escaped in attribute values (safe inside double quotes)
-      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; & <goodbye>"')
+      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; &amp; <goodbye>"')
     })
   })
 

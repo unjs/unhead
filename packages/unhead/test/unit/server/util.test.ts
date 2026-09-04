@@ -8,6 +8,11 @@ describe('propsToString', () => {
     })).toStrictEqual(' a="b"')
     expect(propsToString({})).toStrictEqual('')
   })
+  it('escapes ampersands and double quotes in attribute values', () => {
+    expect(propsToString({
+      href: '/search?q=one&kind="two"',
+    })).toStrictEqual(' href="/search?q=one&amp;kind=&quot;two&quot;"')
+  })
   it ('class / style strings', () => {
     expect(propsToString({
       class: 'a b',

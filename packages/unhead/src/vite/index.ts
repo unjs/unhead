@@ -5,9 +5,8 @@ import { TagConfigKeys } from '../utils/const'
 
 export type { HtmlTagDescriptor }
 
-const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base', 'title'])
+const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base'])
 const VOID_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'base'])
-const AMPERSAND_RE = /&/g
 
 function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
   const props: Record<string, string | boolean> = {}
@@ -18,16 +17,6 @@ function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string
     if (value === false || value === undefined)
       continue
     props[key] = value
-  }
-  return props
-}
-
-function topLevelAttrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
-  const props = attrsToProps(attrs)
-  for (const key in props) {
-    const value = props[key]
-    if (typeof value === 'string')
-      props[key] = value.replace(AMPERSAND_RE, '&amp;')
   }
   return props
 }
@@ -105,8 +94,10 @@ function positionProps(injectTo: HtmlTagDescriptor['injectTo']): { tagPosition?:
  * plugin declared through `useHead()` / `head.push()`.
  *
  * An omitted `injectTo` is treated as `'head-prepend'`, matching Vite's own default.
- * Tag names outside `meta`, `link`, `script`, `style`, `noscript`, `base`, `title`
+ * Tag names outside `meta`, `link`, `script`, `style`, `noscript`, and `base`
  * are skipped without throwing.
+ * Title descriptors are skipped because `SerializableHead` cannot preserve
+ * Vite's RCDATA character-reference semantics.
  */
 export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
   const head: Record<string, any> = {}
@@ -115,18 +106,7 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
     if (!KNOWN_TAGS.has(tag.tag))
       continue
 
-    if (tag.tag === 'title') {
-      if (head.title === undefined) {
-        head.title = typeof tag.children === 'string'
-          ? tag.children
-          : Array.isArray(tag.children)
-            ? tag.children.map(renderTagToHtml).join('')
-            : ''
-      }
-      continue
-    }
-
-    const props = topLevelAttrsToProps(tag.attrs)
+    const props = attrsToProps(tag.attrs)
     const position = positionProps(tag.injectTo)
 
     if (tag.tag === 'base') {

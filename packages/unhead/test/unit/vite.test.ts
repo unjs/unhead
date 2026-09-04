@@ -1,8 +1,9 @@
 import type { HtmlTagDescriptor } from '../../src/vite'
 import { describe, expect, it } from 'vitest'
+import { renderDOMHead } from '../../src/client'
 import { renderSSRHead } from '../../src/server'
 import { htmlTagsToHead } from '../../src/vite'
-import { createServerHeadWithContext } from '../util'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../util'
 
 describe('htmlTagsToHead', () => {
   it('positions head-prepend before explicit head, and maps body-prepend/body', () => {
@@ -31,18 +32,22 @@ describe('htmlTagsToHead', () => {
     expect(result.link?.[0]).toMatchObject({ tagPosition: 'head', tagPriority: 'high' })
   })
 
-  it('dedupes against a user-pushed identical preload link', () => {
+  it('keeps raw attributes and dedupes an identical user link', () => {
     const head = createServerHeadWithContext()
+    const href = '/app.css?v=1&theme=dark'
 
     head.push({
-      link: [{ rel: 'preload', as: 'style', href: '/app.css' }],
+      link: [{ rel: 'preload', as: 'style', href }],
     })
-    head.push(htmlTagsToHead([
-      { tag: 'link', attrs: { rel: 'preload', as: 'style', href: '/app.css' }, injectTo: 'head-prepend' },
-    ]))
+    const converted = htmlTagsToHead([
+      { tag: 'link', attrs: { rel: 'preload', as: 'style', href }, injectTo: 'head-prepend' },
+    ])
+    expect(converted.link?.[0]?.href).toBe(href)
+    head.push(converted)
 
     const { headTags } = renderSSRHead(head)
     expect(headTags.match(/<link[^>]*rel="preload"/g)).toHaveLength(1)
+    expect(headTags).toContain('href="/app.css?v=1&amp;theme=dark"')
   })
 
   it('preserves innerHTML for script children', () => {
@@ -120,15 +125,26 @@ describe('htmlTagsToHead', () => {
     expect(result.script?.[0]?.innerHTML).toBe('<span title="a&quot;&amp;b" data-copy="A &amp;copy; B"><raw></span>')
   })
 
-  it('escapes ampersands once in top-level string attributes', () => {
+  it('keeps top-level string attributes raw until SSR serialization', () => {
     const result = htmlTagsToHead([
       { tag: 'meta', attrs: { content: 'A &copy; B' } },
     ])
-    expect(result.meta?.[0]?.content).toBe('A &amp;copy; B')
+    expect(result.meta?.[0]?.content).toBe('A &copy; B')
 
     const head = createServerHeadWithContext()
     head.push(result)
     expect(renderSSRHead(head).headTags).toContain('content="A &amp;copy; B"')
+  })
+
+  it('keeps raw attribute values in the client DOM', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    head.push(htmlTagsToHead([
+      { tag: 'meta', attrs: { name: 'description', content: 'A &copy; B' } },
+    ]))
+
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.head.querySelector('meta')?.getAttribute('content')).toBe('A &copy; B')
   })
 
   it('keeps the first base href and target across multiple descriptors', () => {
@@ -179,23 +195,13 @@ describe('htmlTagsToHead', () => {
     expect(bodyTags).toBe('')
   })
 
-  it('keeps the first title in Vite render order', () => {
+  it('skips title descriptors', () => {
     const result = htmlTagsToHead([
-      { tag: 'title', children: 'head', injectTo: 'head' },
-      { tag: 'title', children: 'body', injectTo: 'body' },
-      { tag: 'title', children: [{ tag: 'span', children: 'omitted' }] },
-      { tag: 'title', children: 'body-prepend', injectTo: 'body-prepend' },
-      { tag: 'title', children: 'head-prepend', injectTo: 'head-prepend' },
+      { tag: 'title', children: 'Vite &amp; Unhead' },
+      { tag: 'meta', attrs: { name: 'generator', content: 'vite' } },
     ])
-    expect(result.title).toBe('<span>omitted</span>')
-  })
-
-  it('keeps an empty first title in Vite render order', () => {
-    const result = htmlTagsToHead([
-      { tag: 'title' },
-      { tag: 'title', children: 'later', injectTo: 'head' },
-    ])
-    expect(result.title).toBe('')
+    expect(result).not.toHaveProperty('title')
+    expect(result.meta).toHaveLength(1)
   })
 
   it('keeps the first base values in Vite render order', () => {
