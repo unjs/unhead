@@ -2,10 +2,10 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps } from '../utils/normalize'
+import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
-const WHITESPACE_RE = /\s+/
+const HTML_ASCII_WHITESPACE_RE = /[\t\n\f\r ]+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -44,7 +44,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
         const cls = orig[t]?.class
         if (typeof cls === 'string') {
           const $el = state._e.get(t)!
-          for (const c of cls.split(WHITESPACE_RE)) {
+          for (const c of cls.split(HTML_ASCII_WHITESPACE_RE)) {
             if (c)
               state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
           }
@@ -128,6 +128,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       renderState._e.set(id, $el)
+      const isAttrsTag = tag.tag.endsWith('Attrs')
       if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -166,19 +167,51 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if (k === 'class' && v) {
-          for (const c of v as Iterable<string>) {
+        if (k === 'class' && v != null) {
+          const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
+          if (typeof v === 'string' && $el.getAttribute(k) !== v)
+            $el.setAttribute(k, v)
+          let hasClasses = false
+          for (const c of classes as Iterable<string>) {
+            hasClasses = true
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
+          if (!isAttrsTag && (hasClasses || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!$el.classList.length)
+                $el.removeAttribute(k)
+            }))
+          }
         }
-        else if (k === 'style' && v) {
-          for (const [sk, sv] of v as Iterable<[string, string]>) {
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+        else if (k === 'style' && v != null) {
+          const $style = ($el as HTMLElement).style
+          if (typeof v === 'string' && $el.getAttribute(k) !== v)
+            $el.setAttribute(k, v)
+          let hasStyles = false
+          if (typeof v === 'string') {
+            for (let i = 0; i < $style.length; i++) {
+              const sk = $style.item(i)
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+            }
+          }
+          else {
+            for (const [sk, sv] of v as Iterable<[string, string]>) {
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+              $style.setProperty(sk, sv)
+            }
+          }
+          if (!isAttrsTag && (hasStyles || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!$style.length)
+                $el.removeAttribute(k)
+            }))
           }
         }
         else if (v !== false as any && v !== null) {

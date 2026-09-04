@@ -139,7 +139,7 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
     if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!t._vite && !hasContent(props.content) && !props['http-equiv'] && !props.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {

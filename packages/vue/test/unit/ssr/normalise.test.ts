@@ -80,7 +80,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="test-meta" content="true" other-bool>",
+        "headTags": "<meta name="test-meta" content="true" other-bool="true">",
         "htmlAttrs": "",
       }
     `)

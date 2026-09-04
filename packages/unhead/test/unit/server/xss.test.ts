@@ -381,7 +381,7 @@ describe('xss', () => {
     const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`
       "<link rel="stylesheet" href="//evil.com/xss.js">
-      <link rel="stylesheet" href="javascript&#58;alert(1)">
+      <link rel="stylesheet" href="javascript&amp;#58;alert(1)">
       <link rel="stylesheet" href="vbscript:alert(1)">"
     `)
   })

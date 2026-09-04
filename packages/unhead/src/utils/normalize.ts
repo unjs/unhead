@@ -4,7 +4,54 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-function normalizeStyleClassProps(
+function splitStyleDeclarations(value: string): string[] {
+  const declarations: string[] = []
+  let start = 0
+  let depth = 0
+  let quote = ''
+  let escaped = false
+  let comment = false
+  for (let i = 0; i < value.length; i++) {
+    const char = value[i]
+    if (comment) {
+      if (char === '*' && value[i + 1] === '/') {
+        comment = false
+        i++
+      }
+    }
+    else if (escaped) {
+      escaped = false
+    }
+    else if (char === '\\') {
+      escaped = true
+    }
+    else if (quote) {
+      if (char === quote)
+        quote = ''
+    }
+    else if (char === '/' && value[i + 1] === '*') {
+      comment = true
+      i++
+    }
+    else if (char === '"' || char === '\'') {
+      quote = char
+    }
+    else if (char === '(' || char === '[' || char === '{') {
+      depth++
+    }
+    else if (char === ')' || char === ']' || char === '}') {
+      depth = Math.max(0, depth - 1)
+    }
+    else if (char === ';' && depth === 0) {
+      declarations.push(value.slice(start, i))
+      start = i + 1
+    }
+  }
+  declarations.push(value.slice(start))
+  return declarations
+}
+
+export function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
 ): Map<string, string> | Set<string> {
@@ -18,11 +65,11 @@ function normalizeStyleClassProps(
       i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
     }
     else {
-      v.split(' ').forEach(c => c && store.add(c))
+      v.split(/[\t\n\f\r ]+/).forEach(c => c && store.add(c))
     }
   }
   if (typeof value === 'string') {
-    (isStyle ? value.split(';') : [value]).forEach(add)
+    (isStyle ? splitStyleDeclarations(value) : [value]).forEach(add)
   }
   else if (Array.isArray(value)) {
     value.forEach(add)
@@ -45,6 +92,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
+  const isVite = input._vite === true
 
   for (const prop in input) {
     if (isUnsafeKey(prop))
@@ -76,9 +124,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (value !== undefined) {
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
-      const str = String(value)
-      const isMeta = tag.tag === 'meta' && key === 'content'
-      tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
+      const preserveEmpty = isData || (tag.tag === 'meta' && key === 'content')
+      tag.props[key] = value === '' && !preserveEmpty
+        ? true
+        : isData && typeof value === 'boolean' && !isVite ? String(value) : value
     }
   }
   return tag
