@@ -74,6 +74,32 @@ describe('htmlTagsToHead', () => {
     expect(headTags).not.toContain('crossorigin')
   })
 
+  it('preserves Vite string attributes during SSR', () => {
+    const head = createServerHeadWithContext()
+
+    head.push(htmlTagsToHead([
+      { tag: 'script', attrs: { nonce: 'true', title: '' }, children: 'window.vite = true' },
+    ]))
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('nonce="true"')
+    expect(headTags).toContain('title=""')
+  })
+
+  it('preserves Vite string attributes in the client DOM', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+
+    head.push(htmlTagsToHead([
+      { tag: 'script', attrs: { nonce: 'true', title: '' }, children: 'window.vite = true' },
+    ]))
+    renderDOMHead(head, { document: dom.window.document })
+
+    const script = dom.window.document.head.querySelector('script')
+    expect(script?.getAttribute('nonce')).toBe('true')
+    expect(script?.getAttribute('title')).toBe('')
+  })
+
   it('skips unknown tag names without throwing', () => {
     expect(() => htmlTagsToHead([
       { tag: 'div', attrs: { id: 'root' } },
