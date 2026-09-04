@@ -1,3 +1,4 @@
+import type { ResolvableHead } from '../../src/types'
 import type { HtmlTagDescriptor } from '../../src/vite'
 import { describe, expect, it } from 'vitest'
 import { renderDOMHead } from '../../src/client'
@@ -277,7 +278,7 @@ describe('htmlTagsToHead', () => {
         class: { shared: true, structured: true },
         style: { 'color': 'blue', 'background-color': 'black' },
       }],
-    })
+    } as unknown as ResolvableHead)
     renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.head.querySelector('script')).toBe(script)
@@ -294,7 +295,7 @@ describe('htmlTagsToHead', () => {
         class: { shared: true, structured: true },
         style: { 'color': 'red', 'background-color': 'black' },
       }],
-    })
+    } as unknown as ResolvableHead)
     renderDOMHead(head, { document: dom.window.document })
     const script = dom.window.document.head.querySelector('script')!
 
