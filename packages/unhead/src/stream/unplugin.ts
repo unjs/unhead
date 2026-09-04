@@ -223,8 +223,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
   // - `{ runtime }`: a JS expression, only valid inside emitted JS, not a
   //   static HTML attribute.
   // - `{ relative: true }`: a path relative to the rendering HTML file.
-  // Runtime expressions remain available to framework manifest consumers
-  // through `data-unhead-asset` because HTML attributes cannot execute them.
+  // Runtime expressions cannot execute in HTML attributes.
   function resolveAssetSrc(fileName: string, htmlHostId?: string): { src: string, rawFileNameAttr?: Record<string, string> } {
     const result = htmlHostId
       ? state.renderBuiltUrl?.(fileName, {
@@ -235,7 +234,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
         })
       : undefined
     const unresolvedHost = htmlHostId === undefined
-    const rawFileNameAttr = unresolvedHost || (typeof result === 'object' && !!result?.runtime)
+    if (typeof result === 'object' && result?.runtime)
+      throw new Error(`{ runtime: "${result.runtime}" } is not supported for assets in html files: ${fileName}`)
+    const rawFileNameAttr = unresolvedHost
       ? { 'data-unhead-asset': fileName }
       : undefined
     if (typeof result === 'string' && result.length > 0)
@@ -453,7 +454,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
           return [{
             tag: 'script',
             attrs: nonceAttr,
-            children: `import("/${VIRTUAL_CLIENT_ID}")`,
+            children: `import("${state.isBuild ? `/${VIRTUAL_CLIENT_ID}` : joinBase(VIRTUAL_CLIENT_ID)}")`,
             injectTo: 'head-prepend',
           }]
         },

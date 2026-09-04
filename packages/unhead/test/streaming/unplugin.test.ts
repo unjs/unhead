@@ -235,7 +235,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'index.html', hostType: 'html', ssr: true })
   })
 
-  it('async mode falls back and keeps the asset name when renderBuiltUrl returns runtime for an HTML host', async () => {
+  it('async mode rejects runtime renderBuiltUrl results for an HTML host', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
     const renderBuiltUrl = vi.fn(() => ({ runtime: 'globalThis.__publicAssetsURL(...)' }))
@@ -246,14 +246,12 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     )
     const emittedFileName = calls[0].fileName as string
 
-    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', {
+    expect(() => plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', {
       path: '/nested/index.html',
       filename: '/project/nested/index.html',
-    })
+    })).toThrow(`{ runtime: "globalThis.__publicAssetsURL(...)" } is not supported for assets in html files: ${emittedFileName}`)
 
     expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'nested/index.html', hostType: 'html', ssr: false })
-    expect(result[0].attrs.src).toBe(`/docs/${emittedFileName}`)
-    expect(result[0].attrs['data-unhead-asset']).toBe(emittedFileName)
   })
 
   it('async mode falls back to the base-prefixed virtual module URL outside of a build', async () => {
@@ -322,6 +320,18 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
 
     expect(result[0].children).toBe(`import("/${VIRTUAL_CLIENT_ID}")`)
     expect(result[0].attrs.src).toBeUndefined()
+  })
+
+  it('module mode prefixes the virtual client import with base during serve', async () => {
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'module' },
+      { command: 'serve', base: '/docs/', build: { assetsDir: 'assets' } },
+      {},
+    )
+
+    const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', {})
+
+    expect(result[0].children).toBe(`import("/docs/${VIRTUAL_CLIENT_ID}")`)
   })
 
   describe.each([
