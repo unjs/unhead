@@ -125,6 +125,10 @@ describe('htmlTagsToHead', () => {
       { tag: 'meta', attrs: { content: 'A &copy; B' } },
     ])
     expect(result.meta?.[0]?.content).toBe('A &amp;copy; B')
+
+    const head = createServerHeadWithContext()
+    head.push(result)
+    expect(renderSSRHead(head).headTags).toContain('content="A &amp;copy; B"')
   })
 
   it('keeps the first base href and target across multiple descriptors', () => {
