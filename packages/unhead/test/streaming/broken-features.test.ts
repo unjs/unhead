@@ -284,7 +284,7 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      // Streamed Body Tags keep JSON-LD visible without client scripts.
+      // Streamed body tags keep JSON-LD visible without client scripts.
       expect(renderSSRHeadSuspenseChunk(head)).toBe('')
 
       const end = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
@@ -344,7 +344,7 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('noscript tags', () => {
-    it('writes noscript content as Streamed Body Tags', async () => {
+    it('writes noscript content as streamed body tags', async () => {
       const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')

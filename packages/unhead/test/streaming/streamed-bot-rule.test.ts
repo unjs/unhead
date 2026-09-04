@@ -75,7 +75,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(flagged({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })).toHaveLength(1)
   })
 
-  it('stays quiet when the driver writes JSON-LD as Streamed Body Tags', () => {
+  it('stays quiet when the driver writes JSON-LD as streamed body tags', () => {
     const reported: HeadValidationRule[] = []
     const { head } = createStreamableHead({
       disableDefaults: true,
