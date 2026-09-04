@@ -52,8 +52,7 @@ describe('normalise', () => {
         "number="1337",
         "object="[object Object]",
         "octal="484",
-        "string-empty="",
-        "string="string",
+        "string-empty string="string",
         "symbol="Symbol(a)",
         "regex="/a/">",
       ]
