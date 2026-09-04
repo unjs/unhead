@@ -1,6 +1,7 @@
 import type { UnpluginOptions } from 'unplugin'
 import type { ConfigEnv, RenderBuiltAssetUrl, ResolvedConfig, UserConfig } from 'vite'
 import { createHash } from 'node:crypto'
+import { posix } from 'node:path'
 import { createUnplugin } from 'unplugin'
 
 export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
@@ -9,6 +10,7 @@ const RESOLVED_ID = `\0${VIRTUAL_CLIENT_ID}`
 const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
 const VIRTUAL_RE = /virtual:@unhead\/streaming/
 const RESOLVED_RE = /^\0virtual:@unhead\/streaming/
+const IIFE_AUTO_INIT_RE = /\.init\(\);?\s*$/
 
 export type Nonce = string | (() => string | undefined)
 
@@ -117,6 +119,14 @@ function resolveNonce(nonce?: Nonce): string | undefined {
   return typeof nonce === 'function' ? nonce() : nonce
 }
 
+function configureIifeCode(code: string, streamKey: string): string {
+  if (streamKey === '__unhead__')
+    return code
+  if (!IIFE_AUTO_INIT_RE.test(code))
+    throw new Error('[unhead] Streaming IIFE auto-init call was not found.')
+  return code.replace(IIFE_AUTO_INIT_RE, `.init({streamKey:${JSON.stringify(streamKey)}});`)
+}
+
 function buildClientStub(framework: string, streamKey: string, warnOnMissing: boolean): string {
   // Minified client bootstrap. Reads from `window[streamKey]`, swaps `_head`
   // for a real Unhead instance, replays queued entries, rebinds `.push`.
@@ -185,9 +195,25 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
   // Prefixes an emitted/virtual asset path with Vite's resolved `base`,
   // instead of assuming the app is served from `/`.
   function joinBase(path: string): string {
-    const base = state.base.endsWith('/') ? state.base.slice(0, -1) : state.base
     const rest = path.startsWith('/') ? path.slice(1) : path
-    return `${base}/${rest}`
+    if (!state.base)
+      return rest
+    const base = state.base.endsWith('/') ? state.base : `${state.base}/`
+    return `${base}${rest}`
+  }
+
+  function normalizeHtmlHostId(path?: string): string | undefined {
+    if (!path)
+      return undefined
+    const normalized = path.split(/[?#]/, 1)[0].replaceAll('\\', '/').replace(/^\/+/, '')
+    if (!normalized)
+      return 'index.html'
+    return normalized.endsWith('/') ? `${normalized}index.html` : normalized
+  }
+
+  function resolveRelativeAssetSrc(fileName: string, hostId: string): string {
+    const relative = posix.relative(posix.dirname(hostId), fileName)
+    return relative.startsWith('.') ? relative : `./${relative}`
   }
 
   // Resolves the `src` for an emitted asset `fileName`, honouring
@@ -196,19 +222,31 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
   // - a string: an absolute/CDN URL to use as-is.
   // - `{ runtime }`: a JS expression, only valid inside emitted JS, not a
   //   static HTML attribute.
-  // - `{ relative: true }`: a path relative to the *rendering* HTML file,
-  //   which we can't compute here (no host file at manifest-pass time).
-  // The last two fall back to `base + fileName`, but still stamp the raw,
-  // undecorated `fileName` in a `data-*` attribute so a framework reading
-  // this from a manifest can apply its own CDN/base resolution when it
-  // actually renders the tag.
-  function resolveAssetSrc(fileName: string): { src: string, rawFileNameAttr?: Record<string, string> } {
-    const result = state.renderBuiltUrl?.(fileName, { type: 'asset', hostId: 'index.html', hostType: 'html', ssr: false })
-    if (typeof result === 'string')
-      return { src: result }
-    if (result && (result.relative || result.runtime))
-      return { src: joinBase(fileName), rawFileNameAttr: { 'data-unhead-asset': fileName } }
-    return { src: joinBase(fileName) }
+  // - `{ relative: true }`: a path relative to the rendering HTML file.
+  // Runtime expressions remain available to framework manifest consumers
+  // through `data-unhead-asset` because HTML attributes cannot execute them.
+  function resolveAssetSrc(fileName: string, htmlHostId?: string): { src: string, rawFileNameAttr?: Record<string, string> } {
+    const result = htmlHostId
+      ? state.renderBuiltUrl?.(fileName, {
+          type: 'asset',
+          hostId: htmlHostId,
+          hostType: 'html',
+          ssr: state.ssr,
+        })
+      : undefined
+    const unresolvedHost = htmlHostId === undefined
+    const rawFileNameAttr = unresolvedHost || (typeof result === 'object' && !!result?.runtime)
+      ? { 'data-unhead-asset': fileName }
+      : undefined
+    if (typeof result === 'string' && result.length > 0)
+      return { src: result, rawFileNameAttr }
+
+    let relative = state.base === '' || state.base === './'
+    if (typeof result === 'object' && typeof result?.relative === 'boolean')
+      relative = result.relative
+    if (relative && !state.ssr && htmlHostId)
+      return { src: resolveRelativeAssetSrc(fileName, htmlHostId), rawFileNameAttr }
+    return { src: joinBase(fileName), rawFileNameAttr }
   }
 
   function resolveEmittedIifePath(hookThis: any, ctx?: { bundle?: Record<string, any> }): string | undefined {
@@ -270,12 +308,13 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
       if ((mode === 'async' || mode === 'module') && state.isBuild && typeof (this as any).emitFile === 'function') {
         if (!iifeCode)
           throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-        const hash = createHash('sha256').update(iifeCode).digest('hex').slice(0, 8)
-        const fileName = `${state.assetsDir}/unhead-streaming.${hash}.js`
+        const source = configureIifeCode(iifeCode, streamKey)
+        const hash = createHash('sha256').update(source).digest('hex').slice(0, 8)
+        const fileName = [state.assetsDir, `unhead-streaming.${hash}.js`].filter(Boolean).join('/')
         state.emittedIifeFileId = (this as any).emitFile({
           type: 'asset',
           fileName,
-          source: iifeCode,
+          source,
         })
         state.emittedIifeFileName = fileName
       }
@@ -312,7 +351,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             return { code: '', moduleType: 'js' }
           if (!iifeCode)
             throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-          return { code: iifeCode, moduleType: 'js' }
+          return { code: configureIifeCode(iifeCode, streamKey), moduleType: 'js' }
         }
       },
     },
@@ -368,7 +407,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
         // full Vite plugin pipeline (resolveId/load) and aren't stripped or
         // rewritten by downstream HTML transforms.
         order: 'pre',
-        handler(this: any, html?: string, ctx?: { bundle?: Record<string, any> }) {
+        handler(this: any, html?: string, ctx?: { path?: string, bundle?: Record<string, any> }) {
           // Vite's manifest pass (vitejs/ecosystem#15) calls this hook with
           // no HTML, ahead of any per-request render, to collect the
           // returned tags into a build manifest for frameworks (e.g. Nuxt)
@@ -387,7 +426,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             return [{
               tag: 'script',
               attrs: nonceAttr,
-              children: iifeCode,
+              children: configureIifeCode(iifeCode, streamKey),
               injectTo: 'head-prepend',
             }]
           }
@@ -400,8 +439,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             // survives bundling; dev (and bundlers without emitFile) fall
             // back to the virtual module URL served by the load hook.
             const fileName = state.isBuild ? resolveEmittedIifePath(this, ctx) : undefined
+            const htmlHostId = normalizeHtmlHostId(ctx?.path)
             const { src, rawFileNameAttr } = fileName
-              ? resolveAssetSrc(fileName)
+              ? resolveAssetSrc(fileName, htmlHostId)
               : { src: joinBase(VIRTUAL_IIFE_ID), rawFileNameAttr: undefined }
             return [{
               tag: 'script',
