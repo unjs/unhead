@@ -52,7 +52,8 @@ describe('normalise', () => {
         "number="1337",
         "object="[object Object]",
         "octal="484",
-        "string-empty string="string",
+        "string-empty="",
+        "string="string",
         "symbol="Symbol(a)",
         "regex="/a/">",
       ]
@@ -80,7 +81,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="test-meta" content="true" other-bool>",
+        "headTags": "<meta name="test-meta" content="true" other-bool="true">",
         "htmlAttrs": "",
       }
     `)
