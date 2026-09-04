@@ -100,6 +100,28 @@ describe('dom useScript', () => {
       preload!.getAttribute('referrerpolicy'),
     ]).toEqual(expected)
   })
+  it('defaults undefined privacy fields on object input', async () => {
+    const head = useDOMHead()
+
+    useScript(head, {
+      src: 'https://cdn.example.com/script.js',
+      crossorigin: undefined,
+      referrerpolicy: undefined,
+    })
+    await useDelayedSerializedDom()
+
+    const document = getActiveDom()!.window.document
+    const script = document.querySelector('script')
+    const preload = document.querySelector('link[rel="preload"]')
+    expect([
+      script!.getAttribute('crossorigin'),
+      script!.getAttribute('referrerpolicy'),
+    ]).toEqual(['anonymous', 'no-referrer'])
+    expect([
+      preload!.getAttribute('crossorigin'),
+      preload!.getAttribute('referrerpolicy'),
+    ]).toEqual(['anonymous', 'no-referrer'])
+  })
   it('preconnects when the document proves a scheme-dependent origin', async () => {
     const head = useDOMHead()
     const document = getActiveDom()!.window.document
@@ -126,7 +148,7 @@ describe('dom useScript', () => {
     let dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
       [
-        "<script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-onload="" data-onerror=""></script><link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"></head>",
+        "<script defer="" fetchpriority="low" src="https://cdn.example.com/script.js" crossorigin="anonymous" referrerpolicy="no-referrer" data-onload="" data-onerror=""></script><link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"></head>",
       ]
     `)
     instance.remove()
@@ -150,7 +172,7 @@ describe('dom useScript', () => {
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
       [
-        "<script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-onload="" data-onerror=""></script><link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"></head>",
+        "<script defer="" fetchpriority="low" src="https://cdn.example.com/script.js" crossorigin="anonymous" referrerpolicy="no-referrer" data-onload="" data-onerror=""></script><link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"></head>",
       ]
     `)
   })

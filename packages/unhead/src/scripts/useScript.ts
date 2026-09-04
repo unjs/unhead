@@ -116,6 +116,10 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     return result
   }
   const parsedOrigin = input.src ? parseHttpOrigin(input.src, head.resolvedOptions.document?.baseURI) : undefined
+  if (parsedOrigin && input.crossorigin === undefined)
+    input.crossorigin = 'anonymous'
+  if (parsedOrigin && input.referrerpolicy === undefined)
+    input.referrerpolicy = 'no-referrer'
   const lifecycleController = new AbortController()
   const useContext = {
     signal: lifecycleController.signal,
@@ -336,8 +340,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const link = {
         href,
         rel,
-        crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (parsedOrigin ? 'anonymous' : undefined),
-        referrerpolicy: typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (parsedOrigin ? 'no-referrer' : undefined),
+        crossorigin: input.crossorigin,
+        referrerpolicy: input.referrerpolicy,
         fetchpriority: typeof input.fetchpriority !== 'undefined' ? input.fetchpriority : 'low',
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
@@ -362,10 +366,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         const defaults: Partial<RawInput<'script'>> = {
           defer: true,
           fetchpriority: 'low',
-        }
-        if (parsedOrigin) {
-          defaults.crossorigin = 'anonymous'
-          defaults.referrerpolicy = 'no-referrer'
         }
         // status should get updated from script events
         script.entry = head.push({
