@@ -42,16 +42,16 @@ describe('dom useScript', () => {
   })
   it.each([
     ['http-script.js', [null, null]],
-    ['http:cdn.example/x.js', [null, null]],
-    ['http:http-base.invalid/..', [null, null]],
-    ['http:a/..', [null, null]],
-    ['http:/cdn.example/x.js', [null, null]],
-    ['http:\\cdn.example/x.js', [null, null]],
-    ['https:cdn.example/x.js', [null, null]],
-    ['https:https-base.invalid/..', [null, null]],
-    ['https:b/..', [null, null]],
-    ['https:/cdn.example/x.js', [null, null]],
-    ['https:\\cdn.example/x.js', [null, null]],
+    ['http:cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['http:http-base.invalid/..', ['anonymous', 'no-referrer']],
+    ['http:a/..', ['anonymous', 'no-referrer']],
+    ['http:/cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['http:\\cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['https:cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['https:https-base.invalid/..', ['anonymous', 'no-referrer']],
+    ['https:b/..', ['anonymous', 'no-referrer']],
+    ['https:/cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['https:\\cdn.example/x.js', ['anonymous', 'no-referrer']],
     ['/\\cdn.example.com/x.js', ['anonymous', 'no-referrer']],
     [' https://cdn.example.com/script.js ', ['anonymous', 'no-referrer']],
   ])('keeps preload privacy attributes aligned for %s', async (src, expected) => {
@@ -73,6 +73,47 @@ describe('dom useScript', () => {
       preload!.getAttribute('crossorigin'),
       preload!.getAttribute('referrerpolicy'),
     ]).toEqual(expected)
+  })
+  it.each([
+    ['https://app.example/', 'http:cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['http://app.example/', 'http:cdn.example/x.js', [null, null]],
+    ['http://app.example/', 'https:cdn.example/x.js', ['anonymous', 'no-referrer']],
+    ['https://app.example/', 'https:cdn.example/x.js', [null, null]],
+  ])('uses document %s for privacy defaults from %s', async (baseURI, src, expected) => {
+    const head = useDOMHead()
+    const document = getActiveDom()!.window.document
+    const base = document.createElement('base')
+    base.href = baseURI
+    document.head.append(base)
+
+    useScript(head, src)
+    await useDelayedSerializedDom()
+
+    const script = document.querySelector('script')
+    const preload = document.querySelector('link[rel="preload"]')
+    expect([
+      script!.getAttribute('crossorigin'),
+      script!.getAttribute('referrerpolicy'),
+    ]).toEqual(expected)
+    expect([
+      preload!.getAttribute('crossorigin'),
+      preload!.getAttribute('referrerpolicy'),
+    ]).toEqual(expected)
+  })
+  it('preconnects when the document proves a scheme-dependent origin', async () => {
+    const head = useDOMHead()
+    const document = getActiveDom()!.window.document
+    const base = document.createElement('base')
+    base.href = 'https://app.example/'
+    document.head.append(base)
+
+    useScript(head, 'http:cdn.example/x.js', {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })
+    await useDelayedSerializedDom()
+
+    expect(document.querySelector('link[rel="preconnect"]')?.getAttribute('href')).toBe('http://cdn.example')
   })
   it('keeps removed handles terminal and re-adds through a new instance', async () => {
     const head = useDOMHead()

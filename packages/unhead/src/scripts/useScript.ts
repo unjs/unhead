@@ -44,17 +44,16 @@ function tryParseUrl(src: string, base?: string): URL | undefined {
   }
 }
 
-function parseHttpOrigin(src: string): string | undefined {
+function parseHttpOrigin(src: string, baseURI?: string): string | undefined {
   const absoluteUrl = tryParseUrl(src)
   if (absoluteUrl) {
     if (absoluteUrl.protocol !== 'http:' && absoluteUrl.protocol !== 'https:')
       return
     // Use another host so same-scheme relative URLs cannot match the absolute parse.
-    const baseHost = absoluteUrl.hostname === 'a' ? 'b' : 'a'
-    const resolvedUrl = tryParseUrl(src, `${absoluteUrl.protocol}//${baseHost}`)
-    return resolvedUrl?.origin === absoluteUrl.origin
-      ? absoluteUrl.origin
-      : undefined
+    const resolvedUrl = tryParseUrl(src, `${absoluteUrl.protocol}//${absoluteUrl.hostname === 'a' ? 'b' : 'a'}`)
+    if (resolvedUrl?.origin === absoluteUrl.origin)
+      return absoluteUrl.origin
+    return baseURI && !baseURI.startsWith(absoluteUrl.protocol) ? absoluteUrl.origin : undefined
   }
 
   const httpUrl = tryParseUrl(src, 'http://a')
@@ -92,7 +91,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     : loaderInput
       ? { key: loaderInput.key }
       : { ..._input }
-  const parsedOrigin = input.src ? parseHttpOrigin(input.src) : undefined
   const {
     beforeInit,
     eventContext: _eventContext,
@@ -117,6 +115,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       prevScript._setupTriggerHandler(trigger, false)
     return result
   }
+  const parsedOrigin = input.src ? parseHttpOrigin(input.src, head.resolvedOptions.document?.baseURI) : undefined
   const lifecycleController = new AbortController()
   const useContext = {
     signal: lifecycleController.signal,
@@ -325,21 +324,20 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const { src } = input
       if (!src)
         return
-      const isCrossOrigin = !!parsedOrigin
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
-      if (!rel || (isPreconnect && !isCrossOrigin)) {
+      if (!rel || (isPreconnect && !parsedOrigin)) {
         return
       }
-      if (isPreconnect && parsedOrigin)
+      if (isPreconnect)
         href = parsedOrigin
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.
       const link = {
         href,
         rel,
-        crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (isCrossOrigin ? 'anonymous' : undefined),
-        referrerpolicy: typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (isCrossOrigin ? 'no-referrer' : undefined),
+        crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (parsedOrigin ? 'anonymous' : undefined),
+        referrerpolicy: typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (parsedOrigin ? 'no-referrer' : undefined),
         fetchpriority: typeof input.fetchpriority !== 'undefined' ? input.fetchpriority : 'low',
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
