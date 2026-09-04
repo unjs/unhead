@@ -82,7 +82,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       resolveShellReady(shellState)
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
-      // `renderStreamEnd()` writes Streamed Body Tags.
+      // `renderStreamEnd()` writes streamed body tags.
       // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       const encoder = new TextEncoder()

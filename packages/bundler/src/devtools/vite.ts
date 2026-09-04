@@ -14,6 +14,7 @@ import { getConfigRpc, runLintRpc } from './rpc'
 
 const LEADING_SLASH_RE = /^\//
 const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/
+const BACKSLASH_RE = /\\/g
 
 function isViteDevtoolsPlugin(plugin: { name?: string }): boolean {
   return !!plugin.name?.startsWith('vite:devtools')
@@ -39,6 +40,20 @@ function findPkgRoot(fromUrl: string): string {
     dir = dirname(dir)
   }
   return dir
+}
+
+/**
+ * Absolute path to this package's runtime entry (which exports `devtoolsPlugin`).
+ *
+ * This is needed for projects that do not have `@unhead/bundler` as an explicit dep.
+ */
+function resolveRuntimeEntry(pkgDir: string): string {
+  const candidates = [
+    resolve(pkgDir, 'dist/index.mjs'),
+    // running from source (repo tests, unbuilt workspace)
+    resolve(pkgDir, 'src/index.ts'),
+  ]
+  return (candidates.find(existsSync) ?? candidates[0]).replace(BACKSLASH_RE, '/')
 }
 
 function resolveDevToolsKitClient(root: string, pkgDir: string): string | undefined {
@@ -142,7 +157,7 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
       // Register runtime plugins via the shared context
       if (options?._ctx) {
         options._ctx.addRuntimePlugin({
-          import: { name: 'devtoolsPlugin', source: '@unhead/bundler', as: '__unhead_devtoolsPlugin' },
+          import: { name: 'devtoolsPlugin', source: resolveRuntimeEntry(pkgDir), as: '__unhead_devtoolsPlugin' },
           client: 'window.__unhead_devtools__=_h',
           server: '_h.use(__unhead_devtoolsPlugin())',
         })
