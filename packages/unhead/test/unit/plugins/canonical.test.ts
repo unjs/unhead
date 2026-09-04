@@ -37,6 +37,20 @@ describe('canonicalPlugin', () => {
     expect(ctx.tags[0].props.content).toBe('https://example.com/image.jpg')
   })
 
+  it('should resolve relative URLs beginning with http', () => {
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+    const ctx = {
+      tags: [
+        { tag: 'meta', props: { property: 'og:image', content: 'http-image.jpg' } },
+      ],
+    }
+
+    // @ts-expect-error untyped
+    plugin.hooks['tags:resolve'](ctx)
+
+    expect(ctx.tags[0].props.content).toBe('https://example.com/http-image.jpg')
+  })
+
   it('should resolve twitter:image URLs correctly', () => {
     const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
     const ctx = {

@@ -131,7 +131,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
       if (options?.customResolver) {
         return options.customResolver(path)
       }
-      if (path.startsWith('http') || path.startsWith('//'))
+      if (/^https?:\/\//i.test(path) || path.startsWith('//'))
         return path
 
       try {
