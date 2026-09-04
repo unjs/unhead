@@ -34,6 +34,39 @@ type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & 
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
 function noop() {}
 
+function tryParseUrl(src: string, base?: string): URL | undefined {
+  try {
+    return new URL(src, base)
+  }
+  catch {
+    // URL rejection is an expected non-HTTP source at this boundary.
+    return undefined
+  }
+}
+
+function parseHttpOrigin(src: string, baseURI?: string): string | undefined {
+  const absoluteUrl = tryParseUrl(src)
+  if (absoluteUrl) {
+    if (absoluteUrl.protocol !== 'http:' && absoluteUrl.protocol !== 'https:')
+      return
+    // Use another host so same-scheme relative URLs cannot match the absolute parse.
+    const resolvedUrl = tryParseUrl(src, `${absoluteUrl.protocol}//${absoluteUrl.hostname === 'a' ? 'b' : 'a'}`)
+    if (resolvedUrl?.origin === absoluteUrl.origin)
+      return absoluteUrl.origin
+    return baseURI && !baseURI.startsWith(absoluteUrl.protocol) ? absoluteUrl.origin : undefined
+  }
+
+  const httpUrl = tryParseUrl(src, 'http://a')
+  const httpsUrl = tryParseUrl(src, 'https://b')
+  if (!httpUrl || !httpsUrl)
+    return
+
+  // Prefer the parse that preserves an explicit default port.
+  return httpUrl.hostname === httpsUrl.hostname
+    ? `//${httpUrl.port ? httpUrl.host : httpsUrl.host}`
+    : undefined
+}
+
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): ScriptInstance<T> | ScriptScope<T>
@@ -82,6 +115,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       prevScript._setupTriggerHandler(trigger, false)
     return result
   }
+  const parsedOrigin = input.src ? parseHttpOrigin(input.src, head.resolvedOptions.document?.baseURI) : undefined
+  if (parsedOrigin && input.crossorigin === undefined)
+    input.crossorigin = 'anonymous'
+  if (parsedOrigin && input.referrerpolicy === undefined)
+    input.referrerpolicy = 'no-referrer'
   const lifecycleController = new AbortController()
   const useContext = {
     signal: lifecycleController.signal,
@@ -290,23 +328,20 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const { src } = input
       if (!src)
         return
-      const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
-      if (!rel || (isPreconnect && !isCrossOrigin)) {
+      if (!rel || (isPreconnect && !parsedOrigin)) {
         return
       }
-      if (isPreconnect) {
-        const $url = new URL(src)
-        href = `${$url.protocol}//${$url.host}`
-      }
+      if (isPreconnect)
+        href = parsedOrigin!
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.
       const link = {
         href,
         rel,
-        crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (isCrossOrigin ? 'anonymous' : undefined),
-        referrerpolicy: typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (isCrossOrigin ? 'no-referrer' : undefined),
+        crossorigin: input.crossorigin,
+        referrerpolicy: input.referrerpolicy,
         fetchpriority: typeof input.fetchpriority !== 'undefined' ? input.fetchpriority : 'low',
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
@@ -331,11 +366,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         const defaults: Partial<RawInput<'script'>> = {
           defer: true,
           fetchpriority: 'low',
-        }
-        // is absolute, add privacy headers
-        if (input.src && (input.src.startsWith('http') || input.src.startsWith('//'))) {
-          defaults.crossorigin = 'anonymous'
-          defaults.referrerpolicy = 'no-referrer'
         }
         // status should get updated from script events
         script.entry = head.push({
