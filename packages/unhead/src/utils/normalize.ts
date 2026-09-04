@@ -65,7 +65,7 @@ export function normalizeStyleClassProps(
       i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
     }
     else {
-      v.split(' ').forEach(c => c && store.add(c))
+      v.split(/[\t\n\f\r ]+/).forEach(c => c && store.add(c))
     }
   }
   if (typeof value === 'string') {

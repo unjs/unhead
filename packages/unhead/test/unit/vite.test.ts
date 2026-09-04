@@ -260,6 +260,57 @@ describe('htmlTagsToHead', () => {
     expect(script?.getAttribute('class')).toBe(className)
   })
 
+  it('tokenizes raw Vite classes with HTML ASCII whitespace', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+
+    head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { class: 'vite\tmodule\npreload\fready\ractive final\u00A0preserved' },
+      },
+    ]))
+
+    expect(() => renderDOMHead(head, { document: dom.window.document })).not.toThrow()
+    expect([...dom.window.document.head.querySelector('script')!.classList]).toEqual([
+      'vite',
+      'module',
+      'preload',
+      'ready',
+      'active',
+      'final\u00A0preserved',
+    ])
+  })
+
+  it('removes every CSS property owned by a raw Vite style', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    const entry = head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: {
+          id: 'vite-stable',
+          style: '/*vite;comment*/color:red;--quoted:"a;b";background-image:url("data:image/svg+xml;utf8,<svg></svg>")',
+        },
+      },
+    ]))
+
+    renderDOMHead(head, { document: dom.window.document })
+    const script = dom.window.document.head.querySelector('script')!
+    expect(script.style.getPropertyValue('color')).toBe('red')
+    expect(script.style.getPropertyValue('--quoted')).toBe('"a;b"')
+    expect(script.style.getPropertyValue('background-image')).toContain('data:image/svg+xml;utf8')
+
+    entry.patch(htmlTagsToHead([
+      { tag: 'script', attrs: { id: 'vite-stable' } },
+    ]))
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelector('script')).toBe(script)
+    expect(script.hasAttribute('style')).toBe(false)
+    expect(script.style.length).toBe(0)
+  })
+
   it('updates a stable element from raw Vite class and style attrs to structured attrs', () => {
     const dom = useDom()
     const head = createClientHeadWithContext({ document: dom.window.document })

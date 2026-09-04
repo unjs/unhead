@@ -5,7 +5,7 @@ import { callHook } from '../utils/hooks'
 import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
-const WHITESPACE_RE = /\s+/
+const HTML_ASCII_WHITESPACE_RE = /[\t\n\f\r ]+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -44,7 +44,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
         const cls = orig[t]?.class
         if (typeof cls === 'string') {
           const $el = state._e.get(t)!
-          for (const c of cls.split(WHITESPACE_RE)) {
+          for (const c of cls.split(HTML_ASCII_WHITESPACE_RE)) {
             if (c)
               state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
           }
@@ -187,20 +187,29 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           }
         }
         else if (k === 'style' && v != null) {
-          const styles = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
+          const $style = ($el as HTMLElement).style
           if (typeof v === 'string' && $el.getAttribute(k) !== v)
             $el.setAttribute(k, v)
           let hasStyles = false
-          for (const [sk, sv] of styles as Iterable<[string, string]>) {
-            hasStyles = true
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            if (typeof v !== 'string')
-              ($el as HTMLElement).style.setProperty(sk, sv)
+          if (typeof v === 'string') {
+            for (let i = 0; i < $style.length; i++) {
+              const sk = $style.item(i)
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+            }
+          }
+          else {
+            for (const [sk, sv] of v as Iterable<[string, string]>) {
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+              $style.setProperty(sk, sv)
+            }
           }
           if (!isAttrsTag && (hasStyles || typeof v === 'string')) {
             track(ck, previous[ck] || (() => {
-              if (!($el as HTMLElement).style.length)
+              if (!$style.length)
                 $el.removeAttribute(k)
             }))
           }
