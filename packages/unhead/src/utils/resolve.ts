@@ -135,6 +135,13 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
 function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
+    // static plan rows (see `pushStaticPlan`) carry pre-rendered html and no
+    // real `tag`/`props` shape to validate; trust the plan, it was vetted at
+    // build time.
+    if (t._html !== undefined) {
+      tags[w++] = t
+      continue
+    }
     const { innerHTML, tag, props } = t
     if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
@@ -205,11 +212,15 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       // head instances), and no entry options (they get assigned onto each tag).
       // Deliberately NOT cached on `e._tags` so a hook registered between renders
       // takes the normalize path instead of reaching the shared array.
-      if (e._precomputedTags
-        && weightFn === head.resolvedOptions._tagWeight
-        && !hooks['entries:normalize']?.length
-        && !hooks['entries:resolve']?.length
-        && (!e.options || isEmptyProps(e.options))) {
+      if (e._precomputedTags && (
+        // Static plan entries (see `pushStaticPlan`): the plan's tags are the
+        // ONLY representation of this entry, there is no `input` to normalize
+        // as a fallback, so always use them regardless of hooks/weightFn/options.
+        e._static
+        || (weightFn === head.resolvedOptions._tagWeight
+          && !hooks['entries:normalize']?.length
+          && !hooks['entries:resolve']?.length
+          && (!e.options || isEmptyProps(e.options))))) {
         tags = e._precomputedTags
       }
       else {
