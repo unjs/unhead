@@ -334,7 +334,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         return
       }
       if (isPreconnect)
-        href = parsedOrigin
+        href = parsedOrigin!
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.
       const link = {
