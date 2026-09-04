@@ -154,7 +154,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
- * // Stream the app, then close it with the Streamed Body Tags.
+ * // Stream the app, then close it with the streamed body tags.
  * res.end(`${renderStreamBodyTags(head)}${bodyTags}</body></html>`)
  * ```
  */
@@ -355,13 +355,13 @@ function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: st
       (bodyTags ||= {})[key] = carried
   }
 
-  // No client patch remains when every tag becomes a Streamed Body Tag.
+  // No client patch remains when every tag becomes a streamed body tag.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
   return { patch: hasPatch ? patch : undefined, bodyTags }
 }
 
 /**
- * Renders and clears Streamed Body Tags.
+ * Renders and clears streamed body tags.
  *
  * Manual drivers must write this before `</body>`.
  * `renderStreamEnd()` includes it for template streams.
@@ -391,7 +391,7 @@ export function renderStreamBodyTags(head: Unhead<any>): string {
 }
 
 /**
- * Adds Streamed Body Tags to the closing HTML.
+ * Adds streamed body tags to the closing HTML.
  *
  * Manual drivers must write this instead of `parts.end`.
  *
@@ -470,7 +470,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
-  // No client patch remains when every tag becomes a Streamed Body Tag.
+  // No client patch remains when every tag becomes a streamed body tag.
   if (!patchCount)
     return ''
   return `window.${streamKey}.push(${serialized})`
@@ -521,7 +521,7 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  // `renderStreamEnd()` writes Streamed Body Tags.
+  // `renderStreamEnd()` writes streamed body tags.
   // Manual drivers opt in with `writesBodyTags`.
   streamState(head).writesBodyTags = true
   // Preserve late entries when no custom chunk renderer exists.
@@ -633,7 +633,7 @@ export interface StreamingTemplateParts {
    */
   end: string
   /**
-   * Offset for Streamed Body Tags within `end`.
+   * Offset for streamed body tags within `end`.
    */
   bodyTagsAt?: number
 }
