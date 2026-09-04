@@ -298,8 +298,15 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         return
       }
       if (isPreconnect) {
-        const $url = new URL(isProtocolRelative ? `unhead:${src}` : src)
-        href = isProtocolRelative ? `//${$url.host}` : `${$url.protocol}//${$url.host}`
+        const $url = new URL(isProtocolRelative ? `http:${src}` : src)
+        if (isProtocolRelative) {
+          // Parse both web schemes because URL.host removes a scheme's default port.
+          const host = $url.port ? $url.host : new URL(`https:${src}`).host
+          href = `//${host}`
+        }
+        else {
+          href = `${$url.protocol}//${$url.host}`
+        }
       }
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.

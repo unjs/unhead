@@ -86,6 +86,25 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preconnect')
   })
 
+  it.each([
+    ['//cdn.example.com\\script.js', '//cdn.example.com'],
+    ['//cdn.example.com\\@evil.example/script.js', '//cdn.example.com'],
+    ['///script.js', '//script.js'],
+  ])('uses browser URL parsing for protocol-relative source %s', (src, expectedHref) => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    expect(() => useScript(head, src, {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })).not.toThrow()
+
+    // @ts-expect-error untyped
+    const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
+    expect(link.href).toEqual(expectedHref)
+  })
+
   it('preserves explicit ports in protocol-relative origin warmups', () => {
     const head = createServerHead({
       disableDefaults: true,
