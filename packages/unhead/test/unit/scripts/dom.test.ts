@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useScript } from '../../../src/composables'
-import { useDelayedSerializedDom, useDOMHead } from '../../../test/util'
+import { getActiveDom, useDelayedSerializedDom, useDOMHead } from '../../../test/util'
 
 describe('dom useScript', () => {
   it('basic', async () => {
@@ -39,6 +39,30 @@ describe('dom useScript', () => {
     })
 
     expect(instance.proxy.test('hello-world')).toEqual('hello-world')
+  })
+  it.each([
+    ['http-script.js', [null, null]],
+    ['/\\cdn.example.com/x.js', ['anonymous', 'no-referrer']],
+    [' https://cdn.example.com/script.js ', ['anonymous', 'no-referrer']],
+  ])('keeps preload privacy attributes aligned for %s', async (src, expected) => {
+    const head = useDOMHead()
+
+    useScript(head, src)
+    await useDelayedSerializedDom()
+
+    const document = getActiveDom()!.window.document
+    const script = document.querySelector('script')
+    const preload = document.querySelector('link[rel="preload"]')
+    expect(script).not.toBeNull()
+    expect(preload).not.toBeNull()
+    expect([
+      script!.getAttribute('crossorigin'),
+      script!.getAttribute('referrerpolicy'),
+    ]).toEqual(expected)
+    expect([
+      preload!.getAttribute('crossorigin'),
+      preload!.getAttribute('referrerpolicy'),
+    ]).toEqual(expected)
   })
   it('keeps removed handles terminal and re-adds through a new instance', async () => {
     const head = useDOMHead()

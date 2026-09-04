@@ -373,8 +373,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           defer: true,
           fetchpriority: 'low',
         }
-        // is absolute, add privacy headers
-        if (input.src && (input.src.startsWith('http') || input.src.startsWith('//'))) {
+        if (input.src && parseHttpSource(input.src)) {
           defaults.crossorigin = 'anonymous'
           defaults.referrerpolicy = 'no-referrer'
         }
