@@ -12,6 +12,7 @@ describe('normalise', () => {
       'truthy': 'true',
       'enabled': true,
       'disabled': false,
+      'data-enabled': true,
       'data-disabled': false,
     })
 
@@ -20,6 +21,7 @@ describe('normalise', () => {
       'truthy': 'true',
       'enabled': true,
       'disabled': false,
+      'data-enabled': 'true',
       'data-disabled': 'false',
     })
   })
