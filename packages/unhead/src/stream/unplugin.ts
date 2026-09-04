@@ -3,6 +3,7 @@ import type { ConfigEnv, RenderBuiltAssetUrl, ResolvedConfig, UserConfig } from 
 import { createHash } from 'node:crypto'
 import { posix } from 'node:path'
 import { createUnplugin } from 'unplugin'
+import { parseStreamKey } from './key'
 
 export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
 export const VIRTUAL_IIFE_ID = 'virtual:@unhead/streaming-iife.js'
@@ -165,9 +166,10 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     name,
     mode = 'async',
     nonce,
-    streamKey = '__unhead__',
+    streamKey: rawStreamKey = '__unhead__',
     warnOnMissingServerBootstrap,
   } = options
+  const streamKey = parseStreamKey(rawStreamKey)
 
   const state: InternalState = {
     mode,

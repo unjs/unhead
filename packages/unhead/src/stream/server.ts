@@ -7,6 +7,7 @@ import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
+import { parseStreamKey } from './key'
 
 const LT_RE = /</g
 const GT_RE = />/g
@@ -17,20 +18,6 @@ const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
 let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
-
-// Conservative ASCII identifier: must be a safe `window.<name>` accessor.
-// Disallows anything that could break out of the dot-notation sink used by
-// the bootstrap and suspense-chunk scripts (GHSA-x7mm-9vvv-64w8).
-const VALID_STREAM_KEY_RE = /^[$_a-z][$\w]*$/i
-
-function assertValidStreamKey(streamKey: string): void {
-  if (typeof streamKey !== 'string' || !VALID_STREAM_KEY_RE.test(streamKey)) {
-    throw new Error(
-      `[unhead] Invalid streamKey: must be a valid JavaScript identifier matching ${VALID_STREAM_KEY_RE}. `
-      + `Received: ${JSON.stringify(streamKey)}`,
-    )
-  }
-}
 
 /**
  * Base context with just the head instance.
@@ -95,11 +82,10 @@ export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
   const { streamKey, writesBodyTags, ...rest } = options
-  if (streamKey !== undefined)
-    assertValidStreamKey(streamKey)
+  const parsedStreamKey = streamKey === undefined ? undefined : parseStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
-    experimentalStreamKey: streamKey,
+    experimentalStreamKey: parsedStreamKey,
   })
   if (writesBodyTags)
     streamState(head).writesBodyTags = true
@@ -117,8 +103,7 @@ export function createStreamableHead<T = ResolvableHead>(
 }
 function getStreamKey(head: Unhead<any>): string {
   const key = head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
-  assertValidStreamKey(key)
-  return key
+  return parseStreamKey(key)
 }
 
 /**
@@ -133,11 +118,11 @@ function getStreamKey(head: Unhead<any>): string {
  * @returns An inline `<script>` tag string
  */
 export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, nonce?: string): string {
-  assertValidStreamKey(streamKey)
+  const parsedStreamKey = parseStreamKey(streamKey)
   const nonceAttr = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : ''
   // `inline` mode runs the client IIFE above this script, so never clobber an
   // already-installed queue. Doing so drops every streamed patch.
-  return `<script${nonceAttr}>window.${streamKey}||(window.${streamKey}={_q:[],push(e){this._q.push(e)}})</script>`
+  return `<script${nonceAttr}>window.${parsedStreamKey}||(window.${parsedStreamKey}={_q:[],push(e){this._q.push(e)}})</script>`
 }
 
 /**

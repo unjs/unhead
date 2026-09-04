@@ -32,6 +32,22 @@ function callLoad(plugin: any, id: string) {
 }
 
 describe('streaming unplugin', () => {
+  it('rejects inline stream keys containing closing script tags', () => {
+    expect(() => buildStreamingPluginOptions({
+      framework: '@unhead/test',
+      mode: 'inline',
+      streamKey: '</script><script>globalThis.PWNED=1</script>',
+    })).toThrow(/Invalid streamKey/)
+  })
+
+  it.each(['async', 'module'] as const)('rejects invalid stream keys in %s mode', (mode) => {
+    expect(() => buildStreamingPluginOptions({
+      framework: '@unhead/test',
+      mode,
+      streamKey: 'invalid.key',
+    })).toThrow(/Invalid streamKey/)
+  })
+
   it('resolves the Vite-only IIFE virtual module in the Vite adapter', () => {
     const plugin = createStreamingPlugin.vite({
       framework: '@unhead/test',
