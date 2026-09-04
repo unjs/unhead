@@ -63,7 +63,7 @@ function vitePositionOrder(tag: HtmlTagDescriptor): number {
 
 function withViteAttrs(entry: Record<string, unknown>, attrs: Record<string, string | boolean>): Record<string, unknown> {
   for (const key in attrs) {
-    if (TagConfigKeys.has(key))
+    if (TagConfigKeys.has(key) || key === 'style' || key === 'class')
       entry[key.toUpperCase()] = attrs[key]
     else
       entry[key] = attrs[key]

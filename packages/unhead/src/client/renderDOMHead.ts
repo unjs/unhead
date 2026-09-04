@@ -166,7 +166,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if (k === 'class' && v) {
+        if (k === 'class' && v && typeof v !== 'string') {
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
@@ -174,7 +174,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               $el.classList.add(c)
           }
         }
-        else if (k === 'style' && v) {
+        else if (k === 'style' && v && typeof v !== 'string') {
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
             track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))

@@ -76,7 +76,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (value !== undefined) {
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
-      tag.props[key] = isData && typeof value === 'boolean' ? String(value) : value
+      const preserveEmpty = isData || (tag.tag === 'meta' && key === 'content')
+      tag.props[key] = value === '' && !preserveEmpty
+        ? true
+        : isData && typeof value === 'boolean' ? String(value) : value
     }
   }
   return tag

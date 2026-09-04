@@ -83,7 +83,7 @@ describe('htmlTagsToHead', () => {
 
     const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('nonce="true"')
-    expect(headTags).toContain('title=""')
+    expect(headTags).toContain(' title>')
   })
 
   it('preserves Vite string attributes in the client DOM', () => {
@@ -219,6 +219,44 @@ describe('htmlTagsToHead', () => {
     expect(headTags).toContain('window.vite = true')
     expect(headTags).toContain('window.other = true')
     expect(bodyTags).toBe('')
+  })
+
+  it('keeps Vite style and class attrs raw during SSR', () => {
+    const head = createServerHeadWithContext()
+    const style = 'background-image:url(data:image/svg+xml;utf8,<svg></svg>);color:red'
+    const className = 'vite  vite module'
+
+    head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { style, class: className },
+        children: 'window.vite = true',
+      },
+    ]))
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain(`style="${style}"`)
+    expect(headTags).toContain('class="vite  vite module"')
+  })
+
+  it('keeps Vite style and class attrs raw in the client DOM', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    const style = 'background-image:url(data:image/svg+xml;utf8,<svg></svg>);color:red'
+    const className = 'vite  vite module'
+
+    head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { style, class: className },
+        children: 'window.vite = true',
+      },
+    ]))
+    renderDOMHead(head, { document: dom.window.document })
+
+    const script = dom.window.document.head.querySelector('script')
+    expect(script?.getAttribute('style')).toBe(style)
+    expect(script?.getAttribute('class')).toBe(className)
   })
 
   it('skips title descriptors', () => {
