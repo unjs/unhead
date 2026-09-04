@@ -298,7 +298,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         return
       }
       if (isPreconnect) {
-        const $url = new URL(isProtocolRelative ? `https:${src}` : src)
+        const $url = new URL(isProtocolRelative ? `unhead:${src}` : src)
         href = isProtocolRelative ? `//${$url.host}` : `${$url.protocol}//${$url.host}`
       }
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',

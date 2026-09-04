@@ -85,4 +85,19 @@ describe('warmup', () => {
     expect(link.href).toEqual('//cdn.example.com')
     expect(link.rel).toEqual('preconnect')
   })
+
+  it('preserves explicit ports in protocol-relative origin warmups', () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+
+    useScript(head, '//cdn.example.com:443/script.js', {
+      trigger: 'manual',
+      warmupStrategy: 'preconnect',
+    })
+
+    // @ts-expect-error untyped
+    const link = [...head.entries.values()][0]!.input!.link![0] as GenericLink
+    expect(link.href).toEqual('//cdn.example.com:443')
+  })
 })
