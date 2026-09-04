@@ -32,9 +32,6 @@ import { createScriptWaitFor } from './waitFor'
 type ScriptApi = Record<symbol | string, any>
 type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
-type ParsedHttpSource
-  = | { _tag: 'absolute', url: URL }
-    | { _tag: 'protocol-relative', httpUrl: URL, httpsUrl: URL }
 function noop() {}
 
 function tryParseUrl(src: string, base?: string): URL | undefined {
@@ -47,24 +44,27 @@ function tryParseUrl(src: string, base?: string): URL | undefined {
   }
 }
 
-function parseHttpSource(src: string): ParsedHttpSource | undefined {
-  const httpBase = 'http://http-base.invalid'
-  const httpsBase = 'https://https-base.invalid'
-  const httpUrl = tryParseUrl(src, httpBase)
-  const httpsUrl = tryParseUrl(src, httpsBase)
-  if (!httpUrl || !httpsUrl)
-    return
-
+function parseHttpOrigin(src: string): string | undefined {
   const absoluteUrl = tryParseUrl(src)
   if (absoluteUrl) {
-    const isHttp = absoluteUrl.protocol === 'http:' || absoluteUrl.protocol === 'https:'
-    return isHttp && httpUrl.origin === httpsUrl.origin
-      ? { _tag: 'absolute', url: absoluteUrl }
+    if (absoluteUrl.protocol !== 'http:' && absoluteUrl.protocol !== 'https:')
+      return
+    // Use another host so same-scheme relative URLs cannot match the absolute parse.
+    const baseHost = absoluteUrl.hostname === 'a' ? 'b' : 'a'
+    const resolvedUrl = tryParseUrl(src, `${absoluteUrl.protocol}//${baseHost}`)
+    return resolvedUrl?.origin === absoluteUrl.origin
+      ? absoluteUrl.origin
       : undefined
   }
 
+  const httpUrl = tryParseUrl(src, 'http://a')
+  const httpsUrl = tryParseUrl(src, 'https://b')
+  if (!httpUrl || !httpsUrl)
+    return
+
+  // Prefer the parse that preserves an explicit default port.
   return httpUrl.hostname === httpsUrl.hostname
-    ? { _tag: 'protocol-relative', httpUrl, httpsUrl }
+    ? `//${httpUrl.port ? httpUrl.host : httpsUrl.host}`
     : undefined
 }
 
@@ -92,7 +92,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     : loaderInput
       ? { key: loaderInput.key }
       : { ..._input }
-  const parsedSource = input.src ? parseHttpSource(input.src) : undefined
+  const parsedOrigin = input.src ? parseHttpOrigin(input.src) : undefined
   const {
     beforeInit,
     eventContext: _eventContext,
@@ -325,22 +325,14 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const { src } = input
       if (!src)
         return
-      const isCrossOrigin = !!parsedSource
+      const isCrossOrigin = !!parsedOrigin
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
       if (!rel || (isPreconnect && !isCrossOrigin)) {
         return
       }
-      if (isPreconnect && parsedSource) {
-        if (parsedSource._tag === 'protocol-relative') {
-          // Parse both web schemes because URL.host removes a scheme's default port.
-          const host = parsedSource.httpUrl.port ? parsedSource.httpUrl.host : parsedSource.httpsUrl.host
-          href = `//${host}`
-        }
-        else {
-          href = `${parsedSource.url.protocol}//${parsedSource.url.host}`
-        }
-      }
+      if (isPreconnect && parsedOrigin)
+        href = parsedOrigin
       // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
       // and `as` is omitted for preconnect/dns-prefetch which don't require it.
       const link = {
@@ -373,7 +365,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           defer: true,
           fetchpriority: 'low',
         }
-        if (parsedSource) {
+        if (parsedOrigin) {
           defaults.crossorigin = 'anonymous'
           defaults.referrerpolicy = 'no-referrer'
         }

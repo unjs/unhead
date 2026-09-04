@@ -72,9 +72,13 @@ describe('warmup', () => {
 
   it.each([
     'http:cdn.example/x.js',
+    'http:http-base.invalid/..',
+    'http:a/..',
     'http:/cdn.example/x.js',
     'http:\\cdn.example/x.js',
     'https:cdn.example/x.js',
+    'https:https-base.invalid/..',
+    'https:b/..',
     'https:/cdn.example/x.js',
     'https:\\cdn.example/x.js',
   ])('skips origin-only warmups when source %s depends on the document scheme', (src) => {

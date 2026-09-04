@@ -43,9 +43,13 @@ describe('dom useScript', () => {
   it.each([
     ['http-script.js', [null, null]],
     ['http:cdn.example/x.js', [null, null]],
+    ['http:http-base.invalid/..', [null, null]],
+    ['http:a/..', [null, null]],
     ['http:/cdn.example/x.js', [null, null]],
     ['http:\\cdn.example/x.js', [null, null]],
     ['https:cdn.example/x.js', [null, null]],
+    ['https:https-base.invalid/..', [null, null]],
+    ['https:b/..', [null, null]],
     ['https:/cdn.example/x.js', [null, null]],
     ['https:\\cdn.example/x.js', [null, null]],
     ['/\\cdn.example.com/x.js', ['anonymous', 'no-referrer']],
