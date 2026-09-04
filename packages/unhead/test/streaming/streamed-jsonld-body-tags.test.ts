@@ -30,10 +30,10 @@ async function readAll(stream: ReadableStream<Uint8Array>) {
 
 const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
 
-// Streamed Body Tags render at the body-close position in `end`.
+// Streamed body tags render at the body-close position in `end`.
 const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.length }
 
-describe('rendering JSON-LD as Streamed Body Tags', () => {
+describe('rendering JSON-LD as streamed body tags', () => {
   it('keeps JSON-LD out of the patch script', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
@@ -51,7 +51,7 @@ describe('rendering JSON-LD as Streamed Body Tags', () => {
     expect(chunk).not.toContain('ld+json')
   })
 
-  it('renders JSON-LD as a Streamed Body Tag', () => {
+  it('renders JSON-LD as a streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Reviews', script: [LD] })
     renderSSRHeadSuspenseChunk(head)
@@ -169,7 +169,7 @@ describe('pre-rendered shell state', () => {
 })
 
 describe('template-free drivers', () => {
-  it('returns Streamed Body Tags once', () => {
+  it('returns streamed body tags once', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     renderShell(head)
     head.push({ script: [LD] })
@@ -180,7 +180,7 @@ describe('template-free drivers', () => {
   })
 })
 
-describe('render failures for Streamed Body Tags', () => {
+describe('render failures for streamed body tags', () => {
   it('keeps valid JSON-LD when another entry cannot serialize', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
@@ -191,7 +191,7 @@ describe('render failures for Streamed Body Tags', () => {
     expect(renderStreamBodyTags(head)).toContain('Organization')
   })
 
-  it('keeps Streamed Body Tags for a retry', () => {
+  it('keeps streamed body tags for a retry', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)

@@ -56,7 +56,7 @@ export interface DOMHeadHooks {
 export interface SSRHeadHooks {
   /**
    * Fired by `renderSSRHeadSuspenseChunk` with normalized tags from entries
-   * pending after the shell. It runs before Streamed Body Tags are split out.
+   * pending after the shell. It runs before streamed body tags are split out.
    * It also runs before the remaining patch is serialized and entries clear.
    *
    * The chunk renderer normally serializes entry input without normalizing
