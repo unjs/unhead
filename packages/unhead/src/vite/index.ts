@@ -1,10 +1,12 @@
 import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
-import { escapeHtml } from '../server/util'
+import { TagConfigKeys } from '../utils/const'
+import { ViteHtmlAttrs } from '../utils/normalize'
 
 export type { HtmlTagDescriptor }
 
 const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base', 'title'])
+const VOID_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'base'])
 
 function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
   const props: Record<string, string | boolean> = {}
@@ -19,20 +21,42 @@ function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string
   return props
 }
 
-// Only used to render `children` arrays into markup (rare). Escapes attribute
-// values and text so a descriptor can't break out of its own tag.
 function renderTagToHtml(tag: HtmlTagDescriptor): string {
   const props = attrsToProps(tag.attrs)
   const attrString = Object.entries(props)
-    .map(([key, value]) => value === true ? key : `${key}="${escapeHtml(String(value))}"`)
+    .map(([key, value]) => value === true ? key : `${key}="${String(value)}"`)
     .join(' ')
   const open = attrString ? `<${tag.tag} ${attrString}>` : `<${tag.tag}>`
+  if (VOID_TAGS.has(tag.tag))
+    return open
   const inner = typeof tag.children === 'string'
-    ? escapeHtml(tag.children)
+    ? tag.children
     : Array.isArray(tag.children)
       ? tag.children.map(renderTagToHtml).join('')
       : ''
   return `${open}${inner}</${tag.tag}>`
+}
+
+function vitePositionOrder(tag: HtmlTagDescriptor): number {
+  switch (tag.injectTo) {
+    case 'head': return 1
+    case 'body-prepend': return 2
+    case 'body': return 3
+    default: return 0
+  }
+}
+
+function withViteAttrs<T extends Record<string, unknown>>(entry: T, attrs: Record<string, string | boolean>): T {
+  const inertAttrs: Record<string, string | boolean> = {}
+  for (const key in attrs) {
+    if (TagConfigKeys.has(key))
+      inertAttrs[key] = attrs[key]
+    else
+      entry[key] = attrs[key]
+  }
+  if (Object.keys(inertAttrs).length)
+    Object.defineProperty(entry, ViteHtmlAttrs, { value: inertAttrs })
+  return entry
 }
 
 // Mirrors Vite's own `transformIndexHtml` switch (packages/vite/src/node/plugins/html.ts):
@@ -64,13 +88,13 @@ function positionProps(injectTo: HtmlTagDescriptor['injectTo']): { tagPosition?:
 export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
   const head: Record<string, any> = {}
 
-  for (const tag of tags) {
+  for (const tag of [...tags].sort((a, b) => vitePositionOrder(a) - vitePositionOrder(b))) {
     if (!KNOWN_TAGS.has(tag.tag))
       continue
 
     if (tag.tag === 'title') {
-      if (typeof tag.children === 'string')
-        head.title = tag.children
+      if (head.title === undefined && tag.children !== undefined)
+        head.title = typeof tag.children === 'string' ? tag.children : tag.children.map(renderTagToHtml).join('')
       continue
     }
 
@@ -78,15 +102,12 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
     const position = positionProps(tag.injectTo)
 
     if (tag.tag === 'base') {
-      // A document has one <base>; browsers honour only the first href/target.
-      // `base` has no tagPosition, only tagPriority.
-      const { tagPriority } = position
-      const baseProps = tagPriority ? { ...props, tagPriority } : props
-      head.base = head.base ? { ...baseProps, ...head.base } : baseProps
+      if (!head.base)
+        head.base = withViteAttrs({ ...position }, props)
       continue
     }
 
-    const entry: Record<string, unknown> = { ...props, ...position }
+    const entry = withViteAttrs({ ...position }, props)
     if (typeof tag.children === 'string')
       entry.innerHTML = tag.children
     else if (Array.isArray(tag.children) && tag.children.length)

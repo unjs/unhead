@@ -95,21 +95,19 @@ describe('htmlTagsToHead', () => {
     expect(result.script?.[0]?.innerHTML).toBe('<span id="a">hi</span>')
   })
 
-  it('escapes attribute values and text when rendering nested children', () => {
+  it('keeps nested children raw and omits void-tag closing tags', () => {
     const result = htmlTagsToHead([
       {
-        tag: 'script',
-        attrs: { type: 'application/json' },
+        tag: 'style',
         injectTo: 'head',
         children: [
-          { tag: 'span', attrs: { title: '"><script>alert(1)</script>' }, children: '</span><script>alert(2)</script>' },
+          { tag: 'style', children: 'body { color: <unsafe>; }' },
+          { tag: 'link', attrs: { rel: 'stylesheet', href: '/app.css' } },
         ],
       },
     ])
-    const html = result.script?.[0]?.innerHTML as string
-    expect(html).not.toContain('"><script>')
-    expect(html).not.toContain('</span><script>')
-    expect(html).toBe('<span title="&quot;&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;">&lt;&#x2F;span&gt;&lt;script&gt;alert(2)&lt;&#x2F;script&gt;</span>')
+    const html = result.style?.[0]?.innerHTML as string
+    expect(html).toBe('<style>body { color: <unsafe>; }</style><link rel="stylesheet" href="/app.css">')
   })
 
   it('keeps the first base href and target across multiple descriptors', () => {
@@ -118,5 +116,63 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
     ])
     expect(result.base).toMatchObject({ href: '/first/', target: '_self' })
+  })
+
+  it('keeps Vite control-named attrs inert in rendered HTML', () => {
+    const head = createServerHeadWithContext()
+    head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: {
+          key: 'vite-key',
+          tagPosition: 'bodyClose',
+          tagPriority: 'critical',
+          tagDuplicateStrategy: 'replace',
+          innerHTML: 'attribute-value',
+          textContent: 'text-attribute',
+          processTemplateParams: 'false',
+          src: '/vite.js',
+        },
+        children: 'window.vite = true',
+        injectTo: 'head',
+      },
+      {
+        tag: 'script',
+        attrs: { key: 'vite-key', src: '/other.js' },
+        children: 'window.other = true',
+        injectTo: 'head',
+      },
+    ]))
+
+    const { headTags, bodyTags } = renderSSRHead(head)
+    expect(headTags).toContain('key="vite-key"')
+    expect(headTags).toContain('tagposition="bodyClose"')
+    expect(headTags).toContain('tagpriority="critical"')
+    expect(headTags).toContain('tagduplicatestrategy="replace"')
+    expect(headTags).toContain('innerhtml="attribute-value"')
+    expect(headTags).toContain('textcontent="text-attribute"')
+    expect(headTags).toContain('processtemplateparams="false"')
+    expect(headTags).toContain('window.vite = true')
+    expect(headTags).toContain('window.other = true')
+    expect(bodyTags).toBe('')
+  })
+
+  it('keeps the first title in Vite render order', () => {
+    const result = htmlTagsToHead([
+      { tag: 'title', children: 'head', injectTo: 'head' },
+      { tag: 'title', children: 'body', injectTo: 'body' },
+      { tag: 'title', children: [{ tag: 'span', children: 'omitted' }] },
+      { tag: 'title', children: 'body-prepend', injectTo: 'body-prepend' },
+      { tag: 'title', children: 'head-prepend', injectTo: 'head-prepend' },
+    ])
+    expect(result.title).toBe('<span>omitted</span>')
+  })
+
+  it('keeps the first base values in Vite render order', () => {
+    const result = htmlTagsToHead([
+      { tag: 'base', attrs: { href: '/head/', target: '_self' }, injectTo: 'head' },
+      { tag: 'base', attrs: { href: '/prepend/', target: '_blank' }, injectTo: 'head-prepend' },
+    ])
+    expect(result.base).toMatchObject({ href: '/prepend/', target: '_blank' })
   })
 })
