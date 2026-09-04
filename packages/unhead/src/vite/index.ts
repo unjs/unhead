@@ -46,7 +46,7 @@ function vitePositionOrder(tag: HtmlTagDescriptor): number {
   }
 }
 
-function withViteAttrs<T extends Record<string, unknown>>(entry: T, attrs: Record<string, string | boolean>): T {
+function withViteAttrs(entry: Record<string, unknown>, attrs: Record<string, string | boolean>): Record<string, unknown> {
   for (const key in attrs) {
     if (TagConfigKeys.has(key))
       entry[key.toUpperCase()] = attrs[key]
