@@ -38,30 +38,30 @@ type ParsedHttpSource
 function noop() {}
 
 function tryParseUrl(src: string, base?: string): URL | undefined {
-  let url: URL | undefined
   try {
-    url = new URL(src, base)
+    return new URL(src, base)
   }
   catch {
-    // Invalid script URLs cannot produce origin-only warmups.
+    // URL rejection is an expected non-HTTP source at this boundary.
+    return undefined
   }
-  return url
 }
 
 function parseHttpSource(src: string): ParsedHttpSource | undefined {
-  const absoluteUrl = tryParseUrl(src)
-  if (absoluteUrl) {
-    return absoluteUrl.protocol === 'http:' || absoluteUrl.protocol === 'https:'
-      ? { _tag: 'absolute', url: absoluteUrl }
-      : undefined
-  }
-
   const httpBase = 'http://http-base.invalid'
   const httpsBase = 'https://https-base.invalid'
   const httpUrl = tryParseUrl(src, httpBase)
   const httpsUrl = tryParseUrl(src, httpsBase)
   if (!httpUrl || !httpsUrl)
     return
+
+  const absoluteUrl = tryParseUrl(src)
+  if (absoluteUrl) {
+    const isHttp = absoluteUrl.protocol === 'http:' || absoluteUrl.protocol === 'https:'
+    return isHttp && httpUrl.origin === httpsUrl.origin
+      ? { _tag: 'absolute', url: absoluteUrl }
+      : undefined
+  }
 
   return httpUrl.hostname === httpsUrl.hostname
     ? { _tag: 'protocol-relative', httpUrl, httpsUrl }
@@ -92,6 +92,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     : loaderInput
       ? { key: loaderInput.key }
       : { ..._input }
+  const parsedSource = input.src ? parseHttpSource(input.src) : undefined
   const {
     beforeInit,
     eventContext: _eventContext,
@@ -324,7 +325,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const { src } = input
       if (!src)
         return
-      const parsedSource = parseHttpSource(src)
       const isCrossOrigin = !!parsedSource
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
@@ -373,7 +373,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           defer: true,
           fetchpriority: 'low',
         }
-        if (input.src && parseHttpSource(input.src)) {
+        if (parsedSource) {
           defaults.crossorigin = 'anonymous'
           defaults.referrerpolicy = 'no-referrer'
         }

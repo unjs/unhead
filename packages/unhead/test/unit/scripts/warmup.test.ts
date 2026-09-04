@@ -70,6 +70,28 @@ describe('warmup', () => {
     expect([...head.entries.values()]).toHaveLength(0)
   })
 
+  it.each([
+    'http:cdn.example/x.js',
+    'http:/cdn.example/x.js',
+    'http:\\cdn.example/x.js',
+    'https:cdn.example/x.js',
+    'https:/cdn.example/x.js',
+    'https:\\cdn.example/x.js',
+  ])('skips origin-only warmups when source %s depends on the document scheme', (src) => {
+    for (const warmupStrategy of ['preconnect', 'dns-prefetch'] as const) {
+      const head = createServerHead({
+        disableDefaults: true,
+      })
+
+      useScript(head, src, {
+        trigger: 'manual',
+        warmupStrategy,
+      })
+
+      expect([...head.entries.values()]).toHaveLength(0)
+    }
+  })
+
   it('supports protocol-relative sources for origin-only warmups', () => {
     const head = createServerHead({
       disableDefaults: true,
@@ -126,8 +148,10 @@ describe('warmup', () => {
   })
 
   it.each([
+    ['http://cdn.example.com/script.js', 'http://cdn.example.com'],
     [' https://cdn.example.com/script.js ', 'https://cdn.example.com'],
     [' //cdn.example.com/script.js ', '//cdn.example.com'],
+    ['http:\\\\cdn.example.com/script.js', 'http://cdn.example.com'],
     ['https:\\\\cdn.example.com/script.js', 'https://cdn.example.com'],
   ])('uses the parsed HTTP origin for source %s', (src, expectedHref) => {
     const head = createServerHead({

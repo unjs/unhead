@@ -42,6 +42,12 @@ describe('dom useScript', () => {
   })
   it.each([
     ['http-script.js', [null, null]],
+    ['http:cdn.example/x.js', [null, null]],
+    ['http:/cdn.example/x.js', [null, null]],
+    ['http:\\cdn.example/x.js', [null, null]],
+    ['https:cdn.example/x.js', [null, null]],
+    ['https:/cdn.example/x.js', [null, null]],
+    ['https:\\cdn.example/x.js', [null, null]],
     ['/\\cdn.example.com/x.js', ['anonymous', 'no-referrer']],
     [' https://cdn.example.com/script.js ', ['anonymous', 'no-referrer']],
   ])('keeps preload privacy attributes aligned for %s', async (src, expected) => {
