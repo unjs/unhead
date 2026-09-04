@@ -128,6 +128,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       renderState._e.set(id, $el)
+      const isAttrsTag = tag.tag.endsWith('Attrs')
       if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -166,7 +167,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if (k === 'class' && v && typeof v !== 'string') {
+        if ((k === 'class' || k === 'style') && v && typeof v !== 'string' && !isAttrsTag) {
+          const value = k === 'class'
+            ? [...v as Iterable<string>].join(' ')
+            : [...v as Iterable<[string, string]>].map(([sk, sv]) => `${sk}:${sv}`).join(';')
+          if ($el.getAttribute(k) !== value)
+            $el.setAttribute(k, value)
+          track(ck, previous[ck] || (() => $el.removeAttribute(k)))
+        }
+        else if (k === 'class' && v && typeof v !== 'string') {
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))

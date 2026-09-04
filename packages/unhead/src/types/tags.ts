@@ -125,6 +125,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   _source?: string
+  /**
+   * Marks a tag converted from a Vite HTML descriptor.
+   * @internal
+   */
+  _vite?: true
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

@@ -6,7 +6,7 @@ export const ValidHeadTags = /* @__PURE__ */ new Set(['title', 'base', 'htmlAttr
 
 export const UniqueTags = /* @__PURE__ */ new Set(['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams'])
 
-export const TagConfigKeys = /* @__PURE__ */ new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
+export const TagConfigKeys = /* @__PURE__ */ new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams', '_vite'])
 
 export const ScriptNetworkEvents = /* @__PURE__ */ new Set(['onload', 'onerror'])
 

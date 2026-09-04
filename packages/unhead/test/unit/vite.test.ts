@@ -109,7 +109,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'div', attrs: { id: 'root' } },
       { tag: 'meta', attrs: { name: 'generator', content: 'vite' }, injectTo: 'head' },
     ])
-    expect(result).toEqual({ meta: [{ name: 'generator', content: 'vite' }] })
+    expect(result).toMatchObject({ meta: [{ name: 'generator', content: 'vite' }] })
   })
 
   it('renders nested children arrays to an inner HTML string', () => {
@@ -259,6 +259,115 @@ describe('htmlTagsToHead', () => {
     expect(script?.getAttribute('class')).toBe(className)
   })
 
+  it('updates a stable element from raw Vite class and style attrs to structured attrs', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    const entry = head.push(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { id: 'vite-stable', class: 'shared raw', style: 'color:red;display:block' },
+      },
+    ]))
+    renderDOMHead(head, { document: dom.window.document })
+    const script = dom.window.document.head.querySelector('script')!
+
+    entry.patch({
+      script: [{
+        id: 'vite-stable',
+        class: { shared: true, structured: true },
+        style: { 'color': 'blue', 'background-color': 'black' },
+      }],
+    })
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelector('script')).toBe(script)
+    expect(script.getAttribute('class')).toBe('shared structured')
+    expect(script.getAttribute('style')).toBe('color:blue;background-color:black')
+  })
+
+  it('updates a stable element from structured attrs to raw Vite class and style attrs', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    const entry = head.push({
+      script: [{
+        id: 'vite-stable',
+        class: { shared: true, structured: true },
+        style: { 'color': 'red', 'background-color': 'black' },
+      }],
+    })
+    renderDOMHead(head, { document: dom.window.document })
+    const script = dom.window.document.head.querySelector('script')!
+
+    entry.patch(htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { id: 'vite-stable', class: 'shared raw', style: 'color:blue;display:block' },
+      },
+    ]))
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelector('script')).toBe(script)
+    expect(script.getAttribute('class')).toBe('shared raw')
+    expect(script.getAttribute('style')).toBe('color:blue;display:block')
+  })
+
+  it('adopts a server-rendered Vite script with raw class and style attrs', () => {
+    const ssrHead = createServerHeadWithContext()
+    const input = htmlTagsToHead([
+      {
+        tag: 'script',
+        attrs: { src: '/vite.js', class: 'vite module', style: 'color:red;display:block' },
+      },
+    ])
+    ssrHead.push(input)
+    const dom = useDom(renderSSRHead(ssrHead))
+    const serverScript = dom.window.document.head.querySelector('script')!
+    const clientHead = createClientHeadWithContext({ document: dom.window.document })
+
+    clientHead.push(input)
+    renderDOMHead(clientHead, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelectorAll('script[src="/vite.js"]')).toHaveLength(1)
+    expect(dom.window.document.head.querySelector('script')).toBe(serverScript)
+  })
+
+  it('keeps Vite data boolean attrs bare without changing Unhead semantics', () => {
+    const viteSsrHead = createServerHeadWithContext()
+    viteSsrHead.push(htmlTagsToHead([
+      { tag: 'meta', attrs: { 'name': 'vite', 'content': 'enabled', 'data-enabled': true } },
+    ]))
+    expect(renderSSRHead(viteSsrHead).headTags).toContain('data-enabled>')
+
+    const unheadSsrHead = createServerHeadWithContext()
+    unheadSsrHead.push({ meta: [{ 'name': 'unhead', 'content': 'enabled', 'data-enabled': true }] })
+    expect(renderSSRHead(unheadSsrHead).headTags).toContain('data-enabled="true"')
+
+    const dom = useDom()
+    const clientHead = createClientHeadWithContext({ document: dom.window.document })
+    clientHead.push(htmlTagsToHead([
+      { tag: 'meta', attrs: { 'name': 'vite', 'content': 'enabled', 'data-enabled': true } },
+    ]))
+    clientHead.push({ meta: [{ 'name': 'unhead', 'content': 'enabled', 'data-enabled': true }] })
+    renderDOMHead(clientHead, { document: dom.window.document })
+
+    expect(dom.window.document.head.querySelector('meta[name="vite"]')?.getAttribute('data-enabled')).toBe('')
+    expect(dom.window.document.head.querySelector('meta[name="unhead"]')?.getAttribute('data-enabled')).toBe('true')
+  })
+
+  it('renders Vite marker meta tags without content', () => {
+    const head = createServerHeadWithContext()
+    head.push(htmlTagsToHead([
+      { tag: 'meta', attrs: { name: 'vite-marker' } },
+      { tag: 'meta', attrs: { name: 'vite-empty', content: '' } },
+    ]))
+    head.push({ meta: [{ name: 'unhead-marker' }] } as any)
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<meta name="vite-marker">')
+    expect(headTags).toContain('<meta name="vite-empty" content="">')
+    expect(headTags).not.toContain('unhead-marker')
+  })
+
   it('skips title descriptors', () => {
     const result = htmlTagsToHead([
       { tag: 'title', children: 'Vite &amp; Unhead' },
@@ -292,7 +401,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { href: '/body/' }, injectTo: 'body' },
     ])
 
-    expect(prepend.base).toEqual({ tagPriority: 'high', href: '/prepend/' })
-    expect(body.base).toEqual({ href: '/body/' })
+    expect(prepend.base).toMatchObject({ tagPriority: 'high', href: '/prepend/' })
+    expect(body.base).toMatchObject({ href: '/body/' })
   })
 })

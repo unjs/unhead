@@ -4,7 +4,7 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-function normalizeStyleClassProps(
+export function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
 ): Map<string, string> | Set<string> {
@@ -45,6 +45,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
+  const isVite = input._vite === true
 
   for (const prop in input) {
     if (isUnsafeKey(prop))
@@ -79,7 +80,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       const preserveEmpty = isData || (tag.tag === 'meta' && key === 'content')
       tag.props[key] = value === '' && !preserveEmpty
         ? true
-        : isData && typeof value === 'boolean' ? String(value) : value
+        : isData && typeof value === 'boolean' && !isVite ? String(value) : value
     }
   }
   return tag
