@@ -7,6 +7,7 @@ export type { HtmlTagDescriptor }
 
 const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base', 'title'])
 const VOID_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'base'])
+const AMPERSAND_RE = /&/g
 
 function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
   const props: Record<string, string | boolean> = {}
@@ -19,6 +20,31 @@ function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string
     props[key] = value
   }
   return props
+}
+
+function topLevelAttrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
+  const props = attrsToProps(attrs)
+  for (const key in props) {
+    const value = props[key]
+    if (typeof value === 'string')
+      props[key] = value.replace(AMPERSAND_RE, '&amp;')
+  }
+  return props
+}
+
+function normalizeBaseAttrs(attrs: Record<string, string | boolean>): Record<string, string | boolean> {
+  const normalized: Record<string, string | boolean> = {}
+  for (const key in attrs) {
+    const normalizedKey = key.toLowerCase()
+    if (normalizedKey === 'href' || normalizedKey === 'target') {
+      if (normalized[normalizedKey] === undefined)
+        normalized[normalizedKey] = attrs[key]
+    }
+    else {
+      normalized[key] = attrs[key]
+    }
+  }
+  return normalized
 }
 
 function renderTagToHtml(tag: HtmlTagDescriptor): string {
@@ -90,22 +116,29 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
       continue
 
     if (tag.tag === 'title') {
-      if (head.title === undefined && tag.children !== undefined)
-        head.title = typeof tag.children === 'string' ? tag.children : tag.children.map(renderTagToHtml).join('')
+      if (head.title === undefined) {
+        head.title = typeof tag.children === 'string'
+          ? tag.children
+          : Array.isArray(tag.children)
+            ? tag.children.map(renderTagToHtml).join('')
+            : ''
+      }
       continue
     }
 
-    const props = attrsToProps(tag.attrs)
+    const props = topLevelAttrsToProps(tag.attrs)
     const position = positionProps(tag.injectTo)
 
     if (tag.tag === 'base') {
+      const baseProps = normalizeBaseAttrs(props)
       if (!head.base) {
-        head.base = withViteAttrs({ ...position }, props)
+        const basePosition = position.tagPriority ? { tagPriority: position.tagPriority } : {}
+        head.base = withViteAttrs(basePosition, baseProps)
       }
       else {
         for (const key of ['href', 'target'] as const) {
-          if (head.base[key] === undefined && props[key] !== undefined) {
-            head.base[key] = props[key]
+          if (head.base[key] === undefined && baseProps[key] !== undefined) {
+            head.base[key] = baseProps[key]
           }
         }
       }

@@ -114,10 +114,17 @@ describe('htmlTagsToHead', () => {
     const result = htmlTagsToHead([
       {
         tag: 'script',
-        children: [{ tag: 'span', attrs: { title: 'a"&b' }, children: '<raw>' }],
+        children: [{ tag: 'span', attrs: { 'title': 'a"&b', 'data-copy': 'A &copy; B' }, children: '<raw>' }],
       },
     ])
-    expect(result.script?.[0]?.innerHTML).toBe('<span title="a&quot;&amp;b"><raw></span>')
+    expect(result.script?.[0]?.innerHTML).toBe('<span title="a&quot;&amp;b" data-copy="A &amp;copy; B"><raw></span>')
+  })
+
+  it('escapes ampersands once in top-level string attributes', () => {
+    const result = htmlTagsToHead([
+      { tag: 'meta', attrs: { content: 'A &copy; B' } },
+    ])
+    expect(result.meta?.[0]?.content).toBe('A &amp;copy; B')
   })
 
   it('keeps the first base href and target across multiple descriptors', () => {
@@ -179,11 +186,39 @@ describe('htmlTagsToHead', () => {
     expect(result.title).toBe('<span>omitted</span>')
   })
 
+  it('keeps an empty first title in Vite render order', () => {
+    const result = htmlTagsToHead([
+      { tag: 'title' },
+      { tag: 'title', children: 'later', injectTo: 'head' },
+    ])
+    expect(result.title).toBe('')
+  })
+
   it('keeps the first base values in Vite render order', () => {
     const result = htmlTagsToHead([
       { tag: 'base', attrs: { href: '/head/', target: '_self' }, injectTo: 'head' },
       { tag: 'base', attrs: { href: '/prepend/', target: '_blank' }, injectTo: 'head-prepend' },
     ])
     expect(result.base).toMatchObject({ href: '/prepend/', target: '_blank' })
+  })
+
+  it('keeps base href and target case-insensitively', () => {
+    const result = htmlTagsToHead([
+      { tag: 'base', attrs: { HREF: '/first/', TARGET: '_self' } },
+      { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
+    ])
+    expect(result.base).toMatchObject({ href: '/first/', target: '_self' })
+  })
+
+  it('keeps only representable base placement metadata', () => {
+    const prepend = htmlTagsToHead([
+      { tag: 'base', attrs: { href: '/prepend/' }, injectTo: 'head-prepend' },
+    ])
+    const body = htmlTagsToHead([
+      { tag: 'base', attrs: { href: '/body/' }, injectTo: 'body' },
+    ])
+
+    expect(prepend.base).toEqual({ tagPriority: 'high', href: '/prepend/' })
+    expect(body.base).toEqual({ href: '/body/' })
   })
 })
