@@ -39,7 +39,8 @@ export function HeadStream(): ReactNode {
     throw new Error('HeadStream: head context not found')
   }
 
-  const update = renderSSRHeadSuspenseChunk(head)
+  // Initial entries belong to the shell, including tags from earlier components.
+  const update = head._stream?.shellRendered ? renderSSRHeadSuspenseChunk(head) : ''
   // Always render script element for hydration consistency with client
   return createElement('script', {
     suppressHydrationWarning: true,
