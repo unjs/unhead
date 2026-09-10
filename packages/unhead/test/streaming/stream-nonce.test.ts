@@ -41,7 +41,7 @@ describe('streaming request nonces', () => {
       const document = new JSDOM(html).window.document
       expect([...document.scripts].map(script => script.getAttribute('nonce'))).toEqual([NONCES[index] ?? null, NONCES[index] ?? null])
       const executed = new JSDOM(html, { runScripts: 'dangerously' }).window
-      expect(executed.__unhead__._q).toEqual([[{ title: 'Late title' }]])
+      expect(executed.__unhead__?._q).toEqual([[{ title: 'Late title' }]])
       executed.close()
     }
   })

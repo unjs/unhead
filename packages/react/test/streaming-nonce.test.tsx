@@ -23,7 +23,7 @@ describe('react streaming request nonce', () => {
 
     expect([...document.scripts].map(script => script.getAttribute('nonce'))).toEqual([nonce ?? null, nonce ?? null])
     const executed = new JSDOM(html, { runScripts: 'dangerously' }).window
-    expect(executed.__unhead__._q).toEqual([[{ title: 'Late title' }]])
+    expect(executed.__unhead__?._q).toEqual([[{ title: 'Late title' }]])
     executed.close()
   })
 })
