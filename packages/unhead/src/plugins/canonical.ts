@@ -22,6 +22,8 @@ export interface CanonicalPluginOptions {
   trailingSlash?: boolean
 }
 
+const HTTP_SCHEME_RE = /^https?:\/\//i
+
 const META_TRANSFORMABLE_URL = [
   'og:url',
   'og:image',
@@ -84,7 +86,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
   return (head) => {
     let host = options.canonicalHost || (!head.ssr ? (window.location.origin) : '')
     // handle https if not provided
-    if (!host.startsWith('http') && !host.startsWith('//')) {
+    if (!HTTP_SCHEME_RE.test(host) && !host.startsWith('//')) {
       host = `https://${host}`
     }
     // have error thrown if canonicalHost is not a valid URL
@@ -131,7 +133,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
       if (options?.customResolver) {
         return options.customResolver(path)
       }
-      if (/^https?:\/\//i.test(path) || path.startsWith('//'))
+      if (HTTP_SCHEME_RE.test(path) || path.startsWith('//'))
         return path
 
       try {

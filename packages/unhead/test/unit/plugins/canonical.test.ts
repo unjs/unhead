@@ -51,6 +51,34 @@ describe('canonicalPlugin', () => {
     expect(ctx.tags[0].props.content).toBe('https://example.com/http-image.jpg')
   })
 
+  it('should handle canonicalHost without protocol resembling http prefix', () => {
+    const plugin = CanonicalPlugin({ canonicalHost: 'httpbin.org' })({ ssr: false } as Unhead)
+    const ctx = {
+      tags: [
+        { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
+      ],
+    }
+
+    // @ts-expect-error untyped
+    plugin.hooks['tags:resolve'](ctx)
+
+    expect(ctx.tags[0].props.content).toBe('https://httpbin.org/image.jpg')
+  })
+
+  it('should handle canonicalHost with uppercase protocol', () => {
+    const plugin = CanonicalPlugin({ canonicalHost: 'HTTPS://EXAMPLE.COM' })({ ssr: false } as Unhead)
+    const ctx = {
+      tags: [
+        { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
+      ],
+    }
+
+    // @ts-expect-error untyped
+    plugin.hooks['tags:resolve'](ctx)
+
+    expect(ctx.tags[0].props.content).toBe('https://example.com/image.jpg')
+  })
+
   it('should resolve twitter:image URLs correctly', () => {
     const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
     const ctx = {
