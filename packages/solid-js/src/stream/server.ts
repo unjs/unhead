@@ -3,6 +3,7 @@ import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/ser
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
+import { escapeHtml } from 'unhead/server'
 import {
   createStreamableHead as _createStreamableHead,
   prepareStreamingTemplate,
@@ -291,7 +292,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
   }
 }
 
-const scriptTemplate = ['<script>', '</script>'] as TemplateStringsArray & string[]
+const scriptTemplate = ['<script', '>', '</script>'] as TemplateStringsArray & string[]
 
 /**
  * Streaming script component - outputs inline script with current head state.
@@ -314,5 +315,6 @@ export function HeadStream() {
   if (!update)
     return null
 
-  return ssr(scriptTemplate, update)
+  const nonce = head._stream?.nonce
+  return ssr(scriptTemplate, nonce ? ` nonce="${escapeHtml(nonce)}"` : '', update)
 }
