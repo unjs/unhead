@@ -4,6 +4,7 @@ import { defineProject } from 'vitest/config'
 export default defineProject({
   resolve: {
     alias: {
+      '@unhead/angular': resolve(__dirname, 'src/public-api.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),

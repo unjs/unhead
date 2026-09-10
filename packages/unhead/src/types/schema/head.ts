@@ -1,4 +1,4 @@
-import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, StringInnerContent, TagPosition, TagPriority } from '../tags'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, StringInnerContent, TagAttributes, TagPosition, TagPriority } from '../tags'
 import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { Base } from './base'
@@ -150,20 +150,20 @@ export type MaybeEventFnHandlers<T> = {
 
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = string | ((title?: string) => string | null) | null | ({ textContent: string | ((title?: string) => string | null) } & SchemaAugmentations['titleTemplate'])
-export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
+export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']> | ResolvableProperties<TagAttributes<Base>>
 type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
 type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
   ? T extends Events
     ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
     : ResolvableProperties<T & Aug>
   : never
-export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents>
-export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']>
-export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string
-export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string
-export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
-export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
+export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents> | ResolvableProperties<TagAttributes<Link>>
+export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']> | ResolvableProperties<TagAttributes<UnheadMeta>>
+export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string | ResolvableProperties<TagAttributes<Style & DataKeys>>
+export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string | ResolvableProperties<TagAttributes<Script>>
+export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string | ResolvableProperties<TagAttributes<Noscript & DataKeys>>
+export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']> | ResolvableProperties<TagAttributes<UnheadHtmlAttributes & DataKeys>>
+export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> | ResolvableProperties<TagAttributes<UnheadBodyAttributesWithoutEvents & DataKeys & BodyEvents>>
 export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | boolean | number | Record<string, string | boolean | number>> & TemplateParamsAugmentations
 
 export interface ResolvableHead {
@@ -242,15 +242,15 @@ export interface ResolvableHead {
 export interface SerializableHead {
   title?: string
   titleTemplate?: string
-  base?: Base & DataKeys & SchemaAugmentations['base']
+  base?: Base & DataKeys & SchemaAugmentations['base'] | TagAttributes<Base & DataKeys>
   templateParams?: Record<string, any>
-  link?: (Link & SchemaAugmentations['link'])[]
-  meta?: (Meta & SchemaAugmentations['meta'])[]
-  style?: (Style & DataKeys & SchemaAugmentations['style'])[]
-  script?: (Script & SchemaAugmentations['script'])[]
-  noscript?: (Noscript & DataKeys & SchemaAugmentations['noscript'])[]
-  htmlAttrs?: HtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']
-  bodyAttrs?: BodyAttributesWithoutEvents & DataKeys & BodyEvents & SchemaAugmentations['bodyAttrs']
+  link?: (Link & SchemaAugmentations['link'] | TagAttributes<Link>)[]
+  meta?: (Meta & SchemaAugmentations['meta'] | TagAttributes<Meta>)[]
+  style?: (Style & DataKeys & SchemaAugmentations['style'] | TagAttributes<Style & DataKeys>)[]
+  script?: (Script & SchemaAugmentations['script'] | TagAttributes<Script>)[]
+  noscript?: (Noscript & DataKeys & SchemaAugmentations['noscript'] | TagAttributes<Noscript & DataKeys>)[]
+  htmlAttrs?: HtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs'] | TagAttributes<HtmlAttributes & DataKeys>
+  bodyAttrs?: BodyAttributesWithoutEvents & DataKeys & BodyEvents & SchemaAugmentations['bodyAttrs'] | TagAttributes<BodyAttributesWithoutEvents & DataKeys & BodyEvents>
 }
 
 export type RawInput<K extends keyof SerializableHead> = Required<SerializableHead>[K] extends Array<infer T> ? T : Required<SerializableHead>[K]
