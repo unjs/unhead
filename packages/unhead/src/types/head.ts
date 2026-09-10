@@ -167,7 +167,7 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    */
   streamKey?: string
   /**
-   * Set when the driver writes Streamed Body Tags before `</body>`.
+   * Set when the driver writes streamed body tags before `</body>`.
    *
    * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
    * `wrapStream()` enables this option automatically.
@@ -309,7 +309,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string
   /**
-   * Per-response state for Streamed Body Tags.
+   * Per-response state for streamed body tags.
    *
    * @internal
    */

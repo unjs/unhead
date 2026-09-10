@@ -96,7 +96,7 @@ export function createStreamableHead<T = ResolvableHead>(
     head,
     onShellReady,
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
-      // `renderStreamEnd()` writes Streamed Body Tags.
+      // `renderStreamEnd()` writes streamed body tags.
       // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {

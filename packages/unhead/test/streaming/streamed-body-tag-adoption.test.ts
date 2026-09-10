@@ -17,7 +17,7 @@ function appendJsonLd(doc: Document) {
   return el
 }
 
-describe('adopting late Streamed Body Tags', () => {
+describe('adopting late streamed body tags', () => {
   it('reuses a tag appended between renders', async () => {
     const doc = setup()
     const head = createHead({ document: doc })

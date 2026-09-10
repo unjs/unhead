@@ -235,7 +235,7 @@ function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
 
 function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
-  // Served JSON-LD remains visible as Streamed Body Tags.
+  // Served JSON-LD remains visible as streamed body tags.
   if (tag.tag === 'script')
     return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
   // Other reported tags only carry meaning from the head.

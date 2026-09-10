@@ -69,7 +69,7 @@ describe('createHeadTransform', () => {
       client: '_h.use(__validate({ root: __ROOT__ }))',
     }], 'client')
     const result = await transform(`import { createHead } from '@unhead/vue/client'\nconst head = createHead()`)
-    expect(result.code).toContain('import { ValidatePlugin as __validate } from \'@unhead/vue/plugins\'')
+    expect(result.code).toContain('import { ValidatePlugin as __validate } from "@unhead/vue/plugins"')
     expect(result.code).toContain('_h.use(__validate({ root: "/project" }))')
     expect(result.code).not.toContain('typeof window')
   })
@@ -80,8 +80,22 @@ describe('createHeadTransform', () => {
       server: '_h.use(__devtools())',
     }], 'server')
     const result = await transform(`import { createHead } from '@unhead/vue/server'\nconst head = createHead()`)
-    expect(result.code).toContain('import { devtoolsPlugin as __devtools } from \'@unhead/bundler\'')
+    expect(result.code).toContain('import { devtoolsPlugin as __devtools } from "@unhead/bundler"')
     expect(result.code).toContain('_h.use(__devtools())')
+  })
+
+  it.each([
+    '/Users/o\'brien/app/node_modules/@unhead/bundler/dist/index.mjs',
+    '/tmp/line\nbreak/node_modules/@unhead/bundler/dist/index.mjs',
+  ])('emits a valid string literal for the import source %j', async (source) => {
+    const { transform } = createPlugin([{
+      import: { name: 'devtoolsPlugin', source, as: '__devtools' },
+      server: '_h.use(__devtools())',
+    }], 'server')
+    const result = await transform(`import { createHead } from '@unhead/vue/server'\nconst head = createHead()`)
+    const literal = result.code.match(/^import \{ devtoolsPlugin as __devtools \} from (.+);$/m)?.[1]
+    expect(literal).toBeTruthy()
+    expect(JSON.parse(literal!)).toBe(source)
   })
 
   it('injects validation into development server heads', async () => {
