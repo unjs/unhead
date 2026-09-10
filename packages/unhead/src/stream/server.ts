@@ -186,6 +186,7 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
     htmlAttrs: ssr.htmlAttrs,
     headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
     bodyAttrs: ssr.bodyAttrs,
+    bodyTagsOpen: ssr.bodyTagsOpen,
     bodyTags: ssr.bodyTags,
   })
 }
@@ -757,6 +758,7 @@ export function prepareStreamingTemplate(
       htmlAttrs: ssr.htmlAttrs,
       headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
+      bodyTagsOpen: ssr.bodyTagsOpen,
       bodyTags: '',
     }).replace('</body></html>', '')
 
