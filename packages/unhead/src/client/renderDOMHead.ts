@@ -158,7 +158,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }))
       }
       for (const k in tag.props) {
-        const v = tag.props[k]
+        const v: unknown = tag.props[k]
+        if (v === false || v == null)
+          continue
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
@@ -167,7 +169,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if (k === 'class' && v != null) {
+        if (k === 'class') {
           const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
           if (typeof v === 'string' && $el.getAttribute(k) !== v)
             $el.setAttribute(k, v)
@@ -186,7 +188,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
             }))
           }
         }
-        else if (k === 'style' && v != null) {
+        else if (k === 'style') {
           const $style = ($el as HTMLElement).style
           if (typeof v === 'string' && $el.getAttribute(k) !== v)
             $el.setAttribute(k, v)
@@ -214,9 +216,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
             }))
           }
         }
-        else if (v !== false as any && v !== null) {
-          if ($el.getAttribute(k) !== v as any)
-            $el.setAttribute(k, v === true as any ? '' : String(v))
+        else {
+          if ($el.getAttribute(k) !== v)
+            $el.setAttribute(k, v === true ? '' : String(v))
           track(ck, previous[ck] || (() => $el.removeAttribute(k)))
         }
       }
