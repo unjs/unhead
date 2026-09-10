@@ -2,7 +2,7 @@ import { runInNewContext } from 'node:vm'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from 'unhead/client'
 import { createHead, renderSSRHead } from 'unhead/server'
-import { renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
+import { createStreamableHead, renderShell, renderSSRHeadSuspenseChunk, renderStreamBodyTags } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
 function render(input: any) {
@@ -98,5 +98,18 @@ describe('literal attribute input', () => {
       entries.forEach(entry => client.push(entry))
     client.render()
     expect(document.querySelector('meta[name="late"]')?.getAttribute('content')).toBe('&copy;')
+  })
+
+  it.each(['type', 'TYPE'])('writes late JSON-LD with literal %s attributes into the body', (name) => {
+    const { head } = createStreamableHead({ disableDefaults: true, writesBodyTags: true })
+    renderShell(head)
+    head.push({ script: [{ attrs: { [name]: 'application/ld+json', 'data-copy': '&copy;' }, innerHTML: '{"@type":"Organization"}' }] })
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    const html = renderStreamBodyTags(head)
+    const script = documentFor(html).querySelector('script')!
+    expect(script.getAttribute('type')).toBe('application/ld+json')
+    expect(script.getAttribute('data-copy')).toBe('&copy;')
+    expect(script.textContent).toBe('{"@type":"Organization"}')
+    expect(renderStreamBodyTags(head)).toBe('')
   })
 })

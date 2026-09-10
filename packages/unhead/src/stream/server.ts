@@ -259,7 +259,9 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
   const position = tag.tagPosition ?? entryPosition
   if (position === 'bodyClose' || position === 'bodyOpen')
     return true
-  const type = tag.type ?? tag.props?.type
+  const type = tag.attrs && typeof tag.attrs === 'object'
+    ? normalizeProps({ tag: tagName as HeadTag['tag'], props: {} }, tag).props.type
+    : tag.type ?? tag.props?.type
   return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
