@@ -10,7 +10,8 @@ describe('synchronous render hook errors', () => {
     'ssr:render',
     'ssr:rendered',
   ] as const)(
-    'preserves pending entries when %s throws', (name) => {
+    'preserves pending entries when %s throws',
+    (name) => {
       const head = createHead({ disableDefaults: true })
       head.push({ title: 'Retry this shell' })
       const error = new Error('Render hook failed')
