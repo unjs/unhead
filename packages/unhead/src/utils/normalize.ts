@@ -94,7 +94,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
         continue
       const value = attrs[name]
       if (value !== undefined) {
-        tag.props[key] = value === true && (key === 'class' || key === 'style') ? '' : value
+        tag.props[key] = value === null ? false : value === true && (key === 'class' || key === 'style') ? '' : value
         encoding[key] = 'text'
       }
     }

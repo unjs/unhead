@@ -53,6 +53,11 @@ describe('literal attribute input', () => {
     expect(script.hasAttribute('style')).toBe(false)
   })
 
+  it.each([false, null, undefined])('keeps marker meta when literal content is %j', (content) => {
+    const document = documentFor(render({ meta: [{ attrs: { name: 'marker', content } }] }).headTags)
+    expect(document.querySelector('meta[name="marker"]')?.outerHTML).toBe('<meta name="marker">')
+  })
+
   it.each(['htmlAttrs', 'bodyAttrs'] as const)('carries each winning attribute encoding through %s merges', (tag) => {
     const head = createHead({ disableDefaults: true })
     head.push({ [tag]: { 'data-legacy': '&copy;', 'data-replaced': '&copy;' } })
