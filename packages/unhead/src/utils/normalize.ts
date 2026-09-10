@@ -6,7 +6,7 @@ import { isUnsafeKey } from './unsafeKey'
 
 function splitStyleDeclarations(value: string): string[] {
   const declarations: string[] = []
-  let start = 0
+  let declaration = ''
   let depth = 0
   let quote = ''
   let escaped = false
@@ -18,6 +18,7 @@ function splitStyleDeclarations(value: string): string[] {
         comment = false
         i++
       }
+      continue
     }
     else if (escaped) {
       escaped = false
@@ -32,6 +33,7 @@ function splitStyleDeclarations(value: string): string[] {
     else if (char === '/' && value[i + 1] === '*') {
       comment = true
       i++
+      continue
     }
     else if (char === '"' || char === '\'') {
       quote = char
@@ -43,11 +45,13 @@ function splitStyleDeclarations(value: string): string[] {
       depth = Math.max(0, depth - 1)
     }
     else if (char === ';' && depth === 0) {
-      declarations.push(value.slice(start, i))
-      start = i + 1
+      declarations.push(declaration)
+      declaration = ''
+      continue
     }
+    declaration += char
   }
-  declarations.push(value.slice(start))
+  declarations.push(declaration)
   return declarations
 }
 
@@ -106,8 +110,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     if (value === null) {
       tag.props[key] = null as any
     }
-    else if (prop === 'class' || prop === 'style') {
-      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
+    else if (key === 'class' || key === 'style') {
+      tag.props[key] = prop !== key && (typeof value === 'string' || value === true)
+        ? value === true ? '' : value
+        : normalizeStyleClassProps(key, value) as any
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {

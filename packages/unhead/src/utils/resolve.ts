@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
-import { normalizeEntryToTags } from './normalize'
+import { normalizeEntryToTags, normalizeStyleClassProps } from './normalize'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -87,10 +87,17 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     if (strategy === 'merge') {
       const props = { ...prev.props }
       for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        if (p === 'style' || p === 'class') {
+          const previous = typeof prev.props[p] === 'string' ? normalizeStyleClassProps(p, prev.props[p]) : prev.props[p]
+          const incoming = typeof next.props[p] === 'string' ? normalizeStyleClassProps(p, next.props[p]) : next.props[p]
+          // @ts-expect-error class and style use normalized containers at this boundary
+          props[p] = p === 'style'
+            ? new Map([...(previous || []) as Map<string, string>, ...(incoming || []) as Map<string, string>])
+            : new Set([...(previous || []) as Set<string>, ...(incoming || []) as Set<string>])
+        }
+        else {
+          props[p] = next.props[p]
+        }
       }
       ctx.tagMap.set(k, { ...next, props })
     }
