@@ -15,6 +15,7 @@ function freeze<T>(value: T): T {
 
 export const descriptors = freeze<HtmlTagDescriptor[]>([
   { tag: 'base', attrs: { href: 'https://default.test/', target: '_self' } },
+  { tag: 'link', attrs: { id: 'fixture-stylesheet', rel: 'stylesheet', href: '/assets/fixture.css' }, injectTo: 'head' },
   { tag: 'meta', attrs: { name: 'description', content: 'Default & descriptor' }, injectTo: 'head' },
   {
     tag: 'script',

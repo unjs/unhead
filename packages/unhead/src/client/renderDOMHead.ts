@@ -169,10 +169,23 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
+        if (k === 'class' || k === 'style') {
+          const rawKey = `${id}:raw-attr:${k}`
+          if (typeof v === 'string') {
+            if ($el.getAttribute(k) !== v)
+              $el.setAttribute(k, v)
+            track(rawKey, () => {
+              if ($el.getAttribute(k) === v)
+                $el.removeAttribute(k)
+            }, true)
+          }
+          else if (previous[rawKey]) {
+            previous[rawKey]()
+            delete previous[rawKey]
+          }
+        }
         if (k === 'class') {
           const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
-          if (typeof v === 'string' && $el.getAttribute(k) !== v)
-            $el.setAttribute(k, v)
           let hasClasses = false
           for (const c of classes as Iterable<string>) {
             hasClasses = true
@@ -190,8 +203,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         else if (k === 'style') {
           const $style = ($el as HTMLElement).style
-          if (typeof v === 'string' && $el.getAttribute(k) !== v)
-            $el.setAttribute(k, v)
           let hasStyles = false
           if (typeof v === 'string') {
             for (let i = 0; i < $style.length; i++) {
@@ -252,6 +263,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
       const tracked = new Set(renderState._e.values())
+      const pendingIds = new Set(pending.map(ctx => ctx.id))
       for (const el of [...dom.body.children, ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
@@ -260,12 +272,19 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         for (const name of el.getAttributeNames())
           attrs[name] = el.getAttribute(name)
         const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, { attrs, innerHTML: el.innerHTML })
-        next.key = el.getAttribute('data-hid') || undefined
-        const dedupe = dedupeKey(next) || hashTag(next)
+        let dedupe = dedupeKey(next) || hashTag(next)
         let k = dedupe
         let c = 1
         while (renderState._e.has(k))
           k = `${dedupe}:${c++}`
+        if (!pendingIds.has(k) && attrs['data-hid']) {
+          next.key = attrs['data-hid']
+          dedupe = dedupeKey(next) || hashTag(next)
+          k = dedupe
+          c = 1
+          while (renderState._e.has(k))
+            k = `${dedupe}:${c++}`
+        }
         renderState._e.set(k, el)
       }
     }

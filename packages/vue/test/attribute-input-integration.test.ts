@@ -23,6 +23,7 @@ beforeAll(async () => {
     await writeFile(resolve(outDir, 'index.html'), html.replace('</body>', '<script src="/client.js"></script></body>'))
     await mkdir(resolve(outDir, 'assets'), { recursive: true })
     await writeFile(resolve(outDir, 'assets/entry.js'), 'export {}\n')
+    await writeFile(resolve(outDir, 'assets/fixture.css'), '#app h1 { color: rgb(12, 34, 56); }\n')
   }
 }, 30_000)
 
@@ -72,6 +73,7 @@ describe('vue attribute input integration', () => {
       expect(module.getAttribute('class')).toBe('first  second')
       expect(module.getAttribute('style')).toBe('--url: url(https://example.test/a;b);  color: red')
       expect(document.querySelector('#fixture-preload')?.getAttribute('href')).toBe(expectedURL)
+      expect(document.querySelector('#fixture-stylesheet')?.getAttribute('href')).toBe(new URL('/assets/fixture.css', request.baseURL).href)
       expect(document.querySelector('#fixture-preload')?.hasAttribute('crossorigin')).toBe(true)
       expect(document.querySelector('base')?.getAttribute('href')).toBe(request.baseURL)
       expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
@@ -101,7 +103,7 @@ describe('vue attribute input integration', () => {
     const dom = new JSDOM(await renderFixture(requests[0]!), { runScripts: 'outside-only', virtualConsole })
     try {
       const { document } = dom.window
-      const selectors = ['#fixture-module', '#fixture-preload', '#body-open', '#body-close', '#component-data', 'meta[name="description"]']
+      const selectors = ['#fixture-stylesheet', '#fixture-module', '#fixture-preload', '#body-open', '#body-close', '#component-data', 'meta[name="description"]']
       const nodes = selectors.map(selector => document.querySelector(selector))
       const originalApp = document.querySelector('#app main')
       dom.window.eval(client)
