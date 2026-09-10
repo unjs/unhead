@@ -19,7 +19,7 @@ export function propsToString(props: Record<string, any>, encoding?: Record<stri
       continue
 
     let value = props[key]
-    if (value === false || value == null)
+    if (value === false || value === null)
       continue
 
     // class (set) and style (map)

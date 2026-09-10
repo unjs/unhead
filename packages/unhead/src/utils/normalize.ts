@@ -121,7 +121,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
-  const hasAttrs = input.attrs && typeof input.attrs === 'object'
+  const hasAttrs = input?.attrs && typeof input.attrs === 'object'
   // Empty author meta input removes an earlier value. Literal attributes may describe marker tags.
   if (tag.tag === 'meta' && !hasAttrs && !hasContent(tag.props.content) && !tag.props['http-equiv'] && !tag.props.charset)
     tag.props.content = null as any

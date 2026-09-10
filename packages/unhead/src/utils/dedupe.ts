@@ -56,7 +56,9 @@ export function hashTag(tag: HeadTag) {
   let separator = ''
   for (const key of keys) {
     let value: unknown = tag.props[key]
-    if (key.startsWith('data-') && value === true)
+    if (value === false || value == null)
+      continue
+    if (value === true)
       value = ''
     if (key === 'class' && value instanceof Set)
       value = [...value].join(' ')

@@ -105,7 +105,10 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
         else
           delete encoding[p]
       }
-      ctx.tagMap.set(k, { ...next, props, _attrEncoding: encoding })
+      const merged = { ...next, props }
+      if (prev._attrEncoding || next._attrEncoding)
+        merged._attrEncoding = encoding
+      ctx.tagMap.set(k, merged)
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))

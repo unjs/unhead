@@ -150,20 +150,20 @@ export type MaybeEventFnHandlers<T> = {
 
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = string | ((title?: string) => string | null) | null | ({ textContent: string | ((title?: string) => string | null) } & SchemaAugmentations['titleTemplate'])
-export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']> | TagAttributes<Base>
+export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']> | ResolvableProperties<TagAttributes<Base>>
 type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
 type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
   ? T extends Events
     ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
     : ResolvableProperties<T & Aug>
   : never
-export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents> | TagAttributes<Link>
-export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']> | TagAttributes<UnheadMeta>
-export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string | TagAttributes<Style & DataKeys>
-export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string | TagAttributes<Script>
-export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string | TagAttributes<Noscript & DataKeys>
-export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']> | TagAttributes<UnheadHtmlAttributes & DataKeys>
-export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> | TagAttributes<UnheadBodyAttributesWithoutEvents & DataKeys & BodyEvents>
+export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents> | ResolvableProperties<TagAttributes<Link>>
+export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']> | ResolvableProperties<TagAttributes<UnheadMeta>>
+export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string | ResolvableProperties<TagAttributes<Style & DataKeys>>
+export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string | ResolvableProperties<TagAttributes<Script>>
+export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string | ResolvableProperties<TagAttributes<Noscript & DataKeys>>
+export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']> | ResolvableProperties<TagAttributes<UnheadHtmlAttributes & DataKeys>>
+export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> | ResolvableProperties<TagAttributes<UnheadBodyAttributesWithoutEvents & DataKeys & BodyEvents>>
 export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | boolean | number | Record<string, string | boolean | number>> & TemplateParamsAugmentations
 
 export interface ResolvableHead {
