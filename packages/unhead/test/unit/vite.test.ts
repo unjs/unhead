@@ -101,16 +101,11 @@ describe('htmlTagsToHead', () => {
     expect(script?.getAttribute('title')).toBe('')
   })
 
-  it('skips unknown tag names without throwing', () => {
+  it('reports unsupported tags before the framework drops them', () => {
     expect(() => htmlTagsToHead([
+      { tag: 'meta', attrs: { name: 'generator', content: 'vite' } },
       { tag: 'div', attrs: { id: 'root' } },
-    ])).not.toThrow()
-
-    const result = htmlTagsToHead([
-      { tag: 'div', attrs: { id: 'root' } },
-      { tag: 'meta', attrs: { name: 'generator', content: 'vite' }, injectTo: 'head' },
-    ])
-    expect(result).toMatchObject({ meta: [{ attrs: { name: 'generator', content: 'vite' } }] })
+    ])).toThrow('Unsupported tag "div"')
   })
 
   it('renders nested children arrays to an inner HTML string', () => {
@@ -491,13 +486,10 @@ describe('htmlTagsToHead', () => {
     expect(headTags).not.toContain('unhead-marker')
   })
 
-  it('skips title descriptors', () => {
-    const result = htmlTagsToHead([
+  it('reports title descriptors that need the framework HTML transform', () => {
+    expect(() => htmlTagsToHead([
       { tag: 'title', children: 'Vite &amp; Unhead' },
-      { tag: 'meta', attrs: { name: 'generator', content: 'vite' } },
-    ])
-    expect(result).not.toHaveProperty('title')
-    expect(result.meta).toHaveLength(1)
+    ])).toThrow('Unsupported tag "title"')
   })
 
   it('keeps the first base values in Vite render order', () => {
@@ -516,15 +508,16 @@ describe('htmlTagsToHead', () => {
     expect(result.base).toMatchObject({ attrs: { href: '/first/', target: '_self' } })
   })
 
-  it('keeps only representable base placement metadata', () => {
-    const prepend = htmlTagsToHead([
+  it('keeps base head-prepend priority', () => {
+    const result = htmlTagsToHead([
       { tag: 'base', attrs: { href: '/prepend/' }, injectTo: 'head-prepend' },
     ])
-    const body = htmlTagsToHead([
-      { tag: 'base', attrs: { href: '/body/' }, injectTo: 'body' },
-    ])
+    expect(result.base).toMatchObject({ tagPriority: 'high', attrs: { href: '/prepend/' } })
+  })
 
-    expect(prepend.base).toMatchObject({ tagPriority: 'high', attrs: { href: '/prepend/' } })
-    expect(body.base).toMatchObject({ attrs: { href: '/body/' } })
+  it.each(['body', 'body-prepend'] as const)('reports unsupported base placement in %s', (injectTo) => {
+    expect(() => htmlTagsToHead([
+      { tag: 'base', attrs: { href: '/body/' }, injectTo },
+    ])).toThrow('Unsupported base placement')
   })
 })

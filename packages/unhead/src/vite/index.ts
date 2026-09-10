@@ -83,17 +83,17 @@ function positionProps(injectTo: HtmlTagDescriptor['injectTo']): { tagPosition?:
  * plugin declared through `useHead()` / `head.push()`.
  *
  * An omitted `injectTo` is treated as `'head-prepend'`, matching Vite's own default.
- * Tag names outside `meta`, `link`, `script`, `style`, `noscript`, and `base`
- * are skipped without throwing.
- * Title descriptors are skipped because `SerializableHead` cannot preserve
- * Vite's RCDATA character-reference semantics.
+ * Unsupported tags and base body placement throw so frameworks can retain their HTML fallback.
+ * Titles require the framework HTML transform to preserve character reference semantics.
  */
 export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
   const head: Record<string, any> = {}
 
   for (const tag of [...tags].sort((a, b) => vitePositionOrder(a) - vitePositionOrder(b))) {
     if (!KNOWN_TAGS.has(tag.tag))
-      continue
+      throw new TypeError(`[unhead/vite] Unsupported tag "${tag.tag}". Keep it in the framework HTML transform.`)
+    if (tag.tag === 'base' && (tag.injectTo === 'body' || tag.injectTo === 'body-prepend'))
+      throw new TypeError(`[unhead/vite] Unsupported base placement "${tag.injectTo}". Keep it in the framework HTML transform.`)
 
     const props = attrsToProps(tag.attrs)
     const position = positionProps(tag.injectTo)
