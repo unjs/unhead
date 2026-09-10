@@ -1,7 +1,6 @@
 import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
 import { escapeHtml } from '../server/util'
-import { TagConfigKeys } from '../utils/const'
 
 export type { HtmlTagDescriptor }
 
@@ -61,17 +60,6 @@ function vitePositionOrder(tag: HtmlTagDescriptor): number {
   }
 }
 
-function withViteAttrs(entry: Record<string, unknown>, attrs: Record<string, string | boolean>): Record<string, unknown> {
-  entry._vite = true
-  for (const key in attrs) {
-    if (TagConfigKeys.has(key) || key === 'style' || key === 'class')
-      entry[key.toUpperCase()] = attrs[key]
-    else
-      entry[key] = attrs[key]
-  }
-  return entry
-}
-
 // Mirrors Vite's own `transformIndexHtml` switch (packages/vite/src/node/plugins/html.ts):
 // only 'body' and 'body-prepend' get their own branch, explicit 'head' is appended as-is,
 // and everything else -- including an omitted `injectTo` -- is treated as 'head-prepend'.
@@ -114,19 +102,19 @@ export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
       const baseProps = normalizeBaseAttrs(props)
       if (!head.base) {
         const basePosition = position.tagPriority ? { tagPriority: position.tagPriority } : {}
-        head.base = withViteAttrs(basePosition, baseProps)
+        head.base = { ...basePosition, attrs: baseProps }
       }
       else {
         for (const key of ['href', 'target'] as const) {
-          if (head.base[key] === undefined && baseProps[key] !== undefined) {
-            head.base[key] = baseProps[key]
+          if (head.base.attrs[key] === undefined && baseProps[key] !== undefined) {
+            head.base.attrs[key] = baseProps[key]
           }
         }
       }
       continue
     }
 
-    const entry = withViteAttrs({ ...position }, props)
+    const entry: Record<string, unknown> = { ...position, attrs: props }
     if (typeof tag.children === 'string')
       entry.innerHTML = tag.children
     else if (Array.isArray(tag.children) && tag.children.length)

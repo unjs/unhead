@@ -18,6 +18,7 @@ export default defineProject({
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
       'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
       'unhead/stream/iife': resolve(__dirname, '../unhead/src/stream/iife.ts'),
+      'unhead/vite': resolve(__dirname, '../unhead/src/vite/index.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/minify': resolve(__dirname, '../unhead/src/minify/index.ts'),

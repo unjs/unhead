@@ -17,6 +17,7 @@
       "unhead/scripts": ["./packages/unhead/src/scripts/index"],
       "unhead/utils": ["./packages/unhead/src/utils/index"],
       "unhead/types": ["./packages/unhead/src/types/index"],
+      "unhead/vite": ["./packages/unhead/src/vite/index"],
       "unhead/validate": ["./packages/unhead/src/validate/index"],
       "unhead/stream/client": ["./packages/unhead/src/stream/client"],
       "unhead/stream/server": ["./packages/unhead/src/stream/server"],

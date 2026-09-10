@@ -43,7 +43,7 @@ describe('htmlTagsToHead', () => {
     const converted = htmlTagsToHead([
       { tag: 'link', attrs: { rel: 'preload', as: 'style', href }, injectTo: 'head-prepend' },
     ])
-    expect(converted.link?.[0]?.href).toBe(href)
+    expect(converted.link?.[0]).toMatchObject({ attrs: { href } })
     head.push(converted)
 
     const { headTags } = renderSSRHead(head)
@@ -84,7 +84,7 @@ describe('htmlTagsToHead', () => {
 
     const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('nonce="true"')
-    expect(headTags).toContain(' title>')
+    expect(headTags).toContain(' title="">')
   })
 
   it('preserves Vite string attributes in the client DOM', () => {
@@ -110,7 +110,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'div', attrs: { id: 'root' } },
       { tag: 'meta', attrs: { name: 'generator', content: 'vite' }, injectTo: 'head' },
     ])
-    expect(result).toMatchObject({ meta: [{ name: 'generator', content: 'vite' }] })
+    expect(result).toMatchObject({ meta: [{ attrs: { name: 'generator', content: 'vite' } }] })
   })
 
   it('renders nested children arrays to an inner HTML string', () => {
@@ -156,7 +156,7 @@ describe('htmlTagsToHead', () => {
     const result = htmlTagsToHead([
       { tag: 'meta', attrs: { content: 'A &copy; B' } },
     ])
-    expect(result.meta?.[0]?.content).toBe('A &copy; B')
+    expect(result.meta?.[0]).toMatchObject({ attrs: { content: 'A &copy; B' } })
 
     const head = createServerHeadWithContext()
     head.push(result)
@@ -180,7 +180,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { target: '_self' } },
       { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
     ])
-    expect(result.base).toMatchObject({ href: '/first/', target: '_self' })
+    expect(result.base).toMatchObject({ attrs: { href: '/first/', target: '_self' } })
   })
 
   it('keeps Vite control-named attrs inert in rendered HTML', () => {
@@ -505,7 +505,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { href: '/head/', target: '_self' }, injectTo: 'head' },
       { tag: 'base', attrs: { href: '/prepend/', target: '_blank' }, injectTo: 'head-prepend' },
     ])
-    expect(result.base).toMatchObject({ href: '/prepend/', target: '_blank' })
+    expect(result.base).toMatchObject({ attrs: { href: '/prepend/', target: '_blank' } })
   })
 
   it('keeps base href and target case-insensitively', () => {
@@ -513,7 +513,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { HREF: '/first/', TARGET: '_self' } },
       { tag: 'base', attrs: { href: '/second/', target: '_blank' } },
     ])
-    expect(result.base).toMatchObject({ href: '/first/', target: '_self' })
+    expect(result.base).toMatchObject({ attrs: { href: '/first/', target: '_self' } })
   })
 
   it('keeps only representable base placement metadata', () => {
@@ -524,7 +524,7 @@ describe('htmlTagsToHead', () => {
       { tag: 'base', attrs: { href: '/body/' }, injectTo: 'body' },
     ])
 
-    expect(prepend.base).toMatchObject({ tagPriority: 'high', href: '/prepend/' })
-    expect(body.base).toMatchObject({ href: '/body/' })
+    expect(prepend.base).toMatchObject({ tagPriority: 'high', attrs: { href: '/prepend/' } })
+    expect(body.base).toMatchObject({ attrs: { href: '/body/' } })
   })
 })

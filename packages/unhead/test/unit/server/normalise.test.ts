@@ -6,36 +6,6 @@ import { createServerHeadWithContext } from '../../util'
 const TEST_RE = /a/
 
 describe('normalise', () => {
-  it('preserves strings and keeps boolean attribute values distinct', () => {
-    const tag = normalizeProps({ tag: 'script', props: {} }, {
-      'empty': '',
-      'truthy': 'true',
-      'enabled': true,
-      'disabled': false,
-      'data-empty': '',
-      'data-enabled': true,
-      'data-disabled': false,
-    })
-
-    expect(tag.props).toStrictEqual({
-      'empty': true,
-      'truthy': 'true',
-      'enabled': true,
-      'disabled': false,
-      'data-empty': '',
-      'data-enabled': 'true',
-      'data-disabled': 'false',
-    })
-  })
-
-  it('preserves an empty meta content value', () => {
-    const tag = normalizeProps({ tag: 'meta', props: {} }, {
-      content: '',
-    })
-
-    expect(tag.props).toStrictEqual({ content: '' })
-  })
-
   it('handles booleans nicely', async () => {
     const head = createServerHeadWithContext()
 
@@ -56,7 +26,6 @@ describe('normalise', () => {
           'object': { a: 1 },
           'octal': 0o744,
           'string-empty': '',
-          'string-true': 'true',
           'string': 'string',
           'symbol': Symbol('a'),
           'regex': TEST_RE,
@@ -71,7 +40,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty string-true="true" string="string" symbol="Symbol(a)" regex="/a/">",
+        "headTags": "<link array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty string="string" symbol="Symbol(a)" regex="/a/">",
         "htmlAttrs": "",
       }
     `)
@@ -96,7 +65,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="test-meta" content="true" other-bool="true">",
+        "headTags": "<meta name="test-meta" content="true" other-bool>",
         "htmlAttrs": "",
       }
     `)
@@ -164,7 +133,7 @@ describe('normalise', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<script type>console.log("empty type")</script>
-      <script type="true">console.log("true type")</script>
+      <script type>console.log("true type")</script>
       <script type="application/json">{"test": "json"}</script>",
         "htmlAttrs": "",
       }

@@ -1,5 +1,5 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
-import { HasElementTags, TagConfigKeys } from '../utils/const'
+import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
@@ -254,11 +254,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
           continue
-        const props: Record<string, any> = { innerHTML: el.innerHTML }
-        // DOM attribute names never supply Unhead controls.
-        for (const n of el.getAttributeNames())
-          props[TagConfigKeys.has(n) ? n.toUpperCase() : n] = el.getAttribute(n)
-        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
+        const attrs: Record<string, string | null> = {}
+        for (const name of el.getAttributeNames())
+          attrs[name] = el.getAttribute(name)
+        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, { attrs, innerHTML: el.innerHTML })
         next.key = el.getAttribute('data-hid') || undefined
         const dedupe = dedupeKey(next) || hashTag(next)
         let k = dedupe

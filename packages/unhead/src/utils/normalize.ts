@@ -1,70 +1,8 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
-import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
+import { DupeableTags, hasContent, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
-
-function splitStyleDeclarations(value: string): string[] {
-  const declarations: string[] = []
-  let declaration = ''
-  let hasProperty = false
-  let depth = 0
-  let quote = ''
-  let escaped = false
-  let comment = false
-  for (let i = 0; i < value.length; i++) {
-    const char = value[i]
-    if (comment) {
-      if (hasProperty)
-        declaration += char
-      if (char === '*' && value[i + 1] === '/') {
-        if (hasProperty)
-          declaration += '/'
-        comment = false
-        i++
-      }
-      continue
-    }
-    else if (escaped) {
-      escaped = false
-    }
-    else if (char === '\\') {
-      escaped = true
-    }
-    else if (quote) {
-      if (char === quote)
-        quote = ''
-    }
-    else if (char === '/' && value[i + 1] === '*') {
-      comment = true
-      if (hasProperty)
-        declaration += '/*'
-      i++
-      continue
-    }
-    else if (char === '"' || char === '\'') {
-      quote = char
-    }
-    else if (char === '(' || char === '[' || char === '{') {
-      depth++
-    }
-    else if (char === ')' || char === ']' || char === '}') {
-      depth = Math.max(0, depth - 1)
-    }
-    else if (char === ':' && depth === 0) {
-      hasProperty = true
-    }
-    else if (char === ';' && depth === 0) {
-      declarations.push(declaration)
-      declaration = ''
-      hasProperty = false
-      continue
-    }
-    declaration += char
-  }
-  declarations.push(declaration)
-  return declarations
-}
 
 export function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -84,7 +22,7 @@ export function normalizeStyleClassProps(
     }
   }
   if (typeof value === 'string') {
-    (isStyle ? splitStyleDeclarations(value) : [value]).forEach(add)
+    (isStyle ? value.split(';') : [value]).forEach(add)
   }
   else if (Array.isArray(value)) {
     value.forEach(add)
@@ -107,9 +45,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
-  const isVite = input._vite === true
 
   for (const prop in input) {
+    if (prop === 'attrs' && input.attrs && typeof input.attrs === 'object')
+      continue
     if (isUnsafeKey(prop))
       continue
     const isData = prop.startsWith('data-')
@@ -121,10 +60,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     if (value === null) {
       tag.props[key] = null as any
     }
-    else if (key === 'class' || key === 'style') {
-      tag.props[key] = prop !== key && (typeof value === 'string' || value === true)
-        ? value === true ? '' : value
-        : normalizeStyleClassProps(key, value) as any
+    else if (prop === 'class' || prop === 'style') {
+      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
@@ -141,10 +78,25 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (value !== undefined) {
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
-      const preserveEmpty = isData || (tag.tag === 'meta' && key === 'content')
-      tag.props[key] = value === '' && !preserveEmpty
-        ? true
-        : isData && typeof value === 'boolean' && !isVite ? String(value) : value
+      const str = String(value)
+      const isMeta = tag.tag === 'meta' && key === 'content'
+      tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
+    }
+  }
+  const attrs = input.attrs
+  if (attrs && typeof attrs === 'object') {
+    const encoding = tag._attrEncoding ||= {}
+    for (const name in attrs) {
+      if (!Object.hasOwn(attrs, name))
+        continue
+      const key = name.toLowerCase()
+      if (isUnsafeKey(key) || !key || INVALID_ATTR_NAME_RE.test(key))
+        continue
+      const value = attrs[name]
+      if (value !== undefined) {
+        tag.props[key] = value === true && (key === 'class' || key === 'style') ? '' : value
+        encoding[key] = 'text'
+      }
     }
   }
   return tag
@@ -169,6 +121,10 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
+  const hasAttrs = input.attrs && typeof input.attrs === 'object'
+  // Empty author meta input removes an earlier value. Literal attributes may describe marker tags.
+  if (tag.tag === 'meta' && !hasAttrs && !hasContent(tag.props.content) && !tag.props['http-equiv'] && !tag.props.charset)
+    tag.props.content = null as any
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
@@ -178,7 +134,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   if (Array.isArray(tag.props.content)) {
     const tags: HeadTag[] = []
     for (const content of tag.props.content) {
-      tags.push({ ...tag, props: { ...tag.props, content } })
+      tags.push({ ...tag, props: { ...tag.props, content: !hasAttrs && !hasContent(content) ? null : content } })
     }
     return tags
   }

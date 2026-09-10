@@ -1,15 +1,17 @@
 import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 
-const ATTRIBUTE_ESCAPE_RE = /[&"]/g
+const DOUBLE_QUOTE_RE = /"/g
 
 /* @__PURE__ */
-function encodeAttribute(value: string) {
-  const s = typeof value === 'string' ? value : String(value)
-  return s.replace(ATTRIBUTE_ESCAPE_RE, character => character === '&' ? '&amp;' : '&quot;')
+function encodeAttribute(value: string, literal: boolean) {
+  let s = typeof value === 'string' ? value : String(value)
+  if (literal)
+    s = s.replace(/&/g, '&amp;')
+  return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
 }
 
 /* @__PURE__ */
-export function propsToString(props: Record<string, any>) {
+export function propsToString(props: Record<string, any>, encoding?: Record<string, 'text'>) {
   let attrs = ''
 
   for (const key in props) {
@@ -17,6 +19,8 @@ export function propsToString(props: Record<string, any>) {
       continue
 
     let value = props[key]
+    if (value === false || value == null)
+      continue
 
     // class (set) and style (map)
     if (typeof value !== 'string') {
@@ -33,7 +37,7 @@ export function propsToString(props: Record<string, any>) {
     }
 
     if (value !== false && value !== null) {
-      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value)}"`
+      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value, encoding?.[key] === 'text')}"`
     }
   }
 

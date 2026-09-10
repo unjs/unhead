@@ -75,6 +75,11 @@ export interface TagPriority {
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
+/** Literal HTML attributes, separate from Unhead controls. */
+export type TagAttributes<T = unknown> = Partial<T> & TagPriority & TagPosition & StringInnerContent & ResolvesDuplicates & ProcessesTemplateParams & {
+  attrs: Record<string, string | boolean | null | undefined>
+}
+
 export type TagUserProperties = ResolvableProperties<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
 export type TagKey = keyof ResolvableHead | InternalTagKey
@@ -126,10 +131,10 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _source?: string
   /**
-   * Marks a tag converted from a Vite HTML descriptor.
+   * Records literal attribute values that need HTML escaping at serialization.
    * @internal
    */
-  _vite?: true
+  _attrEncoding?: Record<string, 'text'>
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

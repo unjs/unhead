@@ -1,6 +1,5 @@
 import type { HeadTag } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
-import { normalizeStyleClassProps } from './normalize'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
@@ -59,13 +58,10 @@ export function hashTag(tag: HeadTag) {
     let value: unknown = tag.props[key]
     if (key.startsWith('data-') && value === true)
       value = ''
-    if ((key === 'class' || key === 'style') && value != null) {
-      const normalized = typeof value === 'string' ? normalizeStyleClassProps(key, value) : value
-      if (key === 'class' && normalized instanceof Set)
-        value = [...normalized].sort().join(' ')
-      else if (key === 'style' && normalized instanceof Map)
-        value = [...normalized].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([k, v]) => `${k}:${v}`).join(';')
-    }
+    if (key === 'class' && value instanceof Set)
+      value = [...value].join(' ')
+    else if (key === 'style' && value instanceof Map)
+      value = [...value].map(([k, v]) => `${k}:${v}`).join(';')
     hash += `${separator}${key}:${String(value)}`
     separator = ','
   }

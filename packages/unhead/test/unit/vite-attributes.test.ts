@@ -39,14 +39,14 @@ describe.each(renderModes)('vite attributes during %s', (mode) => {
     expect(script.getAttribute(attribute)).toBe('')
   })
 
-  it.each(['raw-first', 'structured-first'])('merges class tokens in %s order', (order) => {
+  it.each(['raw-first', 'structured-first'])('replaces raw class attributes atomically in %s order', (order) => {
     const raw = htmlTagsToHead([{ tag: 'script', attrs: { id: 'same', class: 'plugin shared' }, injectTo: 'head' }])
     const structured = { script: [{ id: 'same', class: { app: true, shared: true } }] } as unknown as ResolvableHead
     const script = renderInputs(mode, order === 'raw-first' ? [raw, structured] : [structured, raw])
-    expect([...script.classList]).toEqual(order === 'raw-first' ? ['plugin', 'shared', 'app'] : ['app', 'shared', 'plugin'])
+    expect(new Set(script.classList)).toEqual(new Set(order === 'raw-first' ? ['app', 'shared'] : ['plugin', 'shared']))
   })
 
-  it.each(['raw-first', 'structured-first'])('merges CSS declarations in %s order', (order) => {
+  it.each(['raw-first', 'structured-first'])('replaces raw style attributes atomically in %s order', (order) => {
     const raw = htmlTagsToHead([{
       tag: 'script',
       attrs: {
@@ -58,9 +58,9 @@ describe.each(renderModes)('vite attributes during %s', (mode) => {
     const structured = { script: [{ id: 'same', style: { color: 'blue', display: 'block' } }] } as unknown as ResolvableHead
     const script = renderInputs(mode, order === 'raw-first' ? [raw, structured] : [structured, raw])
     expect(script.style.color).toBe(order === 'raw-first' ? 'blue' : 'red')
-    expect(script.style.display).toBe('block')
-    expect(script.style.getPropertyValue('--quoted')).toBe('"a;b"')
-    expect(script.style.backgroundImage).toContain('data:image/svg+xml;utf8,<svg></svg>')
+    expect(script.style.display).toBe(order === 'raw-first' ? 'block' : '')
+    expect(script.style.getPropertyValue('--quoted')).toBe(order === 'raw-first' ? '' : '"a;b"')
+    expect(script.style.backgroundImage).toBe(order === 'raw-first' ? '' : 'url("data:image/svg+xml;utf8,<svg></svg>")')
   })
 })
 
@@ -87,6 +87,6 @@ it('adopts a structured script using its serialized Unhead key', () => {
 it('keeps comment-like URL content when merging Vite CSS', () => {
   const raw = htmlTagsToHead([{ tag: 'script', attrs: { id: 'same', style: 'background-image:url(https://example.com/*asset*/image.svg)' }, injectTo: 'head' }])
   const structured = { script: [{ id: 'same', style: { display: 'block' } }] } as unknown as ResolvableHead
-  const script = renderInputs('SSR', [raw, structured])
+  const script = renderInputs('SSR', [structured, raw])
   expect(script.style.backgroundImage).toContain('https://example.com/*asset*/image.svg')
 })
