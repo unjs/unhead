@@ -167,6 +167,11 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    */
   streamKey?: string
   /**
+   * Request CSP nonce for the bootstrap and Unhead patch scripts.
+   * Apply the same nonce to application scripts and the response CSP header.
+   */
+  nonce?: string
+  /**
    * Set when the driver writes streamed body tags before `</body>`.
    *
    * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
@@ -313,7 +318,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    *
    * @internal
    */
-  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
+  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
 }
 
 export interface DomState {

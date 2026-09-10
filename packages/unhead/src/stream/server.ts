@@ -81,7 +81,7 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, writesBodyTags, ...rest } = options
+  const { streamKey, writesBodyTags, nonce, ...rest } = options
   const parsedStreamKey = streamKey === undefined ? undefined : parseStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
@@ -89,6 +89,8 @@ export function createStreamableHead<T = ResolvableHead>(
   })
   if (writesBodyTags)
     streamState(head).writesBodyTags = true
+  if (nonce)
+    streamState(head).nonce = nonce
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -119,10 +121,14 @@ function getStreamKey(head: Unhead<any>): string {
  */
 export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, nonce?: string): string {
   const parsedStreamKey = parseStreamKey(streamKey)
-  const nonceAttr = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : ''
+  const nonceAttr = renderNonceAttribute(nonce)
   // `inline` mode runs the client IIFE above this script, so never clobber an
   // already-installed queue. Doing so drops every streamed patch.
   return `<script${nonceAttr}>window.${parsedStreamKey}||(window.${parsedStreamKey}={_q:[],push(e){this._q.push(e)}})</script>`
+}
+
+function renderNonceAttribute(nonce?: string): string {
+  return nonce ? ` nonce="${nonce.replace(AMP_RE, '&amp;').replace(/"/g, '&quot;')}"` : ''
 }
 
 /**
@@ -184,8 +190,9 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
 function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
-    headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
+    headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
     bodyAttrs: ssr.bodyAttrs,
+    bodyTagsOpen: ssr.bodyTagsOpen,
     bodyTags: ssr.bodyTags,
   })
 }
@@ -522,7 +529,7 @@ export function wrapStream(
     if (!chunk)
       return ''
     // A template with no `</head>` never received the bootstrap script.
-    return `<script>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
+    return `<script${renderNonceAttribute(head._stream?.nonce)}>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
   })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
@@ -755,8 +762,9 @@ export function prepareStreamingTemplate(
   if (layout) {
     const shell = applyHeadToHtml(layout.shellTemplate, {
       htmlAttrs: ssr.htmlAttrs,
-      headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
+      headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
+      bodyTagsOpen: ssr.bodyTagsOpen,
       bodyTags: '',
     }).replace('</body></html>', '')
 
