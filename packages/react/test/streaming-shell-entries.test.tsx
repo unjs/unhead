@@ -1,4 +1,5 @@
 // @vitest-environment node
+import type { ReactStreamableHeadContext } from '../src/stream/server'
 import { PassThrough } from 'node:stream'
 import { JSDOM } from 'jsdom'
 import React, { Suspense, use } from 'react'
@@ -104,10 +105,10 @@ describe('react shell entries', () => {
   })
 
   it.each([
-    ['renderShell', (head: ReturnType<typeof createStreamableHead>['head']) => renderShell(head).headTags],
-    ['renderSSRHeadShell', (head: ReturnType<typeof createStreamableHead>['head']) => renderSSRHeadShell(head, TEMPLATE)],
-    ['prepareStreamingTemplate', (head: ReturnType<typeof createStreamableHead>['head']) => prepareStreamingTemplate(head, TEMPLATE).shell],
-    ['prepareStreamingTemplate without body', (head: ReturnType<typeof createStreamableHead>['head']) => prepareStreamingTemplate(head, '<html><head></head>').shell],
+    ['renderShell', (head: ReactStreamableHeadContext['head']) => renderShell(head).headTags],
+    ['renderSSRHeadShell', (head: ReactStreamableHeadContext['head']) => renderSSRHeadShell(head, TEMPLATE)],
+    ['prepareStreamingTemplate', (head: ReactStreamableHeadContext['head']) => prepareStreamingTemplate(head, TEMPLATE).shell],
+    ['prepareStreamingTemplate without body', (head: ReactStreamableHeadContext['head']) => prepareStreamingTemplate(head, '<html><head></head>').shell],
   ] as const)('starts HeadStream updates after %s captures the shell', (_, captureShell) => {
     const { head } = createStreamableHead()
     head.push({ title: 'Initial page' })
