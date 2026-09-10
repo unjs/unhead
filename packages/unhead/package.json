@@ -176,6 +176,7 @@
     }
   },
   "dependencies": {
+    "entities": "catalog:",
     "hookable": "catalog:",
     "unplugin": "catalog:"
   },

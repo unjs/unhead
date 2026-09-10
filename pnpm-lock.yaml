@@ -99,6 +99,9 @@ catalogs:
     devalue:
       specifier: ^5.9.0
       version: 5.9.0
+    entities:
+      specifier: ^7.0.1
+      version: 7.0.1
     eslint:
       specifier: ^10.8.1
       version: 10.8.1
@@ -1082,6 +1085,9 @@ importers:
 
   packages/unhead:
     dependencies:
+      entities:
+        specifier: 'catalog:'
+        version: 7.0.1
       hookable:
         specifier: 'catalog:'
         version: 6.1.1

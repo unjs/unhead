@@ -1,4 +1,5 @@
 import type { SerializableHead } from '../types'
+import { decodeHTMLAttribute } from 'entities/decode'
 import { hasOwn } from '../utils/hasOwn'
 
 const TAG_HTML = 0
@@ -188,7 +189,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
     // Browsers keep the first duplicate attribute. Preserve that behavior so
     // template extraction cannot rewrite inert tags into active ones.
     if (!hasOwn(result, attrName))
-      result[attrName] = value
+      result[attrName] = decodeHTMLAttribute(value)
   }
   const len = attrStr.length
   let i = 0

@@ -4,8 +4,8 @@ import { DOCUMENT } from '@angular/common'
 import { createEnvironmentInjector, Injector } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
 import { UnheadInjectionToken } from '@unhead/angular'
+import { provideServerHead } from '@unhead/angular/server'
 import { afterEach, describe, expect, it } from 'vitest'
-import { provideServerHead } from './server'
 
 interface SSRRequest {
   document: Document
@@ -55,6 +55,45 @@ describe('provideServerHead', () => {
   afterEach(() => {
     while (injectors.length)
       injectors.pop()!.destroy()
+  })
+
+  it('preserves attribute values through server DOM updates', async () => {
+    const request = createRequest()
+    request.head.push({
+      htmlAttrs: { 'data-owner': 'A&B', 'data-literal': '&quot;', 'data-quote': 'A "quote"' },
+      bodyAttrs: { 'data-owner': 'C&D', 'data-literal': '&#38;' },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('data-owner')).toBe('A&B')
+    expect(request.document.documentElement.getAttribute('data-literal')).toBe('&quot;')
+    expect(request.document.documentElement.getAttribute('data-quote')).toBe('A "quote"')
+    expect(request.document.body.getAttribute('data-owner')).toBe('C&D')
+    expect(request.document.body.getAttribute('data-literal')).toBe('&#38;')
+  })
+
+  it('preserves template attributes and merges complete class and style values', async () => {
+    const request = createRequest()
+    request.document.documentElement.setAttribute('data-owner', 'A&B')
+    request.document.body.className = 'template'
+    request.document.body.style.color = 'red'
+    request.head.push({
+      bodyAttrs: {
+        'class': 'app',
+        'style': 'background-image:url("https://example.com/image?a=1&b=2")',
+        'data-owner': 'C&D',
+      },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('data-owner')).toBe('A&B')
+    expect(request.document.body.classList.contains('template')).toBe(true)
+    expect(request.document.body.classList.contains('app')).toBe(true)
+    expect(request.document.body.style.color).toBe('red')
+    expect(request.document.body.style.backgroundImage).toBe('url("https://example.com/image?a=1&b=2")')
+    expect(request.document.body.getAttribute('data-owner')).toBe('C&D')
   })
 
   it('creates an isolated head for each sequential server injector render', async () => {
