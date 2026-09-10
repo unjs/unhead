@@ -6,6 +6,24 @@ import { htmlTagsToHead } from 'unhead/vite'
 import { describe, expect, it } from 'vitest'
 
 describe('attribute input review regressions', () => {
+  it.each([null, false])('ignores omitted meta names when deduplicating properties: %j', (name) => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ meta: [
+      { attrs: { name, property: 'og:title', content: 'Title' } },
+      { attrs: { name, property: 'og:description', content: 'Description' } },
+    ] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta property="og:title" content="Title">\n<meta property="og:description" content="Description">')
+  })
+
+  it('deduplicates bare and empty meta names with the same HTML identity', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ meta: [{ attrs: { name: true, content: 'Old' } }] })
+    head.push({ meta: [{ attrs: { name: '', content: 'New' } }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="" content="New">')
+  })
+
   it.each([false, true])('adopts data-hid attributes with explicit key %j', (keyed) => {
     const input = htmlTagsToHead([{ tag: 'script', attrs: { 'src': '/asset.js', 'data-hid': 'plugin-value' } }])
     if (keyed)
