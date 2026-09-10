@@ -83,3 +83,10 @@ it('adopts a structured script using its serialized Unhead key', () => {
   const script = renderInputs('hydration', [{ script: [{ key: 'entry', src: '/entry.js' }] }])
   expect(script.getAttribute('data-hid')).toBe('entry')
 })
+
+it('keeps comment-like URL content when merging Vite CSS', () => {
+  const raw = htmlTagsToHead([{ tag: 'script', attrs: { id: 'same', style: 'background-image:url(https://example.com/*asset*/image.svg)' }, injectTo: 'head' }])
+  const structured = { script: [{ id: 'same', style: { display: 'block' } }] } as unknown as ResolvableHead
+  const script = renderInputs('SSR', [raw, structured])
+  expect(script.style.backgroundImage).toContain('https://example.com/*asset*/image.svg')
+})

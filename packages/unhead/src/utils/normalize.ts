@@ -7,6 +7,7 @@ import { isUnsafeKey } from './unsafeKey'
 function splitStyleDeclarations(value: string): string[] {
   const declarations: string[] = []
   let declaration = ''
+  let hasProperty = false
   let depth = 0
   let quote = ''
   let escaped = false
@@ -14,7 +15,11 @@ function splitStyleDeclarations(value: string): string[] {
   for (let i = 0; i < value.length; i++) {
     const char = value[i]
     if (comment) {
+      if (hasProperty)
+        declaration += char
       if (char === '*' && value[i + 1] === '/') {
+        if (hasProperty)
+          declaration += '/'
         comment = false
         i++
       }
@@ -32,6 +37,8 @@ function splitStyleDeclarations(value: string): string[] {
     }
     else if (char === '/' && value[i + 1] === '*') {
       comment = true
+      if (hasProperty)
+        declaration += '/*'
       i++
       continue
     }
@@ -44,9 +51,13 @@ function splitStyleDeclarations(value: string): string[] {
     else if (char === ')' || char === ']' || char === '}') {
       depth = Math.max(0, depth - 1)
     }
+    else if (char === ':' && depth === 0) {
+      hasProperty = true
+    }
     else if (char === ';' && depth === 0) {
       declarations.push(declaration)
       declaration = ''
+      hasProperty = false
       continue
     }
     declaration += char
