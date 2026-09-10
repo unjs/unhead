@@ -188,7 +188,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(calls[0].fileName).toMatch(/^unhead-streaming\.[0-9a-f]{8}\.js$/)
   })
 
-  it('async mode uses a string returned by experimental.renderBuiltUrl as-is', async () => {
+  it('async mode uses a URL returned by experimental.renderBuiltUrl', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
     const renderBuiltUrl = vi.fn((filename: string) => `https://cdn.example.com/${filename}`)
@@ -207,6 +207,49 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(renderBuiltUrl).toHaveBeenCalledWith(emittedFileName, { type: 'asset', hostId: 'index.html', hostType: 'html', ssr: false })
     expect(result[0].attrs.src).toBe(`https://cdn.example.com/${emittedFileName}`)
     expect(result[0].attrs['data-unhead-asset']).toBeUndefined()
+  })
+
+  it.each([
+    ['https://cdn.example.com/releases/100%/stream.js', 'https://cdn.example.com/releases/100%25/stream.js'],
+    ['https://cdn.example.com/v%20literal/stream.js?token=100%25&path=a%2Fb#v%20literal', 'https://cdn.example.com/v%2520literal/stream.js?token=100%25&path=a%2Fb#v%20literal'],
+    ['/my assets/stream.js?token=100%25#client', '/my%20assets/stream.js?token=100%25#client'],
+    ['/100%/stream.js#client?token=100%', '/100%25/stream.js#client?token=100%'],
+    ['data:text/javascript,globalThis.ready=100%25', 'data:text/javascript,globalThis.ready=100%25'],
+  ])('async mode encodes a decoded renderBuiltUrl path: %s', async (url, expected) => {
+    const hookThis = { emitFile: fakeEmitFile().emitFile }
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      {
+        command: 'build',
+        base: '/',
+        build: { assetsDir: 'assets' },
+        experimental: { renderBuiltUrl: () => url },
+      },
+      hookThis,
+    )
+
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', { path: '/index.html' })
+
+    expect(result[0].attrs.src).toBe(expected)
+  })
+
+  it('async mode preserves an encoded base when renderBuiltUrl returns no URL', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const plugin = await buildPlugin(
+      { framework: '@unhead/test', mode: 'async' },
+      {
+        command: 'build',
+        base: '/v%20literal/',
+        build: { assetsDir: 'assets' },
+        experimental: { renderBuiltUrl: () => undefined },
+      },
+      hookThis,
+    )
+
+    const result = plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>', { path: '/index.html' })
+
+    expect(result[0].attrs.src).toBe(`/v%20literal/${calls[0].fileName}`)
   })
 
   it('async mode falls back when experimental.renderBuiltUrl returns an empty string', async () => {
@@ -309,20 +352,32 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(warn).toHaveBeenCalledTimes(1)
   })
 
-  it('module manifest fallback hydrates a configured stream key', async () => {
-    const { calls, emitFile } = fakeEmitFile()
-    const hookThis = { emitFile, warn: vi.fn() }
-    const plugin = await buildPlugin(
-      { framework: '@unhead/test', mode: 'module', streamKey: '__custom__' },
-      { command: 'build', base: '/', build: { assetsDir: 'assets' } },
-      hookThis,
-    )
+  describe.each([
+    ['inline', 'build'],
+    ['async', 'build'],
+    ['module', 'build'],
+    ['async', 'serve'],
+  ] as const)('%s mode during %s', (mode, command) => {
+    it.each(['__custom__', '$$streams'])('hydrates the configured stream key %s', async (streamKey) => {
+      const { calls, emitFile } = fakeEmitFile()
+      const hookThis = { emitFile, warn: vi.fn() }
+      const plugin = await buildPlugin(
+        { framework: '@unhead/test', mode, streamKey },
+        { command, base: '/', build: { assetsDir: 'assets' } },
+        hookThis,
+      )
 
-    plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
-    const runtime = {} as { streamKey?: string }
-    runInNewContext(calls[0].source, { runtime })
+      const [tag] = plugin.vite.transformIndexHtml.handler.call(hookThis, undefined, undefined)
+      const source = mode === 'inline'
+        ? tag.children
+        : command === 'build'
+          ? calls.find(asset => `/${asset.fileName}` === tag.attrs.src).source
+          : callLoad(plugin, callResolve(plugin, tag.attrs.src)).code
+      const runtime = {} as { streamKey?: string }
+      runInNewContext(source, { runtime })
 
-    expect(runtime.streamKey).toBe('__custom__')
+      expect(runtime.streamKey).toBe(streamKey)
+    })
   })
 
   it('module mode keeps the dynamic import descriptor on a normal (non-manifest) render', async () => {

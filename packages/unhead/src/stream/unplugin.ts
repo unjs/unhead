@@ -125,7 +125,7 @@ function configureIifeCode(code: string, streamKey: string): string {
     return code
   if (!IIFE_AUTO_INIT_RE.test(code))
     throw new Error('[unhead] Streaming IIFE auto-init call was not found.')
-  return code.replace(IIFE_AUTO_INIT_RE, `.init({streamKey:${JSON.stringify(streamKey)}});`)
+  return code.replace(IIFE_AUTO_INIT_RE, () => `.init({streamKey:${JSON.stringify(streamKey)}});`)
 }
 
 function buildClientStub(framework: string, streamKey: string, warnOnMissing: boolean): string {
@@ -221,7 +221,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
   // Resolves the `src` for an emitted asset `fileName`, honouring
   // `experimental.renderBuiltUrl` (e.g. Nuxt points it at a CDN via
   // `globalThis.__publicAssetsURL`). That hook can answer three ways:
-  // - a string: an absolute/CDN URL to use as-is.
+  // - a string: a decoded URL whose path needs encoding.
   // - `{ runtime }`: a JS expression, only valid inside emitted JS, not a
   //   static HTML attribute.
   // - `{ relative: true }`: a path relative to the rendering HTML file.
@@ -241,8 +241,12 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     const rawFileNameAttr = unresolvedHost
       ? { 'data-unhead-asset': fileName }
       : undefined
-    if (typeof result === 'string' && result.length > 0)
-      return { src: result, rawFileNameAttr }
+    if (typeof result === 'string' && result.length > 0) {
+      const src = result.startsWith('data:')
+        ? result
+        : result.replace(/^[^?#]+/, path => encodeURI(path))
+      return { src, rawFileNameAttr }
+    }
 
     let relative = state.base === '' || state.base === './'
     if (typeof result === 'object' && typeof result?.relative === 'boolean')
