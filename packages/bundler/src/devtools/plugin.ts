@@ -21,7 +21,7 @@ export function devtoolsPlugin(): HeadPluginInput {
               tag._source = source
           }
         },
-        'tags:resolve': function (ctx: any) {
+        'ssr:render': function (ctx: any) {
           if (!head.ssr)
             return
           // Serialize SSR entries into a payload for the client bridge
@@ -65,12 +65,13 @@ export function devtoolsPlugin(): HeadPluginInput {
               mode: 'server',
             })
           }
-          ctx.tags.push({
+          // Add diagnostics after validation without changing the resolved application tags.
+          ctx.tags = [...ctx.tags, {
             tag: 'script',
             // Escape `<` so a serialized `</script>` cannot close the inline JSON block early
             innerHTML: JSON.stringify({ entries, tags }).replace(/</g, '\\u003C'),
             props: { id: 'unhead:devtools', type: 'application/json' },
-          })
+          }]
         },
       },
     }
