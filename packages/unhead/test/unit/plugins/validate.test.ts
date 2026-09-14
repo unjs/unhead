@@ -1,6 +1,7 @@
 import type { HeadValidationRule, ValidatePluginOptions } from '../../../src/plugins'
 import { renderSSRHead } from '@unhead/ssr'
 import { describe, expect, it, vi } from 'vitest'
+import { defineScript } from '../../../src'
 import { AliasSortingPlugin, TemplateParamsPlugin, ValidatePlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
 
@@ -982,6 +983,29 @@ describe('validatePlugin', () => {
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
     })
+
+    it.each(['application/json', 'application/ld+json', 'importmap', 'speculationrules', ' Application/JSON; charset=utf-8 '])(
+      'does not suggest externalizing inline %s data',
+      (type) => {
+        const { head, rules } = createValidationHead()
+        head.push({
+          script: [defineScript({ id: 'unhead:devtools', type, innerHTML: JSON.stringify({ data: 'a'.repeat(3 * 1024) }) })],
+        })
+        const { headTags } = renderSSRHead(head)
+        expect(headTags).toContain('a'.repeat(3 * 1024))
+        expect(rules.filter(r => r.id === 'inline-script-size')).toEqual([])
+      },
+    )
+
+    it.each(['module', 'text/javascript', 'application/javascript'])(
+      'warns on large inline %s scripts',
+      (type) => {
+        const { head, rules } = createValidationHead()
+        head.push({ script: [defineScript({ type, innerHTML: 'a'.repeat(3 * 1024) })] })
+        renderSSRHead(head)
+        expect(rules.filter(r => r.id === 'inline-script-size')).toHaveLength(1)
+      },
+    )
 
     it('does not warn on small inline script', () => {
       const { head, rules } = createValidationHead()

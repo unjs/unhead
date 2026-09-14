@@ -206,6 +206,7 @@ const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-langua
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
 const JSON_LD_TYPE_RE = /^[\t\n\f\r ]*application\/ld\+json[\t\n\f\r ]*(?:;|$)/i
+const INLINE_DATA_SCRIPT_TYPES = /* @__PURE__ */ new Set(['application/json', 'application/ld+json', 'importmap', 'speculationrules'])
 const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
@@ -527,8 +528,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 report('inline-style-size', `Inline <style> is ${sizeKB.toFixed(1)}KB — exceeds ${styleMaxKB}KB critical CSS budget. Consider moving to an external stylesheet for cacheability.`, 'info', tag)
             }
 
+            // Inline data does not benefit from advice to externalize executable scripts.
             // Inline script size check (2KB threshold)
-            if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)) {
+            if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)
+              && !INLINE_DATA_SCRIPT_TYPES.has(String(props.type || '').split(';', 1)[0]!.trim().toLowerCase())) {
               const content = tag.innerHTML || tag.textContent || ''
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
