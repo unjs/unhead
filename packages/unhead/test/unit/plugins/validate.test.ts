@@ -984,7 +984,21 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
     })
 
-    it.each(['application/json', 'application/ld+json', 'importmap', 'speculationrules', ' Application/JSON; charset=utf-8 '])(
+    it.each([
+      'application/json',
+      'application/ld+json',
+      'importmap',
+      'speculationrules',
+      ' Application/JSON; charset=utf-8 ',
+      'application/custom+json',
+      'text/plain',
+      'text/x-template',
+      'text/javascript; charset=utf-8',
+      'module; charset=utf-8',
+      'text/javascript1.6',
+      '   ',
+      '\u00A0text/javascript\u00A0',
+    ])(
       'does not suggest externalizing inline %s data',
       (type) => {
         const { head, rules } = createValidationHead()
@@ -997,7 +1011,28 @@ describe('validatePlugin', () => {
       },
     )
 
-    it.each(['module', 'text/javascript', 'application/javascript'])(
+    it.each([
+      '',
+      'module',
+      ' MODULE ',
+      '\tTEXT/JAVASCRIPT\n',
+      'application/ecmascript',
+      'application/javascript',
+      'application/x-ecmascript',
+      'application/x-javascript',
+      'text/ecmascript',
+      'text/javascript',
+      'text/javascript1.0',
+      'text/javascript1.1',
+      'text/javascript1.2',
+      'text/javascript1.3',
+      'text/javascript1.4',
+      'text/javascript1.5',
+      'text/jscript',
+      'text/livescript',
+      'text/x-ecmascript',
+      'text/x-javascript',
+    ])(
       'warns on large inline %s scripts',
       (type) => {
         const { head, rules } = createValidationHead()
@@ -1006,6 +1041,24 @@ describe('validatePlugin', () => {
         expect(rules.filter(r => r.id === 'inline-script-size')).toHaveLength(1)
       },
     )
+
+    it.each([
+      [{ language: 'javascript1.2' }, 1],
+      [{ language: 'vbscript' }, 0],
+      [{ language: ' javascript ' }, 0],
+      [{ language: 'javascript\n' }, 0],
+      [{ language: '' }, 1],
+      [{ type: '', language: 'vbscript' }, 1],
+      [{ type: 'module', language: 'vbscript' }, 1],
+      [{ type: 'text/plain', language: 'javascript' }, 0],
+      [{ type: null, language: 'vbscript' }, 0],
+      [{ type: false, language: 'vbscript' }, 0],
+    ])('uses rendered type and legacy language attributes: %j', (props, count) => {
+      const { head, rules } = createValidationHead()
+      head.push({ script: [{ ...props, innerHTML: 'a'.repeat(3 * 1024) }] } as any)
+      renderSSRHead(head)
+      expect(rules.filter(r => r.id === 'inline-script-size')).toHaveLength(count)
+    })
 
     it('does not warn on small inline script', () => {
       const { head, rules } = createValidationHead()

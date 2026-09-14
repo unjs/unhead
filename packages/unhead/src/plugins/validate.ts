@@ -206,10 +206,41 @@ const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-langua
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
 const JSON_LD_TYPE_RE = /^[\t\n\f\r ]*application\/ld\+json[\t\n\f\r ]*(?:;|$)/i
-const INLINE_DATA_SCRIPT_TYPES = /* @__PURE__ */ new Set(['application/json', 'application/ld+json', 'importmap', 'speculationrules'])
+// https://mimesniff.spec.whatwg.org/#javascript-mime-type
+const EXECUTABLE_SCRIPT_TYPES = /* @__PURE__ */ new Set([
+  'module',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
+const ASCII_WHITESPACE_TRIM_RE = /^[\t\n\f\r ]+|[\t\n\f\r ]+$/g
 const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+
+// Follow HTML script preparation, including normalized empty and omitted attributes.
+// https://html.spec.whatwg.org/multipage/scripting.html#prepare-the-script-element
+function isExecutableScript(props: Record<string, unknown>): boolean {
+  const hasType = props.type != null && props.type !== false
+  const type = hasType ? props.type : props.language
+  if (type == null || type === false || type === true || type === '')
+    return true
+  const typeString = hasType ? String(type).replace(ASCII_WHITESPACE_TRIM_RE, '') : `text/${type}`
+  return EXECUTABLE_SCRIPT_TYPES.has(typeString.toLowerCase())
+}
 
 function relTokens(value: unknown): string[] {
   return String(value || '').toLowerCase().split(REL_SEPARATOR_RE)
@@ -531,7 +562,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             // Inline data does not benefit from advice to externalize executable scripts.
             // Inline script size check (2KB threshold)
             if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)
-              && !INLINE_DATA_SCRIPT_TYPES.has(String(props.type || '').split(';', 1)[0]!.trim().toLowerCase())) {
+              && isExecutableScript(props)) {
               const content = tag.innerHTML || tag.textContent || ''
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
