@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { it } from 'vitest'
 import {
   createStreamableHead,
   prepareStreamingTemplate,
@@ -41,38 +41,35 @@ function makeHead() {
   return head
 }
 
-describe('streaming ssr bench', () => {
-  // Floor for the wrapStream benches: same chunk volume, no wrapper.
-  bench('baseline: drain 100-chunk stream', async () => {
-    await drain(appStream(100))
-  })
-
-  bench('wrapStream: drain 100-chunk stream', async () => {
-    await drain(wrapStream(makeHead(), appStream(100), TEMPLATE))
-  })
-
-  bench('wrapStream: shell first-read then cancel (100-chunk upstream)', async () => {
-    const reader = wrapStream(makeHead(), appStream(100), TEMPLATE).getReader()
-    await reader.read()
-    await reader.cancel('bench')
-  })
-
-  bench('prepareStreamingTemplate x100', () => {
-    for (let i = 0; i < 100; i++)
-      prepareStreamingTemplate(makeHead(), TEMPLATE)
-  })
-
-  bench('renderSSRHeadSuspenseChunk x100 (5 entries per chunk)', () => {
-    const head = makeHead()
-    prepareStreamingTemplate(head, TEMPLATE)
-    for (let i = 0; i < 100; i++) {
-      for (let j = 0; j < 5; j++) {
-        head.push({
-          title: `Chunk ${i}-${j}`,
-          meta: [{ name: 'description', content: `chunk ${i}-${j}` }],
-        })
+it('streaming ssr bench', async ({ bench }) => {
+  await bench.compare(
+    bench('baseline: drain 100-chunk stream', async () => {
+      await drain(appStream(100))
+    }),
+    bench('wrapStream: drain 100-chunk stream', async () => {
+      await drain(wrapStream(makeHead(), appStream(100), TEMPLATE))
+    }),
+    bench('wrapStream: shell first-read then cancel (100-chunk upstream)', async () => {
+      const reader = wrapStream(makeHead(), appStream(100), TEMPLATE).getReader()
+      await reader.read()
+      await reader.cancel('bench')
+    }),
+    bench('prepareStreamingTemplate x100', () => {
+      for (let i = 0; i < 100; i++)
+        prepareStreamingTemplate(makeHead(), TEMPLATE)
+    }),
+    bench('renderSSRHeadSuspenseChunk x100 (5 entries per chunk)', () => {
+      const head = makeHead()
+      prepareStreamingTemplate(head, TEMPLATE)
+      for (let i = 0; i < 100; i++) {
+        for (let j = 0; j < 5; j++) {
+          head.push({
+            title: `Chunk ${i}-${j}`,
+            meta: [{ name: 'description', content: `chunk ${i}-${j}` }],
+          })
+        }
+        renderSSRHeadSuspenseChunk(head)
       }
-      renderSSRHeadSuspenseChunk(head)
-    }
-  })
+    }),
+  )
 })

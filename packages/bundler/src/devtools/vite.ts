@@ -20,8 +20,8 @@ function isViteDevtoolsPlugin(plugin: { name?: string }): boolean {
   return !!plugin.name?.startsWith('vite:devtools')
 }
 
-function isViteDevtoolsEnabled(config: { devtools?: { enabled?: boolean }, plugins: readonly { name?: string }[] }): boolean {
-  return config.devtools?.enabled === true || config.plugins.some(isViteDevtoolsPlugin)
+function isViteDevtoolsEnabled(config: { devtools?: false | { enabled?: boolean }, plugins: readonly { name?: string }[] }): boolean {
+  return (config.devtools && config.devtools.enabled === true) || config.plugins.some(isViteDevtoolsPlugin)
 }
 
 /**
