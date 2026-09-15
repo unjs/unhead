@@ -191,13 +191,11 @@ const Helmet: React.FC<HelmetProps> = ({
       if (HasElementTags.has(tagName)) {
         const key = tagName as keyof UseHeadInput
         if (!Array.isArray(input[key])) {
-          // @ts-expect-error untyped
           input[key] = []
         }
         (input[key] as any[])!.push(data)
       }
       else {
-        // @ts-expect-error untyped
         input[tagName as keyof UseHeadInput] = data
       }
     }

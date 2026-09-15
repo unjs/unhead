@@ -5,34 +5,16 @@ import { UnheadInjectionToken } from '@unhead/angular'
 import { parseHtmlForUnheadExtraction } from 'unhead/parser'
 import { renderSSRHead } from 'unhead/server'
 
-const ATTR_MATCH_RE = /([a-z0-9-]+)(?:="([^"]*)")?/i
-const ATTR_RE = /([a-z0-9-]+(?:="[^"]*")?)/gi
-
-function attrToElement(element: HTMLElement, acc: string) {
-  const [key, value] = acc.match(ATTR_MATCH_RE)?.slice(1, 3) || []
-  if (!key)
-    return
-
-  if (value === undefined) {
-    element.setAttribute(key, '')
+function attrToElement(element: HTMLElement, attrs: string) {
+  const container = element.ownerDocument.createElement('div')
+  container.innerHTML = `<div${attrs}></div>`
+  const parsed = container.firstElementChild!
+  for (const { name } of Array.from(element.attributes)) {
+    if (!parsed.hasAttribute(name))
+      element.removeAttribute(name)
   }
-  else if (key === 'style') {
-    const styleObj = value.split(';').reduce((acc, style) => {
-      const [prop, val] = style.split(':').map(s => s.trim())
-      if (prop && val)
-        acc[prop] = val
-      return acc
-    }, {} as Record<string, string>)
-    Object.entries(styleObj).forEach(([prop, val]) => {
-      element.style.setProperty(prop, val)
-    })
-  }
-  else if (key === 'class') {
-    value.split(' ').forEach(className => element.classList.add(className))
-  }
-  else {
-    element.setAttribute(key, value)
-  }
+  for (const { name, value } of Array.from(parsed.attributes))
+    element.setAttribute(name, value)
 }
 
 @Injectable({
@@ -50,8 +32,8 @@ export class UnheadSSRService {
     const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(this.unhead, {
       omitLineBreaks: false,
     })
-    htmlAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.documentElement, attr))
-    bodyAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.body, attr))
+    attrToElement(this.document.documentElement, htmlAttrs)
+    attrToElement(this.document.body, bodyAttrs)
     this.document.body.innerHTML = bodyTagsOpen + this.document.body.innerHTML + bodyTags
     this.document.head.innerHTML = headTags
   }

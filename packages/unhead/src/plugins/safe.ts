@@ -162,6 +162,8 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
       break
     // meta is safe, except for http-equiv
     case 'meta':
+      if (prev.content === null)
+        next.content = null
       WhitelistAttributes.meta.forEach((key) => {
         if (hasContent(prev[key])) {
           next[key] = prev[key]
