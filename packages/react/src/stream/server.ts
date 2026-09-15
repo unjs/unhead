@@ -42,6 +42,7 @@ export function HeadStream(): ReactNode {
   const update = renderSSRHeadSuspenseChunk(head)
   // Always render script element for hydration consistency with client
   return createElement('script', {
+    nonce: head._stream?.nonce,
     suppressHydrationWarning: true,
     dangerouslySetInnerHTML: update ? { __html: update } : undefined,
   })
