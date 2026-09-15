@@ -72,7 +72,24 @@ export interface ValidatePluginOptions {
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 const AT_PREFIX_RE = /^at\s+/
 // Data blocks, import maps, and speculation rules must stay inline.
-const JAVASCRIPT_TYPE_RE = /^(?:(?:text|application)\/(?:x-)?(?:java|ecma)script|text\/(?:javascript1\.[0-5]|jscript|livescript))(?:\s*;|$)/i
+const JAVASCRIPT_TYPES = new Set([
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
 const SLACK_TWITTER_META_NAMES = new Set([
   'twitter:data1',
   'twitter:data2',
@@ -81,8 +98,11 @@ const SLACK_TWITTER_META_NAMES = new Set([
 ])
 
 function isExecutableScript(type: unknown): boolean {
-  const value = type === true ? '' : String(type ?? '').trim()
-  return !value || value.toLowerCase() === 'module' || JAVASCRIPT_TYPE_RE.test(value)
+  const value = type === true ? '' : String(type ?? '')
+  if (!value)
+    return true
+  const normalized = value.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '').toLowerCase()
+  return normalized === 'module' || JAVASCRIPT_TYPES.has(normalized)
 }
 
 /**

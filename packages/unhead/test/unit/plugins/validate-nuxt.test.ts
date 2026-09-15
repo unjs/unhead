@@ -38,14 +38,14 @@ describe('nuxt validation', () => {
     expect(reports).toEqual([])
   })
 
-  it.each(['application/json', 'application/ld+json', 'importmap', 'speculationrules', 'text/plain'])('does not recommend externalizing %s data', (type) => {
+  it.each(['application/json', 'application/ld+json', 'importmap', 'speculationrules', 'text/plain', 'text/javascript; charset=utf-8', 'application/javascript; charset=utf-8', ' ', '\t\n\r', '\u00A0text/javascript', 'text/javascript\uFEFF', 'text/javascript\u2028'])('does not recommend externalizing %s data', (type) => {
     const { head, reports } = createPage()
     head.push({ script: [{ type, innerHTML: JSON.stringify({ data: 'a'.repeat(4096) }) }] } as any)
     renderSSRHead(head)
     expect(reports).toEqual([])
   })
 
-  it.each([undefined, '', 'module', 'MODULE', 'text/javascript', 'application/javascript', 'text/javascript; charset=utf-8'])('still reports large executable scripts with type %s', (type) => {
+  it.each([undefined, '', true, 'module', 'MODULE', 'text/javascript', 'application/javascript', ' text/javascript ', '\ttext/javascript\n'])('still reports large executable scripts with type %s', (type) => {
     const { head, reports } = createPage()
     head.push({ script: [{ type, innerHTML: `console.log("${'a'.repeat(4096)}")` }] } as any)
     renderSSRHead(head)
