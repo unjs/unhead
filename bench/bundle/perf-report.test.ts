@@ -31,6 +31,18 @@ describe('parseVitestBenchmarks', () => {
       .toThrowError('Vitest benchmark output contained no results')
   })
 
+  it('keeps every result from a grouped comparison', () => {
+    const output = benchmarkOutput()
+    output.testResults[0].assertionResults[0].benchmarks[0].tasks.push({
+      name: 'minifyTransform inline script/style',
+      latency: { mean: 0.5, rme: 1 },
+    })
+    expect(parseVitestBenchmarks(output).benches.map(bench => [bench.name, bench.value])).toEqual([
+      ['Bundler: useSeoMetaTransform static calls', 1.25],
+      ['Bundler: minifyTransform inline script/style', 0.5],
+    ])
+  })
+
   it('converts Vitest 5 latency into performance benches', () => {
     expect(parseVitestBenchmarks(benchmarkOutput())).toEqual({
       benches: [{

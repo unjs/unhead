@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 import {
   createStreamableHead,
   prepareStreamingTemplate,
@@ -41,37 +41,24 @@ function makeHead() {
   return head
 }
 
-describe('streaming ssr bench', () => {
-  // Floor for the wrapStream benches: same chunk volume, no wrapper.
-  it('baseline: drain 100-chunk stream', async ({ bench }) => {
-    await bench('baseline: drain 100-chunk stream', async () => {
+it('streaming ssr bench', async ({ bench }) => {
+  await bench.compare(
+    bench('baseline: drain 100-chunk stream', async () => {
       await drain(appStream(100))
-    }).run()
-  })
-
-  it('wrapStream: drain 100-chunk stream', async ({ bench }) => {
-    await bench('wrapStream: drain 100-chunk stream', async () => {
+    }),
+    bench('wrapStream: drain 100-chunk stream', async () => {
       await drain(wrapStream(makeHead(), appStream(100), TEMPLATE))
-    }).run()
-  })
-
-  it('wrapStream: shell first-read then cancel (100-chunk upstream)', async ({ bench }) => {
-    await bench('wrapStream: shell first-read then cancel (100-chunk upstream)', async () => {
+    }),
+    bench('wrapStream: shell first-read then cancel (100-chunk upstream)', async () => {
       const reader = wrapStream(makeHead(), appStream(100), TEMPLATE).getReader()
       await reader.read()
       await reader.cancel('bench')
-    }).run()
-  })
-
-  it('prepareStreamingTemplate x100', async ({ bench }) => {
-    await bench('prepareStreamingTemplate x100', () => {
+    }),
+    bench('prepareStreamingTemplate x100', () => {
       for (let i = 0; i < 100; i++)
         prepareStreamingTemplate(makeHead(), TEMPLATE)
-    }).run()
-  })
-
-  it('renderSSRHeadSuspenseChunk x100 (5 entries per chunk)', async ({ bench }) => {
-    await bench('renderSSRHeadSuspenseChunk x100 (5 entries per chunk)', () => {
+    }),
+    bench('renderSSRHeadSuspenseChunk x100 (5 entries per chunk)', () => {
       const head = makeHead()
       prepareStreamingTemplate(head, TEMPLATE)
       for (let i = 0; i < 100; i++) {
@@ -83,6 +70,6 @@ describe('streaming ssr bench', () => {
         }
         renderSSRHeadSuspenseChunk(head)
       }
-    }).run()
-  })
+    }),
+  )
 })

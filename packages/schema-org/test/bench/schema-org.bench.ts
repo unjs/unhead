@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 import { createSchemaOrgGraph } from '../../src/core/graph'
 import {
   defineArticle,
@@ -9,9 +9,9 @@ import {
   defineWebSite,
 } from '../../src/runtime'
 
-describe('schema-org core', () => {
-  it('createSchemaOrgGraph + resolveGraph (simple)', async ({ bench }) => {
-    await bench('createSchemaOrgGraph + resolveGraph (simple)', () => {
+it('schema-org core', async ({ bench }) => {
+  await bench.compare(
+    bench('createSchemaOrgGraph + resolveGraph (simple)', () => {
       const graph = createSchemaOrgGraph()
       graph.push(defineWebSite({
         name: 'Test Site',
@@ -24,11 +24,8 @@ describe('schema-org core', () => {
         path: '/',
         inLanguage: 'en',
       })
-    }).run({ iterations: 5000 })
-  })
-
-  it('createSchemaOrgGraph + resolveGraph (complex)', async ({ bench }) => {
-    await bench('createSchemaOrgGraph + resolveGraph (complex)', () => {
+    }),
+    bench('createSchemaOrgGraph + resolveGraph (complex)', () => {
       const graph = createSchemaOrgGraph()
       graph.push(defineWebSite({
         name: 'Test Site',
@@ -58,11 +55,8 @@ describe('schema-org core', () => {
         title: 'About Page',
         description: 'Learn more about us',
       })
-    }).run({ iterations: 5000 })
-  })
-
-  it('createSchemaOrgGraph + resolveGraph (product e-commerce)', async ({ bench }) => {
-    await bench('createSchemaOrgGraph + resolveGraph (product e-commerce)', () => {
+    }),
+    bench('createSchemaOrgGraph + resolveGraph (product e-commerce)', () => {
       const graph = createSchemaOrgGraph()
       graph.push(defineProduct({
         name: 'Test Product',
@@ -92,11 +86,8 @@ describe('schema-org core', () => {
         inLanguage: 'en',
         currency: 'USD',
       })
-    }).run({ iterations: 5000 })
-  })
-
-  it('createSchemaOrgGraph + resolveGraph (article blog)', async ({ bench }) => {
-    await bench('createSchemaOrgGraph + resolveGraph (article blog)', () => {
+    }),
+    bench('createSchemaOrgGraph + resolveGraph (article blog)', () => {
       const graph = createSchemaOrgGraph()
       graph.push(defineArticle({
         headline: 'Test Article Title',
@@ -121,11 +112,8 @@ describe('schema-org core', () => {
         title: 'Test Article Title',
         description: 'This is a test article description',
       })
-    }).run({ iterations: 5000 })
-  })
-
-  it('graph.find() lookups (10 nodes)', async ({ bench }) => {
-    await bench('graph.find() lookups (10 nodes)', () => {
+    }),
+    bench('graph.find() lookups (10 nodes)', () => {
       const graph = createSchemaOrgGraph()
       for (let i = 0; i < 10; i++) {
         graph.push(definePerson({
@@ -141,11 +129,8 @@ describe('schema-org core', () => {
       for (let i = 0; i < 10; i++) {
         graph.find(`#person-${i}`)
       }
-    }).run({ iterations: 5000 })
-  })
-
-  it('dedupe nodes (5 duplicates)', async ({ bench }) => {
-    await bench('dedupe nodes (5 duplicates)', () => {
+    }),
+    bench('dedupe nodes (5 duplicates)', () => {
       const graph = createSchemaOrgGraph()
       // Add duplicates
       for (let i = 0; i < 5; i++) {
@@ -159,6 +144,7 @@ describe('schema-org core', () => {
         host: 'https://example.com',
         path: '/',
       })
-    }).run({ iterations: 5000 })
-  })
+    }),
+    { iterations: 5000 },
+  )
 })

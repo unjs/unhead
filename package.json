@@ -29,7 +29,7 @@
     "release": "pnpm build:all && pnpm build:aliases && pnpm bump",
     "release:next": "pnpm build:all && pnpm bump",
     "lint": "eslint . --fix",
-    "benchmark": "vitest bench",
+    "benchmark": "vitest bench --reporter=default",
     "test:attw": "pnpm --filter './packages/**' test:attw",
     "test:import-inert": "node scripts/check-import-inert.mjs",
     "typecheck": "vue-tsc --noEmit",

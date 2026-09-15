@@ -1,18 +1,15 @@
 import { processTemplateParams } from 'unhead/utils'
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 
-describe('processTemplateParams', () => {
-  it('basic', async ({ bench }) => {
-    await bench('basic', () => {
+it('processTemplateParams', async ({ bench }) => {
+  await bench.compare(
+    bench('basic', () => {
       processTemplateParams('%s %separator %siteName', {
         pageTitle: 'hello world',
         siteName: 'My Awesome Site',
       }, '/')
-    }).run()
-  })
-
-  it('nested props', async ({ bench }) => {
-    await bench('nested props', () => {
+    }),
+    bench('nested props', () => {
       processTemplateParams('%params.nested %anotherParams.nested', {
         pageTitle: 'hello world',
         siteName: 'My Awesome Site',
@@ -23,33 +20,24 @@ describe('processTemplateParams', () => {
           nested: 'another yes',
         },
       }, '/')
-    }).run()
-  })
-
-  it('not found props', async ({ bench }) => {
-    await bench('not found props', () => {
+    }),
+    bench('not found props', () => {
       processTemplateParams('%test %another %name %value', {
         pageTitle: 'hello world',
         siteName: 'My Awesome Site',
       }, '/')
-    }).run()
-  })
-
-  it('with url', async ({ bench }) => {
-    await bench('with url', () => {
+    }),
+    bench('with url', () => {
       processTemplateParams('https://cdn.example.com/some%20image.jpg', {
         pageTitle: 'hello world',
         siteName: 'My Awesome Site',
       }, '/')
-    }).run()
-  })
-
-  it('simple string', async ({ bench }) => {
-    await bench('simple string', () => {
+    }),
+    bench('simple string', () => {
       processTemplateParams('My Awesome Simple String', {
         pageTitle: 'hello world',
         siteName: 'My Awesome Site',
       }, '/')
-    }).run()
-  })
+    }),
+  )
 })

@@ -1,12 +1,12 @@
 import type { ResolvableHead, SerializableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/bundler'
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 import { useHead, useSeoMeta } from '../../src'
 import { createHead as createServerHead, renderSSRHead } from '../../src/server'
 
-describe('ssr e2e bench', () => {
-  it('e2e', async ({ bench }) => {
-    await bench('e2e', async () => {
+it('ssr e2e bench', async ({ bench }) => {
+  await bench.compare(
+    bench('e2e', async () => {
     // we're going to replicate the logic needed to render the tags for a harlanzw.com page
 
       // 1. Add nuxt.config meta tags
@@ -260,13 +260,8 @@ ${htmlContext.bodyPrepend.join('\n')}
 ${htmlContext.bodyAppend.join('\n')}
 </body>
 `).toBeDefined()
-    }).run({
-      iterations: 5000,
-    })
-  })
-
-  it('simple', async ({ bench }) => {
-    await bench('simple', async () => {
+    }),
+    bench('simple', async () => {
     // 1. Add nuxt.config meta tags
       const head = createServerHead()
       // nuxt.config app.head
@@ -285,6 +280,7 @@ ${htmlContext.bodyAppend.join('\n')}
         ],
       })
       renderSSRHead(head)
-    }).run()
-  })
+    }),
+    { iterations: 5000 },
+  )
 })

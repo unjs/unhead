@@ -1,5 +1,5 @@
 import { createHead, renderSSRHead } from 'unhead/server'
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 import {
   definePerson,
   defineWebPage,
@@ -8,9 +8,9 @@ import {
 } from '../../src'
 import { UnheadSchemaOrg } from '../../src/plugin'
 
-describe('schema-org SSR e2e', () => {
-  it('full e2e with schema.org', async ({ bench }) => {
-    await bench('full e2e with schema.org', async () => {
+it('schema-org SSR e2e', async ({ bench }) => {
+  await bench.compare(
+    bench('full e2e with schema.org', async () => {
       const head = createHead()
       head.use(UnheadSchemaOrg())
 
@@ -54,11 +54,8 @@ describe('schema-org SSR e2e', () => {
       ]) as any)
 
       renderSSRHead(head)
-    }).run({ iterations: 5000 })
-  })
-
-  it('complex e2e with schema.org (multiple entities)', async ({ bench }) => {
-    await bench('complex e2e with schema.org (multiple entities)', async () => {
+    }),
+    bench('complex e2e with schema.org (multiple entities)', async () => {
       const head = createHead()
       head.use(UnheadSchemaOrg())
 
@@ -121,11 +118,8 @@ describe('schema-org SSR e2e', () => {
       ]) as any)
 
       renderSSRHead(head)
-    }).run({ iterations: 5000 })
-  })
-
-  it('baseline without schema.org', async ({ bench }) => {
-    await bench('baseline without schema.org', async () => {
+    }),
+    bench('baseline without schema.org', async () => {
       const head = createHead()
 
       head.push({
@@ -139,6 +133,7 @@ describe('schema-org SSR e2e', () => {
       })
 
       renderSSRHead(head)
-    }).run({ iterations: 5000 })
-  })
+    }),
+    { iterations: 5000 },
+  )
 })

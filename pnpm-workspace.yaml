@@ -35,18 +35,10 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   less: true
-  lmdb: true
-  msgpackr-extract: true
+  lmdb: false
+  msgpackr-extract: false
+  unrs-resolver: true
   vue-demi: true
-
-ignoredBuiltDependencies:
-  - lmdb
-  - msgpackr-extract
-
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - esbuild
-  - unrs-resolver
 
 catalog:
   '@angular-devkit/build-angular': ^21.2.24

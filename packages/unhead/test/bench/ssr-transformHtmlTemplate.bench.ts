@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { createHead } from 'unhead/server'
-import { describe, it } from 'vitest'
+import { it } from 'vitest'
 import {
   transformHtmlTemplate,
   transformHtmlTemplateRaw,
 } from '../../src/server/transformHtmlTemplate'
 
-describe('transformHtmlTemplate', () => {
+it('transformHtmlTemplate', async ({ bench }) => {
   const basicHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -16,11 +16,9 @@ describe('transformHtmlTemplate', () => {
   <h1>Hello World</h1>
 </body>
 </html>`
-
   const complexHtml = readFileSync(new URL('../fixtures/Markdown.html', import.meta.url), 'utf-8')
-
-  it('basic html template', async ({ bench }) => {
-    await bench('basic html template', async () => {
+  await bench.compare(
+    bench('basic html template', async () => {
       const head = createHead()
       head.push({
         title: 'Benchmarked Page',
@@ -30,14 +28,8 @@ describe('transformHtmlTemplate', () => {
         ],
       })
       await transformHtmlTemplate(head, basicHtml)
-    }).run({
-      iterations: 1000,
-      time: 1000,
-    })
-  })
-
-  it('complex html template', async ({ bench }) => {
-    await bench('complex html template', async () => {
+    }),
+    bench('complex html template', async () => {
       const head = createHead()
       head.push({
         title: 'Complex Benchmarked Page',
@@ -58,14 +50,8 @@ describe('transformHtmlTemplate', () => {
         ],
       })
       await transformHtmlTemplate(head, complexHtml)
-    }).run({
-      iterations: 1000,
-      time: 1000,
-    })
-  })
-
-  it('complex html template raw', async ({ bench }) => {
-    await bench('complex html template raw', async () => {
+    }),
+    bench('complex html template raw', async () => {
       const head = createHead()
       head.push({
         title: 'Complex Benchmarked Page',
@@ -86,14 +72,8 @@ describe('transformHtmlTemplate', () => {
         ],
       })
       await transformHtmlTemplateRaw(head, complexHtml)
-    }).run({
-      iterations: 1000,
-      time: 1000,
-    })
-  })
-
-  it('multiple head pushes', async ({ bench }) => {
-    await bench('multiple head pushes', async () => {
+    }),
+    bench('multiple head pushes', async () => {
       const head = createHead()
 
       // Simulate multiple components adding head data
@@ -104,14 +84,8 @@ describe('transformHtmlTemplate', () => {
       head.push({ script: [{ src: '/analytics.js', async: true }] })
 
       await transformHtmlTemplate(head, basicHtml)
-    }).run({
-      iterations: 1000,
-      time: 1000,
-    })
-  })
-
-  it('large html template', async ({ bench }) => {
-    await bench('large html template', async () => {
+    }),
+    bench('large html template', async () => {
     // Generate a larger HTML template
       const largeContent = Array.from({ length: 100 }, (_, i) =>
         `<section><h2>Section ${i}</h2><p>Content for section ${i} with some text...</p></section>`).join('\n    ')
@@ -140,9 +114,7 @@ describe('transformHtmlTemplate', () => {
       })
 
       await transformHtmlTemplate(head, largeHtml)
-    }).run({
-      iterations: 500,
-      time: 1000,
-    })
-  })
+    }),
+    { iterations: 1000, time: 1000 },
+  )
 })
