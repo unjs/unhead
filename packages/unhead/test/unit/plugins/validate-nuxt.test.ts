@@ -45,7 +45,7 @@ describe('nuxt validation', () => {
     expect(reports).toEqual([])
   })
 
-  it.each([undefined, '', true, 'module', 'MODULE', 'text/javascript', 'application/javascript', ' text/javascript ', '\ttext/javascript\n'])('still reports large executable scripts with type %s', (type) => {
+  it.each([undefined, null, false, '', true, 'module', 'MODULE', 'text/javascript', 'application/javascript', ' text/javascript ', '\ttext/javascript\n'])('still reports large executable scripts with type %s', (type) => {
     const { head, reports } = createPage()
     head.push({ script: [{ type, innerHTML: `console.log("${'a'.repeat(4096)}")` }] } as any)
     renderSSRHead(head)

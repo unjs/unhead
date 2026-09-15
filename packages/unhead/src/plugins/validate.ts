@@ -98,7 +98,7 @@ const SLACK_TWITTER_META_NAMES = new Set([
 ])
 
 function isExecutableScript(type: unknown): boolean {
-  const value = type === true ? '' : String(type ?? '')
+  const value = typeof type === 'boolean' ? '' : String(type ?? '')
   if (!value)
     return true
   const normalized = value.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '').toLowerCase()
