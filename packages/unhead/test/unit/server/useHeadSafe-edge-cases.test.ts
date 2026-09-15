@@ -380,13 +380,12 @@ describe('useHeadSafe edge cases', () => {
       expect(ctx.headTags).not.toContain('Content-Security-Policy')
     })
 
-    it('escapes quotes in attribute values', async () => {
+    it('escapes quotes, ampersands and angle brackets in attribute values', async () => {
       const ctx = await safeRender({
         meta: [{ name: 'description', content: 'He said "hello" & <goodbye>' }],
       })
       expect(ctx.headTags).toContain('&quot;')
-      // < and > are not escaped in attribute values (safe inside double quotes)
-      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; & <goodbye>"')
+      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; &amp; &lt;goodbye&gt;"')
     })
   })
 
