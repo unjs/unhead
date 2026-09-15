@@ -1,4 +1,5 @@
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { normalizeEntryToTags } from '../../src/utils/normalize'
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {
@@ -104,5 +105,42 @@ describe('hashTag', () => {
     expect(hashTag({ tag: 'script', props: {}, _h: 'hash' })).toBe('hash')
     expect(hashTag({ tag: 'meta', props: {}, _d: 'dedupe' })).toBe('dedupe')
     expect(hashTag({ tag: 'style', props: {}, innerHTML: 'body{}' })).toBe('body{}')
+  })
+
+  // JSON-LD (and other object innerHTML) is serialized with JSON.stringify, which
+  // preserves insertion order, so two logically identical payloads with differently
+  // ordered keys must still fingerprint identically at every nesting depth.
+  it('gives object innerHTML a hash that is stable across key insertion order, at any nesting depth', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { 'address': { country: 'AU', city: 'Sydney' }, 'name': 'Acme', '@type': 'Organization' } }] }, [])
+    expect(hashTag(a)).toBe(hashTag(b))
+    expect(dedupeKey(a)).toBe(dedupeKey(b))
+  })
+
+  it('keeps array order significant inside object innerHTML', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [1, 2] } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [2, 1] } }] }, [])
+    expect(hashTag(a)).not.toBe(hashTag(b))
+    expect(dedupeKey(a)).not.toBe(dedupeKey(b))
+  })
+})
+
+describe('canonical json identity across the ssr boundary', () => {
+  const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
+
+  it('adopts the server-rendered block instead of adding a second', async () => {
+    const { JSDOM } = await import('jsdom')
+    const { createHead: createClientHead } = await import('../../src/client')
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    const doc = new JSDOM(`<!DOCTYPE html><html><head>${(await ssr.render()).headTags}</head><body></body></html>`).window.document
+
+    const client = createClientHead({ document: doc })
+    client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 })
