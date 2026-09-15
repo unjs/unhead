@@ -157,15 +157,15 @@ These rules encode conservative heuristics rather than universal browser limits.
 | `charset-not-early` | `warn` | During SSR, `<meta charset>` appears after the configured number of rendered head tags (three by default). This is a tag-position heuristic; it does not measure the declaration's byte offset |
 | `preload-not-modulepreload` | `warn` | `<link rel="preload" as="script">` for a module script should use `rel="modulepreload"` to also trigger module parsing |
 | `preconnect-missing-crossorigin` | `warn` | `<link rel="preconnect">` is missing `crossorigin` but CORS resources are loaded from that origin, causing a separate connection |
-| `preload-fetchpriority-conflict` | `warn` | A non-script preload has `fetchpriority="low"`; script preloads are exempt because `useScript()` uses that combination for warmup |
+| `preload-fetchpriority-conflict` | `off` | Optional priority advice for non-script preloads with `fetchpriority="low"`. Early fetching at low priority is valid. |
 | `too-many-preloads` | `warn` | More than 6 `<link rel="preload">` tags compete for bandwidth and hurt performance |
 | `too-many-prefetches` | `info` | More than 50 `<link rel="prefetch">` tags may consume speculative bandwidth and cache capacity. This advisory guardrail is not a browser or standards limit |
 | `too-many-preconnects` | `warn` | More than 4 `<link rel="preconnect">` tags; each starts connection work that can compete with critical resources |
 | `redundant-dns-prefetch` | `info` | Same origin has both `<link rel="preconnect">` and `<link rel="dns-prefetch">`; preconnect already includes DNS resolution |
-| `preload-async-defer-conflict` | `warn` | A preloaded script also has `async` or `defer` and the preload is not marked `fetchpriority="low"`. Browsers allow this combination; the warning is the plugin's priority heuristic |
+| `preload-async-defer-conflict` | `off` | Optional priority advice for preloaded `async` or `defer` scripts. Framework entry scripts commonly use this valid combination. |
 | `prefetch-preload-conflict` | `warn` | Same resource has both `preload` and `prefetch`; use preload for current page, prefetch for future navigation |
 | `inline-style-size` | `info` | Inline `<style>` exceeds the plugin's default 14KB threshold |
-| `inline-script-size` | `info` | Inline `<script>` exceeds 2KB; consider moving to an external file for cacheability |
+| `inline-script-size` | `info` | Inline JavaScript exceeds 2KB. Excludes data blocks, JSON-LD, import maps, and speculation rules |
 | `meta-beyond-1mb` | `warn` | The plugin's serialized-size estimate places a `<meta>` tag beyond its default 1MB inspection threshold |
 
 ## Rule configuration
