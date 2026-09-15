@@ -71,12 +71,19 @@ export interface ValidatePluginOptions {
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 const AT_PREFIX_RE = /^at\s+/
+// Data blocks, import maps, and speculation rules must stay inline.
+const JAVASCRIPT_TYPE_RE = /^(?:(?:text|application)\/(?:x-)?(?:java|ecma)script|text\/(?:javascript1\.[0-5]|jscript|livescript))(?:\s*;|$)/i
 const SLACK_TWITTER_META_NAMES = new Set([
   'twitter:data1',
   'twitter:data2',
   'twitter:label1',
   'twitter:label2',
 ])
+
+function isExecutableScript(type: unknown): boolean {
+  const value = type === true ? '' : String(type ?? '').trim()
+  return !value || value.toLowerCase() === 'module' || JAVASCRIPT_TYPE_RE.test(value)
+}
 
 /**
  * Per-rule severity used by the runtime ValidatePlugin path that runs through
@@ -385,7 +392,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         'tags:afterResolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
-          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
+          function report(id: ValidationRuleId, message: string, defaultSeverity: RuleSeverity, tag?: HeadTag, inputEntryIndex?: number) {
             const severity = severityFor(id, defaultSeverity)
             if (severity === 'off')
               return
@@ -512,11 +519,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             // === Performance Hints ===
             // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
 
-            // Preload + fetchpriority="low" without a matching low-priority script is contradictory
-            // Note: preload + fetchpriority="low" is a valid warmup pattern (used by useScript)
-            // to hint the browser to start fetching early at low priority
+            // Early discovery and fetch priority are independent. Keep this heuristic opt-in.
             if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low' && props.as !== 'script')
-              report('preload-fetchpriority-conflict', `Preload with fetchpriority="low" is contradictory — preload signals critical, low priority contradicts that.`, 'warn', tag)
+              report('preload-fetchpriority-conflict', `This preload uses fetchpriority="low". Check whether the resource needs a higher priority.`, 'off', tag)
 
             // Inline style size check (14KB critical CSS budget)
             if (tag.tag === 'style' && (tag.innerHTML || tag.textContent)) {
@@ -528,7 +533,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             }
 
             // Inline script size check (2KB threshold)
-            if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)) {
+            if (tag.tag === 'script' && isExecutableScript(props.type) && !props.src && (tag.innerHTML || tag.textContent)) {
               const content = tag.innerHTML || tag.textContent || ''
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
@@ -601,7 +606,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               report('redundant-dns-prefetch', `dns-prefetch for "${tag.props.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
           }
 
-          // Preload + async/defer script conflict (priority escalation anti-pattern)
+          // Preloading deferred application entries is valid. Keep priority advice opt-in.
           // Skip when the preload has fetchpriority="low" as this is a valid warmup pattern (used by useScript)
           const preloadScriptHrefs = new Map<string, HeadTag>()
           for (const tag of tags) {
@@ -613,7 +618,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               const preloadTag = preloadScriptHrefs.get(tag.props.src)
               if (preloadTag) {
                 const attr = tag.props.async ? 'async' : 'defer'
-                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
+                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded with "${attr}". Check whether early fetching is intentional.`, 'off', preloadTag)
               }
             }
           }
