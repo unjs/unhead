@@ -147,6 +147,7 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
   rememberShellBodyTags(head)
   head.entries.clear()
+  streamState(head).shellRendered = true
   return result
 }
 
@@ -174,6 +175,7 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
   rememberShellBodyTags(head)
   // Keep entries when template rendering fails, so the caller can retry.
   head.entries.clear()
+  streamState(head).shellRendered = true
   return result
 }
 
@@ -781,6 +783,7 @@ export function prepareStreamingTemplate(
     rememberShellBodyTags(head)
     head.entries.clear()
   }
+  streamState(head).shellRendered = true
   return parts
 }
 

@@ -309,11 +309,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string
   /**
-   * Per-response state for streamed body tags.
+   * Per-response state for shell rendering and streamed body tags.
    *
    * @internal
    */
-  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
+  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
 }
 
 export interface DomState {
