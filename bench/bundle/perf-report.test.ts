@@ -1,37 +1,38 @@
 import { describe, expect, it } from 'vitest'
 import { parseVitestBenchmarks, renderPerfReport } from './perf-report'
 
+function benchmarkOutput(mean: unknown = 1.25) {
+  return {
+    testResults: [{
+      assertionResults: [{
+        benchmarks: [{
+          tasks: [{
+            name: 'useSeoMetaTransform static calls',
+            latency: { mean, rme: 2.5 },
+          }],
+        }],
+      }],
+    }],
+  }
+}
+
 describe('parseVitestBenchmarks', () => {
   it('treats a missing benchmark file as an empty run', () => {
     expect(parseVitestBenchmarks(null)).toEqual({ benches: [] })
   })
 
-  it('rejects malformed benchmark output', () => {
-    expect(() => parseVitestBenchmarks({
-      files: [{
-        groups: [{
-          benchmarks: [{
-            name: 'useSeoMetaTransform static calls',
-            mean: '1.25',
-            rme: 2.5,
-          }],
-        }],
-      }],
-    })).toThrowError('Invalid Vitest benchmark result')
+  it.each(['1.25', Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid latency %s', (mean) => {
+    expect(() => parseVitestBenchmarks(benchmarkOutput(mean)))
+      .toThrowError('Invalid Vitest benchmark result')
   })
 
-  it('converts transform benchmark output into performance benches', () => {
-    expect(parseVitestBenchmarks({
-      files: [{
-        groups: [{
-          benchmarks: [{
-            name: 'useSeoMetaTransform static calls',
-            mean: 1.25,
-            rme: 2.5,
-          }],
-        }],
-      }],
-    })).toEqual({
+  it('rejects a report without benchmark results', () => {
+    expect(() => parseVitestBenchmarks({ testResults: [] }))
+      .toThrowError('Vitest benchmark output contained no results')
+  })
+
+  it('converts Vitest 5 latency into performance benches', () => {
+    expect(parseVitestBenchmarks(benchmarkOutput())).toEqual({
       benches: [{
         id: 'bundler-transform:useSeoMetaTransform static calls',
         name: 'Bundler: useSeoMetaTransform static calls',
