@@ -1,6 +1,6 @@
 import { FlatMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
-import { bench, describe } from 'vitest'
+import { describe, it } from 'vitest'
 
 // Resolve-heavy first and cached renders with many entries per head.
 // Covers Nuxt-style per-request creation and tag-mutating plugin hooks.
@@ -40,20 +40,28 @@ function createBenchHead(count: number, plugin?: keyof typeof benchPlugins) {
 }
 
 describe('resolveTags many entries, first render', () => {
-  bench('20 entries, no plugins', () => {
-    createBenchHead(20).render()
+  it('20 entries, no plugins', async ({ bench }) => {
+    await bench('20 entries, no plugins', () => {
+      createBenchHead(20).render()
+    }).run()
   })
 
-  bench('20 entries, templateParams plugin', () => {
-    createBenchHead(20, 'templateParams').render()
+  it('20 entries, templateParams plugin', async ({ bench }) => {
+    await bench('20 entries, templateParams plugin', () => {
+      createBenchHead(20, 'templateParams').render()
+    }).run()
   })
 
-  bench('20 entries, flatMeta plugin', () => {
-    createBenchHead(20, 'flatMeta').render()
+  it('20 entries, flatMeta plugin', async ({ bench }) => {
+    await bench('20 entries, flatMeta plugin', () => {
+      createBenchHead(20, 'flatMeta').render()
+    }).run()
   })
 
-  bench('5 entries, no plugins', () => {
-    createBenchHead(5).render()
+  it('5 entries, no plugins', async ({ bench }) => {
+    await bench('5 entries, no plugins', () => {
+      createBenchHead(5).render()
+    }).run()
   })
 })
 
@@ -65,15 +73,21 @@ describe('resolveTags many entries, cached render', () => {
   templateParams.render()
   flatMeta.render()
 
-  bench('20 entries, no plugins', () => {
-    noPlugins.render()
+  it('20 entries, no plugins', async ({ bench }) => {
+    await bench('20 entries, no plugins', () => {
+      noPlugins.render()
+    }).run()
   })
 
-  bench('20 entries, templateParams plugin', () => {
-    templateParams.render()
+  it('20 entries, templateParams plugin', async ({ bench }) => {
+    await bench('20 entries, templateParams plugin', () => {
+      templateParams.render()
+    }).run()
   })
 
-  bench('20 entries, flatMeta plugin', () => {
-    flatMeta.render()
+  it('20 entries, flatMeta plugin', async ({ bench }) => {
+    await bench('20 entries, flatMeta plugin', () => {
+      flatMeta.render()
+    }).run()
   })
 })

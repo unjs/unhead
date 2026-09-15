@@ -1,5 +1,5 @@
 import type { MinifyFn } from '../packages/bundler/src/unplugin/MinifyTransform'
-import { bench, describe } from 'vitest'
+import { describe, it } from 'vitest'
 import { CreateHeadTransform, createHeadTransformContext } from '../packages/bundler/src/unplugin/CreateHeadTransform'
 import { MinifyTransform } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { SSRStaticReplace } from '../packages/bundler/src/unplugin/SSRStaticReplace'
@@ -127,92 +127,114 @@ function assertTransformResult(result: unknown, name: string) {
 }
 
 describe('unplugin transform CPU', () => {
-  bench('transform id filter mixed ids', () => {
-    const seo = UseSeoMetaTransform.vite({}) as any
-    const minify = MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any
-    const treeshake = TreeshakeServerComposables.vite({}) as any
-    let included = 0
-    for (const id of ids) {
-      if (idFilterMatches(seo, id))
-        included++
-      if (idFilterMatches(minify, id))
-        included++
-      if (idFilterMatches(treeshake, id))
-        included++
-    }
-    return included
+  it('transform id filter mixed ids', async ({ bench }) => {
+    await bench('transform id filter mixed ids', () => {
+      const seo = UseSeoMetaTransform.vite({}) as any
+      const minify = MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any
+      const treeshake = TreeshakeServerComposables.vite({}) as any
+      let included = 0
+      for (const id of ids) {
+        if (idFilterMatches(seo, id))
+          included++
+        if (idFilterMatches(minify, id))
+          included++
+        if (idFilterMatches(treeshake, id))
+          included++
+      }
+      return included
+    }).run()
   })
 
-  bench('useSeoMetaTransform static calls', async () => {
-    const plugin = UseSeoMetaTransform.vite({}) as any
-    const result = await runPluginTransform(plugin, seoCode, '/project/src/page.ts')
-    assertTransformResult(result, plugin.name)
+  it('useSeoMetaTransform static calls', async ({ bench }) => {
+    await bench('useSeoMetaTransform static calls', async () => {
+      const plugin = UseSeoMetaTransform.vite({}) as any
+      const result = await runPluginTransform(plugin, seoCode, '/project/src/page.ts')
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('minifyTransform inline script/style', async () => {
-    const plugin = MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any
-    const result = await runPluginTransform(plugin, minifyCode, '/project/src/page.ts')
-    assertTransformResult(result, plugin.name)
+  it('minifyTransform inline script/style', async ({ bench }) => {
+    await bench('minifyTransform inline script/style', async () => {
+      const plugin = MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any
+      const result = await runPluginTransform(plugin, minifyCode, '/project/src/page.ts')
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('treeshakeServerComposables many calls', async () => {
-    const plugin = TreeshakeServerComposables.vite({}) as any
-    const result = await runPluginTransform(
-      plugin,
-      treeshakeCode,
-      '/project/src/page.ts',
-      { environment: { config: { consumer: 'client' } } },
-    )
-    assertTransformResult(result, plugin.name)
+  it('treeshakeServerComposables many calls', async ({ bench }) => {
+    await bench('treeshakeServerComposables many calls', async () => {
+      const plugin = TreeshakeServerComposables.vite({}) as any
+      const result = await runPluginTransform(
+        plugin,
+        treeshakeCode,
+        '/project/src/page.ts',
+        { environment: { config: { consumer: 'client' } } },
+      )
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('treeshakeServerComposables skip unrelated code', async () => {
-    const plugin = TreeshakeServerComposables.vite({}) as any
-    await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts')
+  it('treeshakeServerComposables skip unrelated code', async ({ bench }) => {
+    await bench('treeshakeServerComposables skip unrelated code', async () => {
+      const plugin = TreeshakeServerComposables.vite({}) as any
+      await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts')
+    }).run()
   })
 
-  bench('ssrStaticReplace many head.ssr reads', async () => {
-    const plugin = SSRStaticReplace.vite({}) as any
-    plugin.apply({}, { command: 'build', isSsrBuild: false })
-    const result = await runPluginTransform(plugin, ssrStaticReplaceCode, '/project/node_modules/unhead/dist/index.mjs')
-    assertTransformResult(result, plugin.name)
+  it('ssrStaticReplace many head.ssr reads', async ({ bench }) => {
+    await bench('ssrStaticReplace many head.ssr reads', async () => {
+      const plugin = SSRStaticReplace.vite({}) as any
+      plugin.apply({}, { command: 'build', isSsrBuild: false })
+      const result = await runPluginTransform(plugin, ssrStaticReplaceCode, '/project/node_modules/unhead/dist/index.mjs')
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('ssrStaticReplace skip unrelated code', async () => {
-    const plugin = SSRStaticReplace.vite({}) as any
-    plugin.apply({}, { command: 'build', isSsrBuild: false })
-    await runPluginTransform(plugin, unrelatedCode, '/project/node_modules/unhead/dist/index.mjs')
+  it('ssrStaticReplace skip unrelated code', async ({ bench }) => {
+    await bench('ssrStaticReplace skip unrelated code', async () => {
+      const plugin = SSRStaticReplace.vite({}) as any
+      plugin.apply({}, { command: 'build', isSsrBuild: false })
+      await runPluginTransform(plugin, unrelatedCode, '/project/node_modules/unhead/dist/index.mjs')
+    }).run()
   })
 
-  bench('createHeadTransform many createHead calls', async () => {
-    const ctx = createHeadTransformContext()
-    ctx.addRuntimePlugin({
-      import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__validate' },
-      client: '_h.use(__validate({ root: __ROOT__ }))',
-    })
-    ctx.addRuntimePlugin({
-      import: { name: 'devtoolsPlugin', source: '@unhead/bundler', as: '__devtools' },
-      client: 'window.__unhead_devtools__=_h',
-    })
-    const plugin = CreateHeadTransform(ctx) as any
-    plugin.configResolved({ root: '/project' })
-    const result = await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, createHeadCode, '/project/src/head.ts')
-    assertTransformResult(result, plugin.name)
+  it('createHeadTransform many createHead calls', async ({ bench }) => {
+    await bench('createHeadTransform many createHead calls', async () => {
+      const ctx = createHeadTransformContext()
+      ctx.addRuntimePlugin({
+        import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__validate' },
+        client: '_h.use(__validate({ root: __ROOT__ }))',
+      })
+      ctx.addRuntimePlugin({
+        import: { name: 'devtoolsPlugin', source: '@unhead/bundler', as: '__devtools' },
+        client: 'window.__unhead_devtools__=_h',
+      })
+      const plugin = CreateHeadTransform(ctx) as any
+      plugin.configResolved({ root: '/project' })
+      const result = await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, createHeadCode, '/project/src/head.ts')
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('react streaming skip JSX without head calls', async () => {
-    const plugin = unheadReactStreamingPlugin.vite({}) as any
-    await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithoutHeadCode, '/project/src/page.tsx')
+  it('react streaming skip JSX without head calls', async ({ bench }) => {
+    await bench('react streaming skip JSX without head calls', async () => {
+      const plugin = unheadReactStreamingPlugin.vite({}) as any
+      await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithoutHeadCode, '/project/src/page.tsx')
+    }).run()
   })
 
-  bench('react streaming transform JSX with head calls', async () => {
-    const plugin = unheadReactStreamingPlugin.vite({}) as any
-    const result = await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithHeadCode, '/project/src/page.tsx')
-    assertTransformResult(result, plugin.name)
+  it('react streaming transform JSX with head calls', async ({ bench }) => {
+    await bench('react streaming transform JSX with head calls', async () => {
+      const plugin = unheadReactStreamingPlugin.vite({}) as any
+      const result = await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithHeadCode, '/project/src/page.tsx')
+      assertTransformResult(result, plugin.name)
+    }).run()
   })
 
-  bench('solid streaming skip JSX without head calls', async () => {
-    const plugin = unheadSolidStreamingPlugin.vite({}) as any
-    await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithoutHeadCode, '/project/src/page.tsx')
+  it('solid streaming skip JSX without head calls', async ({ bench }) => {
+    await bench('solid streaming skip JSX without head calls', async () => {
+      const plugin = unheadSolidStreamingPlugin.vite({}) as any
+      await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithoutHeadCode, '/project/src/page.tsx')
+    }).run()
   })
 })

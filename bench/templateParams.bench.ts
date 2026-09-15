@@ -1,45 +1,55 @@
 import { processTemplateParams } from 'unhead/utils'
-import { bench, describe } from 'vitest'
+import { describe, it } from 'vitest'
 
 describe('processTemplateParams', () => {
-  bench('basic', () => {
-    processTemplateParams('%s %separator %siteName', {
-      pageTitle: 'hello world',
-      siteName: 'My Awesome Site',
-    }, '/')
+  it('basic', async ({ bench }) => {
+    await bench('basic', () => {
+      processTemplateParams('%s %separator %siteName', {
+        pageTitle: 'hello world',
+        siteName: 'My Awesome Site',
+      }, '/')
+    }).run()
   })
 
-  bench('nested props', () => {
-    processTemplateParams('%params.nested %anotherParams.nested', {
-      pageTitle: 'hello world',
-      siteName: 'My Awesome Site',
-      params: {
-        nested: 'yes',
-      },
-      anotherParams: {
-        nested: 'another yes',
-      },
-    }, '/')
+  it('nested props', async ({ bench }) => {
+    await bench('nested props', () => {
+      processTemplateParams('%params.nested %anotherParams.nested', {
+        pageTitle: 'hello world',
+        siteName: 'My Awesome Site',
+        params: {
+          nested: 'yes',
+        },
+        anotherParams: {
+          nested: 'another yes',
+        },
+      }, '/')
+    }).run()
   })
 
-  bench('not found props', () => {
-    processTemplateParams('%test %another %name %value', {
-      pageTitle: 'hello world',
-      siteName: 'My Awesome Site',
-    }, '/')
+  it('not found props', async ({ bench }) => {
+    await bench('not found props', () => {
+      processTemplateParams('%test %another %name %value', {
+        pageTitle: 'hello world',
+        siteName: 'My Awesome Site',
+      }, '/')
+    }).run()
   })
 
-  bench('with url', () => {
-    processTemplateParams('https://cdn.example.com/some%20image.jpg', {
-      pageTitle: 'hello world',
-      siteName: 'My Awesome Site',
-    }, '/')
+  it('with url', async ({ bench }) => {
+    await bench('with url', () => {
+      processTemplateParams('https://cdn.example.com/some%20image.jpg', {
+        pageTitle: 'hello world',
+        siteName: 'My Awesome Site',
+      }, '/')
+    }).run()
   })
 
-  bench('simple string', () => {
-    processTemplateParams('My Awesome Simple String', {
-      pageTitle: 'hello world',
-      siteName: 'My Awesome Site',
-    }, '/')
+  it('simple string', async ({ bench }) => {
+    await bench('simple string', () => {
+      processTemplateParams('My Awesome Simple String', {
+        pageTitle: 'hello world',
+        siteName: 'My Awesome Site',
+      }, '/')
+    }).run()
   })
 })

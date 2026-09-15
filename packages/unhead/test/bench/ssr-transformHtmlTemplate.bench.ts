@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { createHead } from 'unhead/server'
-import { bench, describe } from 'vitest'
+import { describe, it } from 'vitest'
 import {
   transformHtmlTemplate,
   transformHtmlTemplateRaw,
@@ -19,95 +19,104 @@ describe('transformHtmlTemplate', () => {
 
   const complexHtml = readFileSync(new URL('../fixtures/Markdown.html', import.meta.url), 'utf-8')
 
-  bench('basic html template', async () => {
-    const head = createHead()
-    head.push({
-      title: 'Benchmarked Page',
-      meta: [
-        { name: 'description', content: 'A benchmark test page' },
-        { property: 'og:title', content: 'Benchmarked Page' },
-      ],
+  it('basic html template', async ({ bench }) => {
+    await bench('basic html template', async () => {
+      const head = createHead()
+      head.push({
+        title: 'Benchmarked Page',
+        meta: [
+          { name: 'description', content: 'A benchmark test page' },
+          { property: 'og:title', content: 'Benchmarked Page' },
+        ],
+      })
+      await transformHtmlTemplate(head, basicHtml)
+    }).run({
+      iterations: 1000,
+      time: 1000,
     })
-    await transformHtmlTemplate(head, basicHtml)
-  }, {
-    iterations: 1000,
-    time: 1000,
   })
 
-  bench('complex html template', async () => {
-    const head = createHead()
-    head.push({
-      title: 'Complex Benchmarked Page',
-      meta: [
-        { name: 'description', content: 'A complex benchmark test page with lots of content' },
-        { name: 'keywords', content: 'benchmark, test, performance, html' },
-        { property: 'og:title', content: 'Complex Benchmarked Page' },
-        { property: 'og:description', content: 'Testing performance with complex HTML' },
-        { property: 'og:image', content: 'https://example.com/image.jpg' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-      ],
-      link: [
-        { rel: 'canonical', href: 'https://example.com/complex' },
-        { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
-      ],
-      script: [
-        { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
-      ],
+  it('complex html template', async ({ bench }) => {
+    await bench('complex html template', async () => {
+      const head = createHead()
+      head.push({
+        title: 'Complex Benchmarked Page',
+        meta: [
+          { name: 'description', content: 'A complex benchmark test page with lots of content' },
+          { name: 'keywords', content: 'benchmark, test, performance, html' },
+          { property: 'og:title', content: 'Complex Benchmarked Page' },
+          { property: 'og:description', content: 'Testing performance with complex HTML' },
+          { property: 'og:image', content: 'https://example.com/image.jpg' },
+          { name: 'twitter:card', content: 'summary_large_image' },
+        ],
+        link: [
+          { rel: 'canonical', href: 'https://example.com/complex' },
+          { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
+        ],
+        script: [
+          { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
+        ],
+      })
+      await transformHtmlTemplate(head, complexHtml)
+    }).run({
+      iterations: 1000,
+      time: 1000,
     })
-    await transformHtmlTemplate(head, complexHtml)
-  }, {
-    iterations: 1000,
-    time: 1000,
   })
 
-  bench('complex html template raw', async () => {
-    const head = createHead()
-    head.push({
-      title: 'Complex Benchmarked Page',
-      meta: [
-        { name: 'description', content: 'A complex benchmark test page with lots of content' },
-        { name: 'keywords', content: 'benchmark, test, performance, html' },
-        { property: 'og:title', content: 'Complex Benchmarked Page' },
-        { property: 'og:description', content: 'Testing performance with complex HTML' },
-        { property: 'og:image', content: 'https://example.com/image.jpg' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-      ],
-      link: [
-        { rel: 'canonical', href: 'https://example.com/complex' },
-        { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
-      ],
-      script: [
-        { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
-      ],
+  it('complex html template raw', async ({ bench }) => {
+    await bench('complex html template raw', async () => {
+      const head = createHead()
+      head.push({
+        title: 'Complex Benchmarked Page',
+        meta: [
+          { name: 'description', content: 'A complex benchmark test page with lots of content' },
+          { name: 'keywords', content: 'benchmark, test, performance, html' },
+          { property: 'og:title', content: 'Complex Benchmarked Page' },
+          { property: 'og:description', content: 'Testing performance with complex HTML' },
+          { property: 'og:image', content: 'https://example.com/image.jpg' },
+          { name: 'twitter:card', content: 'summary_large_image' },
+        ],
+        link: [
+          { rel: 'canonical', href: 'https://example.com/complex' },
+          { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
+        ],
+        script: [
+          { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
+        ],
+      })
+      await transformHtmlTemplateRaw(head, complexHtml)
+    }).run({
+      iterations: 1000,
+      time: 1000,
     })
-    await transformHtmlTemplateRaw(head, complexHtml)
-  }, {
-    iterations: 1000,
-    time: 1000,
   })
 
-  bench('multiple head pushes', async () => {
-    const head = createHead()
+  it('multiple head pushes', async ({ bench }) => {
+    await bench('multiple head pushes', async () => {
+      const head = createHead()
 
-    // Simulate multiple components adding head data
-    head.push({ title: 'Base Title' })
-    head.push({ meta: [{ name: 'description', content: 'Base description' }] })
-    head.push({ meta: [{ property: 'og:title', content: 'Social Title' }] })
-    head.push({ link: [{ rel: 'canonical', href: 'https://example.com' }] })
-    head.push({ script: [{ src: '/analytics.js', async: true }] })
+      // Simulate multiple components adding head data
+      head.push({ title: 'Base Title' })
+      head.push({ meta: [{ name: 'description', content: 'Base description' }] })
+      head.push({ meta: [{ property: 'og:title', content: 'Social Title' }] })
+      head.push({ link: [{ rel: 'canonical', href: 'https://example.com' }] })
+      head.push({ script: [{ src: '/analytics.js', async: true }] })
 
-    await transformHtmlTemplate(head, basicHtml)
-  }, {
-    iterations: 1000,
-    time: 1000,
+      await transformHtmlTemplate(head, basicHtml)
+    }).run({
+      iterations: 1000,
+      time: 1000,
+    })
   })
 
-  bench('large html template', async () => {
+  it('large html template', async ({ bench }) => {
+    await bench('large html template', async () => {
     // Generate a larger HTML template
-    const largeContent = Array.from({ length: 100 }, (_, i) =>
-      `<section><h2>Section ${i}</h2><p>Content for section ${i} with some text...</p></section>`).join('\n    ')
+      const largeContent = Array.from({ length: 100 }, (_, i) =>
+        `<section><h2>Section ${i}</h2><p>Content for section ${i} with some text...</p></section>`).join('\n    ')
 
-    const largeHtml = `<!DOCTYPE html>
+      const largeHtml = `<!DOCTYPE html>
 <html>
 <head>
   <title>Large Template</title>
@@ -121,18 +130,19 @@ describe('transformHtmlTemplate', () => {
 </body>
 </html>`
 
-    const head = createHead()
-    head.push({
-      title: 'Large Page Benchmark',
-      meta: [
-        { name: 'description', content: 'Testing with large HTML content' },
-        { property: 'og:title', content: 'Large Page' },
-      ],
-    })
+      const head = createHead()
+      head.push({
+        title: 'Large Page Benchmark',
+        meta: [
+          { name: 'description', content: 'Testing with large HTML content' },
+          { property: 'og:title', content: 'Large Page' },
+        ],
+      })
 
-    await transformHtmlTemplate(head, largeHtml)
-  }, {
-    iterations: 500,
-    time: 1000,
+      await transformHtmlTemplate(head, largeHtml)
+    }).run({
+      iterations: 500,
+      time: 1000,
+    })
   })
 })
