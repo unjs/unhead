@@ -11,6 +11,8 @@ export default defineProject({
       '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),
       '@unhead/schema-org/vue': resolve(__dirname, '../schema-org/src/vue/index.ts'),
+      '@unhead/vue/stream/server': resolve(__dirname, 'src/stream/server.ts'),
+      '@unhead/vue/stream/client': resolve(__dirname, 'src/stream/client.ts'),
       '@unhead/vue/server': resolve(__dirname, 'src/server.ts'),
       '@unhead/vue/client': resolve(__dirname, 'src/client.ts'),
       '@unhead/vue': resolve(__dirname, 'src/index.ts'),

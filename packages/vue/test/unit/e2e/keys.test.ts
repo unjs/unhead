@@ -12,13 +12,13 @@ const SPACE_RE = / /
 
 describe('vue e2e keys', () => {
   it('ssr / csr hydration', async () => {
-    const IndexSchema: ReactiveHead = {
+    const IndexSchema = {
       link: [{ rel: 'icon', href: '/page-index.ico', key: 'main-icon' }],
-    }
+    } satisfies ReactiveHead
 
-    const AboutSchema: ReactiveHead = {
+    const AboutSchema = {
       link: [{ rel: 'icon', href: '/page-about.ico', key: 'main-icon' }],
-    }
+    } satisfies ReactiveHead
 
     // ssr render on the index page
     const ssrHead = createServerHead({
