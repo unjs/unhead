@@ -81,7 +81,7 @@
   "peerDependencies": {
     "@unhead/cli": "workspace:^",
     "@vitejs/devtools-kit": "^0.4.1",
-    "esbuild": ">=0.17.0",
+    "esbuild": ">=0.28.1",
     "lightningcss": ">=1.20.0",
     "oxc-parser": ">=0.98.0",
     "rolldown": ">=1.0.0",
