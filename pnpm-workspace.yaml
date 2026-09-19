@@ -69,7 +69,7 @@ catalog:
   '@vitejs/devtools': ^0.4.12
   '@vitejs/devtools-kit': ^0.4.12
   '@vue/server-renderer': ^3.5.42
-  '@vueuse/nuxt': ^14.4.0
+  '@vueuse/nuxt': ^15.0.0
   bumpp: ^12.3.0
   citty: ^0.2.2
   devalue: ^5.9.2
