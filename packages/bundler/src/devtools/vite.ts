@@ -139,6 +139,7 @@ export interface UnheadDevtoolsInternalOptions extends UnheadDevtoolsOptions {
 export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin {
   let root = ''
   let enabled = false
+  let runtimePluginRegistered = false
   let bridgeCode: string | undefined
   let unheadVersion = ''
   const pkgDir = findPkgRoot(import.meta.url)
@@ -155,12 +156,13 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
         return
 
       // Register runtime plugins via the shared context
-      if (options?._ctx) {
+      if (options?._ctx && !runtimePluginRegistered) {
         options._ctx.addRuntimePlugin({
           import: { name: 'devtoolsPlugin', source: resolveRuntimeEntry(pkgDir), as: '__unhead_devtoolsPlugin' },
           client: 'window.__unhead_devtools__=_h',
           server: '_h.use(__unhead_devtoolsPlugin())',
         })
+        runtimePluginRegistered = true
       }
 
       // Resolve unhead version for the devtools UI. Resolve the `unhead` entry
