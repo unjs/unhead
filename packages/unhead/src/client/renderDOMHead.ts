@@ -65,7 +65,9 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
       for (const t of ['bodyAttrs', 'htmlAttrs'] as const) {
         const cls = orig[t]?.class
         if (typeof cls === 'string') {
-          const $el = state._e.get(t)!
+          const $el = state._e.get(t)
+          if (!$el)
+            continue
           for (const c of cls.split(WHITESPACE_RE)) {
             if (c)
               state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
@@ -264,19 +266,55 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         else if (k === 'style' && v) {
           delete renderState._p[ck]
+          const style = ($el as HTMLElement).style
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
-            const style = ($el as HTMLElement).style
             track(key, previous[key] || (() => style.removeProperty(sk)))
             style.setProperty(sk, sv)
-            // Browsers enumerate longhands only, so a shorthand claim (`margin`) must retire
-            // the longhand seeds it expands to or the end-of-pass pool deletes what was just set.
-            expansion = expandStyle()
-            expansion.setProperty(sk, sv)
-            for (let i = 0; i < expansion.length; i++) {
-              const xk = expansion.item(i)
+            // Browsers enumerate longhands only, so shorthand claims and cleanups left by the
+            // last pass must be reconciled through the CSSOM expansion in both directions or
+            // the end-of-pass pool deletes what was just set:
+            // - forward: a shorthand claim (`margin`) retires the longhand cleanups it covers
+            // - reverse: a previous shorthand covering this claim retires the claimed key too
+            const probe = expandStyle()
+            // reset between claims: leftovers from an earlier claim must not retire
+            // cleanups owned by that claim
+            while (probe.length)
+              probe.removeProperty(probe.item(0))
+            probe.setProperty(sk, sv)
+            for (let i = 0; i < probe.length; i++) {
+              const xk = probe.item(i)
               if (xk !== sk)
                 delete previous[`${ck}:${xk}`]
+            }
+            const prefix = `${ck}:`
+            for (const pk of Object.keys(previous)) {
+              if (!pk.startsWith(prefix))
+                continue
+              const pKey = pk.slice(prefix.length)
+              while (probe.length)
+                probe.removeProperty(probe.item(0))
+              probe.setProperty(pKey, sv)
+              let covers = false
+              for (let i = 0; i < probe.length; i++) {
+                if (probe.item(i) === sk) {
+                  covers = true
+                  break
+                }
+              }
+              if (!covers)
+                continue
+              delete previous[pk]
+              // the retired cleanup removed more than the claimed key; keep owning the
+              // rest of its expansion so a later drop cannot leak the stale values
+              for (let i = 0; i < probe.length; i++) {
+                const xk = probe.item(i)
+                if (xk === sk || xk === pKey)
+                  continue
+                const xkey = `${ck}:${xk}`
+                if (!renderState._s[xkey] && !previous[xkey])
+                  renderState._s[xkey] = () => style.removeProperty(xk)
+              }
             }
           }
         }
@@ -316,7 +354,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
       const tracked = new Set(renderState._e.values())
-      for (const el of [...dom.body.children, ...dom.head.children]) {
+      for (const el of [...(dom.body?.children || []), ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
           continue
@@ -343,10 +381,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     if (frag.head)
       dom.head.appendChild(frag.head)
-    if (frag.bodyOpen)
-      dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
-    if (frag.bodyClose)
-      dom.body.appendChild(frag.bodyClose)
+    // body-position tags need a <body>; on a body-less document they are dropped
+    if (dom.body) {
+      if (frag.bodyOpen)
+        dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
+      if (frag.bodyClose)
+        dom.body.appendChild(frag.bodyClose)
+    }
     for (const k in previous)
       previous[k]()
     head._dom = renderState

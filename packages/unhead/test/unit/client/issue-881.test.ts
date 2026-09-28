@@ -72,6 +72,34 @@ describe('issue 881 - adopted style shorthand claims', () => {
   })
 })
 
+describe('issue 881 - style claims across renders', () => {
+  it('keeps a longhand claim when it replaces a shorthand from the last render', () => {
+    const dom = useDom()
+    const document = dom.window.document
+    const style = withLonghandStyle(document.body, {})
+
+    const head = createClientHeadWithContext({ document })
+    const entry = head.push({ bodyAttrs: { style: { margin: '10px' } } })
+    entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
+
+    expect(style.getPropertyValue('margin-top')).toBe('5px')
+    expect(style.getPropertyValue('margin-left')).toBe('10px')
+  })
+
+  it('removes prior shorthand longhands when the style is dropped later', () => {
+    const dom = useDom()
+    const document = dom.window.document
+    const style = withLonghandStyle(document.body, {})
+
+    const head = createClientHeadWithContext({ document })
+    const entry = head.push({ bodyAttrs: { style: { margin: '10px' } } })
+    entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
+    entry.patch({ bodyAttrs: {} })
+
+    expect(style.length).toBe(0)
+  })
+})
+
 describe('issue 881 - document without a body', () => {
   it('renders a title-only head into a body-less document', () => {
     const document = useDom().window.document
@@ -82,6 +110,34 @@ describe('issue 881 - document without a body', () => {
 
     expect(renderDOMHead(head, { document })).toBe(true)
     expect(document.title).toBe('Bodyless')
+  })
+
+  it('renders a pending meta tag into a body-less document', () => {
+    const document = useDom().window.document
+    document.body.remove()
+
+    const head = createClientHeadWithContext({ document })
+    head.push({ meta: [{ name: 'viewport', content: 'width=device-width' }] })
+
+    expect(document.head.querySelector('meta[name="viewport"]')?.getAttribute('content')).toBe('width=device-width')
+  })
+
+  it('drops body-position tags instead of crashing on a body-less document', () => {
+    const document = useDom().window.document
+    document.body.remove()
+
+    const head = createClientHeadWithContext({ document })
+    head.push({ script: [{ src: 'https://cdn.example.com/app.js', tagPosition: 'bodyClose' }] })
+
+    expect(document.querySelector('script[src="https://cdn.example.com/app.js"]')).toBeNull()
+  })
+
+  it('ignores bodyAttrs seeds when the body is missing', () => {
+    const document = useDom().window.document
+    document.body.remove()
+
+    const head = createClientHeadWithContext({ document })
+    expect(() => head.push({ bodyAttrs: { class: 'page' } })).not.toThrow()
   })
 })
 
