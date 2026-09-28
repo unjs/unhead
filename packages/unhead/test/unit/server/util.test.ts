@@ -37,6 +37,14 @@ describe('propsToString', () => {
       content: 'a&#39;b&#x27;c&copy;',
     })).toStrictEqual(' content="a&#39;b&#x27;c&copy;"')
   })
+  it('preserves uppercase-X hex character references', () => {
+    expect(propsToString({
+      content: '&#X27;',
+    })).toStrictEqual(' content="&#X27;"')
+    expect(propsToString({
+      content: '&#X1F600;',
+    })).toStrictEqual(' content="&#X1F600;"')
+  })
   it('escapes ampersands that are not entity references', () => {
     expect(propsToString({
       href: '/search?q=a&b=2',

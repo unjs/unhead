@@ -3,7 +3,7 @@ import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 const HAS_ATTR_ESCAPE_RE = /[&<>"]/
 // & is only escaped when it does not already start a character reference, so
 // pre-escaped values (e.g. `&amp;`) pass through unchanged
-const ESCAPE_ATTR_RE = /&(?!#\d+;|#x[\da-fA-F]+;|[a-zA-Z][a-zA-Z0-9]*;)|[<>"]/g
+const ESCAPE_ATTR_RE = /&(?!#\d+;|#x[\da-f]+;|[a-z][a-z0-9]*;)|[<>"]/gi
 const ESCAPE_ATTR_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
 
 /* @__PURE__ */
