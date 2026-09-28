@@ -45,6 +45,20 @@ describe('propsToString', () => {
       content: '&#X1F600;',
     })).toStrictEqual(' content="&#X1F600;"')
   })
+  it('preserves semicolon-less character references browsers decode', () => {
+    expect(propsToString({
+      href: '/a?x=1&amp',
+    })).toStrictEqual(' href="/a?x=1&amp"')
+    expect(propsToString({
+      href: '/a?x=1&#38',
+    })).toStrictEqual(' href="/a?x=1&#38"')
+    expect(propsToString({
+      href: '/a?x=1&#x26',
+    })).toStrictEqual(' href="/a?x=1&#x26"')
+    expect(propsToString({
+      content: '&copy 2024',
+    })).toStrictEqual(' content="&copy 2024"')
+  })
   it('escapes ampersands that are not entity references', () => {
     expect(propsToString({
       href: '/search?q=a&b=2',
