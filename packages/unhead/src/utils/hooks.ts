@@ -16,7 +16,9 @@ export function createHooks<T extends CoreHeadHooks>(hooks?: Partial<T>): Hookab
   instance.callHook = (name, ...args) => {
     const registered = (instance as any)._hooks[name] as HookCallback[] | undefined
     if (registered?.length)
-      return callRegisteredHooks(registered, args)
+      // Snapshot the registered array so hooks removed during an async
+      // callback cannot shift indices and skip the next still-registered hook.
+      return callRegisteredHooks(registered.slice(), args)
   }
   for (const key in hooks || {}) {
     instance.hook(key as any, hooks![key as keyof typeof hooks] as any)
