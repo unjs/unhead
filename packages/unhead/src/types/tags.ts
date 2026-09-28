@@ -121,6 +121,13 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _h?: string
   /**
+   * Key-sorted JSON fingerprint of a JSON script payload (`innerHTML`/
+   * `textContent`), used for dedupe identity so differing key insertion
+   * order still matches. Rendered output keeps `JSON.stringify` order.
+   * @internal
+   */
+  _c?: string
+  /**
    * Source file:line that created this tag (devtools only).
    * @internal
    */

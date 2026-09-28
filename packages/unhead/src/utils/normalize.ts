@@ -5,6 +5,10 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { canonicalStringify } from './dedupe'
 import { isUnsafeKey } from './unsafeKey'
 
+function isJsonScriptType(type: unknown): boolean {
+  return typeof type === 'string' && (type.endsWith('json') || type === 'speculationrules' || type === 'importmap')
+}
+
 function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
@@ -65,13 +69,26 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
-        if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
+        if (isJsonScriptType(type)) {
           tag.props.type = type
-          tag[prop] = canonicalStringify(value)
+          // fingerprint with key-sorted serialisation so identity is insertion-order
+          // independent, but render with JSON.stringify so output bytes are unchanged
+          tag._c = canonicalStringify(value)
+          tag[prop] = JSON.stringify(value)
         }
       }
       else {
         (tag as any)[prop] = value
+        // JSON payloads rebuilt from server-rendered DOM arrive as strings (and users
+        // may push strings directly); fingerprint the parsed value so identity matches
+        // the object-push path. Malformed JSON cannot be fingerprinted: identity then
+        // falls back to the literal string, which still matches identical DOM content.
+        if (tag.tag === 'script' && (prop === 'textContent' || prop === 'innerHTML') && typeof value === 'string' && isJsonScriptType(input.type)) {
+          try {
+            tag._c = canonicalStringify(JSON.parse(value))
+          }
+          catch {}
+        }
       }
     }
     else if (value !== undefined) {
@@ -107,7 +124,8 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
-    tag.innerHTML = canonicalStringify(tag.innerHTML)
+    tag._c = canonicalStringify(tag.innerHTML)
+    tag.innerHTML = JSON.stringify(tag.innerHTML)
     tag.props.type = tag.props.type || 'application/json'
   }
   if (Array.isArray(tag.props.content)) {

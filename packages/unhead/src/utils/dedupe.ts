@@ -9,6 +9,9 @@ const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
  * same shape but different insertion order serialise identically. Arrays stay
  * order-sensitive: `[1,2]` and `[2,1]` are genuinely different.
  *
+ * The accumulator is a null-prototype object so an own enumerable `__proto__`
+ * key survives assignment, keeping the output identical to `JSON.stringify`.
+ *
  * `JSON.stringify` still does the serialising, so `Date`, `toJSON`, `NaN`,
  * `undefined`, and boxed primitives behave exactly as they did before.
  */
@@ -31,7 +34,7 @@ function sortKeysDeep(value: unknown, seen: Set<object>): unknown {
     out = value
   }
   else {
-    const sorted: Record<string, unknown> = {}
+    const sorted: Record<string, unknown> = Object.create(null)
     for (const key of Object.keys(value as Record<string, unknown>).sort())
       sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key], seen)
     out = sorted
@@ -83,11 +86,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   // after key/id so an explicit key still allows multiple links with the same rel + href
   if (t === 'link' && props.rel && props.href)
     return `link:${props.rel}:${props.href}`
-  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
+  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag._c || tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag) {
-  const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
+  const identity = tag._h || tag._d || tag._c || tag.textContent || tag.innerHTML
   if (identity)
     return identity
   // sort so the hash is stable across differing prop insertion orders (#823)

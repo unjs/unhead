@@ -1,4 +1,4 @@
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { canonicalStringify, dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
 import { normalizeEntryToTags } from '../../src/utils/normalize'
 
 describe('isMetaArrayDupeKey', () => {
@@ -149,6 +149,45 @@ describe('canonical json identity across the ssr boundary', () => {
     const ssr = createServerHead({ disableDefaults: true })
     ssr.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
     const doc = new JSDOM(`<!DOCTYPE html><html><head>${(await ssr.render()).headTags}</head><body></body></html>`).window.document
+
+    const client = createClientHead({ document: doc })
+    client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
+  })
+
+  // A null-prototype object can carry an own enumerable `__proto__` key, which
+  // native JSON.stringify renders. Dedupe identity must not silently drop it,
+  // or distinct payloads collide and one JSON-LD block is lost.
+  it('keeps own __proto__ keys on null-prototype payloads distinct', async () => {
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const plain: Record<string, unknown> = Object.create(null)
+    plain.a = 1
+    const protoKeyed: Record<string, unknown> = Object.create(null)
+    Object.defineProperty(protoKeyed, '__proto__', { value: 1, enumerable: true, configurable: true, writable: true })
+    protoKeyed.a = 1
+
+    expect(canonicalStringify(protoKeyed)).toBe(JSON.stringify(protoKeyed))
+    expect(canonicalStringify(plain)).not.toBe(canonicalStringify(protoKeyed))
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: plain as any }, { type: 'application/ld+json', innerHTML: protoKeyed as any }] })
+    const { headTags } = await ssr.render()
+
+    expect(headTags.match(/<script/g)).toHaveLength(2)
+    expect(headTags).toContain('"__proto__":1')
+  })
+
+  // Pages served from caches written before the fingerprinting change carry
+  // insertion-order JSON. The client must adopt that block, not append a twin.
+  it('adopts a pre-upgrade insertion-order json block instead of adding a second', async () => {
+    const { JSDOM } = await import('jsdom')
+    const { createHead: createClientHead } = await import('../../src/client')
+
+    const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
+    const doc = new JSDOM(`<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify(LD)}</script></head><body></body></html>`).window.document
 
     const client = createClientHead({ document: doc })
     client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
