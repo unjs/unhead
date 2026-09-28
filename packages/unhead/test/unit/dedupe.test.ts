@@ -128,6 +128,19 @@ describe('hashTag', () => {
 describe('canonical json identity across the ssr boundary', () => {
   const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
 
+  it('renders boxed primitives as JSON primitives, not exploded objects', async () => {
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: { value: new Object(1), s: new Object('ab') } as any }] })
+    const { headTags } = await ssr.render()
+
+    expect(headTags).toContain('"value":1')
+    expect(headTags).toContain('"s":"ab"')
+    expect(headTags).not.toContain('"0":"a"')
+    expect(headTags).not.toContain('"1":"b"')
+  })
+
   it('adopts the server-rendered block instead of adding a second', async () => {
     const { JSDOM } = await import('jsdom')
     const { createHead: createClientHead } = await import('../../src/client')

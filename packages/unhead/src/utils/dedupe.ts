@@ -9,11 +9,16 @@ const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
  * same shape but different insertion order serialise identically. Arrays stay
  * order-sensitive: `[1,2]` and `[2,1]` are genuinely different.
  *
- * `JSON.stringify` still does the serialising, so `Date`, `toJSON`, `NaN`, and
- * `undefined` behave exactly as they did before.
+ * `JSON.stringify` still does the serialising, so `Date`, `toJSON`, `NaN`,
+ * `undefined`, and boxed primitives behave exactly as they did before.
  */
 function sortKeysDeep(value: unknown, seen: Set<object>): unknown {
   if (!value || typeof value !== 'object')
+    return value
+  // boxed primitives (new Number(1), new String('ab'), new Boolean(true)) have no
+  // meaningful own keys; Object.keys explodes String instances into an index map
+  const classTag = Object.prototype.toString.call(value)
+  if (classTag === '[object Number]' || classTag === '[object String]' || classTag === '[object Boolean]')
     return value
   if (seen.has(value as object))
     throw new TypeError('Converting circular structure to JSON')
