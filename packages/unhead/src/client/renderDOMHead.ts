@@ -16,6 +16,9 @@ type DomStateInternal = DomState & {
   _a: WeakSet<Element>
   _d: Document
   _l: Map<string, DomEventSideEffect>
+  // orphaned longhand keys a retired shorthand left behind, keyed by the claim that
+  // retired it; fired only by that claim's cleanup on drop, never by the end-of-pass pool
+  _x: Record<string, string[]>
 }
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -37,7 +40,7 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+  const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map(), _x: {} }
   if (dom.documentElement)
     state._a.add(dom.documentElement)
   if (dom.body)
@@ -99,7 +102,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       if (state) {
         for (const k in state._s) state._s[k]()
         for (const k in state._p) state._p[k]()
-        state._s = state._p = {}
+        state._s = state._p = state._x = {}
         state._e.clear()
         state._l.clear()
       }
@@ -119,6 +122,20 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     // detached probe mirroring the CSSOM expansion of claimed style keys
     let expansion: CSSStyleDeclaration | undefined
     const expandStyle = () => expansion ??= dom.createElement('div').style
+
+    // a dropped style claim must also clear longhands orphaned by a shorthand it retired
+    // (see retirement below); the record is read at fire time so re-renders keep the
+    // claim alive without arming the orphans into the end-of-pass pool
+    function styleClaimCleanup(key: string, sk: string, style: CSSStyleDeclaration) {
+      return () => {
+        style.removeProperty(sk)
+        const extras = renderState._x[key]
+        if (!extras)
+          return
+        delete renderState._x[key]
+        for (const xk of extras) style.removeProperty(xk)
+      }
+    }
 
     function track(key: string, fn: () => void, fresh?: boolean) {
       // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
@@ -267,9 +284,23 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         else if (k === 'style' && v) {
           delete renderState._p[ck]
           const style = ($el as HTMLElement).style
+          const prefix = `${ck}:`
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => style.removeProperty(sk)))
+            track(key, previous[key] || styleClaimCleanup(key, sk, style))
+            // the claim owns this key outright: no orphan record may remove it when
+            // another claim on this element drops
+            for (const rk of Object.keys(renderState._x)) {
+              if (!rk.startsWith(prefix))
+                continue
+              const owned = renderState._x[rk]!
+              const i = owned.indexOf(sk)
+              if (i === -1)
+                continue
+              owned.splice(i, 1)
+              if (!owned.length)
+                delete renderState._x[rk]
+            }
             style.setProperty(sk, sv)
             // Browsers enumerate longhands only, so shorthand claims and cleanups left by the
             // last pass must be reconciled through the CSSOM expansion in both directions or
@@ -284,10 +315,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
             probe.setProperty(sk, sv)
             for (let i = 0; i < probe.length; i++) {
               const xk = probe.item(i)
-              if (xk !== sk)
+              if (xk !== sk) {
                 delete previous[`${ck}:${xk}`]
+                delete renderState._x[`${ck}:${xk}`]
+              }
             }
-            const prefix = `${ck}:`
             for (const pk of Object.keys(previous)) {
               if (!pk.startsWith(prefix))
                 continue
@@ -305,16 +337,18 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               if (!covers)
                 continue
               delete previous[pk]
-              // the retired cleanup removed more than the claimed key; keep owning the
-              // rest of its expansion so a later drop cannot leak the stale values
+              delete renderState._x[pk]
+              // the retired cleanup removed more than the claimed key; keep owning the rest
+              // of its expansion so a later drop cannot leak the stale values. The orphans
+              // hang off THIS claim and fire with its cleanup on drop, so unrelated or
+              // identical re-renders keep the preserved values intact.
+              const owned = renderState._x[key] || (renderState._x[key] = [])
               for (let i = 0; i < probe.length; i++) {
                 const xk = probe.item(i)
-                if (xk === sk || xk === pKey)
-                  continue
-                const xkey = `${ck}:${xk}`
-                if (!renderState._s[xkey] && !previous[xkey])
-                  renderState._s[xkey] = () => style.removeProperty(xk)
+                if (xk !== sk && xk !== pKey && !owned.includes(xk))
+                  owned.push(xk)
               }
+              renderState._s[key] = styleClaimCleanup(key, sk, style)
             }
           }
         }

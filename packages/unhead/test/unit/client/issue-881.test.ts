@@ -86,6 +86,22 @@ describe('issue 881 - style claims across renders', () => {
     expect(style.getPropertyValue('margin-left')).toBe('10px')
   })
 
+  it('keeps preserved longhands when an identical style claim re-renders', () => {
+    const dom = useDom()
+    const document = dom.window.document
+    const style = withLonghandStyle(document.body, {})
+
+    const head = createClientHeadWithContext({ document })
+    const entry = head.push({ bodyAttrs: { style: { margin: '10px' } } })
+    entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
+    entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
+
+    expect(style.getPropertyValue('margin-top')).toBe('5px')
+    expect(style.getPropertyValue('margin-right')).toBe('10px')
+    expect(style.getPropertyValue('margin-bottom')).toBe('10px')
+    expect(style.getPropertyValue('margin-left')).toBe('10px')
+  })
+
   it('removes prior shorthand longhands when the style is dropped later', () => {
     const dom = useDom()
     const document = dom.window.document
