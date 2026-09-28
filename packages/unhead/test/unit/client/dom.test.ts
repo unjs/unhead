@@ -210,7 +210,7 @@ describe('reused element drop reconciliation', () => {
     expect(adopted.getAttribute(attr)).toBeNull()
   })
 
-  it('reconciles classes, styles, and attributes on adopted document elements', () => {
+  it('preserves external state on adopted document elements while reconciling the entry baseline', () => {
     const head = useDOMHead()
     const document = head.resolvedOptions.document!
     document.documentElement.setAttribute('class', 'server shared')
@@ -220,7 +220,7 @@ describe('reused element drop reconciliation', () => {
     document.body.setAttribute('style', 'color: red; background: blue')
     document.body.setAttribute('data-server', 'body')
 
-    head.push({
+    const entry = head.push({
       htmlAttrs: {
         class: 'client shared',
         style: { color: 'green' },
@@ -231,12 +231,26 @@ describe('reused element drop reconciliation', () => {
       },
     })
 
-    expect(document.documentElement.className).toBe('shared client')
-    expect(document.documentElement.style.cssText).toBe('color: green;')
-    expect(document.documentElement.getAttribute('data-server')).toBeNull()
-    expect(document.body.className).toBe('shared client')
-    expect(document.body.style.cssText).toBe('color: green;')
-    expect(document.body.getAttribute('data-server')).toBeNull()
+    // external class/attr/style survive; only the entry baseline (_o) is claimed
+    expect(document.documentElement.className).toBe('server shared client')
+    expect(document.documentElement.style.cssText).toBe('color: green; background: blue;')
+    expect(document.documentElement.getAttribute('data-server')).toBe('html')
+    expect(document.body.className).toBe('server shared client')
+    expect(document.body.style.cssText).toBe('color: green; background: blue;')
+    expect(document.body.getAttribute('data-server')).toBe('body')
+
+    // dropping the baseline still removes baseline classes, external classes stay
+    entry.patch({
+      htmlAttrs: {
+        style: { color: 'green' },
+      },
+      bodyAttrs: {
+        style: { color: 'green' },
+      },
+    })
+
+    expect(document.documentElement.className).toBe('server')
+    expect(document.body.className).toBe('server')
   })
 
   it('clears content omitted from an adopted keyed tag', () => {
