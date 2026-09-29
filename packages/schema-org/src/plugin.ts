@@ -6,7 +6,6 @@ import { hasOwn, processTemplateParams, unpackMeta } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
-import { resolveMeta } from './core/resolve'
 
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
@@ -39,9 +38,10 @@ export interface PluginSchemaOrgOptions {
 }
 
 export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> = () => ({}), options?: PluginSchemaOrgOptions) {
-  config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta: Partial<ResolvedMeta> = {}
+  // Kept apart from resolvedMeta: a canonical only fills `url` when no source sets one.
+  let canonical: string | undefined
   return defineHeadPlugin((head: Unhead): HeadPlugin => {
     head.use(TemplateParamsPlugin)
     function collectMeta(props: Record<string, unknown>) {
@@ -89,16 +89,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         resolvedMeta.title = String(tag.textContent)
       }
       else if (tag.tag === 'link' && tag.props.rel === 'canonical' && typeof tag.props.href === 'string') {
-        resolvedMeta.url = tag.props.href
-        // may be using template params that aren't resolved
-        if (resolvedMeta.url && !resolvedMeta.host) {
-          try {
-            resolvedMeta.host = new URL(resolvedMeta.url).origin
-          }
-          catch {
-            // Canonical URLs may contain unresolved template params; leave host unset.
-          }
-        }
+        canonical = tag.props.href
       }
       // use template params
       else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
@@ -117,6 +108,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           graph.nodes = []
           graph.nodeIndex.clear()
           resolvedMeta = {}
+          canonical = undefined
           for (const entry of ctx.entries) {
             if (entry._tags) {
               if (entry._tags.some(isSchemaOrgTag)) {
@@ -139,7 +131,10 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             // nodes can resolve to nullish at runtime (reactive no-op input), match by key too
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
+              const graphMeta = { ...(meta?.() || {}), ...config, ...resolvedMeta }
+              if (canonical && !graphMeta.url)
+                graphMeta.url = processTemplateParams(canonical, head._templateParams!, head._separator!)
+              const resolvedGraph = graph.resolveGraph(graphMeta)
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
