@@ -2,7 +2,7 @@ import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { hasOwn, processTemplateParams } from 'unhead/utils'
+import { hasOwn, processTemplateParams, unpackMeta } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
@@ -44,6 +44,14 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   let resolvedMeta: Partial<ResolvedMeta> = {}
   return defineHeadPlugin((head: Unhead): HeadPlugin => {
     head.use(TemplateParamsPlugin)
+    function collectMeta(props: Record<string, unknown>) {
+      if (typeof props.content !== 'string')
+        return
+      if (props.name === 'description')
+        resolvedMeta.description = props.content
+      else if (props.property === 'og:image')
+        resolvedMeta.image = props.content
+    }
     function collectTag(tag: HeadTag) {
       if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
         // this is a bit expensive, load in seperate chunk
@@ -65,14 +73,20 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         }
         tag.tagPosition = tag.tagPosition || (config.tagPosition === 'head' ? 'head' : 'bodyClose')
       }
-      if (tag.tag === 'htmlAttrs' && typeof tag.props.lang === 'string') {
+      if (tag.tag === 'meta') {
+        collectMeta(tag.props)
+      }
+      // useSeoMeta() packs its meta into one `_flatMeta` tag. FlatMetaPlugin may
+      // unpack it before or after this hook, so read both shapes.
+      else if (tag.tag === '_flatMeta') {
+        for (const props of unpackMeta(tag.props))
+          collectMeta(props as Record<string, unknown>)
+      }
+      else if (tag.tag === 'htmlAttrs' && typeof tag.props.lang === 'string') {
         resolvedMeta.inLanguage = tag.props.lang
       }
       else if (tag.tag === 'title' && tag.textContent != null && typeof tag.textContent !== 'function') {
         resolvedMeta.title = String(tag.textContent)
-      }
-      else if (tag.tag === 'meta' && tag.props.name === 'description' && typeof tag.props.content === 'string') {
-        resolvedMeta.description = tag.props.content
       }
       else if (tag.tag === 'link' && tag.props.rel === 'canonical' && typeof tag.props.href === 'string') {
         resolvedMeta.url = tag.props.href
@@ -85,9 +99,6 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             // Canonical URLs may contain unresolved template params; leave host unset.
           }
         }
-      }
-      else if (tag.tag === 'meta' && tag.props.property === 'og:image' && typeof tag.props.content === 'string') {
-        resolvedMeta.image = tag.props.content
       }
       // use template params
       else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
