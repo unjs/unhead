@@ -29,6 +29,25 @@ function mergeObjects(target: any, source: any): any {
   return result
 }
 
+const ABSOLUTE_URL_RE = /^https?:\/\//i
+
+// The graph url is always rebuilt from host and path, so a canonical link must set those.
+// A canonical that still holds unresolved template params is ignored.
+function canonicalMeta(href: string): Partial<MetaInput> {
+  if (href.startsWith('/') && !href.startsWith('//'))
+    return { path: href.split(/[?#]/, 1)[0] }
+  if (!ABSOLUTE_URL_RE.test(href))
+    return {}
+  try {
+    const url = new URL(href)
+    return { host: url.origin, path: url.pathname }
+  }
+  catch {
+    // Not a valid URL; keep host and path from the other sources.
+    return {}
+  }
+}
+
 function isSchemaOrgTag(tag: HeadTag) {
   return (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph'
 }
@@ -42,6 +61,8 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta: Partial<ResolvedMeta> = {}
+  // Kept apart from resolvedMeta so the page canonical beats template params in any order.
+  let canonical: string | undefined
   return defineHeadPlugin((head: Unhead): HeadPlugin => {
     head.use(TemplateParamsPlugin)
     function collectTag(tag: HeadTag) {
@@ -75,16 +96,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         resolvedMeta.description = tag.props.content
       }
       else if (tag.tag === 'link' && tag.props.rel === 'canonical' && typeof tag.props.href === 'string') {
-        resolvedMeta.url = tag.props.href
-        // may be using template params that aren't resolved
-        if (resolvedMeta.url && !resolvedMeta.host) {
-          try {
-            resolvedMeta.host = new URL(resolvedMeta.url).origin
-          }
-          catch {
-            // Canonical URLs may contain unresolved template params; leave host unset.
-          }
-        }
+        canonical = tag.props.href
       }
       else if (tag.tag === 'meta' && tag.props.property === 'og:image' && typeof tag.props.content === 'string') {
         resolvedMeta.image = tag.props.content
@@ -106,6 +118,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           graph.nodes = []
           graph.nodeIndex.clear()
           resolvedMeta = {}
+          canonical = undefined
           for (const entry of ctx.entries) {
             if (entry._tags) {
               if (entry._tags.some(isSchemaOrgTag)) {
@@ -128,7 +141,12 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             // nodes can resolve to nullish at runtime (reactive no-op input), match by key too
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
+              const resolvedGraph = graph.resolveGraph({
+                ...(meta?.() || {}),
+                ...config,
+                ...resolvedMeta,
+                ...(canonical ? canonicalMeta(processTemplateParams(canonical, head._templateParams!, head._separator!)) : {}),
+              })
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
