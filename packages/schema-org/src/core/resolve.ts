@@ -19,15 +19,22 @@ function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
 
 const ABSOLUTE_URL_RE = /^https?:\/\//i
 
-// Split an explicit url into host and path. A url that is not a valid URL,
-// such as one with unresolved template params, is ignored.
-function parseMetaUrl(url: string): Partial<MetaInput> {
-  if (url.startsWith('/') && !url.startsWith('//'))
-    return { path: url.split(/[?#]/, 1)[0] }
-  if (!ABSOLUTE_URL_RE.test(url))
+const QUERY_RE = /[?#]/
+
+// Split an explicit url into host and path. A url under the current host keeps
+// that host, so a host with a base path or a trailing slash stays as given.
+// A url that is not a valid URL, such as one with unresolved template params, is ignored.
+function parseMetaUrl(url: string, host?: string): Partial<MetaInput> {
+  const href = url.split(QUERY_RE, 1)[0]!
+  if (href.startsWith('/') && !href.startsWith('//'))
+    return { path: href }
+  if (!ABSOLUTE_URL_RE.test(href))
     return {}
+  const base = host && withoutTrailingSlash(host)
+  if (base && (href === base || href.startsWith(`${base}/`)))
+    return { path: href.slice(base.length) || '/' }
   try {
-    const parsed = new URL(url)
+    const parsed = new URL(href)
     return { host: parsed.origin, path: parsed.pathname }
   }
   catch {
@@ -39,7 +46,7 @@ function parseMetaUrl(url: string): Partial<MetaInput> {
 export function resolveMeta(meta: Partial<MetaInput>): ResolvedMeta {
   // The graph url is always rebuilt from host and path, so an explicit url sets those.
   if (meta.url)
-    Object.assign(meta, parseMetaUrl(meta.url))
+    Object.assign(meta, parseMetaUrl(meta.url, meta.host))
 
   if (!meta.path)
     meta.path = '/'
