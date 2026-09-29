@@ -5,7 +5,6 @@ import { processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
-import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
 
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
@@ -86,9 +85,12 @@ export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta
  * @deprecated Providing a plugin is no longer required. You can remove this code.
  */
 export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
-  config = resolveMeta({ ...config })
+  // Unresolved on purpose: resolving here would fill a default `url` that outranks the canonical link.
+  config = { ...config }
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
+  // Kept apart from resolvedMeta: a canonical only fills `url` when no source sets one.
+  let canonical: string | undefined
   return defineHeadPlugin((head) => {
     head.use(TemplateParamsPlugin)
     return {
@@ -124,16 +126,8 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             else if (tag.tag === 'meta' && tag.props.name === 'description') {
               resolvedMeta.description = tag.props.content
             }
-            else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
-              resolvedMeta.url = tag.props.href
-              // may be using template params that aren't resolved
-              if (resolvedMeta.url && !resolvedMeta.host) {
-                try {
-                  resolvedMeta.host = new URL(resolvedMeta.url).origin
-                }
-                catch {
-                }
-              }
+            else if (tag.tag === 'link' && tag.props.rel === 'canonical' && typeof tag.props.href === 'string') {
+              canonical = tag.props.href
             }
             else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
               resolvedMeta.image = tag.props.content
@@ -155,7 +149,10 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
+              const graphMeta = { ...(await meta?.() || {}), ...config, ...resolvedMeta }
+              if (canonical && !graphMeta.url)
+                graphMeta.url = processTemplateParams(canonical, head._templateParams!, head._separator!)
+              const resolvedGraph = graph.resolveGraph(graphMeta)
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}

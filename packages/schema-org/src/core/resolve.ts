@@ -15,6 +15,51 @@ function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
   return ctx.nodeIdCounters[alias].toString()
 }
 
+const ABSOLUTE_URL_RE = /^https?:\/\//i
+
+const QUERY_RE = /[?#]/
+const HASH_RE = /#/
+
+const TRAILING_SLASHES_RE = /\/+$/
+
+function parseAbsoluteUrl(url: string): URL | undefined {
+  if (!ABSOLUTE_URL_RE.test(url))
+    return undefined
+  try {
+    return new URL(url)
+  }
+  catch {
+    // Not a valid URL; the caller keeps host and path from the other sources.
+    return undefined
+  }
+}
+
+interface ExplicitUrl {
+  /** The url as given, without a fragment. */
+  url: string
+  /** Set when the url sits under the site host: the page path relative to that host. */
+  path?: string
+}
+
+// Read an explicit url. A url under the site host also gives the page path; a url on
+// another host gives only the url. A url that is not a valid URL, such as one with
+// unresolved template params, is ignored.
+function parseMetaUrl(input: string, host?: string): ExplicitUrl | undefined {
+  const url = input.split(HASH_RE, 1)[0]!
+  if (url.startsWith('/') && !url.startsWith('//'))
+    return { url: host ? joinURL(host, url) : url, path: url.split(QUERY_RE, 1)[0] }
+  const parsed = parseAbsoluteUrl(url)
+  if (!parsed)
+    return undefined
+  const hostUrl = host ? parseAbsoluteUrl(host) : undefined
+  if (!hostUrl)
+    return { url, path: parsed.pathname }
+  const basePath = hostUrl.pathname.replace(TRAILING_SLASHES_RE, '')
+  if (hostUrl.origin === parsed.origin && (parsed.pathname === basePath || parsed.pathname.startsWith(`${basePath}/`)))
+    return { url, path: parsed.pathname.slice(basePath.length) || '/' }
+  return { url }
+}
+
 export function resolveMeta(meta: Partial<MetaInput>) {
   if (!meta.host && meta.canonicalHost)
     meta.host = meta.canonicalHost
@@ -33,6 +78,14 @@ export function resolveMeta(meta: Partial<MetaInput>) {
   if (!meta.url && meta.canonicalUrl)
     meta.url = meta.canonicalUrl
 
+  const explicit = meta.url ? parseMetaUrl(meta.url, meta.host) : undefined
+  // A url without a host adopts its origin as the site host.
+  if (explicit?.path && !meta.host && ABSOLUTE_URL_RE.test(explicit.url))
+    meta.host = new URL(explicit.url).origin
+  if (explicit?.path)
+    meta.path = explicit.path
+
+  // trailingSlash shapes only the url built from host and path; an explicit url is used as given.
   if (meta.path !== '/') {
     if (meta.trailingSlash && !hasTrailingSlash(meta.path))
       meta.path = withTrailingSlash(meta.path)
@@ -40,12 +93,16 @@ export function resolveMeta(meta: Partial<MetaInput>) {
       meta.path = withoutTrailingSlash(meta.path)
   }
 
-  meta.url = joinURL(meta.host || '', meta.path)
+  const siteUrl = joinURL(meta.host || '', meta.path)
+  meta.url = explicit?.url || siteUrl
 
   return <ResolvedMeta> {
     ...meta,
     host: meta.host,
     url: meta.url,
+    path: meta.path,
+    // Page @id values stay on the site host: a url on another host changes only the url property.
+    idUrl: explicit?.path ? explicit.url : siteUrl,
     currency: meta.currency,
     image: meta.image,
     inLanguage: meta.inLanguage,
@@ -103,6 +160,10 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
   return node
 }
 
+function idBase(ctx: SchemaOrgGraph, prefix: 'host' | 'url') {
+  return prefix === 'url' ? ctx.meta.idUrl : ctx.meta.host
+}
+
 export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>, resolveAsRoot = false) {
   // already fully qualified
   if (node['@id'] && node['@id'].startsWith('http'))
@@ -114,11 +175,11 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
   if (!node['@id'] && resolveAsRoot && rootId) {
     // transform ['host', PrimaryWebPageId] to https://host.com/#webpage
     // allow overriding root ids
-    node['@id'] = prefixId(ctx.meta[prefix], rootId)
+    node['@id'] = prefixId(idBase(ctx, prefix), rootId)
     return node
   }
   if (node['@id']?.startsWith('#/schema/') || node['@id']?.startsWith('/')) {
-    node['@id'] = prefixId(ctx.meta[prefix], node['@id'])
+    node['@id'] = prefixId(idBase(ctx, prefix), node['@id'])
     return node
   }
   // transform 'host' to https://host.com/#schema/webpage/1
@@ -129,7 +190,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     alias = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   }
 
-  node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)
+  node['@id'] = prefixId(idBase(ctx, prefix), `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)
   return node
 }
 
