@@ -48,4 +48,15 @@ describe('schema.org canonical link', async () => {
 
     expect(webPage((await renderSSRHead(head)).bodyTags).url).toBe('https://example.com/page')
   })
+
+  it('explicit url in template params beats the canonical link', async () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/other', url: 'https://override.example.com/custom' } } })
+    useSchemaOrg(head, [defineWebPage()])
+    useHead(head, { link: [{ rel: 'canonical', href: 'https://example.com/page' }] })
+
+    const page = webPage((await renderSSRHead(head)).bodyTags)
+    expect(page.url).toBe('https://override.example.com/custom')
+    expect(page['@id']).toBe('https://override.example.com/custom#webpage')
+  })
 })

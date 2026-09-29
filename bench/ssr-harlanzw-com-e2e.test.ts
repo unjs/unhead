@@ -327,11 +327,11 @@ ${htmlContext.bodyAppend.join('\n')}
             }
           },
           {
-            "@id": "https://harlanzw.com#webpage",
+            "@id": "https://harlanzw.com/path#webpage",
             "@type": "WebPage",
             "description": "Home page description",
             "name": "Home",
-            "url": "https://harlanzw.com",
+            "url": "https://harlanzw.com/path",
             "about": {
               "@id": "https://harlanzw.com#identity"
             },
@@ -342,7 +342,7 @@ ${htmlContext.bodyAppend.join('\n')}
               {
                 "@type": "ReadAction",
                 "target": [
-                  "https://harlanzw.com"
+                  "https://harlanzw.com/path"
                 ]
               }
             ]

@@ -5,7 +5,6 @@ import { processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
-import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
 
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
@@ -65,25 +64,6 @@ function mergeObjects(target: any, source: any): any {
   return result
 }
 
-const ABSOLUTE_URL_RE = /^https?:\/\//i
-
-// The graph url is always rebuilt from host and path, so a canonical link must set those.
-// A canonical that still holds unresolved template params is ignored.
-function canonicalMeta(href: string): Partial<MetaInput> {
-  if (href.startsWith('/') && !href.startsWith('//'))
-    return { path: href.split(/[?#]/, 1)[0] }
-  if (!ABSOLUTE_URL_RE.test(href))
-    return {}
-  try {
-    const url = new URL(href)
-    return { host: url.origin, path: url.pathname }
-  }
-  catch {
-    // Not a valid URL; keep host and path from the other sources.
-    return {}
-  }
-}
-
 export interface PluginSchemaOrgOptions {
   minify?: boolean
   trailingSlash?: boolean
@@ -105,10 +85,11 @@ export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta
  * @deprecated Providing a plugin is no longer required. You can remove this code.
  */
 export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
-  config = resolveMeta({ ...config })
+  // Unresolved on purpose: resolving here would fill a default `url` that outranks the canonical link.
+  config = { ...config }
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
-  // Kept apart from resolvedMeta so the page canonical beats template params in any order.
+  // Kept apart from resolvedMeta: a canonical only fills `url` when no source sets one.
   let canonical: string | undefined
   return defineHeadPlugin((head) => {
     head.use(TemplateParamsPlugin)
@@ -168,12 +149,10 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({
-                ...(await meta?.() || {}),
-                ...config,
-                ...resolvedMeta,
-                ...(canonical ? canonicalMeta(processTemplateParams(canonical, head._templateParams!, head._separator!)) : {}),
-              })
+              const graphMeta = { ...(await meta?.() || {}), ...config, ...resolvedMeta }
+              if (canonical && !graphMeta.url)
+                graphMeta.url = processTemplateParams(canonical, head._templateParams!, head._separator!)
+              const resolvedGraph = graph.resolveGraph(graphMeta)
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
