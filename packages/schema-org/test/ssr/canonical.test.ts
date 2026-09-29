@@ -32,7 +32,7 @@ describe('schema.org canonical link', () => {
 
     const page = webPage(renderSSRHead(head).bodyTags)
     expect(page.url).toBe('https://canonical.example.com/page')
-    expect(page['@id']).toBe('https://canonical.example.com/page#webpage')
+    expect(page['@id']).toBe('https://example.com/other#webpage')
   })
 
   it('relative canonical link sets the path', () => {
@@ -60,7 +60,7 @@ describe('schema.org canonical link', () => {
 
     const page = webPage(renderSSRHead(head).bodyTags)
     expect(page.url).toBe('https://override.example.com/custom')
-    expect(page['@id']).toBe('https://override.example.com/custom#webpage')
+    expect(page['@id']).toBe('https://example.com/other#webpage')
   })
 
   it('url under a host with a trailing slash or base path keeps that host', () => {
@@ -70,7 +70,7 @@ describe('schema.org canonical link', () => {
     useHead(head, { link: [{ rel: 'canonical', href: 'https://EXAMPLE.com:443/base/page' }] })
 
     const bodyTags = renderSSRHead(head).bodyTags
-    expect(webPage(bodyTags).url).toBe('https://example.com/base/page')
+    expect(webPage(bodyTags).url).toBe('https://EXAMPLE.com:443/base/page')
     expect(findNode(bodyTags, 'WebSite')['@id']).toBe('https://example.com/base/#website')
   })
 
@@ -82,5 +82,47 @@ describe('schema.org canonical link', () => {
     const bodyTags = renderSSRHead(head).bodyTags
     expect(webPage(bodyTags)['@id']).toBe('https://example.com/#webpage')
     expect(findNode(bodyTags, 'WebSite')['@id']).toBe('https://example.com/#website')
+  })
+
+  it('cross-domain canonical sets the url but keeps @id on the site host', () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/post' } } })
+    useSchemaOrg(head, [defineWebSite({ name: 'Site' }), defineWebPage()])
+    useHead(head, { link: [{ rel: 'canonical', href: 'https://syndicated.example.org/original' }] })
+
+    const bodyTags = renderSSRHead(head).bodyTags
+    expect(webPage(bodyTags).url).toBe('https://syndicated.example.org/original')
+    expect(webPage(bodyTags)['@id']).toBe('https://example.com/post#webpage')
+    expect(findNode(bodyTags, 'WebSite')['@id']).toBe('https://example.com#website')
+  })
+
+  it('canonical query string stays in the url and the @id', () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/blog' } } })
+    useSchemaOrg(head, [defineWebPage()])
+    useHead(head, { link: [{ rel: 'canonical', href: 'https://example.com/blog?page=2' }] })
+
+    const page = webPage(renderSSRHead(head).bodyTags)
+    expect(page.url).toBe('https://example.com/blog?page=2')
+    expect(page['@id']).toBe('https://example.com/blog?page=2#webpage')
+  })
+
+  it('canonical is used as given, whatever trailingSlash says', () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/blog', trailingSlash: false } } })
+    useSchemaOrg(head, [defineWebPage()])
+    useHead(head, { link: [{ rel: 'canonical', href: 'https://example.com/blog/' }] })
+
+    const page = webPage(renderSSRHead(head).bodyTags)
+    expect(page.url).toBe('https://example.com/blog/')
+    expect(page['@id']).toBe('https://example.com/blog/#webpage')
+  })
+
+  it('trailingSlash still normalizes a url built from host and path', () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/blog/', trailingSlash: false } } })
+    useSchemaOrg(head, [defineWebPage()])
+
+    expect(webPage(renderSSRHead(head).bodyTags).url).toBe('https://example.com/blog')
   })
 })
