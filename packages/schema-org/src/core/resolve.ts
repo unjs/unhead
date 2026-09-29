@@ -21,26 +21,36 @@ const ABSOLUTE_URL_RE = /^https?:\/\//i
 
 const QUERY_RE = /[?#]/
 
+const TRAILING_SLASHES_RE = /\/+$/
+
+function parseAbsoluteUrl(url: string): URL | undefined {
+  if (!ABSOLUTE_URL_RE.test(url))
+    return undefined
+  try {
+    return new URL(url)
+  }
+  catch {
+    // Not a valid URL; the caller keeps host and path from the other sources.
+    return undefined
+  }
+}
+
 // Split an explicit url into host and path. A url under the current host keeps
 // that host, so a host with a base path or a trailing slash stays as given.
 // A url that is not a valid URL, such as one with unresolved template params, is ignored.
 function parseMetaUrl(url: string, host?: string): Partial<MetaInput> {
-  const href = url.split(QUERY_RE, 1)[0]!
-  if (href.startsWith('/') && !href.startsWith('//'))
-    return { path: href }
-  if (!ABSOLUTE_URL_RE.test(href))
+  if (url.startsWith('/') && !url.startsWith('//'))
+    return { path: url.split(QUERY_RE, 1)[0] }
+  const parsed = parseAbsoluteUrl(url)
+  if (!parsed)
     return {}
-  const base = host && withoutTrailingSlash(host)
-  if (base && (href === base || href.startsWith(`${base}/`)))
-    return { path: href.slice(base.length) || '/' }
-  try {
-    const parsed = new URL(href)
-    return { host: parsed.origin, path: parsed.pathname }
+  const hostUrl = host ? parseAbsoluteUrl(host) : undefined
+  if (hostUrl && hostUrl.origin === parsed.origin) {
+    const basePath = hostUrl.pathname.replace(TRAILING_SLASHES_RE, '')
+    if (parsed.pathname === basePath || parsed.pathname.startsWith(`${basePath}/`))
+      return { path: parsed.pathname.slice(basePath.length) || '/' }
   }
-  catch {
-    // Not a valid URL; keep host and path from the other sources.
-    return {}
-  }
+  return { host: parsed.origin, path: parsed.pathname }
 }
 
 export function resolveMeta(meta: Partial<MetaInput>): ResolvedMeta {

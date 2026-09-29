@@ -67,7 +67,7 @@ describe('schema.org canonical link', () => {
     const head = createHead()
     useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com/base/', path: '/other' } } })
     useSchemaOrg(head, [defineWebSite({ name: 'Site' }), defineWebPage()])
-    useHead(head, { link: [{ rel: 'canonical', href: 'https://example.com/base/page' }] })
+    useHead(head, { link: [{ rel: 'canonical', href: 'https://EXAMPLE.com:443/base/page' }] })
 
     const bodyTags = renderSSRHead(head).bodyTags
     expect(webPage(bodyTags).url).toBe('https://example.com/base/page')
