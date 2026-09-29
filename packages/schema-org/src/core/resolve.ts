@@ -17,7 +17,30 @@ function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
   return ctx.nodeIdCounters[alias].toString()
 }
 
+const ABSOLUTE_URL_RE = /^https?:\/\//i
+
+// Split an explicit url into host and path. A url that is not a valid URL,
+// such as one with unresolved template params, is ignored.
+function parseMetaUrl(url: string): Partial<MetaInput> {
+  if (url.startsWith('/') && !url.startsWith('//'))
+    return { path: url.split(/[?#]/, 1)[0] }
+  if (!ABSOLUTE_URL_RE.test(url))
+    return {}
+  try {
+    const parsed = new URL(url)
+    return { host: parsed.origin, path: parsed.pathname }
+  }
+  catch {
+    // Not a valid URL; keep host and path from the other sources.
+    return {}
+  }
+}
+
 export function resolveMeta(meta: Partial<MetaInput>): ResolvedMeta {
+  // The graph url is always rebuilt from host and path, so an explicit url sets those.
+  if (meta.url)
+    Object.assign(meta, parseMetaUrl(meta.url))
+
   if (!meta.path)
     meta.path = '/'
 
