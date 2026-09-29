@@ -10,6 +10,9 @@ export type OptionalSchemaOrgPrefix<T extends string> = T | `https://schema.org/
 export interface ResolvedMeta {
   host: string
   url: string
+  path: string
+  /** Base for page `@id` values. Equals `url`, unless `url` points at another host. */
+  idUrl: string
   currency?: string
   inLanguage?: string
   image?: string

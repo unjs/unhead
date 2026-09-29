@@ -113,7 +113,7 @@ export const PrimaryWebPageId = '#webpage'
 export const webPageResolver = defineSchemaOrgResolver<WebPage>({
   defaults({ meta }) {
     // try match the @type for the url
-    const endPath = withoutTrailingSlash(meta.url.substring(meta.url.lastIndexOf('/') + 1))
+    const endPath = withoutTrailingSlash(meta.path.substring(meta.path.lastIndexOf('/') + 1))
     let type: ValidSubTypes = 'WebPage'
     switch (endPath) {
       case 'about':
@@ -180,7 +180,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     /*
      * When it's a homepage, add additional about property which references the identity of the site.
      */
-    if (identity && meta.url === meta.host)
+    if (identity && meta.path === '/')
       setIfEmpty(webPage, 'about', idReference(identity))
 
     if (logo)
