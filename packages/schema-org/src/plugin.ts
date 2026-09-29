@@ -1,7 +1,7 @@
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { processTemplateParams } from 'unhead/utils'
+import { processTemplateParams, unpackMeta } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
@@ -91,6 +91,14 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
   let resolvedMeta = {} as ResolvedMeta
   return defineHeadPlugin((head) => {
     head.use(TemplateParamsPlugin)
+    function collectMeta(props: Record<string, unknown>) {
+      if (typeof props.content !== 'string')
+        return
+      if (props.name === 'description')
+        resolvedMeta.description = props.content
+      else if (props.property === 'og:image')
+        resolvedMeta.image = props.content
+    }
     return {
       key: 'schema-org',
       hooks: {
@@ -115,14 +123,21 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
               }
               tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
             }
-            if (tag.tag === 'htmlAttrs' && tag.props.lang) {
+            if (tag.tag === 'meta') {
+              collectMeta(tag.props)
+            }
+            // useSeoMeta() packs its meta into one `_flatMeta` tag. FlatMetaPlugin may
+            // unpack it before or after this hook, so read both shapes.
+            // @ts-expect-error untyped
+            else if (tag.tag === '_flatMeta') {
+              for (const props of unpackMeta(tag.props))
+                collectMeta(props as Record<string, unknown>)
+            }
+            else if (tag.tag === 'htmlAttrs' && tag.props.lang) {
               resolvedMeta.inLanguage = tag.props.lang
             }
             else if (tag.tag === 'title') {
               resolvedMeta.title = tag.textContent
-            }
-            else if (tag.tag === 'meta' && tag.props.name === 'description') {
-              resolvedMeta.description = tag.props.content
             }
             else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
               resolvedMeta.url = tag.props.href
@@ -134,9 +149,6 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 catch {
                 }
               }
-            }
-            else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
-              resolvedMeta.image = tag.props.content
             }
             // use template params
             else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
