@@ -1,6 +1,8 @@
 import { RuleTester } from 'eslint'
 import { nonAbsoluteCanonical } from '../src/rules/canonical-rules'
 import { emptyMetaContent } from '../src/rules/empty-meta-content'
+import { noUnknownMeta } from '../src/rules/no-unknown-meta'
+import { preferDefineHelpers } from '../src/rules/prefer-define-helpers'
 import { preloadFontCrossorigin, preloadMissingAs } from '../src/rules/preload-rules'
 import { robotsConflict } from '../src/rules/robots-conflict'
 import { deferOnModuleScript, scriptSrcWithContent } from '../src/rules/script-rules'
@@ -152,6 +154,121 @@ tester.run('empty-meta-content', emptyMetaContent, {
     {
       code: `useHead({ meta: [{ name: 'description', content: '' }] })`,
       errors: [{ message: /"description" has empty content/ }],
+    },
+  ],
+})
+
+tester.run('no-unknown-meta', noUnknownMeta, {
+  valid: [
+    `useHead({ meta: [{ name: 'description', content: 'A page' }] })`,
+    // `meta[name]` is case-insensitive, so mixed-case known names stay silent.
+    `useHead({ meta: [{ name: 'Description', content: 'A page' }] })`,
+    `useHead({ meta: [{ property: 'og:title', content: 'My page' }] })`,
+    // Non-OG namespaces are out of scope for `property` typo detection.
+    `useHead({ meta: [{ property: 'music:musician', content: 'Somebody' }] })`,
+    // Dynamic values can't be typo-checked.
+    `useHead({ meta: [{ name: someName, content: 'A page' }] })`,
+  ],
+  invalid: [
+    {
+      code: `useHead({ meta: [{ name: 'descripton', content: 'A page' }] })`,
+      output: `useHead({ meta: [{ name: 'description', content: 'A page' }] })`,
+      errors: [{ message: /Unknown meta name "descripton"\. Did you mean "description"\?/ }],
+    },
+    {
+      code: `useHead({ meta: [{ property: 'og:titel', content: 'My page' }] })`,
+      output: `useHead({ meta: [{ property: 'og:title', content: 'My page' }] })`,
+      errors: [{ message: /Unknown meta property "og:titel"\. Did you mean "og:title"\?/ }],
+    },
+    {
+      // Both sides of the tag are flagged in one pass: property first, then name.
+      code: `useHead({ meta: [{ property: 'og:descrption', name: 'descripton' }] })`,
+      output: `useHead({ meta: [{ property: 'og:description', name: 'description' }] })`,
+      errors: [
+        { message: /Unknown meta property "og:descrption"\. Did you mean "og:description"\?/ },
+        { message: /Unknown meta name "descripton"\. Did you mean "description"\?/ },
+      ],
+    },
+    {
+      // The message quotes the original casing; the fix writes the canonical value.
+      code: `useHead({ meta: [{ name: 'Descripton', content: 'A page' }] })`,
+      output: `useHead({ meta: [{ name: 'description', content: 'A page' }] })`,
+      errors: [{ message: /Unknown meta name "Descripton"\. Did you mean "description"\?/ }],
+    },
+  ],
+})
+
+tester.run('prefer-define-helpers', preferDefineHelpers, {
+  valid: [
+    `import { defineLink } from 'unhead'
+useHead({ link: [defineLink({ rel: 'icon' })] })`,
+    // Only link/script entries are in scope.
+    `useHead({ meta: [{ name: 'description', content: 'A page' }] })`,
+    // The object (non-array) form is not flagged, only array entries.
+    `useHead({ link: { rel: 'canonical', href: 'https://example.com/' } })`,
+    // Inputs outside head composables are not scanned.
+    `makeTags({ link: [{ rel: 'icon' }] })`,
+  ],
+  invalid: [
+    {
+      // Without an import there is no safe autofix, only a suggestion.
+      code: `useHead({ link: [{ rel: 'icon', href: '/favicon.png' }] })`,
+      errors: [{
+        message: /Wrap this link entry in `defineLink\(\)`/,
+        suggestions: [{
+          desc: 'Wrap in `defineLink()` (you may need to import it).',
+          output: `useHead({ link: [defineLink({ rel: 'icon', href: '/favicon.png' })] })`,
+        }],
+      }],
+    },
+    {
+      // An imported helper turns the report into a plain autofix.
+      code: `import { defineLink } from 'unhead'
+useHead({ link: [{ rel: 'icon', href: '/i.png' }] })`,
+      output: `import { defineLink } from 'unhead'
+useHead({ link: [defineLink({ rel: 'icon', href: '/i.png' })] })`,
+      errors: [{ message: /Wrap this link entry in `defineLink\(\)`/ }],
+    },
+    {
+      // Renamed imports wrap with the local binding name.
+      code: `import { defineScript as ds } from '@unhead/vue'
+useHead({ script: [{ src: '/x.js' }] })`,
+      output: `import { defineScript as ds } from '@unhead/vue'
+useHead({ script: [ds({ src: '/x.js' })] })`,
+      errors: [{ message: /Wrap this script entry in `defineScript\(\)`/ }],
+    },
+    {
+      // Helpers imported from unrelated packages don't count.
+      code: `import { defineLink } from 'some-other-lib'
+useHead({ link: [{ rel: 'icon' }] })`,
+      errors: [{
+        message: /Wrap this link entry in `defineLink\(\)`/,
+        suggestions: [{
+          desc: 'Wrap in `defineLink()` (you may need to import it).',
+          output: `import { defineLink } from 'some-other-lib'
+useHead({ link: [defineLink({ rel: 'icon' })] })`,
+        }],
+      }],
+    },
+    {
+      // Every unhelped entry in the array is reported.
+      code: `useHead({ script: [{ src: '/a.js' }, { src: '/b.js' }] })`,
+      errors: [
+        {
+          message: /Wrap this script entry in `defineScript\(\)`/,
+          suggestions: [{
+            desc: 'Wrap in `defineScript()` (you may need to import it).',
+            output: `useHead({ script: [defineScript({ src: '/a.js' }), { src: '/b.js' }] })`,
+          }],
+        },
+        {
+          message: /Wrap this script entry in `defineScript\(\)`/,
+          suggestions: [{
+            desc: 'Wrap in `defineScript()` (you may need to import it).',
+            output: `useHead({ script: [{ src: '/a.js' }, defineScript({ src: '/b.js' })] })`,
+          }],
+        },
+      ],
     },
   ],
 })
