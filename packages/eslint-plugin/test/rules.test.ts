@@ -65,11 +65,25 @@ tester.run('defer-on-module-script', deferOnModuleScript, {
   valid: [
     `useHead({ script: [{ src: '/x.js', type: 'module' }] })`,
     `useHead({ script: [{ src: '/x.js', defer: true }] })`,
+    // Only `defer: true` is redundant; an explicit false stays silent.
+    `useHead({ script: [{ src: '/x.js', type: 'module', defer: false }] })`,
   ],
   invalid: [
     {
       code: `useHead({ script: [{ src: '/x.js', type: 'module', defer: true }] })`,
       output: `useHead({ script: [{ src: '/x.js', type: 'module' }] })`,
+      errors: [{ message: /redundant on module scripts/ }],
+    },
+    {
+      // The fixer drops the comma that trails `defer` when it is a middle property.
+      code: `useHead({ script: [{ src: '/x.js', defer: true, type: 'module' }] })`,
+      output: `useHead({ script: [{ src: '/x.js',  type: 'module' }] })`,
+      errors: [{ message: /redundant on module scripts/ }],
+    },
+    {
+      // Tag helpers such as `defineScript` are scanned like array entries.
+      code: `defineScript({ src: '/x.js', type: 'module', defer: true })`,
+      output: `defineScript({ src: '/x.js', type: 'module' })`,
       errors: [{ message: /redundant on module scripts/ }],
     },
   ],
@@ -79,10 +93,20 @@ tester.run('script-src-with-content', scriptSrcWithContent, {
   valid: [
     `useHead({ script: [{ src: '/x.js' }] })`,
     `useHead({ script: [{ innerHTML: 'console.log(1)' }] })`,
+    // Empty inline strings count as "no content" and stay silent.
+    `useHead({ script: [{ src: '/x.js', innerHTML: '' }] })`,
+    `useHead({ script: [{ src: '/x.js', textContent: '' }] })`,
+    // A dynamic src cannot be statically compared with the inline content.
+    `useHead({ script: [{ src: someVar, innerHTML: 'x' }] })`,
   ],
   invalid: [
     {
       code: `useHead({ script: [{ src: '/x.js', innerHTML: 'console.log(1)' }] })`,
+      errors: [{ message: /both "src" and inline content/ }],
+    },
+    {
+      // `textContent` is treated exactly like `innerHTML`.
+      code: `useHead({ script: [{ src: '/x.js', textContent: 'console.log(1)' }] })`,
       errors: [{ message: /both "src" and inline content/ }],
     },
   ],
@@ -119,11 +143,27 @@ tester.run('non-absolute-canonical', nonAbsoluteCanonical, {
   valid: [
     `useHead({ link: [{ rel: 'canonical', href: 'https://example.com/' }] })`,
     `useHead({ link: [{ rel: 'canonical', href: someVar }] })`,
+    // Plain http URLs are absolute too.
+    `useHead({ link: [{ rel: 'canonical', href: 'http://example.com/' }] })`,
+    // Relative hrefs are only flagged on canonical links.
+    `useHead({ link: [{ rel: 'icon', href: '/favicon.png' }] })`,
+    // Templates with expressions resolve dynamically and cannot be checked.
+    `useHead({ link: [{ rel: 'canonical', href: \`\${base}/about\` }] })`,
   ],
   invalid: [
     {
       code: `useHead({ link: [{ rel: 'canonical', href: '/about' }] })`,
       errors: [{ message: /Canonical URL should be absolute/ }],
+    },
+    {
+      // Protocol-relative URLs do not count as absolute here.
+      code: `useHead({ link: [{ rel: 'canonical', href: '//example.com/about' }] })`,
+      errors: [{ message: /received "\/\/example.com\/about"/ }],
+    },
+    {
+      // Static templates are materialized and checked like plain strings.
+      code: `useHead({ link: [{ rel: 'canonical', href: \`/about\` }] })`,
+      errors: [{ message: /received "\/about"/ }],
     },
   ],
 })
@@ -132,6 +172,10 @@ tester.run('no-html-in-title', noHtmlInTitle, {
   valid: [
     `useHead({ title: 'Hello world' })`,
     `useSeoMeta({ title: 'Plain' })`,
+    // Dynamic titles cannot be inspected.
+    `useHead({ title: someTitle })`,
+    // Only `title` is in scope; `titleTemplate` is left to other rules.
+    `useHead({ titleTemplate: '(blog) <b>%s</b>' })`,
   ],
   invalid: [
     {
@@ -140,6 +184,16 @@ tester.run('no-html-in-title', noHtmlInTitle, {
     },
     {
       code: `useSeoMeta({ title: '<b>x</b>' })`,
+      errors: [{ message: /HTML characters/ }],
+    },
+    {
+      // A lone `>` is enough to trip the check.
+      code: `useHead({ title: '5 > 3' })`,
+      errors: [{ message: /not rendered: "5 > 3"/ }],
+    },
+    {
+      // The server-side variant is checked like `useSeoMeta`.
+      code: `useServerSeoMeta({ title: '<b>x</b>' })`,
       errors: [{ message: /HTML characters/ }],
     },
   ],
