@@ -75,9 +75,33 @@ tester.run('defer-on-module-script', deferOnModuleScript, {
       errors: [{ message: /redundant on module scripts/ }],
     },
     {
-      // The fixer drops the comma that trails `defer` when it is a middle property.
+      // The fixer drops the comma that trails `defer` when it is a middle
+      // property and swallows the separator space so no double space remains.
       code: `useHead({ script: [{ src: '/x.js', defer: true, type: 'module' }] })`,
-      output: `useHead({ script: [{ src: '/x.js',  type: 'module' }] })`,
+      output: `useHead({ script: [{ src: '/x.js', type: 'module' }] })`,
+      errors: [{ message: /redundant on module scripts/ }],
+    },
+    {
+      // Same comma-after branch with `defer` as the first property.
+      code: `useHead({ script: [{ defer: true, type: 'module', src: '/x.js' }] })`,
+      output: `useHead({ script: [{ type: 'module', src: '/x.js' }] })`,
+      errors: [{ message: /redundant on module scripts/ }],
+    },
+    {
+      // Multi-line objects only lose the removed property's line.
+      code: [
+        `useHead({ script: [{`,
+        `  type: 'module',`,
+        `  defer: true,`,
+        `  src: '/x.js',`,
+        `}] })`,
+      ].join('\n'),
+      output: [
+        `useHead({ script: [{`,
+        `  type: 'module',`,
+        `  src: '/x.js',`,
+        `}] })`,
+      ].join('\n'),
       errors: [{ message: /redundant on module scripts/ }],
     },
     {
