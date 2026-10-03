@@ -37,6 +37,17 @@ export interface HeadEntry<Input> {
    */
   _precomputedTags?: HeadTag[]
   /**
+   * Marks the entry as permanently static (see `pushStaticPlan` in
+   * `unhead/server`): `_precomputedTags` are the entry's only tags, forever.
+   * Unlike the `_precomputedTags` cache used for the SSR default init entry,
+   * this bypasses tag-weight overrides, `entries:normalize`/`entries:resolve`
+   * hooks and entry options too — there is no normalizable `input` to fall
+   * back to, `input` is a placeholder.
+   *
+   * @internal
+   */
+  _static?: boolean
+  /**
    * Pending patch to apply on next render (client-only)
    * @internal
    */
