@@ -72,7 +72,7 @@ catalog:
   '@vueuse/nuxt': ^14.4.0
   bumpp: ^12.3.0
   citty: ^0.2.2
-  devalue: ^5.9.2
+  devalue: ^6.0.2
   esbuild: ^0.28.2
   eslint: ^10.10.0
   eslint-plugin-harlanzw: ^0.21.1
