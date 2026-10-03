@@ -283,7 +283,7 @@ describe('xss', () => {
     })
 
     const ctx = renderSSRHead(head)
-    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="<svg><script>alert(1)</script></svg>">"`)
+    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="&lt;svg&gt;&lt;script&gt;alert(1)&lt;/script&gt;&lt;/svg&gt;">"`)
   })
 
   it('meta with character encoding tricks', async () => {
@@ -312,7 +312,7 @@ describe('xss', () => {
     })
 
     const ctx = renderSSRHead(head)
-    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="keywords" content="📝➡️<script>alert(1)</script>">"`)
+    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="keywords" content="📝➡️&lt;script&gt;alert(1)&lt;/script&gt;">"`)
   })
 
   it('meta with tag name bypass using character casing', async () => {
@@ -325,7 +325,7 @@ describe('xss', () => {
     })
 
     const ctx = renderSSRHead(head)
-    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="<ScRiPt>alert(1)</ScRiPt>">"`)
+    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;">"`)
   })
 
   it('script with comment-based tag closure bypass', async () => {
