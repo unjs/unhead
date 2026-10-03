@@ -8,27 +8,27 @@ import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
 
 describe('vue e2e charset', () => {
   it('ssr / csr hydration', async () => {
-    const AppSchema: ReactiveHead = {
+    const AppSchema = {
       title: 'My app',
       meta: [
         {
           charset: 'utf-8',
         },
       ],
-    }
+    } satisfies ReactiveHead
 
-    const IndexSchema: ReactiveHead = {
+    const IndexSchema = {
       title: 'Home page',
       meta: [
         {
           charset: () => 'utf-8',
         },
       ],
-    }
+    } satisfies ReactiveHead
 
-    const AboutSchema: ReactiveHead = {
+    const AboutSchema = {
       title: 'About page',
-    }
+    } satisfies ReactiveHead
 
     // ssr render on the index page
     const ssrHead = await ssrVueAppWithUnhead(() => {
