@@ -64,7 +64,8 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
               title = title(head._title)
             }
             title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            const inferredTitle = options.ogTitle ? options.ogTitle(title) : title
+            ogTitle.props.content = hasContent(inferredTitle) ? inferredTitle! : null as any
             ogTitle.processTemplateParams = true
           }
 
@@ -72,7 +73,8 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
           const ogDescription = tagMap.get('meta:og:description')
           if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
+            const inferredDescription = options.ogDescription ? options.ogDescription(description) : description
+            ogDescription.props.content = hasContent(inferredDescription) ? inferredDescription! : null as any
             ogDescription.processTemplateParams = true
           }
         },
