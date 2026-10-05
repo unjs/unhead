@@ -142,4 +142,37 @@ describe('ssr templateParams', () => {
       `"<title>test foo | subPage% | test</title>"`,
     )
   })
+
+  it('numeric params, including 0', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      title: '%count items',
+      meta: [
+        {
+          name: 'description',
+          content: '%count items from %price',
+        },
+      ],
+      script: [
+        {
+          type: 'application/ld+json',
+          innerHTML: '{"price":"%price","count":"%count"}',
+          processTemplateParams: true,
+        },
+      ],
+      templateParams: {
+        count: 0,
+        price: 5,
+      },
+    })
+    const { headTags } = renderSSRHead(head)
+
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>0 items</title>
+      <meta name="description" content="0 items from 5">
+      <script type="application/ld+json">{"price":"5","count":"0"}</script>"
+    `)
+  })
 })
