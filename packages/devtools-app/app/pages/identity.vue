@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isBrokenUrl } from '~/composables/link-checker'
-import { state } from '~/composables/state'
+import { resolvePageUrl, state } from '~/composables/state'
 
 const seo = computed(() => state.value.seo)
 
@@ -115,7 +115,7 @@ const themeChecklist = computed<TipItem[]>(() => [
           </div>
           <div class="id-browser__bar">
             <UIcon name="i-carbon-locked" class="id-browser__lock" />
-            <span class="id-browser__url">{{ seo.canonical || 'localhost' }}</span>
+            <span class="id-browser__url">{{ seo.canonical || state.url }}</span>
           </div>
           <div class="id-browser__actions" aria-hidden="true">
             <span /><span /><span />
@@ -124,7 +124,7 @@ const themeChecklist = computed<TipItem[]>(() => [
         <div class="id-browser__tabs">
           <div class="id-browser__tab id-browser__tab--active">
             <UIcon v-if="!faviconUrl || isBrokenUrl(faviconUrl)" name="i-carbon-earth" class="id-browser__favicon-placeholder" />
-            <img v-else :src="faviconUrl" class="id-browser__favicon" alt="" width="14" height="14">
+            <img v-else :src="resolvePageUrl(faviconUrl ?? '')" class="id-browser__favicon" alt="" width="14" height="14">
             <span class="id-browser__title">{{ seo.title || 'Untitled' }}</span>
           </div>
           <div class="id-browser__tab">
@@ -173,7 +173,7 @@ const themeChecklist = computed<TipItem[]>(() => [
                 <template v-if="isBrokenUrl(icon.href)">
                   <UIcon name="i-carbon-warning-filled" class="text-red-400 text-lg" />
                 </template>
-                <img v-else :src="icon.href" :alt="icon.rel" class="id-icon-img" width="32" height="32" loading="lazy">
+                <img v-else :src="resolvePageUrl(icon.href)" :alt="icon.rel" class="id-icon-img" width="32" height="32" loading="lazy">
               </div>
               <div class="id-icon-meta">
                 <p class="text-xs font-mono truncate" :class="isBrokenUrl(icon.href) ? 'text-red-400' : 'text-muted'">

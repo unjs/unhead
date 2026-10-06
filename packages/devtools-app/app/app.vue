@@ -4,10 +4,12 @@ import { brokenLinks, validateLinks } from '~/composables/link-checker'
 import { useDevtoolsConnection } from '~/composables/rpc'
 import { applyOverrides, useRuleOverrides } from '~/composables/rule-overrides'
 import { loadShiki } from '~/composables/shiki'
-import { state, unheadVersion } from '~/composables/state'
+import { connectionStatus, state, unheadVersion } from '~/composables/state'
 import { checkForUpdate, hasUpdate, latestVersion } from '~/composables/update-check'
 
-useDevtoolsConnection()
+useDevtoolsConnection().catch((err) => {
+  console.error('[unhead devtools] connection failed:', err)
+})
 loadShiki()
 
 // Validate external links whenever tags change
@@ -17,6 +19,12 @@ watch(() => state.value.tags, tags => validateLinks(tags), { immediate: true })
 watch(unheadVersion, v => checkForUpdate(v), { immediate: true })
 
 const { overrides } = useRuleOverrides()
+
+// Audit and Docs work without the page script; every other tab renders head state.
+const route = useRoute()
+const showConnectionState = computed(() =>
+  connectionStatus.value !== 'connected' && !route.path.startsWith('/audit') && !route.path.startsWith('/docs'),
+)
 
 const tagsErrors = computed(() => brokenLinks.value.size)
 const tagsWarnings = computed(() =>
@@ -74,7 +82,8 @@ const navItems = computed<DevtoolsNavItem[]>(() => [
         </div>
       </template>
       <template #stats />
-      <NuxtPage />
+      <DevtoolsConnectionState v-if="showConnectionState && connectionStatus !== 'connected'" :status="connectionStatus" />
+      <NuxtPage v-else />
     </DevtoolsLayout>
   </UApp>
 </template>

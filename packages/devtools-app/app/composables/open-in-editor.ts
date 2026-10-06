@@ -11,7 +11,12 @@ export function openInEditor(source: string | undefined | null): void {
   // dock only renders inside the Vite dev server iframe so it's always
   // available when this is called.
   const url = `/__open-in-editor?file=${encodeURIComponent(source)}`
-  fetch(url).catch((err) => {
-    console.warn('[unhead devtools] open-in-editor failed:', err)
-  })
+  fetch(url)
+    .then((res) => {
+      if (!res.ok)
+        throw new Error(`/__open-in-editor responded ${res.status}`)
+    })
+    .catch((err) => {
+      console.warn('[unhead devtools] open-in-editor failed:', err)
+    })
 }

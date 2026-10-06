@@ -1,10 +1,10 @@
 import type { SerializedTag } from './state'
+import { resolvePageUrl } from './state'
 
 export interface BrokenLink {
   url: string
   tag: string
   identifier: string
-  status: number | 'error'
   tagDedupeKey?: string
 }
 
@@ -12,6 +12,10 @@ const IMAGE_URL_META = new Set(['og:image', 'og:image:url', 'og:image:secure_url
 const URL_META = new Set([...IMAGE_URL_META, 'og:url', 'og:video', 'og:video:url', 'og:audio', 'og:audio:url'])
 const ICON_RELS = new Set(['icon', 'apple-touch-icon', 'apple-touch-icon-precomposed'])
 const IMAGE_EXT_RE = /\.(?:png|jpe?g|gif|svg|ico|webp|avif)(?:\?.*)?$/i
+// Head state syncs on every DOM render; check each URL at most once per window.
+const RECHECK_MS = 60_000
+
+const checkedAt = new Map<string, number>()
 
 /** All broken link results keyed by URL */
 export const brokenLinks = shallowRef(new Map<string, BrokenLink>())
@@ -61,29 +65,32 @@ function extractCheckableUrls(tags: SerializedTag[]): Array<{ url: string, tag: 
   return results
 }
 
-async function checkUrl(url: string, identifier: string): Promise<number | 'error'> {
-  // Skip during SSR/prerender — `new Image()` and `fetch` to relative URLs both fail there
-  if (typeof window === 'undefined')
-    return 200
+type CheckResult = 'ok' | 'broken' | 'unknown'
 
-  // For image URLs (including relative icon paths), use Image() which reliably detects broken images
+async function checkUrl(rawUrl: string, identifier: string): Promise<CheckResult> {
+  // Skip during SSR/prerender: `new Image()` and relative `fetch` both fail there
+  if (typeof window === 'undefined')
+    return 'unknown'
+
+  const url = resolvePageUrl(rawUrl)
+
+  // Image() loads cross-origin images without CORS, so it gives a real answer.
   if (IMAGE_URL_META.has(identifier) || ICON_RELS.has(identifier) || IMAGE_EXT_RE.test(url)) {
-    return new Promise<number>((resolve) => {
+    return new Promise<CheckResult>((resolve) => {
       const img = new Image()
-      img.onload = () => resolve(200)
-      img.onerror = () => resolve(0)
+      img.onload = () => resolve('ok')
+      img.onerror = () => resolve('broken')
       img.src = url
     })
   }
-  // For non-image URLs, try fetch with cors first, fall back to no-cors
-  try {
-    const res = await fetch(url, { method: 'HEAD' })
-    return res.status
-  }
-  catch {
-    // CORS blocked, can't determine status so assume OK
-    return 200
-  }
+
+  // A cross-origin HEAD fails CORS on most hosts and logs an error, so only
+  // same-origin URLs get a status check.
+  if (new URL(url).origin !== location.origin)
+    return 'unknown'
+  const res = await fetch(url, { method: 'HEAD' })
+  // Many servers reject HEAD with 403 or 405; only treat a missing resource or a server error as broken.
+  return res.status === 404 || res.status === 410 || res.status >= 500 ? 'broken' : 'ok'
 }
 
 export function validateLinks(tags: SerializedTag[]) {
@@ -101,26 +108,32 @@ export function validateLinks(tags: SerializedTag[]) {
   if (pruned)
     triggerBrokenLinks()
 
+  const now = Date.now()
   for (const { url, tag, identifier, tagDedupeKey } of urls) {
-    if (pendingUrls.value.has(url))
+    if (pendingUrls.value.has(url) || now - (checkedAt.get(url) ?? 0) < RECHECK_MS)
       continue
+    checkedAt.set(url, now)
     pendingUrls.value.add(url)
     triggerPending()
 
-    checkUrl(url, identifier).then((status) => {
-      pendingUrls.value.delete(url)
-      triggerPending()
-      const isBroken = status === 'error' || status === 0 || (status >= 400 && status < 600)
-      if (isBroken) {
-        brokenLinks.value.set(url, { url, tag, identifier, status, tagDedupeKey })
-        triggerBrokenLinks()
-      }
-      // Recovered: drop any stale broken-link entry so the UI updates
-      else if (brokenLinks.value.has(url)) {
-        brokenLinks.value.delete(url)
-        triggerBrokenLinks()
-      }
-    })
+    checkUrl(url, identifier)
+      .catch((err) => {
+        console.warn('[unhead devtools] link check failed:', url, err)
+        return 'unknown' as const
+      })
+      .then((result) => {
+        pendingUrls.value.delete(url)
+        triggerPending()
+        if (result === 'broken') {
+          brokenLinks.value.set(url, { url, tag, identifier, tagDedupeKey })
+          triggerBrokenLinks()
+        }
+        // Recovered or unverifiable: drop any stale broken-link entry so the UI updates
+        else if (brokenLinks.value.has(url)) {
+          brokenLinks.value.delete(url)
+          triggerBrokenLinks()
+        }
+      })
   }
 }
 
@@ -128,4 +141,5 @@ export function validateLinks(tags: SerializedTag[]) {
 export function resetLinkChecker() {
   brokenLinks.value = new Map()
   pendingUrls.value = new Set()
+  checkedAt.clear()
 }

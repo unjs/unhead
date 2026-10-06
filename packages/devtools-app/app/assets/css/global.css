@@ -1,26 +1,14 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-
-@font-face {
-  font-family: 'Hubot Sans';
-  src: url('../fonts/hubot-sans.woff2') format('woff2');
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Fira Code';
-  src: url('../fonts/fira-code.woff2') format('woff2');
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
+/* Brand type, matching unhead.unjs.io. Bundled so the panel works offline. */
+@import "@fontsource-variable/nunito-sans";
+@import "@fontsource-variable/hubot-sans";
+@import "@fontsource-variable/fira-code";
 
 @theme {
-  --font-sans: 'Hubot Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Hubot Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Fira Code', ui-monospace, monospace;
+  --font-sans: 'Nunito Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Hubot Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Fira Code Variable', ui-monospace, monospace;
 
   /* Warm amber-tinted neutral scale (hue 75) */
   --color-neutral-50: oklch(0.984 0.003 75);
@@ -81,12 +69,12 @@ h1, h2, h3, h4, h5, h6 {
   isolation: isolate;
 }
 
-/* Noise grain overlay */
+/* Noise grain, behind content so it never dulls text */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: -1;
   pointer-events: none;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -101,14 +89,14 @@ html:not(.dark) body::before {
 /* Scrollbar */
 * {
   --scrollbar-track: initial;
-  --scrollbar-thumb: #acbad2;
+  --scrollbar-thumb: var(--color-neutral-300);
 
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
 }
 
 .dark * {
-  --scrollbar-thumb: #3b5178;
+  --scrollbar-thumb: var(--color-neutral-700);
 }
 
 ::-webkit-scrollbar {
