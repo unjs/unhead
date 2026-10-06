@@ -18,8 +18,9 @@ async function tryRequire(): Promise<{ runLint: any } | null> {
 
 // Explicit `any` annotation for the same TS2883 reason as get-config.
 export const runLintRpc: any = defineRpcFunction({
-  name: 'unhead:run-lint',
-  type: 'static',
+  name: 'run-lint',
+  // Each run reads the current files, and `migrate` rewrites them, so never cache it.
+  type: 'action',
   setup: ctx => ({
     handler: async (args: RunLintArgs = {}): Promise<LintResponse> => {
       const lib = await tryRequire()
