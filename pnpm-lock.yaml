@@ -264,8 +264,8 @@ catalogs:
       specifier: ^0.2.2
       version: 0.2.2
     devalue:
-      specifier: ^5.9.2
-      version: 5.9.2
+      specifier: ^6.0.2
+      version: 6.0.2
     devframe:
       specifier: ^1.2.0
       version: 1.2.0
@@ -395,7 +395,7 @@ importers:
         version: 12.3.0
       devalue:
         specifier: 'catalog:'
-        version: 5.9.2
+        version: 6.0.2
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -6480,6 +6480,10 @@ packages:
 
   devalue@5.9.2:
     resolution: {integrity: sha512-po4PAY5c53tw5XMocSnf8A/5OHhbbUftpr93aEN6BBoAdntUmK7vu7wOATqvt7cXO7m1Cl4gMVn6p7n6n4mj0w==}
+
+  devalue@6.0.2:
+    resolution: {integrity: sha512-6V1HzU4to74skg//ScZR2mp9bdz+rESC9jQzVIIG/ha0HYgymHcXIQQCjH0+ivRaSuY82fa9fZ7Ro6QZT4s4uw==}
+    engines: {node: '>=22.17'}
 
   devframe@1.2.0:
     resolution: {integrity: sha512-MeLtg4QHnm/khez+pGzRVIaFCi6AT/4Tz8mS+UshySNzr+MTDSNWq4VHEbgio/Bzvd1Qu3sJAwfpqm+V6xNcag==}
@@ -17544,6 +17548,8 @@ snapshots:
   detect-node@2.1.0: {}
 
   devalue@5.9.2: {}
+
+  devalue@6.0.2: {}
 
   devframe@1.2.0(@devframes/agentic@1.2.0)(cac@7.0.0)(srvx@0.11.22):
     dependencies:
