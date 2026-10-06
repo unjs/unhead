@@ -97,8 +97,14 @@ export interface LintUnavailableResult {
 
 export type LintResponse = LintRunResult | LintUnavailableResult
 
-export interface UnheadDevtoolsState {
+export interface UnheadDevtoolsConfig {
+  cwd: string
+  mode: 'dev' | 'build'
+  /** Installed `unhead` version; empty when it cannot be resolved. */
   version: string
+}
+
+export interface UnheadDevtoolsState {
   entries: SerializedEntry[]
   tags: SerializedTag[]
   plugins: string[]
@@ -116,7 +122,6 @@ export interface UnheadDevtoolsState {
 }
 
 const defaultState: UnheadDevtoolsState = {
-  version: '',
   entries: [],
   tags: [],
   plugins: [],
@@ -135,6 +140,7 @@ const defaultState: UnheadDevtoolsState = {
 
 export const state = ref<UnheadDevtoolsState>({ ...defaultState })
 export const isConnected = ref(false)
+export const unheadVersion = ref('')
 
 export function syncState(newState: UnheadDevtoolsState) {
   if (!newState)

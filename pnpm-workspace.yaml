@@ -21,7 +21,7 @@ overrides:
   '@arethetypeswrong/core>fflate': 0.8.3
   # Keep Vite on one peer variant so plugin types share the same module identity.
   '@types/node': 26.5.1
-  '@vitejs/devtools': 0.4.12
+  '@vitejs/devtools': 0.7.6
   chokidar: 5.0.0
   esbuild: 'catalog:'
   oxc-walker>@oxc-project/types: 0.149.0
@@ -66,13 +66,14 @@ catalog:
   '@types/jsdom': ^30.0.0
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
-  '@vitejs/devtools': ^0.4.12
-  '@vitejs/devtools-kit': ^0.4.12
+  '@vitejs/devtools': ^0.7.6
+  '@vitejs/devtools-kit': ^0.7.6
   '@vue/server-renderer': ^3.5.42
   '@vueuse/nuxt': ^14.4.0
   bumpp: ^12.3.0
   citty: ^0.2.2
   devalue: ^5.9.2
+  devframe: ^1.2.0
   esbuild: ^0.28.2
   eslint: ^10.10.0
   eslint-plugin-harlanzw: ^0.21.1

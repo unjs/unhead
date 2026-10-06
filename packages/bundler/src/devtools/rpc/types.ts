@@ -92,8 +92,14 @@ export interface LintUnavailableResult {
 
 export type LintResponse = LintRunResult | LintUnavailableResult
 
-export interface UnheadDevtoolsState {
+export interface UnheadDevtoolsConfig {
+  cwd: string
+  mode: 'dev' | 'build'
+  /** Installed `unhead` version; empty when it cannot be resolved. */
   version: string
+}
+
+export interface UnheadDevtoolsState {
   entries: SerializedEntry[]
   tags: SerializedTag[]
   plugins: string[]

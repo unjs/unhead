@@ -45,7 +45,9 @@ app.use('*all', async (req, res) => {
     if (!isProduction) {
       // Always read fresh template in development
       template = await fs.readFile('./index.html', 'utf-8')
-      template = await vite.transformIndexHtml(url, template)
+      // Pass the full URL: Vite serves inline module scripts (the DevTools dock loader)
+      // through proxy modules keyed by it, and the base-stripped root URL is empty.
+      template = await vite.transformIndexHtml(req.originalUrl, template)
       render = (await vite.ssrLoadModule('/src/entry-server.ts')).render
     } else {
       template = templateHtml
