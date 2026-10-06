@@ -74,6 +74,8 @@ export interface LintFileResult {
   messages: LintMessage[]
   /** `migrate` rewrote this file, or would with `dryRun`. */
   fixed: boolean
+  /** Fingerprint of the source and proposed migration. */
+  fingerprint?: string
 }
 
 export interface LintRunResult {

@@ -40,11 +40,16 @@ it('previews a migration without writing files', async () => {
   expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toBe(SOURCE)
 })
 
+function confirmedFiles(preview: any) {
+  return preview.files.filter((f: any) => f.fixed).map((f: any) => ({ filePath: f.filePath, fingerprint: f.fingerprint }))
+}
+
 it('writes only the files the user confirmed', async () => {
   const cwd = await createProject()
+  const preview = await runLint(cwd, { mode: 'migrate', dryRun: true })
   await writeFile(join(cwd, 'later.ts'), SOURCE)
 
-  const result = await runLint(cwd, { mode: 'migrate', files: [join(cwd, 'app.ts')] })
+  const result = await runLint(cwd, { mode: 'migrate', files: confirmedFiles(preview) })
 
   expect(result).toMatchObject({ available: true, filesFixed: 1 })
   expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toContain(`innerHTML: 'console.log(1)'`)
@@ -58,4 +63,14 @@ it('writes the migration', async () => {
 
   expect(result).toMatchObject({ available: true, dryRun: false, filesFixed: 1 })
   expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toContain(`innerHTML: 'console.log(1)'`)
+})
+
+it('leaves a confirmed file untouched if its source changes', async () => {
+  const cwd = await createProject()
+  const preview = await runLint(cwd, { mode: 'migrate', dryRun: true })
+  const changed = `${SOURCE}// edited after preview\n`
+  await writeFile(join(cwd, 'app.ts'), changed)
+  const result = await runLint(cwd, { mode: 'migrate', files: preview.files })
+  expect(result.filesFixed).toBe(0)
+  expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toBe(changed)
 })

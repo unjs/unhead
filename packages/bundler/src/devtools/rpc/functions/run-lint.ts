@@ -1,5 +1,6 @@
 import type { LintFileResult, LintMessage, LintResponse } from '../types'
-import { writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { readFile, writeFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import { defineRpcFunction } from '@vitejs/devtools-kit'
 
@@ -11,7 +12,7 @@ interface RunLintArgs {
    * With `migrate`: write only these absolute paths. The panel passes the files
    * the user confirmed from the dry run, so a file that changed since then is left alone.
    */
-  files?: string[]
+  files?: { filePath: string, fingerprint: string }[]
 }
 
 const PATTERNS = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,vue,svelte}']
@@ -47,10 +48,13 @@ export const runLintRpc: any = defineRpcFunction({
       const cwd = ctx.cwd
       const results = await cli.runAudit({ patterns: PATTERNS, mode, cwd, ignore: IGNORE })
 
-      const allowed = args.files ? new Set(args.files) : undefined
+      const allowed = args.files ? new Map(args.files.map(file => [file.filePath, file.fingerprint])) : undefined
       const files: LintFileResult[] = []
       for (const r of results) {
-        const fixed = typeof r.output === 'string' && (!allowed || allowed.has(r.filePath))
+        const fingerprint = typeof r.output === 'string'
+          ? createHash('sha256').update(await readFile(r.filePath)).update(r.output).digest('hex')
+          : undefined
+        const fixed = typeof r.output === 'string' && (!allowed || allowed.get(r.filePath) === fingerprint)
         if (fixed && mode === 'migrate' && !dryRun)
           await writeFile(r.filePath, r.output)
         const messages: LintMessage[] = r.diagnostics.map((d: any): LintMessage => ({
@@ -69,6 +73,7 @@ export const runLintRpc: any = defineRpcFunction({
           warningCount: messages.filter(m => m.severity === 'warn').length,
           messages,
           fixed,
+          fingerprint,
         })
       }
 

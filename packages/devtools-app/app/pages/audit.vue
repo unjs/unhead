@@ -32,7 +32,7 @@ const error = ref<string | null>(null)
 // A dry run waiting for the user to confirm the rewrite.
 const pendingMigration = ref<LintRunResult | null>(null)
 
-async function run(action: Action, files?: string[]) {
+async function run(action: Action, files?: { filePath: string, fingerprint: string }[]) {
   running.value = action
   error.value = null
   try {
@@ -56,7 +56,7 @@ async function run(action: Action, files?: string[]) {
 
 function confirmMigration() {
   // Write only the files the dialog listed, even if more became rewritable since the dry run.
-  const files = pendingMigration.value?.files.filter(f => f.fixed).map(f => f.filePath) ?? []
+  const files = pendingMigration.value?.files.filter(f => f.fixed && f.fingerprint).map(f => ({ filePath: f.filePath, fingerprint: f.fingerprint! })) ?? []
   pendingMigration.value = null
   run('migrate', files)
 }
