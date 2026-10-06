@@ -79,7 +79,7 @@ describe('hashTag', () => {
         href: '/_nuxt/app.css',
         crossorigin: true as any,
       },
-    })).toBe('link:crossorigin:true,href:/_nuxt/app.css,rel:stylesheet')
+    })).toBe('link:crossorigin:,href:/_nuxt/app.css,rel:stylesheet')
     // prop order must not affect the hash (#823)
     expect(hashTag({
       tag: 'script',

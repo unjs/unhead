@@ -31,9 +31,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return 'charset'
   if (t === 'meta') {
     for (const n of META_KEY_ATTRS) {
-      const v = props[n]
-      if (v !== undefined)
-        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
+      const value: unknown = props[n]
+      if (value != null && value !== false) {
+        const v = value === true ? '' : String(value)
+        return `meta:${v}${!v.includes(':') && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
+      }
     }
   }
   if (key)
@@ -55,7 +57,16 @@ export function hashTag(tag: HeadTag) {
   let hash = `${tag.tag}:`
   let separator = ''
   for (const key of keys) {
-    hash += `${separator}${key}:${String(tag.props[key])}`
+    let value: unknown = tag.props[key]
+    if (value === false || value == null)
+      continue
+    if (value === true)
+      value = ''
+    if (key === 'class' && value instanceof Set)
+      value = [...value].join(' ')
+    else if (key === 'style' && value instanceof Map)
+      value = [...value].map(([k, v]) => `${k}:${v}`).join(';')
+    hash += `${separator}${key}:${String(value)}`
     separator = ','
   }
   return hash
