@@ -264,9 +264,11 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
   if (head._scripts) {
     for (const [id, script] of Object.entries(head._scripts)) {
       const s = script as any
+      const src = s.src || s.input?.src || ''
       scripts.push({
         id,
-        src: s.src || s.input?.src || '',
+        src,
+        size: scriptSize(src),
         status: s.status || 'unknown',
         warmupStrategy: s._warmupEl ? (s._warmupStrategy || 'preload') : undefined,
         events: s._events || [],
@@ -300,6 +302,7 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
   }))
 
   return {
+    url: location.href,
     entries,
     tags: allTags.sort((a, b) => (a.priority ?? 100) === (b.priority ?? 100) ? (a.order ?? 0) - (b.order ?? 0) : (a.priority ?? 100) - (b.priority ?? 100)),
     plugins,
@@ -317,6 +320,22 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
     tagTypeCounts,
     validationRules,
   }
+}
+
+/** Read a script's size from Resource Timing, so the panel never refetches it. */
+function scriptSize(src: string): number | undefined {
+  if (!src || typeof performance === 'undefined')
+    return
+  let url: string
+  try {
+    url = new URL(src, location.href).href
+  }
+  catch {
+    // An unparseable src never loaded, so there is no timing entry to read.
+    return
+  }
+  const entry = performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined
+  return entry?.encodedBodySize || undefined
 }
 
 function detectSSR(): boolean {

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { createGetConfigRpc, runLintRpc } from './rpc'
+import { createGetConfigRpc, getDistTagsRpc, runLintRpc } from './rpc'
 
 export const UNHEAD_DEVFRAME_ID = 'unhead'
 
@@ -76,6 +76,7 @@ export function createUnheadDevframe(): DevframeDefinition {
     setup(ctx) {
       const unhead = ctx.scope(UNHEAD_DEVFRAME_ID)
       unhead.rpc.register(getConfigRpc)
+      unhead.rpc.register(getDistTagsRpc)
       unhead.rpc.register(runLintRpc)
     },
   }

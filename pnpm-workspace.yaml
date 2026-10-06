@@ -53,6 +53,9 @@ catalog:
   '@antfu/eslint-config': ^9.5.1
   '@arethetypeswrong/cli': ^0.18.5
   '@fast-check/vitest': ^0.5.0
+  '@fontsource-variable/fira-code': ^5.3.0
+  '@fontsource-variable/hubot-sans': ^5.3.0
+  '@fontsource-variable/nunito-sans': ^5.3.0
   '@nuxt/ui': ^4.11.1
   '@rollup/plugin-node-resolve': ^16.0.3
   '@shikijs/langs': ^4.4.3
