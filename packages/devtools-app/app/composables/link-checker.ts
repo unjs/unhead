@@ -19,7 +19,7 @@ const checkedAt = new Map<string, number>()
 
 /** All broken link results keyed by URL */
 export const brokenLinks = shallowRef(new Map<string, BrokenLink>())
-/** URLs currently being checked */
+/** Resolved URLs currently being checked */
 export const pendingUrls = shallowRef(new Set<string>())
 
 function triggerBrokenLinks() {
@@ -94,8 +94,17 @@ async function checkUrl(rawUrl: string, identifier: string): Promise<CheckResult
 }
 
 export function validateLinks(tags: SerializedTag[]) {
-  const urls = extractCheckableUrls(tags)
+  // Checks are keyed by the resolved target: after a navigation, the same
+  // relative href can point at a different file.
+  const urls = extractCheckableUrls(tags).map(u => ({ ...u, target: resolvePageUrl(u.url) }))
   const activeUrls = new Set(urls.map(u => u.url))
+  const activeTargets = new Set(urls.map(u => u.target))
+
+  // Forget check times for targets that left the page, so one that returns is checked again
+  for (const target of checkedAt.keys()) {
+    if (!activeTargets.has(target))
+      checkedAt.delete(target)
+  }
 
   // Prune stale broken-link entries for URLs that no longer exist in the tag set
   let pruned = false
@@ -109,11 +118,11 @@ export function validateLinks(tags: SerializedTag[]) {
     triggerBrokenLinks()
 
   const now = Date.now()
-  for (const { url, tag, identifier, tagDedupeKey } of urls) {
-    if (pendingUrls.value.has(url) || now - (checkedAt.get(url) ?? 0) < RECHECK_MS)
+  for (const { url, target, tag, identifier, tagDedupeKey } of urls) {
+    if (pendingUrls.value.has(target) || now - (checkedAt.get(target) ?? 0) < RECHECK_MS)
       continue
-    checkedAt.set(url, now)
-    pendingUrls.value.add(url)
+    checkedAt.set(target, now)
+    pendingUrls.value.add(target)
     triggerPending()
 
     checkUrl(url, identifier)
@@ -122,7 +131,7 @@ export function validateLinks(tags: SerializedTag[]) {
         return 'unknown' as const
       })
       .then((result) => {
-        pendingUrls.value.delete(url)
+        pendingUrls.value.delete(target)
         triggerPending()
         if (result === 'broken') {
           brokenLinks.value.set(url, { url, tag, identifier, tagDedupeKey })

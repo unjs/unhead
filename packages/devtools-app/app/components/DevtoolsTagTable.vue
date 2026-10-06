@@ -36,11 +36,13 @@ const tagTypeCounts = computed(() => {
   return counts
 })
 
-// Ignore a selected type once no tag of that type remains, so the table never empties with no chip to clear it.
-const activeTagType = computed(() => {
-  const type = selectedTagType.value
-  return type && tagTypeCounts.value[type] && Object.keys(tagTypeCounts.value).length > 1 ? type : null
+// Drop the selected type once its last tag disappears. The table never empties
+// with no chip to clear, and the filter cannot reapply when that type returns later.
+watch(tagTypeCounts, (counts) => {
+  if (selectedTagType.value && !counts[selectedTagType.value])
+    selectedTagType.value = null
 })
+const activeTagType = computed(() => Object.keys(tagTypeCounts.value).length > 1 ? selectedTagType.value : null)
 
 const singletonTags = new Set(['title', 'titleTemplate', 'templateParams', 'htmlAttrs', 'bodyAttrs'])
 
@@ -74,14 +76,17 @@ function clearFilters() {
 }
 
 // One unique key per row. Inline scripts can share props, so content is part of
-// the key, and identical tags get an occurrence suffix.
+// the key. A repeated key gets the first free suffix, which never collides with
+// a base that already ends in one.
 const rows = computed(() => {
-  const seen = new Map<string, number>()
+  const used = new Set<string>()
   return filteredTags.value.map((tag) => {
     const base = tag.dedupeKey || `${tag.tag}:${JSON.stringify(tag.props || {})}:${tag.innerHTML ?? tag.textContent ?? ''}`
-    const n = seen.get(base) ?? 0
-    seen.set(base, n + 1)
-    return { tag, key: n ? `${base}#${n}` : base }
+    let key = base
+    for (let n = 1; used.has(key); n++)
+      key = `${base}#${n}`
+    used.add(key)
+    return { tag, key }
   })
 })
 

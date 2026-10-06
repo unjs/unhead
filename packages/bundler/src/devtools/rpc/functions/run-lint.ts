@@ -7,6 +7,11 @@ interface RunLintArgs {
   mode?: 'audit' | 'migrate'
   /** With `migrate`: report the files that would change without writing them. */
   dryRun?: boolean
+  /**
+   * With `migrate`: write only these absolute paths. The panel passes the files
+   * the user confirmed from the dry run, so a file that changed since then is left alone.
+   */
+  files?: string[]
 }
 
 const PATTERNS = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,vue,svelte}']
@@ -42,9 +47,10 @@ export const runLintRpc: any = defineRpcFunction({
       const cwd = ctx.cwd
       const results = await cli.runAudit({ patterns: PATTERNS, mode, cwd, ignore: IGNORE })
 
+      const allowed = args.files ? new Set(args.files) : undefined
       const files: LintFileResult[] = []
       for (const r of results) {
-        const fixed = typeof r.output === 'string'
+        const fixed = typeof r.output === 'string' && (!allowed || allowed.has(r.filePath))
         if (fixed && mode === 'migrate' && !dryRun)
           await writeFile(r.filePath, r.output)
         const messages: LintMessage[] = r.diagnostics.map((d: any): LintMessage => ({

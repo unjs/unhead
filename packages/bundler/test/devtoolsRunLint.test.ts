@@ -40,6 +40,17 @@ it('previews a migration without writing files', async () => {
   expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toBe(SOURCE)
 })
 
+it('writes only the files the user confirmed', async () => {
+  const cwd = await createProject()
+  await writeFile(join(cwd, 'later.ts'), SOURCE)
+
+  const result = await runLint(cwd, { mode: 'migrate', files: [join(cwd, 'app.ts')] })
+
+  expect(result).toMatchObject({ available: true, filesFixed: 1 })
+  expect(await readFile(join(cwd, 'app.ts'), 'utf8')).toContain(`innerHTML: 'console.log(1)'`)
+  expect(await readFile(join(cwd, 'later.ts'), 'utf8')).toBe(SOURCE)
+})
+
 it('writes the migration', async () => {
   const cwd = await createProject()
 

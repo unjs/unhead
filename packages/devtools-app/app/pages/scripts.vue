@@ -6,7 +6,7 @@ const PROTOCOL_RE = /^https?:\/\//
 const scripts = computed(() => state.value.scripts || [])
 
 type StatusFilter = 'all' | 'loaded' | 'loading' | 'awaitingLoad' | 'error' | 'removed'
-const selectedFilter = ref<StatusFilter>('all')
+const statusFilter = ref<StatusFilter>('all')
 
 const scriptCounts = computed(() => {
   const counts: Record<string, number> = { all: scripts.value.length }
@@ -16,8 +16,12 @@ const scriptCounts = computed(() => {
   return counts
 })
 
-// Fall back to "all" once the selected status has no scripts left, so the list never empties with no way back.
-const statusFilter = computed<StatusFilter>(() => scriptCounts.value[selectedFilter.value] ? selectedFilter.value : 'all')
+// Reset to "all" once the selected status has no scripts left. The list never
+// empties with no way back, and the filter cannot reapply when that status returns.
+watch(scriptCounts, (counts) => {
+  if (!counts[statusFilter.value])
+    statusFilter.value = 'all'
+})
 
 const filteredScripts = computed(() => {
   if (statusFilter.value === 'all')
@@ -137,7 +141,7 @@ function toggleEvents(id: string) {
           :variant="statusFilter === f.key ? 'solid' : 'subtle'"
           size="xs"
           :aria-pressed="statusFilter === f.key"
-          @click="selectedFilter = f.key"
+          @click="statusFilter = f.key"
         >
           {{ f.label }}
           <span class="ml-1 opacity-70 tabular-nums">{{ scriptCounts[f.key] || 0 }}</span>

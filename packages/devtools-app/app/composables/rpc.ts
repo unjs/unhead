@@ -35,17 +35,27 @@ export async function useDevtoolsConnection(): Promise<void> {
 
   // Head state comes straight from the page script in the host page, not the server.
   const channel = connectPanelChannel<UnheadChannelProtocol>({ name: UNHEAD_CHANNEL, functions: {} })
+  // Each wait for the page script gets its own grace period. Only the latest
+  // one may report `waiting`, and never once the channel has reconnected.
+  let gracePeriod = 0
+  function startGracePeriod() {
+    const id = ++gracePeriod
+    channel.whenConnected(PAGE_SCRIPT_GRACE_MS).catch(() => {
+      if (id === gracePeriod && connectionStatus.value !== 'connected')
+        connectionStatus.value = 'waiting'
+    })
+  }
   channel.events.on('status:updated', (status) => {
-    if (status === 'connected')
+    if (status === 'connected') {
       connectionStatus.value = 'connected'
+    }
     // A host page reload drops the port; the channel re-handshakes on its own.
-    else if (connectionStatus.value === 'connected')
+    else if (connectionStatus.value === 'connected') {
       connectionStatus.value = 'connecting'
+      startGracePeriod()
+    }
   })
-  channel.whenConnected(PAGE_SCRIPT_GRACE_MS).catch(() => {
-    if (connectionStatus.value !== 'connected')
-      connectionStatus.value = 'waiting'
-  })
+  startGracePeriod()
   const sharedState = await channel.sharedState.get('state')
   connectionStatus.value = 'connected'
   syncState(sharedState.value() as UnheadDevtoolsState)

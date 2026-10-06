@@ -32,13 +32,14 @@ const error = ref<string | null>(null)
 // A dry run waiting for the user to confirm the rewrite.
 const pendingMigration = ref<LintRunResult | null>(null)
 
-async function run(action: Action) {
+async function run(action: Action, files?: string[]) {
   running.value = action
   error.value = null
   try {
     const response = await callRpc<LintResponse>('unhead:run-lint', {
       mode: action === 'audit' ? 'audit' : 'migrate',
       dryRun: action === 'preview',
+      files,
     })
     if (action === 'preview' && response.available)
       pendingMigration.value = response
@@ -54,8 +55,10 @@ async function run(action: Action) {
 }
 
 function confirmMigration() {
+  // Write only the files the dialog listed, even if more became rewritable since the dry run.
+  const files = pendingMigration.value?.files.filter(f => f.fixed).map(f => f.filePath) ?? []
   pendingMigration.value = null
-  run('migrate')
+  run('migrate', files)
 }
 
 const SEVERITY_ICON: Record<LintMessage['severity'], { icon: string, class: string, label: string }> = {
