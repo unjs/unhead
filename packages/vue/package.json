@@ -133,7 +133,8 @@
   },
   "files": [
     "*.d.ts",
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "unbuild",
