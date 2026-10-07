@@ -1,10 +1,13 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
-import { resolveHeadInput } from '../utils/normalize'
+import { dedupeKey, hashTag } from '../utils/dedupe'
+import { callHook } from '../utils/hooks'
+import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
+import { parseStreamKey } from './key'
 
 const LT_RE = /</g
 const GT_RE = />/g
@@ -15,20 +18,6 @@ const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
 let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
-
-// Conservative ASCII identifier: must be a safe `window.<name>` accessor.
-// Disallows anything that could break out of the dot-notation sink used by
-// the bootstrap and suspense-chunk scripts (GHSA-x7mm-9vvv-64w8).
-const VALID_STREAM_KEY_RE = /^[$_a-z][$\w]*$/i
-
-function assertValidStreamKey(streamKey: string): void {
-  if (typeof streamKey !== 'string' || !VALID_STREAM_KEY_RE.test(streamKey)) {
-    throw new Error(
-      `[unhead] Invalid streamKey: must be a valid JavaScript identifier matching ${VALID_STREAM_KEY_RE}. `
-      + `Received: ${JSON.stringify(streamKey)}`,
-    )
-  }
-}
 
 /**
  * Base context with just the head instance.
@@ -92,13 +81,16 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, ...rest } = options
-  if (streamKey !== undefined)
-    assertValidStreamKey(streamKey)
+  const { streamKey, writesBodyTags, nonce, ...rest } = options
+  const parsedStreamKey = streamKey === undefined ? undefined : parseStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
-    experimentalStreamKey: streamKey,
+    experimentalStreamKey: parsedStreamKey,
   })
+  if (writesBodyTags)
+    streamState(head).writesBodyTags = true
+  if (nonce)
+    streamState(head).nonce = nonce
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -113,8 +105,7 @@ export function createStreamableHead<T = ResolvableHead>(
 }
 function getStreamKey(head: Unhead<any>): string {
   const key = head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
-  assertValidStreamKey(key)
-  return key
+  return parseStreamKey(key)
 }
 
 /**
@@ -129,9 +120,15 @@ function getStreamKey(head: Unhead<any>): string {
  * @returns An inline `<script>` tag string
  */
 export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, nonce?: string): string {
-  assertValidStreamKey(streamKey)
-  const nonceAttr = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : ''
-  return `<script${nonceAttr}>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+  const parsedStreamKey = parseStreamKey(streamKey)
+  const nonceAttr = renderNonceAttribute(nonce)
+  // `inline` mode runs the client IIFE above this script, so never clobber an
+  // already-installed queue. Doing so drops every streamed patch.
+  return `<script${nonceAttr}>window.${parsedStreamKey}||(window.${parsedStreamKey}={_q:[],push(e){this._q.push(e)}})</script>`
+}
+
+function renderNonceAttribute(nonce?: string): string {
+  return nonce ? ` nonce="${nonce.replace(AMP_RE, '&amp;').replace(/"/g, '&quot;')}"` : ''
 }
 
 /**
@@ -147,11 +144,16 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * ```ts
  * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
+ *
+ * // Stream the app, then close it with the streamed body tags.
+ * res.end(`${renderStreamBodyTags(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
+  rememberShellBodyTags(head)
   head.entries.clear()
+  streamState(head).shellRendered = true
   return result
 }
 
@@ -176,9 +178,10 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
 export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
-  // Only clear entries once the shell has been successfully produced so a
-  // template failure leaves them intact for retry.
+  rememberShellBodyTags(head)
+  // Keep entries when template rendering fails, so the caller can retry.
   head.entries.clear()
+  streamState(head).shellRendered = true
   return result
 }
 
@@ -189,10 +192,47 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
 function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
-    headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
+    headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
     bodyAttrs: ssr.bodyAttrs,
+    bodyTagsOpen: ssr.bodyTagsOpen,
     bodyTags: ssr.bodyTags,
   })
+}
+
+/**
+ * Normalizes the entries that have not been flushed yet, for inspection only.
+ *
+ * Mirrors only the parts of `resolveTags` that no listener can redo: entry
+ * options and the `_p` packing. Plugin-owned shapes (`_flatMeta`, the legacy
+ * `body` prop, `useHeadSafe` filtering) stay unresolved so the SSR bundle does
+ * not carry a second copy of every plugin's normalization.
+ *
+ * It deliberately does not run the `entries:normalize` hook, because listeners
+ * there hold per-resolve state that a second pass would corrupt.
+ */
+function normalizePendingTags(head: Unhead<any>): { tags: HeadTag[], entries: Map<number, { input: any, resolved: any }> } {
+  const propResolvers = head.resolvedOptions.propResolvers || []
+  const tags: HeadTag[] = []
+  const entries = new Map<number, { input: any, resolved: any }>()
+  for (const entry of head.entries.values()) {
+    const resolved = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+    entries.set(entry._i, { input: entry.input, resolved })
+    let index = 0
+    for (const tag of normalizeEntryToTags(resolved, [])) {
+      if (entry.options)
+        Object.assign(tag, entry.options)
+      // Same packing as `resolveTags`, so a consumer can recover the entry
+      // that registered the tag and report its source location.
+      tag._p = (entry._i << 10) + index++
+      // `normalizeProps` assigns the entry's own object for templateParams
+      // rather than copying it, so this is the one tag an inspector could
+      // mutate into a later render.
+      if (tag.tag === 'templateParams')
+        tag.props = { ...tag.props }
+      tags.push(tag)
+    }
+  }
+  return { tags, entries }
 }
 
 /**
@@ -213,25 +253,209 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  * }
  * ```
  */
+const JSON_LD_TYPE_RE = /\bld\+json\b/i
+
+function streamState(head: Unhead<any>) {
+  return (head._stream ||= {})
+}
+
+function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): boolean {
+  if (!tag || typeof tag !== 'object')
+    return false
+  if (tagName === 'noscript')
+    return true
+  // An entry position applies when the tag has no position.
+  const position = tag.tagPosition ?? entryPosition
+  if (position === 'bodyClose' || position === 'bodyOpen')
+    return true
+  const type = tag.type ?? tag.props?.type
+  return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
+}
+
+function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
+  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
+  const content = hashTag(normalized)
+  return { slot: dedupeKey(normalized) || content, content }
+}
+
+function unwrapEntryInput(input: any): any {
+  return typeof input === 'function' ? input() : input
+}
+
+function rememberShellBodyTags(head: Unhead<any>): void {
+  const state = streamState(head)
+  let seen = state.seen
+  for (const entry of head.entries.values()) {
+    const entryPosition = (entry.options as any)?.tagPosition
+    for (const tag of entry._tags || entry._precomputedTags || []) {
+      if (!isStreamedBodyTag(tag.tag, tag, entryPosition))
+        continue
+      seen ||= state.seen = new Set<string>()
+      if (tag.textContent || tag.innerHTML)
+        seen.add(String(tag.textContent || tag.innerHTML))
+      seen.add(tag._d || tag._h || hashTag(tag))
+    }
+  }
+}
+
+function hasStreamedBodyTags(input: any, entryPosition?: string): boolean {
+  if (input && typeof input === 'object') {
+    for (const key in input) {
+      const value = input[key]
+      if (Array.isArray(value)) {
+        for (const tag of value) {
+          if (isStreamedBodyTag(key, tag, entryPosition))
+            return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, bodyTags?: any } {
+  let patch: any
+  let bodyTags: any
+  for (const key in input) {
+    const value = input[key]
+    if (!Array.isArray(value) || !value.some(tag => isStreamedBodyTag(key, tag, entryPosition)))
+      continue
+    const rest: any[] = []
+    const carried: any[] = []
+    for (const tag of value) {
+      if (!isStreamedBodyTag(key, tag, entryPosition)) {
+        rest.push(tag)
+        continue
+      }
+      const id = streamedBodyTagIdentity(key, tag)
+      // The shell already served this exact tag.
+      if (seen.has(id.content))
+        continue
+      // The shell owns this slot. Keep updates in the client patch.
+      if (seen.has(id.slot)) {
+        rest.push(tag)
+        continue
+      }
+      seen.add(id.content)
+      // The body-open slot already flushed. Use the body-close slot.
+      carried.push({ ...tag, tagPosition: 'bodyClose' })
+    }
+    patch ||= { ...input }
+    if (rest.length)
+      patch[key] = rest
+    else
+      delete patch[key]
+    if (carried.length)
+      (bodyTags ||= {})[key] = carried
+  }
+
+  // No client patch remains when every tag becomes a streamed body tag.
+  const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
+  return { patch: hasPatch ? patch : undefined, bodyTags }
+}
+
+/**
+ * Renders and clears streamed body tags.
+ *
+ * Manual drivers must write this before `</body>`.
+ * `renderStreamEnd()` includes it for template streams.
+ */
+export function renderStreamBodyTags(head: Unhead<any>): string {
+  const bodyTagInputs = streamState(head).bodyTags
+  if (!bodyTagInputs?.length) {
+    return ''
+  }
+
+  // Use the server renderer for normalization, dedupe, and escaping.
+  const restore = new Map(head.entries)
+  head.entries.clear()
+  try {
+    for (const input of bodyTagInputs)
+      head.push(input)
+    const bodyTags = (head.render() as SSRHeadPayload).bodyTags
+    // Clear only after a successful render, so failures can retry.
+    streamState(head).bodyTags = undefined
+    return bodyTags
+  }
+  finally {
+    head.entries.clear()
+    for (const [k, v] of restore)
+      head.entries.set(k, v)
+  }
+}
+
+/**
+ * Adds streamed body tags to the closing HTML.
+ *
+ * Manual drivers must write this instead of `parts.end`.
+ *
+ * @example
+ * ```ts
+ * const parts = prepareStreamingTemplate(head, template)
+ * res.write(parts.shell)
+ * // ...stream the app, calling renderSSRHeadSuspenseChunk per boundary
+ * res.end(renderStreamEnd(head, parts))
+ * ```
+ */
+export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
+  const bodyTags = renderStreamBodyTags(head)
+  if (!bodyTags)
+    return parts.end
+  const at = parts.bodyTagsAt ?? parts.end.length
+  return parts.end.slice(0, at) + bodyTags + parts.end.slice(at)
+}
+
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
 
   const streamKey = getStreamKey(head)
   const propResolvers = head.resolvedOptions.propResolvers || []
+  let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
   let serialized: string
+  let patchCount = 0
   try {
-    const inputs = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
+    // Only pay for normalization when something is listening.
+    if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
+      const normalized = normalizePendingTags(head)
+      normalizedEntries = normalized.entries
+      callHook(head, 'ssr:streamChunk', { tags: normalized.tags })
+    }
+    const state = streamState(head)
+    let nextSeen: Set<string> | undefined
+    const inputs: any[] = []
+    let bodyTags: any[] | undefined
+    for (const entry of head.entries.values()) {
+      const normalized = normalizedEntries?.get(entry._i)
+      const input = normalized && normalized.input === entry.input
+        ? normalized.resolved
+        : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+      const entryPosition = (entry.options as any)?.tagPosition
+      if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
+        inputs.push(input)
+        continue
+      }
+      const split = splitStreamedBodyTags(input, nextSeen ||= new Set(state.seen), entryPosition)
+      if (split.patch)
+        inputs.push(split.patch)
+      if (split.bodyTags)
+        (bodyTags ||= []).push(split.bodyTags)
+    }
     serialized = safeJsonStringify(inputs)
+    patchCount = inputs.length
+    if (nextSeen)
+      state.seen = nextSeen
+    if (bodyTags)
+      (state.bodyTags ||= []).push(...bodyTags)
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
     // poison every subsequent chunk render with the same error.
     for (const [key, entry] of head.entries) {
       try {
-        safeJsonStringify(resolveHeadInput(entry.input, propResolvers))
+        safeJsonStringify(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers))
       }
       catch {
         head.entries.delete(key)
@@ -240,6 +464,9 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
+  // No client patch remains when every tag becomes a streamed body tag.
+  if (!patchCount)
+    return ''
   return `window.${streamKey}.push(${serialized})`
 }
 
@@ -288,10 +515,27 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  const flushChunk = options?.flushChunk
+  // `renderStreamEnd()` writes streamed body tags.
+  // Manual drivers opt in with `writesBodyTags`.
+  streamState(head).writesBodyTags = true
+  // Preserve late entries when no custom chunk renderer exists.
+  const flushChunk = options?.flushChunk ?? (() => {
+    let chunk: string
+    try {
+      chunk = renderSSRHeadSuspenseChunk(head)
+    }
+    catch {
+      // The response already started. Skip this patch.
+      return ''
+    }
+    if (!chunk)
+      return ''
+    // A template with no `</head>` never received the bootstrap script.
+    return `<script${renderNonceAttribute(head._stream?.nonce)}>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
+  })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
-  let end = ''
+  let parts: StreamingTemplateParts | undefined
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -301,17 +545,17 @@ export function wrapStream(
     // for retry.
     async start(controller) {
       const activeReader = stream.getReader()
-      let parts: StreamingTemplateParts
+      let prepared: StreamingTemplateParts
       try {
-        parts = prepareStreamingTemplate(head, template, preRenderedState)
+        prepared = prepareStreamingTemplate(head, template, preRenderedState)
       }
       catch (error) {
         activeReader.releaseLock()
         throw error
       }
       reader = activeReader
-      end = parts.end
-      controller.enqueue(enc.encode(parts.shell))
+      parts = prepared
+      controller.enqueue(enc.encode(prepared.shell))
     },
     // Read at most one upstream chunk per downstream request so backpressure
     // propagates instead of eagerly draining the app stream.
@@ -339,8 +583,9 @@ export function wrapStream(
         const extra = flushChunk?.()
         if (extra)
           controller.enqueue(enc.encode(extra))
-        if (end)
-          controller.enqueue(enc.encode(end))
+        const closing = parts ? renderStreamEnd(head, parts) : ''
+        if (closing)
+          controller.enqueue(enc.encode(closing))
         controller.close()
         return
       }
@@ -381,6 +626,10 @@ export interface StreamingTemplateParts {
    * Write this after streaming app content completes.
    */
   end: string
+  /**
+   * Offset for streamed body tags within `end`.
+   */
+  bodyTagsAt?: number
 }
 
 interface StreamingTemplateLayout {
@@ -515,14 +764,16 @@ export function prepareStreamingTemplate(
   if (layout) {
     const shell = applyHeadToHtml(layout.shellTemplate, {
       htmlAttrs: ssr.htmlAttrs,
-      headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
+      headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
+      bodyTagsOpen: ssr.bodyTagsOpen,
       bodyTags: '',
     }).replace('</body></html>', '')
 
     parts = {
       shell,
       end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
+      bodyTagsAt: layout.endBeforeBodyTags.length,
     }
   }
   else {
@@ -536,11 +787,14 @@ export function prepareStreamingTemplate(
   // Only clear entries once the shell/end parts have been successfully
   // produced so a template failure leaves them intact for retry.
   if (!preRenderedState) {
+    // A supplied payload means all current entries belong to the stream.
+    rememberShellBodyTags(head)
     head.entries.clear()
   }
+  streamState(head).shellRendered = true
   return parts
 }
 
 export { prepareTemplate } from '../parser'
 export type { PreparedTemplate } from '../parser'
-export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
+export type { CreateStreamableServerHeadOptions, HeadTag, SSRHeadPayload, Unhead } from '../types'

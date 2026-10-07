@@ -85,7 +85,7 @@ export type TagKey = keyof ResolvableHead | InternalTagKey
  */
 export type InternalTagKey = '_flatMeta'
 
-export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
+export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | boolean | number | Record<string, string | boolean | number>>
 
 export interface ProcessesTemplateParams { processTemplateParams?: boolean }
 
@@ -107,6 +107,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   _p?: number
+  /**
+   * Copied from the entry options: the entry came from `useHeadSafe`.
+   * @internal
+   */
+  _safe?: boolean
   /**
    * @internal
    */

@@ -46,10 +46,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
-export function hashTag(tag: HeadTag) {
+export function hashTag(tag: HeadTag): string {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
+  // stringify: a number/boolean textContent is not a valid string key (#1006)
   if (identity)
-    return identity
+    return String(identity)
   // sort so the hash is stable across differing prop insertion orders (#823)
   const keys = Object.keys(tag.props).sort()
   let hash = `${tag.tag}:`

@@ -1,4 +1,4 @@
-import type { HeadEntry, HeadEntryOptions, Link, PreloadLink, Script, SerializableHead, UnheadMeta } from '../../src/types'
+import type { HeadEntry, HeadEntryOptions, Link, PreloadLink, ResolvableTemplateParams, Script, SerializableHead, UnheadMeta } from '../../src/types'
 import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
 import { expectTypeOf } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
@@ -54,6 +54,18 @@ describe('types', () => {
     })
     expectTypeOf(customScript['data-purpose']).toEqualTypeOf<'debug'>()
     customScript satisfies Script
+  })
+  it('accepts nested non-string template param values', () => {
+    const head = createHead()
+    useHead(head, {
+      templateParams: {
+        schemaOrg: {
+          trailingSlash: true,
+        },
+      },
+    })
+    const params: ResolvableTemplateParams = { schemaOrg: { trailingSlash: true } }
+    void params
   })
   it('types useHead', () => {
     const unhead = createHead()

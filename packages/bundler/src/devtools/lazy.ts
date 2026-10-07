@@ -1,9 +1,9 @@
 import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
 import type { UnheadDevtoolsOptions } from '../unplugin/types'
+import { SOURCE_FILE_RE } from '../unplugin/utils'
+import { HEAD_COMPOSABLE_RE } from './filter'
 
-const HEAD_COMPOSABLE_RE = /\b(?:useHead|useSeoMeta|useHeadSafe|useScript)\b/
-const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const DEVTOOLS_KIT_PACKAGE = '@vitejs/devtools-kit'
 
 interface LazyUnheadDevtoolsOptions extends UnheadDevtoolsOptions {
@@ -28,8 +28,8 @@ function isViteDevtoolsPlugin(plugin: { name?: string }): boolean {
   return !!plugin.name?.startsWith('vite:devtools')
 }
 
-function isViteDevtoolsEnabled(config: { devtools?: { enabled?: boolean }, plugins: readonly { name?: string }[] }): boolean {
-  return config.devtools?.enabled === true || config.plugins.some(isViteDevtoolsPlugin)
+function isViteDevtoolsEnabled(config: { devtools?: false | { enabled?: boolean }, plugins: readonly { name?: string }[] }): boolean {
+  return (config.devtools && config.devtools.enabled === true) || config.plugins.some(isViteDevtoolsPlugin)
 }
 
 function isMissingDevtoolsKit(error: unknown): boolean {
@@ -64,7 +64,7 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
   let pluginPromise: Promise<Plugin> | undefined
   // configResolved runs once and early; cache it so a late devtools.setup() (which enables
   // devtools after configResolved already returned without forwarding) can replay it to the
-  // real plugin, initializing its root/bridgeCode/unheadVersion/_ctx before load/transform run
+  // real plugin, initializing its root and _ctx before transform runs
   let resolvedConfig: any
   let configForwarded = false
 
@@ -105,29 +105,10 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
       return callHook('configResolved', this, [config])
     },
 
-    async configureServer(server) {
-      return callEnabledHook('configureServer', this, [server])
-    },
-
-    async resolveId(source, importer, options) {
-      return callEnabledHook('resolveId', this, [source, importer, options])
-    },
-
-    async load(id, options) {
-      return callEnabledHook('load', this, [id, options])
-    },
-
     transform: {
-      filter: { id: FILE_RE, code: HEAD_COMPOSABLE_RE },
+      filter: { id: SOURCE_FILE_RE, code: HEAD_COMPOSABLE_RE },
       async handler(code, id, options) {
         return callEnabledHook('transform', this, [code, id, options])
-      },
-    },
-
-    transformIndexHtml: {
-      order: 'pre',
-      async handler(...args: any[]) {
-        return callEnabledHook('transformIndexHtml', this, args)
       },
     },
 

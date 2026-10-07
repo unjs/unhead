@@ -1,6 +1,6 @@
 import { FlatMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
-import { bench, describe } from 'vitest'
+import { it } from 'vitest'
 
 // Resolve-heavy first and cached renders with many entries per head.
 // Covers Nuxt-style per-request creation and tag-mutating plugin hooks.
@@ -39,41 +39,39 @@ function createBenchHead(count: number, plugin?: keyof typeof benchPlugins) {
   return head
 }
 
-describe('resolveTags many entries, first render', () => {
-  bench('20 entries, no plugins', () => {
-    createBenchHead(20).render()
-  })
-
-  bench('20 entries, templateParams plugin', () => {
-    createBenchHead(20, 'templateParams').render()
-  })
-
-  bench('20 entries, flatMeta plugin', () => {
-    createBenchHead(20, 'flatMeta').render()
-  })
-
-  bench('5 entries, no plugins', () => {
-    createBenchHead(5).render()
-  })
+it('resolveTags many entries, first render', async ({ bench }) => {
+  await bench.compare(
+    bench('20 entries, no plugins', () => {
+      createBenchHead(20).render()
+    }),
+    bench('20 entries, templateParams plugin', () => {
+      createBenchHead(20, 'templateParams').render()
+    }),
+    bench('20 entries, flatMeta plugin', () => {
+      createBenchHead(20, 'flatMeta').render()
+    }),
+    bench('5 entries, no plugins', () => {
+      createBenchHead(5).render()
+    }),
+  )
 })
 
-describe('resolveTags many entries, cached render', () => {
+it('resolveTags many entries, cached render', async ({ bench }) => {
   const noPlugins = createBenchHead(20)
   const templateParams = createBenchHead(20, 'templateParams')
   const flatMeta = createBenchHead(20, 'flatMeta')
   noPlugins.render()
   templateParams.render()
   flatMeta.render()
-
-  bench('20 entries, no plugins', () => {
-    noPlugins.render()
-  })
-
-  bench('20 entries, templateParams plugin', () => {
-    templateParams.render()
-  })
-
-  bench('20 entries, flatMeta plugin', () => {
-    flatMeta.render()
-  })
+  await bench.compare(
+    bench('20 entries, no plugins', () => {
+      noPlugins.render()
+    }),
+    bench('20 entries, templateParams plugin', () => {
+      templateParams.render()
+    }),
+    bench('20 entries, flatMeta plugin', () => {
+      flatMeta.render()
+    }),
+  )
 })

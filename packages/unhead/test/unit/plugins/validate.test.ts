@@ -777,8 +777,8 @@ describe('validatePlugin', () => {
   })
 
   describe('performance hints', () => {
-    it('warns on preload with fetchpriority="low" for non-script assets', () => {
-      const { head, rules } = createValidationHead()
+    it('reports low-priority preloads when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-fetchpriority-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'low' as const }],
       })
@@ -880,8 +880,8 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeFalsy()
     })
 
-    it('warns on preload + async script conflict', () => {
-      const { head, rules } = createValidationHead()
+    it('reports preloaded async scripts when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-async-defer-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const }],
         script: [{ src: '/analytics.js', async: true }],
@@ -890,8 +890,8 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
     })
 
-    it('warns on preload + defer script conflict', () => {
-      const { head, rules } = createValidationHead()
+    it('reports preloaded deferred scripts when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-async-defer-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
         script: [{ src: '/app.js', defer: true }],

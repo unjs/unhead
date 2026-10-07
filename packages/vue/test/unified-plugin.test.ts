@@ -26,6 +26,20 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
     expect(streamIdx).toBe(plugins.length - 1)
   })
 
+  it('vite injects validation into development server heads', async () => {
+    const plugins = Unhead({ devtools: false }).vite() as any[]
+    const transform = plugins.find(plugin => plugin?.name === '@unhead/create-head-transform')
+    transform.configResolved({ root: '/project' })
+
+    const result = await transform.transform.handler.call(
+      { environment: { config: { consumer: 'server' } } },
+      `import { createHead } from '@unhead/vue/server'\nconst head = createHead()`,
+      'entry.ts',
+    )
+
+    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
+  })
+
   it('webpack adds exactly one extra plugin when streaming is enabled', () => {
     // Webpack plugin wrappers from unplugin only expose `.apply`, no `name`,
     // so we verify the streaming plugin's presence indirectly via the count

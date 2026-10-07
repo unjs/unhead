@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SSRStaticReplace } from '../src/unplugin/SSRStaticReplace'
+import { passesTransformFilter, runTransform } from './utils'
 
 function createPlugin(env: { isSsrBuild?: boolean, command?: string } = {}) {
   const plugin = SSRStaticReplace.vite({}) as any
@@ -13,10 +14,7 @@ function environmentContext(consumer: 'client' | 'server') {
 }
 
 function transform(plugin: any, code: string, id: string, ctx: any = {}) {
-  if (plugin.transformInclude && !plugin.transformInclude(id))
-    return undefined
-  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
-  return handler.call(ctx, code, id)
+  return runTransform(plugin, code, id, ctx)
 }
 
 const UNHEAD_MODULE_ID = '/node_modules/@unhead/vue/dist/index.mjs'
@@ -25,10 +23,11 @@ const USER_MODULE_ID = '/src/app.js'
 describe('ssrStaticReplace', () => {
   it('only transforms unhead modules', () => {
     const plugin = createPlugin()
-    expect(plugin.transformInclude(UNHEAD_MODULE_ID)).toBe(true)
-    expect(plugin.transformInclude(USER_MODULE_ID)).toBe(false)
-    expect(plugin.transformInclude('/node_modules/unhead/dist/index.mjs')).toBe(true)
-    expect(plugin.transformInclude('/src/components/Head.vue')).toBe(false)
+    const code = 'if (head.ssr) {}'
+    expect(passesTransformFilter(plugin, UNHEAD_MODULE_ID, code)).toBe(true)
+    expect(passesTransformFilter(plugin, USER_MODULE_ID, code)).toBe(false)
+    expect(passesTransformFilter(plugin, '/node_modules/unhead/dist/index.mjs', code)).toBe(true)
+    expect(passesTransformFilter(plugin, '/src/components/Head.vue', code)).toBe(false)
   })
 
   it('replaces head.ssr with false for client builds', () => {

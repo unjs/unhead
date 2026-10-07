@@ -65,6 +65,8 @@
   renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
+  renderStreamBodyTags: function
+  renderStreamEnd: function
   wrapStream: function
 ./stream/vite:
   default: function

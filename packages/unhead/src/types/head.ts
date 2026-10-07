@@ -166,6 +166,20 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    * @default '__unhead__'
    */
   streamKey?: string
+  /**
+   * Request CSP nonce for the bootstrap and Unhead patch scripts.
+   * Apply the same nonce to application scripts and the response CSP header.
+   */
+  nonce?: string
+  /**
+   * Set when the driver writes streamed body tags before `</body>`.
+   *
+   * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
+   * `wrapStream()` enables this option automatically.
+   *
+   * @default false
+   */
+  writesBodyTags?: boolean
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
@@ -274,6 +288,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _du?: boolean
   /**
+   * Batches client pushes into one render.
+   *
+   * @internal
+   */
+  _b?: boolean
+  /**
    * @internal
    */
   _scripts?: Record<string, any>
@@ -294,9 +314,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string
   /**
+   * Per-response state for shell rendering and streamed body tags.
+   *
    * @internal
    */
-  _rootStreamedTags?: Record<string, HeadTag>
+  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
 }
 
 export interface DomState {

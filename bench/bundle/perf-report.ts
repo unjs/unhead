@@ -31,10 +31,11 @@ function parseVitestBenchmark(value: unknown): PerfBench {
   if (
     !isRecord(value)
     || typeof value.name !== 'string'
-    || typeof value.mean !== 'number'
-    || !Number.isFinite(value.mean)
-    || typeof value.rme !== 'number'
-    || !Number.isFinite(value.rme)
+    || !isRecord(value.latency)
+    || typeof value.latency.mean !== 'number'
+    || !Number.isFinite(value.latency.mean)
+    || typeof value.latency.rme !== 'number'
+    || !Number.isFinite(value.latency.rme)
   ) {
     throw new TypeError('Invalid Vitest benchmark result')
   }
@@ -43,8 +44,8 @@ function parseVitestBenchmark(value: unknown): PerfBench {
     id: `bundler-transform:${value.name}`,
     name: `Bundler: ${value.name}`,
     kind: 'time',
-    value: value.mean,
-    rme: value.rme,
+    value: value.latency.mean,
+    rme: value.latency.rme,
   }
 }
 
@@ -52,16 +53,20 @@ export function parseVitestBenchmarks(value: unknown): PerfRun {
   if (value === null || value === undefined)
     return { benches: [] }
 
-  if (!isRecord(value) || !Array.isArray(value.files))
+  if (!isRecord(value) || !Array.isArray(value.testResults))
     throw new TypeError('Invalid Vitest benchmark output')
 
-  const benches = value.files.flatMap((file) => {
-    if (!isRecord(file) || !Array.isArray(file.groups))
+  const benches = value.testResults.flatMap((file) => {
+    if (!isRecord(file) || !Array.isArray(file.assertionResults))
       throw new TypeError('Invalid Vitest benchmark file')
-    return file.groups.flatMap((group) => {
-      if (!isRecord(group) || !Array.isArray(group.benchmarks))
-        throw new TypeError('Invalid Vitest benchmark group')
-      return group.benchmarks.map(parseVitestBenchmark)
+    return file.assertionResults.flatMap((test) => {
+      if (!isRecord(test) || !Array.isArray(test.benchmarks))
+        throw new TypeError('Invalid Vitest benchmark test')
+      return test.benchmarks.flatMap((group) => {
+        if (!isRecord(group) || !Array.isArray(group.tasks))
+          throw new TypeError('Invalid Vitest benchmark group')
+        return group.tasks.map(parseVitestBenchmark)
+      })
     })
   })
 

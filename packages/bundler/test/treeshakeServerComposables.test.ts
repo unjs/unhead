@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TreeshakeServerComposables } from '../src/unplugin/TreeshakeServerComposables'
+import { runTransform } from './utils'
 
 const USE_SERVER_HEAD_RE = /useServerHead/
 
@@ -8,14 +9,7 @@ function environmentContext(consumer: 'client' | 'server') {
 }
 
 async function transformWith(plugin: any, code: string | string[], id = 'some-id.js', ctx: any = environmentContext('client')) {
-  if (plugin.transformInclude && !plugin.transformInclude(id))
-    return
-  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
-  const res = await handler.call(
-    ctx,
-    Array.isArray(code) ? code.join('\n') : code,
-    id,
-  )
+  const res = await runTransform(plugin, Array.isArray(code) ? code.join('\n') : code, id, ctx)
   return res?.code
 }
 
@@ -31,6 +25,27 @@ describe('treeshakeServerComposables', () => {
 
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
+  })
+
+  it('does not transform files matched by both include and exclude', async () => {
+    const plugin = TreeshakeServerComposables.vite({
+      filter: {
+        include: [/excluded/],
+        exclude: [/excluded/],
+      },
+    }) as any
+    expect(await transformWith(plugin, couldTransform, '/src/excluded.ts')).toBeUndefined()
+  })
+
+  it.each(['test.ts', 'test.mts', 'test.cts', 'test.js', 'test.mjs', 'test.cjs', 'test.tsx', 'test.jsx'])(
+    'transforms %s modules',
+    async (id) => {
+      expect(await transform(couldTransform, id)).toBeDefined()
+    },
+  )
+
+  it('transforms ids that carry a query', async () => {
+    expect(await transform(couldTransform, '/src/app.mts?t=1730000000')).toBeDefined()
   })
 
   it('transforms vue script blocks', async () => {
