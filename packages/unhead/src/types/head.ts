@@ -169,7 +169,12 @@ export interface CreateStreamableServerHeadOptions<Input = ResolvableHead, HeadI
    */
   streamKey?: string
   /**
-   * Set when the driver writes Streamed Body Tags before `</body>`.
+   * Request CSP nonce for the bootstrap and Unhead patch scripts.
+   * Apply the same nonce to application scripts and the response CSP header.
+   */
+  nonce?: string
+  /**
+   * Set when the driver writes streamed body tags before `</body>`.
    *
    * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
    * `wrapStream()` enables this option automatically.
@@ -341,11 +346,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string | HeadTagTitleTemplate
   /**
-   * Per-response state for Streamed Body Tags.
+   * Per-response state for shell rendering and streamed body tags.
    *
    * @internal
    */
-  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
+  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
 }
 
 export interface DomState {

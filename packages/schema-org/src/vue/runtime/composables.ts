@@ -292,7 +292,7 @@ export function defineService<Input extends object | undefined = undefined>(inpu
   return provideResolver(input, serviceResolver)
 }
 
-export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>>>>
+export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>> | null | undefined | false>>
 
 interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
 type UseSchemaOrgOptions = Omit<UseHeadOptions, 'head'> & {

@@ -2,7 +2,7 @@
 import type { SerializedTag } from '~/composables/state'
 import { brokenLinks, isBrokenUrl } from '~/composables/link-checker'
 import { applyOverrides, useRuleOverrides } from '~/composables/rule-overrides'
-import { state } from '~/composables/state'
+import { resolvePageUrl, state } from '~/composables/state'
 
 const { tags, title = 'Tags', icon = 'i-carbon-tag-group' } = defineProps<{
   tags: SerializedTag[]
@@ -11,7 +11,7 @@ const { tags, title = 'Tags', icon = 'i-carbon-tag-group' } = defineProps<{
 }>()
 
 const tagFilter = ref('')
-const activeTagType = ref<string | null>(null)
+const selectedTagType = ref<string | null>(null)
 const activeSource = ref<string | null>(null)
 
 const tagTypeColors: Record<string, string> = {
@@ -36,6 +36,14 @@ const tagTypeCounts = computed(() => {
   return counts
 })
 
+// Drop the selected type once its last tag disappears. The table never empties
+// with no chip to clear, and the filter cannot reapply when that type returns later.
+watch(tagTypeCounts, (counts) => {
+  if (selectedTagType.value && !counts[selectedTagType.value])
+    selectedTagType.value = null
+})
+const activeTagType = computed(() => Object.keys(tagTypeCounts.value).length > 1 ? selectedTagType.value : null)
+
 const singletonTags = new Set(['title', 'titleTemplate', 'templateParams', 'htmlAttrs', 'bodyAttrs'])
 
 const filteredTags = computed(() => {
@@ -58,8 +66,29 @@ function toggleSource(source: string) {
 }
 
 function toggleTagType(tag: string) {
-  activeTagType.value = activeTagType.value === tag ? null : tag
+  selectedTagType.value = activeTagType.value === tag ? null : tag
 }
+
+function clearFilters() {
+  selectedTagType.value = null
+  activeSource.value = null
+  tagFilter.value = ''
+}
+
+// One unique key per row. Inline scripts can share props, so content is part of
+// the key. A repeated key gets the first free suffix, which never collides with
+// a base that already ends in one.
+const rows = computed(() => {
+  const used = new Set<string>()
+  return filteredTags.value.map((tag) => {
+    const base = tag.dedupeKey || `${tag.tag}:${JSON.stringify(tag.props || {})}:${tag.innerHTML ?? tag.textContent ?? ''}`
+    let key = base
+    for (let n = 1; used.has(key); n++)
+      key = `${base}#${n}`
+    used.add(key)
+    return { tag, key }
+  })
+})
 
 const { overrides } = useRuleOverrides()
 
@@ -208,8 +237,7 @@ function hasInlineCode(tag: any): false | { code: string, lang: 'js' | 'json' | 
 
 const expandedRows = ref(new Set<string>())
 
-function toggleRow(tag: any) {
-  const key = tagMatchKey(tag)
+function toggleRow(key: string) {
   if (expandedRows.value.has(key))
     expandedRows.value.delete(key)
   else
@@ -234,31 +262,31 @@ function toggleRow(tag: any) {
         </div>
       </div>
     </template>
-    <div class="overflow-auto max-h-[400px]">
-      <div class="mb-3 flex gap-3">
-        <UInput v-model="tagFilter" placeholder="Filter tags…" aria-label="Filter tags" name="tag-filter" autocomplete="off" size="xs" class="w-48" />
-        <div v-if="Object.keys(tagTypeCounts).length > 1" class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag type">
-          <button
-            v-for="(count, tag) in tagTypeCounts"
-            :key="tag"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-150 border"
-            :class="activeTagType === tag
-              ? 'tag-filter-active border-current'
-              : 'tag-filter border-transparent hover:border-current'"
-            :data-color="tagTypeColor(tag as string)"
-            :aria-pressed="activeTagType === tag"
-            @click="toggleTagType(tag as string)"
-          >
-            <span class="tag-filter-dot" />
-            <template v-if="singletonTags.has(tag as string)">
-              {{ tag }}
-            </template>
-            <template v-else>
-              {{ count }} {{ tag }}
-            </template>
-          </button>
-        </div>
+    <div class="mb-3 flex flex-wrap gap-3">
+      <UInput v-model="tagFilter" placeholder="Filter tags…" aria-label="Filter tags" name="tag-filter" autocomplete="off" size="xs" class="w-48" />
+      <div v-if="Object.keys(tagTypeCounts).length > 1" class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag type">
+        <button
+          v-for="(count, tag) in tagTypeCounts"
+          :key="tag"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-150 border"
+          :class="activeTagType === tag
+            ? 'tag-filter-active border-current'
+            : 'tag-filter border-transparent hover:border-current'"
+          :data-color="tagTypeColor(tag as string)"
+          :aria-pressed="activeTagType === tag"
+          @click="toggleTagType(tag as string)"
+        >
+          <span class="tag-filter-dot" />
+          <template v-if="singletonTags.has(tag as string)">
+            {{ tag }}
+          </template>
+          <template v-else>
+            {{ count }} {{ tag }}
+          </template>
+        </button>
       </div>
+    </div>
+    <div class="overflow-auto max-h-[400px]">
       <table class="w-full text-sm">
         <thead class="sticky top-0 bg-default">
           <tr class="text-left text-muted border-b border-default">
@@ -280,25 +308,25 @@ function toggleRow(tag: any) {
           </tr>
         </thead>
         <tbody>
-          <template v-for="tag in filteredTags" :key="tagMatchKey(tag)">
+          <template v-for="{ tag, key } in rows" :key="key">
             <tr
               class="border-b border-default hover:bg-elevated transition-colors cursor-pointer"
-              :class="{ 'bg-elevated/30': expandedRows.has(tagMatchKey(tag)) }"
-              @click="toggleRow(tag)"
+              :class="{ 'bg-elevated/30': expandedRows.has(key) }"
+              @click="toggleRow(key)"
             >
               <td class="p-2">
                 <div class="flex items-center gap-1.5">
                   <button
                     type="button"
                     class="inline-flex items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ui-primary)]"
-                    :aria-expanded="expandedRows.has(tagMatchKey(tag))"
-                    :aria-label="expandedRows.has(tagMatchKey(tag)) ? `Collapse ${tag.tag} details` : `Expand ${tag.tag} details`"
-                    @click.stop="toggleRow(tag)"
+                    :aria-expanded="expandedRows.has(key)"
+                    :aria-label="expandedRows.has(key) ? `Collapse ${tag.tag} details` : `Expand ${tag.tag} details`"
+                    @click.stop="toggleRow(key)"
                   >
                     <UIcon
                       name="i-carbon-chevron-right"
                       class="text-xs text-muted shrink-0 transition-transform duration-150"
-                      :class="{ 'rotate-90': expandedRows.has(tagMatchKey(tag)) }"
+                      :class="{ 'rotate-90': expandedRows.has(key) }"
                     />
                   </button>
                   <UBadge :color="tagTypeColor(tag.tag)" variant="subtle" size="xs">
@@ -315,11 +343,15 @@ function toggleRow(tag: any) {
                     v-if="tagWarnings(tag).some(r => r.id === 'broken-link')"
                     name="i-carbon-error-filled"
                     class="text-red-500 text-sm shrink-0"
+                    role="img"
+                    aria-label="Broken link"
                   />
                   <UIcon
                     v-else-if="tagWarnings(tag).length"
                     name="i-carbon-warning-filled"
                     class="text-amber-500 text-sm shrink-0"
+                    role="img"
+                    aria-label="Has warnings"
                   />
                   <span
                     v-if="isColorValue(tag)"
@@ -340,11 +372,13 @@ function toggleRow(tag: any) {
                     {{ tag.source }}
                   </button>
                   <button
-                    class="opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
+                    type="button"
+                    class="opacity-50 hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer"
                     title="Open in editor"
+                    :aria-label="`Open ${tag.source} in editor`"
                     @click.stop="openInEditor(tag.source)"
                   >
-                    <UIcon name="i-carbon-launch" class="text-sm" />
+                    <UIcon name="i-carbon-launch" class="text-sm" aria-hidden="true" />
                   </button>
                 </div>
               </td>
@@ -361,7 +395,7 @@ function toggleRow(tag: any) {
                 </UBadge>
               </td>
             </tr>
-            <tr v-if="expandedRows.has(tagMatchKey(tag))" class="border-b border-default">
+            <tr v-if="expandedRows.has(key)" class="border-b border-default">
               <td colspan="5" class="px-4 py-3 bg-elevated/50">
                 <div class="space-y-3">
                   <!-- Warnings -->
@@ -398,7 +432,7 @@ function toggleRow(tag: any) {
                   <!-- Image preview -->
                   <div v-if="isImageUrl(tag)" class="tag-image-preview">
                     <img
-                      :src="isImageUrl(tag) as string"
+                      :src="resolvePageUrl(isImageUrl(tag) as string)"
                       :alt="tagIdentifier(tag)"
                       class="max-w-full max-h-40 rounded border border-default object-contain bg-elevated"
                       loading="lazy"
@@ -429,7 +463,12 @@ function toggleRow(tag: any) {
           </template>
         </tbody>
       </table>
-      <DevtoolsEmptyState v-if="!filteredTags.length" icon="i-carbon-tag-group" title="No tags found" description="Try adjusting your filter." />
+      <DevtoolsEmptyState v-if="!filteredTags.length && tags.length" icon="i-carbon-tag-group" title="No tags match these filters">
+        <UButton size="xs" color="neutral" variant="subtle" icon="i-carbon-filter-remove" @click="clearFilters">
+          Clear filters
+        </UButton>
+      </DevtoolsEmptyState>
+      <DevtoolsEmptyState v-else-if="!tags.length" icon="i-carbon-tag-group" title="No tags yet" description="Tags appear here once the page adds head tags." />
     </div>
   </UCard>
 </template>

@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, CreateClientHeadOptions, CreateHeadOptions, GenericScript, HeadEntry, HeadEntryOptions, HeadRenderer, HeadTag, HeadTagAttributeValue, HeadTagTitleTemplate, PreloadLink, PropResolver, ResolvableHead, SerializableHead, UnheadMeta } from '../../src/types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, CreateHeadOptions, GenericScript, HeadEntry, HeadEntryOptions, HeadRenderer, HeadTag, HeadTagAttributeValue, HeadTagTitleTemplate, PreloadLink, PropResolver, ResolvableHead, ResolvableTemplateParams, SerializableHead, UnheadMeta } from '../../src/types'
 import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
 import { expectTypeOf } from 'vitest'
 import { createHead as createClientHead } from '../../src/client'
@@ -299,6 +299,18 @@ describe('types', () => {
         },
       },
     })
+  })
+  it('accepts nested non-string template param values', () => {
+    const head = createHead()
+    useHead(head, {
+      templateParams: {
+        schemaOrg: {
+          trailingSlash: true,
+        },
+      },
+    })
+    const params: ResolvableTemplateParams = { schemaOrg: { trailingSlash: true } }
+    void params
   })
   it('types useHead', () => {
     const unhead = createHead()

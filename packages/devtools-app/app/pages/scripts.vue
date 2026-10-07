@@ -16,29 +16,18 @@ const scriptCounts = computed(() => {
   return counts
 })
 
+// Reset to "all" once the selected status has no scripts left. The list never
+// empties with no way back, and the filter cannot reapply when that status returns.
+watch(scriptCounts, (counts) => {
+  if (!counts[statusFilter.value])
+    statusFilter.value = 'all'
+})
+
 const filteredScripts = computed(() => {
   if (statusFilter.value === 'all')
     return scripts.value
   return scripts.value.filter(s => s.status === statusFilter.value)
 })
-
-// Fetch script sizes via HEAD requests
-const scriptSizes = ref<Record<string, string>>({})
-
-async function fetchScriptSize(src: string) {
-  if (!src || scriptSizes.value[src])
-    return
-  try {
-    const res = await fetch(src, { method: 'HEAD' })
-    const len = res.headers.get('content-length')
-    if (len) {
-      scriptSizes.value[src] = formatBytes(Number.parseInt(len, 10))
-    }
-  }
-  catch {
-    // silently ignore CORS or network errors
-  }
-}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024)
@@ -47,14 +36,6 @@ function formatBytes(bytes: number): string {
     return `${(bytes / 1024).toFixed(1)} kB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
-
-// Fetch sizes when scripts change
-watch(scripts, (list) => {
-  for (const s of list) {
-    if (s.src)
-      fetchScriptSize(s.src)
-  }
-}, { immediate: true })
 
 function statusColor(status: string) {
   if (status === 'loaded')
@@ -88,10 +69,14 @@ function cleanUrl(src: string): string {
   return src.replace(PROTOCOL_RE, '')
 }
 
+// The script's own origin: the page already talks to it, so no third party learns about the script.
+const failedFavicons = ref(new Set<string>())
+
 function faviconUrl(src: string): string | null {
   try {
     const url = new URL(src)
-    return `https://www.google.com/s2/favicons?domain=${url.hostname}`
+    const favicon = `${url.origin}/favicon.ico`
+    return failedFavicons.value.has(favicon) ? null : favicon
   }
   catch {
     return null
@@ -149,18 +134,18 @@ function toggleEvents(id: string) {
     <template v-else>
       <!-- Filter bar -->
       <div class="flex flex-wrap gap-1.5">
-        <UBadge
+        <UButton
           v-for="f in availableFilters"
           :key="f.key"
           :color="statusFilter === f.key ? 'primary' : 'neutral'"
           :variant="statusFilter === f.key ? 'solid' : 'subtle'"
           size="xs"
-          class="cursor-pointer"
+          :aria-pressed="statusFilter === f.key"
           @click="statusFilter = f.key"
         >
           {{ f.label }}
           <span class="ml-1 opacity-70 tabular-nums">{{ scriptCounts[f.key] || 0 }}</span>
-        </UBadge>
+        </UButton>
       </div>
 
       <!-- Script cards -->
@@ -174,6 +159,7 @@ function toggleEvents(id: string) {
                 :src="faviconUrl(script.src)!"
                 class="w-4 h-4 rounded-sm"
                 alt=""
+                @error="failedFavicons = new Set(failedFavicons).add(faviconUrl(script.src)!)"
               >
               <UIcon v-else name="i-carbon-script" class="text-sm text-muted" />
             </div>
@@ -192,9 +178,9 @@ function toggleEvents(id: string) {
         <!-- Metric badges -->
         <div class="flex flex-wrap gap-1.5 mt-3">
           <DevtoolsMetric
-            v-if="script.src && scriptSizes[script.src]"
+            v-if="script.size"
             icon="i-carbon-data-volume"
-            :value="scriptSizes[script.src]!"
+            :value="formatBytes(script.size)"
             label="size"
           />
           <DevtoolsMetric

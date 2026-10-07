@@ -4,6 +4,7 @@ import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/ser
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
+import { escapeHtml } from 'unhead/server'
 import {
   createStreamableHead as _createStreamableHead,
   prepareStreamingTemplate,
@@ -91,7 +92,7 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
       resolveShellReady(shellState)
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
-      // `renderStreamEnd()` writes Streamed Body Tags.
+      // `renderStreamEnd()` writes streamed body tags.
       // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       const encoder = new TextEncoder()
@@ -300,7 +301,7 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
   }
 }
 
-const scriptTemplate = ['<script>', '</script>'] as TemplateStringsArray & string[]
+const scriptTemplate = ['<script', '>', '</script>'] as TemplateStringsArray & string[]
 
 /**
  * Streaming script component - outputs inline script with current head state.
@@ -323,5 +324,6 @@ export function HeadStream(): JSX.Element {
   if (!update)
     return null
 
-  return ssr(scriptTemplate, update) as unknown as JSX.Element
+  const nonce = head._stream?.nonce
+  return ssr(scriptTemplate, nonce ? ` nonce="${escapeHtml(nonce)}"` : '', update) as unknown as JSX.Element
 }

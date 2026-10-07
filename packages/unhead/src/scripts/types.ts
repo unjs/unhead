@@ -27,6 +27,8 @@ type BaseScriptApi = object
 export interface UseScriptLoaderInput<T extends BaseScriptApi = BaseScriptApi> {
   key: string
   loader: UseScriptLoader<T>
+  crossorigin?: never
+  referrerpolicy?: never
   src?: never
   innerHTML?: never
   onerror?: never

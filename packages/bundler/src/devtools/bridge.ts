@@ -1,6 +1,14 @@
+/**
+ * The Unhead DevTools **page script**, loaded into the user app's page as the
+ * dock's client script. It serializes the live head and owns that snapshot as
+ * the in-page channel's shared state; the panel iframe mirrors it.
+ */
+import type { UnheadChannelProtocol } from './channel'
 import type { SeoOverview, SerializedScript, SerializedTag, SerializedValidationRule, TagRenderMode, UnheadDevtoolsState } from './rpc/types'
+import { createPageScriptChannel } from 'devframe/in-page-channel'
+import { UNHEAD_CHANNEL } from './channel'
 
-const __UNHEAD_VERSION__ = '' // replaced at serve-time by the Vite plugin
+const GLOBAL_FLAG = '__unhead_devtools_page_script__'
 
 declare global {
   interface Window {
@@ -10,6 +18,7 @@ declare global {
       push?: (e: any) => void
     }
     __unhead_devtools__?: any
+    [GLOBAL_FLAG]?: boolean
   }
 }
 
@@ -159,7 +168,8 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
         const weight = tag._w ?? weightFn(tag)
         allTags.push({
           tag: tagName,
-          props: { ...tag.props },
+          // Props can hold non-cloneable values (event handlers); the channel uses structured clone.
+          props: safeSerialize(tag.props || {}),
           innerHTML: tag.innerHTML,
           textContent: tag.textContent,
           position: tag.tagPosition,
@@ -254,9 +264,11 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
   if (head._scripts) {
     for (const [id, script] of Object.entries(head._scripts)) {
       const s = script as any
+      const src = s.src || s.input?.src || ''
       scripts.push({
         id,
-        src: s.src || s.input?.src || '',
+        src,
+        size: scriptSize(src),
         status: s.status || 'unknown',
         warmupStrategy: s._warmupEl ? (s._warmupStrategy || 'preload') : undefined,
         events: s._events || [],
@@ -290,7 +302,7 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
   }))
 
   return {
-    version: __UNHEAD_VERSION__,
+    url: location.href,
     entries,
     tags: allTags.sort((a, b) => (a.priority ?? 100) === (b.priority ?? 100) ? (a.order ?? 0) - (b.order ?? 0) : (a.priority ?? 100) - (b.priority ?? 100)),
     plugins,
@@ -310,6 +322,22 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
   }
 }
 
+/** Read a script's size from Resource Timing, so the panel never refetches it. */
+function scriptSize(src: string): number | undefined {
+  if (!src || typeof performance === 'undefined')
+    return
+  let url: string
+  try {
+    url = new URL(src, location.href).href
+  }
+  catch {
+    // An unparseable src never loaded, so there is no timing entry to read.
+    return
+  }
+  const entry = performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined
+  return entry?.encodedBodySize || undefined
+}
+
 function detectSSR(): boolean {
   // Check if the page has server-rendered head elements (meta/link with content)
   const headEl = document.head
@@ -322,38 +350,26 @@ function detectSSR(): boolean {
 }
 
 function connectBridge(head: any) {
-  let sharedState: any
-
   const wasSSR = detectSSR()
   const ssrPayload = readSSRDevtoolsPayload()
+  const channel = createPageScriptChannel<UnheadChannelProtocol>({ name: UNHEAD_CHANNEL, functions: {} })
 
-  function syncToSharedState() {
-    if (!sharedState)
-      return
-    const newState = serializeHeadState(head, wasSSR, ssrPayload)
-    sharedState.mutate((draft: any) => {
-      Object.assign(draft, newState)
+  channel.sharedState.get('state', { initialValue: serializeHeadState(head, wasSSR, ssrPayload) })
+    .then((sharedState) => {
+      function syncToSharedState() {
+        const newState = serializeHeadState(head, wasSSR, ssrPayload)
+        sharedState.mutate((draft: any) => {
+          Object.assign(draft, newState)
+        })
+      }
+      if (head.hooks)
+        head.hooks.hook('dom:rendered', syncToSharedState)
+      // Initial sync after a short delay to capture early entries
+      setTimeout(syncToSharedState, 500)
     })
-  }
-
-  async function init() {
-    const { getDevToolsRpcClient } = await import('@vitejs/devtools-kit/client')
-    const rpc = await getDevToolsRpcClient({ baseURL: '/__devtools/' })
-
-    sharedState = await rpc.sharedState.get('unhead:state', {
-      initialValue: serializeHeadState(head, wasSSR, ssrPayload),
+    .catch((err) => {
+      console.error('[unhead devtools] page script init failed:', err)
     })
-
-    if (head.hooks)
-      head.hooks.hook('dom:rendered', syncToSharedState)
-
-    // Initial sync after a short delay to capture early entries
-    setTimeout(syncToSharedState, 500)
-  }
-
-  init().catch((err) => {
-    console.error('[unhead bridge] init failed:', err)
-  })
 }
 
 function findHead(): any {
@@ -383,12 +399,17 @@ function pollForHead() {
   }, 100)
 }
 
-if (typeof window !== 'undefined') {
+/**
+ * Boot the page script once per page. The hub calls this default export when it
+ * loads the dock's client script; repeated calls are no-ops.
+ */
+export default function setupUnheadPageScript(): void {
+  if (typeof window === 'undefined' || window[GLOBAL_FLAG])
+    return
+  window[GLOBAL_FLAG] = true
   const head = findHead()
-  if (head) {
+  if (head)
     connectBridge(head)
-  }
-  else {
+  else
     pollForHead()
-  }
 }

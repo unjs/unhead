@@ -50,6 +50,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 
 export function hashTag(tag: HeadTag): string {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
+  // stringify: a number/boolean textContent is not a valid string key (#1006)
   if (identity)
     return String(identity)
   // sort so the hash is stable across differing prop insertion orders (#823)

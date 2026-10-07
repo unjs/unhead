@@ -14,17 +14,17 @@
   },
   "dependencies": {
     "@unhead/solid-js": "workspace:*",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "express": "^5.2.1",
-    "solid-js": "^1.9.14"
+    "solid-js": "^1.9.15"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.5.1",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.2.1",
+    "vite": "^8.3.0",
     "vite-plugin-solid": "^2.11.14"
   }
 }
