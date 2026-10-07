@@ -5,6 +5,13 @@
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
+<a href="https://skilld.dev/gh/unjs/unhead">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://skilld.dev/b/unjs/unhead?theme=dark">
+    <source media="(prefers-color-scheme: light)" srcset="https://skilld.dev/b/unjs/unhead?theme=light">
+    <img alt="Skill repository on skilld.dev" src="https://skilld.dev/b/unjs/unhead?theme=light">
+  </picture>
+</a>
 
 ## Features
 
@@ -26,6 +33,9 @@ yarn add @unhead/vue
 # pnpm
 pnpm add @unhead/vue
 ```
+
+> [!TIP]
+> Using an AI agent? Get the @unhead/vue Skill on [skilld.dev/gh/unjs/unhead](https://skilld.dev/gh/unjs/unhead).
 
 ## Usage
 
