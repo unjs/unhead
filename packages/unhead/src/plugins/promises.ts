@@ -101,7 +101,7 @@ function walkPromises(v: any): any {
  * are omitted from the current render and become available on the next render.
  */
 export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
-  const pending = new WeakMap<HeadEntry<any>, unknown>()
+  const pending = new WeakMap<HeadEntry<unknown>, unknown>()
 
   return {
     key: 'promises',

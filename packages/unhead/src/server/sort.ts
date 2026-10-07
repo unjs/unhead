@@ -2,7 +2,7 @@ import type { HeadTag } from '../types'
 import { TagPriorityAliases } from '../utils/const'
 
 // Capo.js tag weights for optimal head ordering
-const isTruthy = (v?: string | boolean) => v === '' || v === true
+const isTruthy = (v: unknown) => v === '' || v === true
 
 export function capoTagWeight(tag: HeadTag): number {
   if (typeof tag.tagPriority === 'number')

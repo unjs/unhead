@@ -42,7 +42,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   let resolvedMeta: Partial<ResolvedMeta> = {}
   // Kept apart from resolvedMeta: a canonical only fills `url` when no source sets one.
   let canonical: string | undefined
-  return defineHeadPlugin((head: Unhead): HeadPlugin => {
+  return defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>): HeadPlugin<Input, RenderResult> => {
     head.use(TemplateParamsPlugin)
     function collectMeta(props: Record<string, unknown>) {
       if (typeof props.content !== 'string')

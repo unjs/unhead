@@ -1,7 +1,6 @@
 /// <reference types="@vitejs/devtools-kit" />
 import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
-import type { UnheadDevtoolsOptions } from '../unplugin/types'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPluginFromDevframe } from '@vitejs/devtools-kit/node'
@@ -94,7 +93,7 @@ function transformSourceLocations(code: string, id: string, root: string): { cod
   }
 }
 
-export interface UnheadDevtoolsInternalOptions extends UnheadDevtoolsOptions {
+export interface UnheadDevtoolsInternalOptions {
   _ctx?: HeadTransformContext
 }
 

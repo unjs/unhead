@@ -22,7 +22,7 @@ import type {
 } from '@unhead/schema-org'
 import type { SchemaOrgArticle } from '@unhead/schema-org/vue'
 import type { DeepResolvableProperties } from '@unhead/vue'
-import type { HeadPluginInput } from 'unhead/types'
+import type { HeadPlugin, HeadPluginInput, Unhead } from 'unhead/types'
 import type { ComputedRef } from 'vue'
 import {
   createSchemaOrgGraph,
@@ -114,6 +114,7 @@ describe('public types', () => {
 
     const plugin = UnheadSchemaOrg({ trailingSlash: true })
     expectTypeOf(plugin).toMatchTypeOf<HeadPluginInput>()
+    expectTypeOf(plugin).toMatchTypeOf<<Input, RenderResult>(head: Unhead<Input, RenderResult>) => HeadPlugin<Input, RenderResult>>()
     // @ts-expect-error schema tag resolution is synchronous, so metadata cannot be async
     UnheadSchemaOrg({}, async () => ({ host: 'https://example.com' }))
   })

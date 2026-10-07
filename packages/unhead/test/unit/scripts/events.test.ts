@@ -1,3 +1,4 @@
+import type { ScriptInstance } from '../../../src/scripts/types'
 import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
@@ -298,7 +299,7 @@ describe('useScript events', () => {
     expect(onLoaded).not.toHaveBeenCalled()
 
     first.status = 'loaded'
-    await head.hooks.callHook('script:updated', { script: first })
+    await head.hooks.callHook('script:updated', { script: first as unknown as ScriptInstance<object> })
     expect(second.status).toBe('loading')
     expect(onLoaded).not.toHaveBeenCalled()
 
@@ -386,7 +387,8 @@ describe('useScript events', () => {
       }) as any,
     })).not.toThrow()
 
-    expect(head._scripts?.['/invalid-function-cleanup.js']?.status).toBe('loading')
+    const script = head._scripts?.['/invalid-function-cleanup.js'] as { status?: string } | undefined
+    expect(script?.status).toBe('loading')
   })
 
   it('removes partial lifecycle state when a function trigger throws', () => {

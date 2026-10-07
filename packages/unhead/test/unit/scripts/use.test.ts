@@ -1,4 +1,5 @@
 import type { UseScriptOptions, UseScriptTrigger } from '../../../src/scripts'
+import type { ActiveHeadEntry, ResolvableHead } from '../../../src/types'
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { useScript } from '../../../src/composables'
 import { createHead as createServerHead } from '../../../src/server'
@@ -68,6 +69,27 @@ describe('useScript', () => {
     expectTypeOf(instance.proxy.test).returns.toBeVoid()
   })
 
+  it('types: reflects lifecycle return values', () => {
+    interface ScriptApi {
+      track: (event: string) => boolean
+    }
+
+    const head = createServerHead()
+    const instance = useScript<ScriptApi>(head, 'https://cdn.example.com/script.js', {
+      trigger: 'manual',
+      use: () => ({ track: () => true }),
+    })
+
+    expectTypeOf(instance.instance).toEqualTypeOf<ScriptApi | null>()
+    expectTypeOf(instance.load()).toEqualTypeOf<Promise<ScriptApi | false>>()
+    expectTypeOf(instance.warmup(false)).toEqualTypeOf<ActiveHeadEntry<ResolvableHead> | undefined>()
+    expectTypeOf(instance.onLoaded(() => {})).toEqualTypeOf<() => void>()
+    expectTypeOf(instance.onError(() => {})).toEqualTypeOf<() => void>()
+
+    const _opaque = useScript(head, 'https://cdn.example.com/opaque.js', { trigger: 'manual' })
+    expectTypeOf<(typeof _opaque.proxy)['arbitrary']>().toBeNever()
+  })
+
   it('types: inferred async resolve() context', () => {
     const head = createServerHead()
     const instance = useScript(head, '/script.js', {
@@ -105,13 +127,14 @@ describe('useScript', () => {
     })
 
     const checkInference = async () => {
-      const inferred: typeof api = await instance.load()
-      inferred.method('ok')
+      const inferred = await instance.load()
+      if (inferred)
+        inferred.method('ok')
     }
     type Loaded = Awaited<ReturnType<typeof instance.load>>
     type LoadedWithCleanup = Awaited<ReturnType<typeof instanceWithCleanup.load>>
-    expectTypeOf<Loaded>().toEqualTypeOf<typeof api>()
-    expectTypeOf<LoadedWithCleanup>().toEqualTypeOf<typeof api>()
+    expectTypeOf<Loaded>().toEqualTypeOf<typeof api | false>()
+    expectTypeOf<LoadedWithCleanup>().toEqualTypeOf<typeof api | false>()
     const notAny: 0 extends (1 & Loaded) ? never : true = true
     void checkInference
     void instanceWithCleanup

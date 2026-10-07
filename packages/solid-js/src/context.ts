@@ -1,4 +1,4 @@
-import type { Unhead } from 'unhead/types'
+import type { HeadContextTarget, ResolvableHead } from 'unhead/types'
 import { createContext } from 'solid-js'
 
-export const UnheadContext = createContext<Unhead | null>(null)
+export const UnheadContext = createContext<HeadContextTarget<ResolvableHead> | null>(null)

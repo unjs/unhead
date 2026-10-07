@@ -1,12 +1,11 @@
 import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
-import type { UnheadDevtoolsOptions } from '../unplugin/types'
 import { SOURCE_FILE_RE } from '../unplugin/utils'
 import { HEAD_COMPOSABLE_RE } from './filter'
 
 const DEVTOOLS_KIT_PACKAGE = '@vitejs/devtools-kit'
 
-interface LazyUnheadDevtoolsOptions extends UnheadDevtoolsOptions {
+interface LazyUnheadDevtoolsOptions {
   _ctx?: HeadTransformContext
 }
 

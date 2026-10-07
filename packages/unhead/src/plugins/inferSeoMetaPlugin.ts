@@ -55,16 +55,13 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
       key: 'infer-seo-meta',
       hooks: {
         'tags:beforeResolve': ({ tagMap }) => {
-          let title = head._titleTemplate || head._title
+          const titleSource = head._titleTemplate || head._title
+          const title = typeof titleSource === 'function' ? titleSource(head._title) : titleSource
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            if (typeof title === 'function') {
-              // @ts-expect-error untyped
-              title = title(head._title)
-            }
-            title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            const resolvedTitle = hasContent(title) ? String(title) : undefined
+            ogTitle.props!.content = options.ogTitle ? options.ogTitle(resolvedTitle) : resolvedTitle || ''
             ogTitle.processTemplateParams = true
           }
 
