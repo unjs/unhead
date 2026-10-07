@@ -1,6 +1,6 @@
 ---
 name: unhead-vue
-description: Manages document head tags in Vue 3 SSR and SPA apps with @unhead/vue v3. Covers createHead from @unhead/vue/client and @unhead/vue/server, transformHtmlTemplate, useHead, useSeoMeta, useHeadSafe, useScript, VueHeadMixin, TemplateParamsPlugin, streaming SSR, and the Unhead Vite plugin. Use when a task sets a title, meta, Open Graph, canonical, or script tag in a Vue app, upgrades from @vueuse/head or Unhead v1 or v2, or hits "useHead() was called without provide context", %separator or %siteName printed in the title, "[object Promise]" in a meta tag, or hid and vmid attributes in the HTML.
+description: Manages head tags in Vue 3 SSR and SPA apps with @unhead/vue v3 through createHead, transformHtmlTemplate, useHead, useSeoMeta, useHeadSafe, useScript, and streaming SSR. Use when a task sets titles, meta, Open Graph, or scripts in a Vue app, upgrades from @vueuse/head or Unhead v1 or v2, or hits a useHead provide context error, template params printed literally in the title, or hid and vmid attributes in the HTML.
 ---
 
 # @unhead/vue
