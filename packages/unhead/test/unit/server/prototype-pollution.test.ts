@@ -100,4 +100,29 @@ describe('prototype pollution', () => {
     await renderSSRHead(head)
     expect(({} as any).polluted).toBeUndefined()
   })
+
+  it('strips __proto__ from merged attributes replaced by hooks', () => {
+    let inheritedOnload: unknown
+    const head = createServerHeadWithContext({
+      hooks: {
+        'entries:normalize': ({ tags }) => {
+          const htmlAttrs = tags.find(tag => tag.tag === 'htmlAttrs')
+          const classes = htmlAttrs?.props.class as unknown
+          if (htmlAttrs && classes instanceof Set && classes.has('second'))
+            htmlAttrs.props = JSON.parse('{"lang":"en","__proto__":{"onload":"alert(1)"}}')
+        },
+        'tags:beforeResolve': ({ tags }) => {
+          inheritedOnload = tags.find(tag => tag.tag === 'htmlAttrs')?.props.onload
+        },
+      },
+    })
+    head.push({ htmlAttrs: { class: 'first' } })
+    head.push({ htmlAttrs: { class: 'second' } })
+
+    const result = renderSSRHead(head)
+
+    expect(inheritedOnload).toBeUndefined()
+    expect(result.htmlAttrs).toContain('lang="en"')
+    expect(result.htmlAttrs).not.toContain('onload')
+  })
 })
