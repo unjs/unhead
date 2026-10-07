@@ -24,6 +24,11 @@ overrides:
   '@vitejs/devtools': 0.7.6
   chokidar: 5.0.0
   esbuild: 'catalog:'
+  # Nuxt resolves its head module from its own dependency tree (published
+  # @unhead/vue); point it at the workspace so examples/nuxt-v4-trial
+  # exercises local changes including compiled mode.
+  nuxt>@unhead/vue: workspace:*
+  nuxt>unhead: workspace:*
   oxc-walker>@oxc-project/types: 0.149.0
   # Keep Rolldown on one peer variant so unplugin resolves a single
   # UnpluginInstance type across the workspace.

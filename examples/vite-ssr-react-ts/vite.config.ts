@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 import { Unhead } from '@unhead/react/vite'
 
 export default defineConfig({
-  plugins: [react(), Unhead()],
+  plugins: [react(), Unhead({ experimental: { precompile: true } })],
 })

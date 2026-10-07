@@ -18,6 +18,9 @@ export default defineBuildConfig({
   rollup: {
     inlineDependencies: true,
     esbuild: {
+      define: {
+        'process.env.NODE_ENV': JSON.stringify('production'),
+      },
       treeShaking: true,
       minify: true,
     },
@@ -41,6 +44,9 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
+      const baseline = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'last.json'), 'utf8')).clientSelfContained?.gz
+      if (baseline && compressed > Math.ceil(baseline * 1.04))
+        throw new Error(`Client runtime budget exceeded: ${compressed} B > ${Math.ceil(baseline * 1.04)} B (4% over the tracked gzip baseline).`)
       console.log(`CLIENT (self-contained) Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },

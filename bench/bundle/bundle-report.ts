@@ -18,6 +18,7 @@ export interface BundleData {
   baseSize: number
   baseGzippedSize: number
   baseBrotliSize: number
+  comparison?: 'precompile'
 }
 
 type Status = 'new' | 'grew' | 'shrank' | 'same'
@@ -161,6 +162,7 @@ export function collectBundleData(): BundleData[] {
       baseSize,
       baseGzippedSize,
       baseBrotliSize,
+      comparison: spec.comparison,
     })
   }
   return data
