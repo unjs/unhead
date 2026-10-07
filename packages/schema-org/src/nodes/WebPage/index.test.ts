@@ -476,6 +476,40 @@ describe('defineWebPage', () => {
     })
   })
 
+  it('primaryImageOfPage: false opts out of logo inheritance', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineWebPage({
+          primaryImageOfPage: false,
+        }),
+        defineOrganization({
+          name: 'Harlan Wilton',
+          logo: '/logo.png',
+        }),
+      ])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage).not.toHaveProperty('primaryImageOfPage')
+    })
+  })
+
+  it('primaryImageOfPage: false opts out of logo inheritance when the organization resolves first', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Harlan Wilton',
+          logo: '/logo.png',
+        }),
+        defineWebPage({
+          primaryImageOfPage: false,
+        }),
+      ])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage).not.toHaveProperty('primaryImageOfPage')
+    })
+  })
+
   it('duplicate entries resolve as single', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

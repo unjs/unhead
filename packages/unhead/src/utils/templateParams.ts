@@ -9,7 +9,7 @@ const SepSub = '%separator'
 
 // for each %<word> token replace it with the corresponding runtime config or an empty value
 function sub(p: TemplateParams, token: string, isJson = false) {
-  let val: string | undefined
+  let val: string | number | boolean | null | undefined
   if (token === 's' || token === 'pageTitle') {
     val = p.pageTitle as string
   }
@@ -21,12 +21,14 @@ function sub(p: TemplateParams, token: string, isJson = false) {
   }
   else { val = p[token] as string | undefined }
   if (val !== undefined) {
+    // numbers are kept, including 0, while null and false still render as empty
+    const str = typeof val === 'number' ? String(val) : String(val || '')
     return isJson
-      ? (val || '')
+      ? str
           .replace(BACKSLASH_RE, '\\\\')
           .replace(LT_RE, '\\u003C')
           .replace(DOUBLE_QUOTE_RE, '\\"')
-      : val || ''
+      : str
   }
   return undefined
 }

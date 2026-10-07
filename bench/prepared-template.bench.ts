@@ -1,6 +1,6 @@
 import { createHead, prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from 'unhead/server'
 import { prepareStreamingTemplate } from 'unhead/stream/server'
-import { bench, describe } from 'vitest'
+import { it } from 'vitest'
 
 // Realistically large template (~100KB) with many head tags, similar to a
 // framework build output (modulepreload links, chunked CSS, inline data).
@@ -52,40 +52,40 @@ function makeHead() {
   return head
 }
 
-describe('transformHtmlTemplateRaw (~100KB template)', () => {
+it('transformHtmlTemplateRaw (~100KB template)', async ({ bench }) => {
   const prepared = prepareTemplate(template)
-
-  bench('string per request', () => {
-    transformHtmlTemplateRaw(makeHead(), template)
-  })
-
-  bench('prepared once', () => {
-    transformHtmlTemplateRaw(makeHead(), prepared)
-  })
+  await bench.compare(
+    bench('string per request', () => {
+      transformHtmlTemplateRaw(makeHead(), template)
+    }),
+    bench('prepared once', () => {
+      transformHtmlTemplateRaw(makeHead(), prepared)
+    }),
+  )
 })
 
-describe('transformHtmlTemplate (~100KB template)', () => {
+it('transformHtmlTemplate (~100KB template)', async ({ bench }) => {
   const prepared = prepareTemplate(template)
-
-  bench('string per request', () => {
-    transformHtmlTemplate(makeHead(), template)
-  })
-
-  bench('prepared once', () => {
-    transformHtmlTemplate(makeHead(), prepared)
-  })
+  await bench.compare(
+    bench('string per request', () => {
+      transformHtmlTemplate(makeHead(), template)
+    }),
+    bench('prepared once', () => {
+      transformHtmlTemplate(makeHead(), prepared)
+    }),
+  )
 })
 
-describe('prepareStreamingTemplate (~100KB template)', () => {
+it('prepareStreamingTemplate (~100KB template)', async ({ bench }) => {
   const prepared = prepareTemplate(template)
   const head = makeHead()
   const state = head.render()
-
-  bench('string per request', () => {
-    prepareStreamingTemplate(head, template, state)
-  })
-
-  bench('prepared once', () => {
-    prepareStreamingTemplate(head, prepared, state)
-  })
+  await bench.compare(
+    bench('string per request', () => {
+      prepareStreamingTemplate(head, template, state)
+    }),
+    bench('prepared once', () => {
+      prepareStreamingTemplate(head, prepared, state)
+    }),
+  )
 })

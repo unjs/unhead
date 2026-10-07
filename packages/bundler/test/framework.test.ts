@@ -18,29 +18,10 @@ vi.mock('../src/devtools/vite', () => {
         name: '@unhead/devtools:real',
         apply: 'serve',
         configResolved: vi.fn(() => devtoolsState.calls.push('configResolved')),
-        configureServer: {
-          handler: vi.fn(() => devtoolsState.calls.push('configureServer')),
-        },
-        resolveId: vi.fn((id: string) => {
-          devtoolsState.calls.push(`resolveId:${id}`)
-          if (id === '/@unhead/bridge.mjs')
-            return id
-        }),
-        load: vi.fn((id: string) => {
-          devtoolsState.calls.push(`load:${id}`)
-          if (id === '/@unhead/bridge.mjs')
-            return 'bridge'
-        }),
         transform: {
           handler: vi.fn((code: string, id: string) => {
             devtoolsState.calls.push(`transform:${id}`)
             return { code: `${code}\n/* transformed */`, map: null }
-          }),
-        },
-        transformIndexHtml: {
-          handler: vi.fn(() => {
-            devtoolsState.calls.push('transformIndexHtml')
-            return [{ tag: 'script' }]
           }),
         },
         devtools: {
@@ -161,23 +142,15 @@ describe('createFrameworkPlugin devtools loading', () => {
       root: process.cwd(),
       plugins: [...plugins, viteDevtools],
     })
-    await devtools.configureServer({ middlewares: { use: vi.fn() } })
-    await expect(devtools.resolveId('/@unhead/bridge.mjs')).resolves.toBe('/@unhead/bridge.mjs')
-    await expect(devtools.load('/@unhead/bridge.mjs')).resolves.toBe('bridge')
     await expect(devtools.transform.handler('useHead({})', '/src/app.ts')).resolves.toEqual({
       code: 'useHead({})\n/* transformed */',
       map: null,
     })
-    await expect(devtools.transformIndexHtml.handler()).resolves.toEqual([{ tag: 'script' }])
 
     expect(devtoolsState.instances).toBe(1)
     expect(devtoolsState.calls).toEqual([
       'configResolved',
-      'configureServer',
-      'resolveId:/@unhead/bridge.mjs',
-      'load:/@unhead/bridge.mjs',
       'transform:/src/app.ts',
-      'transformIndexHtml',
     ])
   })
 
@@ -186,12 +159,12 @@ describe('createFrameworkPlugin devtools loading', () => {
     const devtools = plugins.find(plugin => plugin?.name === '@unhead/devtools')
 
     await devtools.devtools.setup({})
-    await expect(devtools.load('/@unhead/bridge.mjs')).resolves.toBe('bridge')
+    await devtools.transform.handler('useHead({})', '/src/app.ts')
 
     expect(devtoolsState.instances).toBe(1)
     expect(devtoolsState.calls).toEqual([
       'setup',
-      'load:/@unhead/bridge.mjs',
+      'transform:/src/app.ts',
     ])
   })
 })

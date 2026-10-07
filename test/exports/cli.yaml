@@ -2,5 +2,7 @@
   audit: object
   migrate: object
   run: function
+  runAudit: function
+  summarise: function
   validateHtmlCommand: object
   validateUrlCommand: object

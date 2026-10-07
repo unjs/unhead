@@ -21,7 +21,6 @@ export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<
     init: [
       {
         templateParams: {
-          // @ts-expect-error untyped
           schemaOrg: {
             currency: 'AUD',
             host: 'https://example.com/',
