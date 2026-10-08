@@ -105,4 +105,9 @@ describe('hashTag', () => {
     expect(hashTag({ tag: 'meta', attrs: {}, _d: 'dedupe' })).toBe('dedupe')
     expect(hashTag({ tag: 'style', attrs: {}, innerHTML: 'body{}' })).toBe('body{}')
   })
+
+  it('returns a string for non-string text content', () => {
+    expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
+    expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+  })
 })

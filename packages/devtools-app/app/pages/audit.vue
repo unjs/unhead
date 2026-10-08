@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RuleSeverity, ValidationRuleId } from 'unhead/validate'
-import type { LintFileResult, LintMessage, LintResponse } from '~/composables/state'
+import type { LintFileResult, LintMessage, LintResponse, LintRunResult } from '~/composables/state'
+import { openInEditor } from '~/composables/open-in-editor'
 import { callRpc } from '~/composables/rpc'
 import { useRuleOverrides } from '~/composables/rule-overrides'
 
@@ -23,49 +24,69 @@ function onSeverityChange(id: ValidationRuleId, value: RuleSeverity | 'default')
 
 const overrideCount = computed(() => Object.keys(overrides.value).length)
 
-const result = ref<LintResponse | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
-const lastMode = ref<'audit' | 'migrate' | null>(null)
+type Action = 'audit' | 'preview' | 'migrate'
 
-async function run(mode: 'audit' | 'migrate') {
-  loading.value = true
+const result = ref<LintResponse | null>(null)
+const running = ref<Action | null>(null)
+const error = ref<string | null>(null)
+// A dry run waiting for the user to confirm the rewrite.
+const pendingMigration = ref<LintRunResult | null>(null)
+
+async function run(action: Action, files?: { filePath: string, fingerprint: string }[]) {
+  running.value = action
   error.value = null
-  lastMode.value = mode
   try {
-    result.value = await callRpc<LintResponse>('unhead:run-lint', { mode })
+    const response = await callRpc<LintResponse>('unhead:run-lint', {
+      mode: action === 'audit' ? 'audit' : 'migrate',
+      dryRun: action === 'preview',
+      files,
+    })
+    if (action === 'preview' && response.available)
+      pendingMigration.value = response
+    else
+      result.value = response
   }
   catch (err: any) {
     error.value = err?.message || String(err)
   }
   finally {
-    loading.value = false
+    running.value = null
   }
 }
 
-function severityColor(s: 'error' | 'warn'): 'error' | 'warning' {
-  return s === 'error' ? 'error' : 'warning'
+function confirmMigration() {
+  // Write only the files the dialog listed, even if more became rewritable since the dry run.
+  const files = pendingMigration.value?.files.filter(f => f.fixed && f.fingerprint).map(f => ({ filePath: f.filePath, fingerprint: f.fingerprint! })) ?? []
+  pendingMigration.value = null
+  run('migrate', files)
+}
+
+const SEVERITY_ICON: Record<LintMessage['severity'], { icon: string, class: string, label: string }> = {
+  error: { icon: 'i-carbon-error-filled', class: 'text-red-500', label: 'Error' },
+  warn: { icon: 'i-carbon-warning-filled', class: 'text-amber-500', label: 'Warning' },
+  info: { icon: 'i-carbon-information-filled', class: 'text-sky-500', label: 'Info' },
+}
+
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? '' : 's'}`
 }
 
 function openFile(file: LintFileResult, message?: LintMessage) {
-  const loc = message?.line != null
+  openInEditor(message?.line != null
     ? `${file.filePath}:${message.line}${message.column != null ? `:${message.column}` : ''}`
-    : file.filePath
-  fetch(`/__open-in-editor?file=${encodeURIComponent(loc)}`).catch((err) => {
-    console.warn('[unhead devtools] open-in-editor failed:', err)
-  })
+    : file.filePath)
 }
 </script>
 
 <template>
   <div class="p-6 space-y-4">
-    <div class="flex items-start justify-between gap-4">
-      <div>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0 max-w-2xl">
         <h2 class="text-base font-semibold text-highlighted">
-          Source-level audit
+          Source audit
         </h2>
         <p class="text-sm text-muted">
-          Runs <code class="font-mono">@unhead/eslint-plugin</code>'s recommended ruleset across the project. Apply the migration ruleset to also rewrite tag literals into <code class="font-mono">defineX</code> helpers.
+          Checks your source files for Unhead misuse with <code class="font-mono">@unhead/cli</code>. Migrate also rewrites tag literals into <code class="font-mono">defineX</code> helpers.
         </p>
       </div>
       <div class="flex gap-2 shrink-0">
@@ -73,8 +94,8 @@ function openFile(file: LintFileResult, message?: LintMessage) {
           icon="i-carbon-search"
           variant="solid"
           color="primary"
-          :loading="loading && lastMode === 'audit'"
-          :disabled="loading"
+          :loading="running === 'audit'"
+          :disabled="!!running"
           @click="run('audit')"
         >
           Run audit
@@ -82,15 +103,45 @@ function openFile(file: LintFileResult, message?: LintMessage) {
         <UButton
           icon="i-carbon-magic-wand"
           variant="outline"
-          color="warning"
-          :loading="loading && lastMode === 'migrate'"
-          :disabled="loading"
-          @click="run('migrate')"
+          color="neutral"
+          :loading="running === 'preview' || running === 'migrate'"
+          :disabled="!!running"
+          @click="run('preview')"
         >
-          Apply migrate
+          Migrate…
         </UButton>
       </div>
     </div>
+
+    <UModal
+      :open="!!pendingMigration"
+      :title="pendingMigration?.filesFixed ? `Rewrite ${plural(pendingMigration.filesFixed, 'file')}?` : 'Nothing to migrate'"
+      @update:open="(open: boolean) => { if (!open) pendingMigration = null }"
+    >
+      <template #body>
+        <p v-if="pendingMigration?.filesFixed" class="text-sm">
+          Migrate writes these changes to disk. Commit or stash your work first so you can review the diff.
+        </p>
+        <p v-else class="text-sm">
+          No file has tag literals that Migrate can rewrite.
+        </p>
+        <ul v-if="pendingMigration?.filesFixed" class="mt-3 space-y-1 text-xs font-mono text-muted">
+          <li v-for="file in pendingMigration.files.filter(f => f.fixed)" :key="file.filePath" class="truncate">
+            {{ file.relativePath }}
+          </li>
+        </ul>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" @click="pendingMigration = null">
+            {{ pendingMigration?.filesFixed ? 'Cancel' : 'Close' }}
+          </UButton>
+          <UButton v-if="pendingMigration?.filesFixed" color="warning" icon="i-carbon-magic-wand" @click="confirmMigration">
+            Rewrite files
+          </UButton>
+        </div>
+      </template>
+    </UModal>
 
     <UAlert v-if="error" color="error" :title="error" />
 
@@ -104,77 +155,74 @@ function openFile(file: LintFileResult, message?: LintMessage) {
     <div v-else-if="result && result.available" class="space-y-3">
       <div class="flex flex-wrap gap-2 text-xs">
         <UBadge color="error" variant="subtle">
-          {{ result.errorCount }} error{{ result.errorCount === 1 ? '' : 's' }}
+          {{ plural(result.errorCount, 'error') }}
         </UBadge>
         <UBadge color="warning" variant="subtle">
-          {{ result.warningCount }} warning{{ result.warningCount === 1 ? '' : 's' }}
+          {{ plural(result.warningCount, 'warning') }}
         </UBadge>
         <UBadge v-if="result.mode === 'migrate'" color="success" variant="subtle">
-          {{ result.filesFixed }} file{{ result.filesFixed === 1 ? '' : 's' }} fixed
-        </UBadge>
-        <UBadge v-else-if="result.fixableErrorCount + result.fixableWarningCount > 0" color="info" variant="subtle">
-          {{ result.fixableErrorCount + result.fixableWarningCount }} fixable
+          {{ plural(result.filesFixed, 'file') }} rewritten
         </UBadge>
         <UBadge color="neutral" variant="subtle" class="font-mono">
           {{ result.durationMs }}ms
         </UBadge>
       </div>
 
-      <div v-if="result.files.length === 0" class="text-sm text-muted py-8 text-center">
-        No issues found.
-      </div>
+      <DevtoolsEmptyState v-if="result.files.length === 0" icon="i-carbon-checkmark-outline" title="No issues found" />
 
       <div v-else class="space-y-3">
         <div v-for="file in result.files" :key="file.filePath" class="border border-default rounded-md overflow-hidden">
           <div class="flex items-center justify-between bg-elevated px-3 py-2 border-b border-default">
-            <button class="font-mono text-xs hover:underline cursor-pointer text-left truncate" @click="openFile(file)">
+            <button type="button" class="font-mono text-xs hover:underline cursor-pointer text-left truncate" :title="`Open ${file.relativePath} in your editor`" @click="openFile(file)">
               {{ file.relativePath }}
             </button>
             <div class="flex gap-1 shrink-0 ml-2">
               <UBadge v-if="file.fixed" color="success" variant="subtle" size="xs">
-                fixed
+                rewritten
               </UBadge>
               <UBadge v-if="file.errorCount" color="error" variant="subtle" size="xs">
-                {{ file.errorCount }} error
+                {{ plural(file.errorCount, 'error') }}
               </UBadge>
               <UBadge v-if="file.warningCount" color="warning" variant="subtle" size="xs">
-                {{ file.warningCount }} warn
+                {{ plural(file.warningCount, 'warning') }}
               </UBadge>
             </div>
           </div>
           <ul class="divide-y divide-default">
-            <li
-              v-for="(m, i) in file.messages"
-              :key="i"
-              class="px-3 py-2 flex items-start gap-2 text-xs hover:bg-elevated/40 cursor-pointer"
-              @click="openFile(file, m)"
-            >
-              <UIcon
-                :name="m.severity === 'error' ? 'i-carbon-error-filled' : 'i-carbon-warning-filled'"
-                class="text-sm mt-0.5 shrink-0"
-                :class="m.severity === 'error' ? 'text-red-500' : 'text-amber-500'"
-              />
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span v-if="m.ruleId" class="font-mono text-muted">{{ m.ruleId }}</span>
-                  <UBadge v-if="m.fixable" :color="severityColor(m.severity)" variant="subtle" size="xs">
-                    fixable
-                  </UBadge>
-                  <span class="font-mono text-muted text-[10px]">{{ m.line ?? '?' }}:{{ m.column ?? '?' }}</span>
-                </div>
-                <p class="text-default mt-0.5">
-                  {{ m.message }}
-                </p>
-              </div>
+            <li v-for="(m, i) in file.messages" :key="i">
+              <button
+                type="button"
+                class="w-full px-3 py-2 flex items-start gap-2 text-xs text-left hover:bg-elevated/40 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ui-primary)]"
+                @click="openFile(file, m)"
+              >
+                <UIcon
+                  :name="SEVERITY_ICON[m.severity].icon"
+                  class="text-sm mt-0.5 shrink-0"
+                  :class="SEVERITY_ICON[m.severity].class"
+                  aria-hidden="true"
+                />
+                <span class="sr-only">{{ SEVERITY_ICON[m.severity].label }}:</span>
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center gap-2 flex-wrap">
+                    <span v-if="m.ruleId" class="font-mono text-muted">{{ m.ruleId }}</span>
+                    <span class="font-mono text-muted text-[10px]">{{ m.line ?? '?' }}:{{ m.column ?? '?' }}</span>
+                  </span>
+                  <span class="block text-default mt-0.5">
+                    {{ m.message }}
+                  </span>
+                </span>
+              </button>
             </li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div v-else class="text-sm text-muted py-12 text-center">
-      Click <span class="font-medium">Run audit</span> to lint your source files for unhead misuse.
-    </div>
+    <DevtoolsEmptyState v-else icon="i-carbon-rule-test" title="Audit your source files">
+      <template #description>
+        Run the audit to find Unhead misuse before it reaches production.
+      </template>
+    </DevtoolsEmptyState>
 
     <div class="border-t border-default pt-6 mt-6 space-y-3">
       <div class="flex items-start justify-between gap-4">

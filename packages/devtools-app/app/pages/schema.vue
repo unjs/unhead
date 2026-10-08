@@ -8,51 +8,39 @@ import {
   getNodeType,
   getSchemaIcon,
   googleRichResultsRequirements,
+  hasPropertyValue,
   isRichResultType,
   nodeToSchemaOrgLink,
 } from '~/utils/schema-validation'
 
-// Extract JSON-LD from script tags
-const jsonLdData = computed(() => {
-  const jsonLdTags = state.value.tags.filter(
-    t => t.tag === 'script' && t.props?.type === 'application/ld+json',
-  )
-  if (!jsonLdTags.length)
-    return null
-
-  for (const tag of jsonLdTags) {
+// Parse every JSON-LD script: a page can emit Organization, WebSite and
+// BreadcrumbList as separate scripts.
+const jsonLdDocs = computed(() => state.value.tags
+  .filter(t => t.tag === 'script' && t.props?.type === 'application/ld+json')
+  .flatMap((tag) => {
     try {
-      return JSON.parse(tag.innerHTML || '{}')
+      return [JSON.parse(tag.innerHTML || '{}')]
     }
     catch {
-      continue
+      // Malformed JSON-LD has no nodes to list; the Tags tab still shows the raw script.
+      return []
     }
-  }
-  return null
-})
+  }))
 
-// Extract only top-level @graph nodes (no recursive nesting)
-const graphNodes = computed(() => {
-  const data = jsonLdData.value
-  if (!data)
-    return []
+function isTypedNode(node: any): boolean {
+  return !!node && typeof node === 'object' && !!node['@type']
+}
 
-  if (data['@graph'] && Array.isArray(data['@graph'])) {
-    return data['@graph'].filter((node: any) => {
-      if (!node || typeof node !== 'object')
-        return false
-      // Skip bare @id references
-      if (Object.keys(node).length === 1 && node['@id'])
-        return false
-      return !!node['@type']
-    })
-  }
+// Top-level nodes only (no recursive nesting). Bare @id references have no @type.
+function topLevelNodes(doc: any): any[] {
+  if (Array.isArray(doc))
+    return doc.flatMap(topLevelNodes)
+  if (doc && Array.isArray(doc['@graph']))
+    return doc['@graph'].filter(isTypedNode)
+  return isTypedNode(doc) ? [doc] : []
+}
 
-  if (data['@type'])
-    return [data]
-
-  return []
-})
+const graphNodes = computed(() => jsonLdDocs.value.flatMap(topLevelNodes))
 
 const richResultNodes = computed(() => graphNodes.value.filter((n: any) => isRichResultType(getNodeType(n))))
 
@@ -71,7 +59,7 @@ const validationSummary = computed(() => {
 <template>
   <div class="space-y-4">
     <!-- No JSON-LD detected -->
-    <DevtoolsEmptyState v-if="!jsonLdData" icon="i-carbon-chart-relationship" title="No structured data detected">
+    <DevtoolsEmptyState v-if="!graphNodes.length" icon="i-carbon-chart-relationship" title="No structured data detected">
       <template #description>
         Add JSON-LD structured data via <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">useSchemaOrg()</code> or <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">useHead()</code> with a script tag.
       </template>
@@ -85,6 +73,14 @@ const validationSummary = computed(() => {
       >
         <p class="font-medium">
           {{ validationSummary.errors }} missing required propert{{ validationSummary.errors > 1 ? 'ies' : 'y' }}
+        </p>
+      </DevtoolsAlert>
+      <DevtoolsAlert
+        v-else-if="validationSummary.warnings > 0"
+        variant="warning"
+      >
+        <p class="font-medium">
+          {{ validationSummary.warnings }} missing recommended propert{{ validationSummary.warnings > 1 ? 'ies' : 'y' }}
         </p>
       </DevtoolsAlert>
 
@@ -114,12 +110,12 @@ const validationSummary = computed(() => {
                 class="flex items-center gap-2 px-2 py-1.5 rounded-md"
               >
                 <UIcon
-                  :name="getNestedProperty(node, prop) !== undefined ? 'i-carbon-checkmark-filled' : 'i-carbon-close-filled'"
+                  :name="hasPropertyValue(node, prop) ? 'i-carbon-checkmark-filled' : 'i-carbon-close-filled'"
                   class="text-sm shrink-0"
-                  :class="getNestedProperty(node, prop) !== undefined ? 'text-green-500' : 'text-red-400'"
+                  :class="hasPropertyValue(node, prop) ? 'text-green-500' : 'text-red-400'"
                 />
                 <span class="text-sm font-mono">{{ prop }}</span>
-                <span v-if="getNestedProperty(node, prop) !== undefined" class="text-xs text-muted font-mono ml-auto truncate max-w-[200px]">
+                <span v-if="hasPropertyValue(node, prop)" class="text-xs text-muted font-mono ml-auto truncate max-w-[200px]">
                   {{ formatPropertyValue(getNestedProperty(node, prop)) }}
                 </span>
                 <UBadge v-else color="error" variant="subtle" size="xs" class="ml-auto">
@@ -144,12 +140,12 @@ const validationSummary = computed(() => {
                 class="flex items-center gap-2 px-2 py-1.5 rounded-md"
               >
                 <UIcon
-                  :name="getNestedProperty(node, prop) !== undefined ? 'i-carbon-checkmark-filled' : 'i-carbon-warning-filled'"
+                  :name="hasPropertyValue(node, prop) ? 'i-carbon-checkmark-filled' : 'i-carbon-warning-filled'"
                   class="text-sm shrink-0"
-                  :class="getNestedProperty(node, prop) !== undefined ? 'text-green-500' : 'text-amber-400'"
+                  :class="hasPropertyValue(node, prop) ? 'text-green-500' : 'text-amber-400'"
                 />
                 <span class="text-sm font-mono">{{ prop }}</span>
-                <span v-if="getNestedProperty(node, prop) !== undefined" class="text-xs text-muted font-mono ml-auto truncate max-w-[200px]">
+                <span v-if="hasPropertyValue(node, prop)" class="text-xs text-muted font-mono ml-auto truncate max-w-[200px]">
                   {{ formatPropertyValue(getNestedProperty(node, prop)) }}
                 </span>
                 <UBadge v-else color="warning" variant="subtle" size="xs" class="ml-auto">

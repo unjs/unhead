@@ -93,7 +93,7 @@ export const IdentityId = '#identity'
 
 /** Whether identity resolvers should default `WebPage.about` to the site identity. */
 export function isHomePage(meta: ResolvedMeta) {
-  return meta.url === meta.host
+  return meta.path === '/'
 }
 
 export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any) {

@@ -13,20 +13,20 @@
   "dependencies": {
     "@unhead/react": "workspace:*",
     "@unhead/schema-org": "workspace:*",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "express": "^5.2.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "sirv": "^3.0.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.2.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.2.1"
+    "vite": "^8.3.0"
   }
 }
