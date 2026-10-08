@@ -8,12 +8,15 @@
     "generate": "nuxi generate"
   },
   "devDependencies": {
+    "@fontsource-variable/fira-code": "catalog:",
+    "@fontsource-variable/hubot-sans": "catalog:",
+    "@fontsource-variable/nunito-sans": "catalog:",
     "@nuxt/ui": "catalog:",
     "@shikijs/langs": "catalog:",
     "@shikijs/themes": "catalog:",
     "@unhead/vue": "workspace:*",
-    "@vitejs/devtools-kit": "catalog:",
     "@vueuse/nuxt": "catalog:",
+    "devframe": "catalog:",
     "nuxt": "catalog:",
     "pathe": "catalog:",
     "shiki": "catalog:",

@@ -278,7 +278,7 @@ export function defineBookEdition<Input extends object | undefined = undefined>(
 }
 /* end-simple-only */
 
-export type UseSchemaOrgInput = Arrayable<Thing | Record<string, unknown>>
+export type UseSchemaOrgInput = Arrayable<Thing | Record<string, unknown> | null | undefined | false>
 
 export interface SchemaOrgHeadInput<T = UseSchemaOrgInput> {
   script: [{
@@ -325,7 +325,8 @@ export function normalizeSchemaOrgInput(input: unknown): SchemaOrgHeadInput<unkn
       {
         type: 'application/ld+json',
         key: 'schema-org-graph',
-        nodes: input,
+        // nullish or falsy input is a no-op, keep nodes truthy so the tag is still collected
+        nodes: input || [],
       },
     ],
   }
