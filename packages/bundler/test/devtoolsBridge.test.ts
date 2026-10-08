@@ -29,7 +29,7 @@ it('publishes head state through the in-page channel', async () => {
   ;(window as any).__unhead_devtools__ = {
     entries: new Map([[1, {
       input: { title: 'Home' },
-      _tags: [{ tag: 'title', props: {}, textContent: 'Home' }],
+      _tags: [{ tag: 'title', attrs: {}, textContent: 'Home' }],
     }]]),
     hooks: { hook: vi.fn() },
   }

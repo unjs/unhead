@@ -29,7 +29,7 @@ function mergeObjects(target: any, source: any): any {
 }
 
 function isSchemaOrgTag(tag: HeadTag) {
-  return (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph'
+  return (tag.tag === 'script' && tag.attrs.type === 'application/ld+json' && tag.attrs.nodes) || tag.key === 'schema-org-graph'
 }
 
 export interface PluginSchemaOrgOptions {
@@ -53,9 +53,9 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         resolvedMeta.image = props.content
     }
     function collectTag(tag: HeadTag) {
-      if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
+      if (tag.tag === 'script' && tag.attrs.type === 'application/ld+json' && (tag.attrs.nodes || tag.key === 'schema-org-graph')) {
         // this is a bit expensive, load in seperate chunk
-        const nodes = tag.props.nodes
+        const nodes = tag.attrs.nodes
         if (nodes) {
           for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
             // malformed input - skip null/undefined but allow empty objects
@@ -74,28 +74,28 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         tag.tagPosition = tag.tagPosition || (config.tagPosition === 'head' ? 'head' : 'bodyClose')
       }
       if (tag.tag === 'meta') {
-        collectMeta(tag.props)
+        collectMeta(tag.attrs)
       }
       // useSeoMeta() packs its meta into one `_flatMeta` tag. FlatMetaPlugin may
       // unpack it before or after this hook, so read both shapes.
       else if (tag.tag === '_flatMeta') {
-        for (const props of unpackMeta(tag.props))
+        for (const props of unpackMeta(tag.attrs))
           collectMeta(props as Record<string, unknown>)
       }
-      else if (tag.tag === 'htmlAttrs' && typeof tag.props.lang === 'string') {
-        resolvedMeta.inLanguage = tag.props.lang
+      else if (tag.tag === 'htmlAttrs' && typeof tag.attrs.lang === 'string') {
+        resolvedMeta.inLanguage = tag.attrs.lang
       }
       else if (tag.tag === 'title' && tag.textContent != null && typeof tag.textContent !== 'function') {
         resolvedMeta.title = String(tag.textContent)
       }
-      else if (tag.tag === 'link' && tag.props.rel === 'canonical' && typeof tag.props.href === 'string') {
-        canonical = tag.props.href
+      else if (tag.tag === 'link' && tag.attrs.rel === 'canonical' && typeof tag.attrs.href === 'string') {
+        canonical = tag.attrs.href
       }
       // use template params
-      else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
+      else if (tag.tag === 'templateParams' && tag.attrs.schemaOrg) {
         resolvedMeta = {
           ...resolvedMeta,
-          ...(tag.props.schemaOrg as unknown as Record<string, any>),
+          ...(tag.attrs.schemaOrg as unknown as Record<string, any>),
         }
       }
     }
@@ -129,15 +129,15 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           for (const k in ctx.tags) {
             const tag = ctx.tags[k]
             // nodes can resolve to nullish at runtime (reactive no-op input), match by key too
-            if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
-              delete tag.props.nodes
+            if (tag.tag === 'script' && tag.attrs.type === 'application/ld+json' && (tag.attrs.nodes || tag.key === 'schema-org-graph')) {
+              delete tag.attrs.nodes
               const graphMeta = { ...(meta?.() || {}), ...config, ...resolvedMeta }
               if (canonical && !graphMeta.url)
                 graphMeta.url = processTemplateParams(canonical, head._templateParams!, head._separator!)
               const resolvedGraph = graph.resolveGraph(graphMeta)
               if (!resolvedGraph.length) {
                 // removes the tag
-                tag.props = {}
+                tag.attrs = tag.props = {}
                 return
               }
               // eslint-disable-next-line node/prefer-global/process
@@ -160,17 +160,18 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           let toRemove: Set<number> | undefined
           for (let i = 0; i < ctx.tags.length; i++) {
             const tag = ctx.tags[i]
-            if (!tag?.props)
+            if (!tag?.attrs)
               continue
             if (isSchemaOrgTag(tag)) {
-              delete tag.props.nodes
+              delete tag.attrs.nodes
               if (typeof firstNodeIdx === 'undefined') {
                 firstNodeIdx = i
                 continue
               }
-              // merge props on to first node and delete
-              ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
-              delete ctx.tags[firstNodeIdx].props.nodes
+              // merge attrs on to first node and delete
+              const merged = mergeObjects(ctx.tags[firstNodeIdx].attrs, tag.attrs)
+              ctx.tags[firstNodeIdx].attrs = ctx.tags[firstNodeIdx].props = merged
+              delete ctx.tags[firstNodeIdx].attrs.nodes
               ;(toRemove ||= new Set()).add(i)
             }
           }

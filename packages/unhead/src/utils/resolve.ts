@@ -46,12 +46,12 @@ export interface ResolveTagsOptions {
 function cloneTagsInPlace(tags: HeadTag[]) {
   for (let i = 0; i < tags.length; i++) {
     const t = tags[i]
-    const props: Record<string, any> = { ...t.props }
-    if (props.class instanceof Set)
-      props.class = new Set(props.class)
-    if (props.style instanceof Map)
-      props.style = new Map(props.style)
-    tags[i] = { ...t, props }
+    const attrs: Record<string, any> = { ...t.attrs }
+    if (attrs.class instanceof Set)
+      attrs.class = new Set(attrs.class)
+    if (attrs.style instanceof Map)
+      attrs.style = new Map(attrs.style)
+    tags[i] = { ...t, attrs, props: attrs }
   }
 }
 
@@ -85,14 +85,14 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
+      const attrs = { ...prev.attrs }
+      for (const p in next.attrs) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        attrs[p] = p === 'style'
+          ? new Map([...(prev.attrs.style || new Map()) as any, ...next.attrs[p] as any])
+          : p === 'class' ? new Set([...(prev.attrs.class || []) as any, ...next.attrs[p] as any]) : next.attrs[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k, { ...next, attrs, props: attrs })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -135,15 +135,15 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
 function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
-    const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
+    const { innerHTML, tag, attrs } = t
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(attrs) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!hasContent(attrs.content) && !attrs['http-equiv'] && !attrs.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
-      const type = String(props.type)
+      const type = String(attrs.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
@@ -251,5 +251,11 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
+  // a hook may still reassign the deprecated `tag.props` directly instead of `tag.attrs`;
+  // treat props as the winner and re-sync attrs so both point at the same object again
+  for (const t of ctx.tags) {
+    if (t.props !== t.attrs)
+      t.attrs = t.props!
+  }
   return sanitizeTagsInPlace(ctx.tags)
 }

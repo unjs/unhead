@@ -24,6 +24,12 @@ describe('resolveTags', () => {
           "_d": "htmlAttrs",
           "_p": 2048,
           "_w": 100,
+          "attrs": {
+            "class": Set {
+              "first-class",
+              "second-class",
+            },
+          },
           "props": {
             "class": Set {
               "first-class",
@@ -67,6 +73,12 @@ describe('resolveTags', () => {
           "_d": "htmlAttrs",
           "_p": 2048,
           "_w": 100,
+          "attrs": {
+            "class": Set {
+              "layout-theme-dark",
+              "home",
+            },
+          },
           "props": {
             "class": Set {
               "layout-theme-dark",
@@ -79,6 +91,12 @@ describe('resolveTags', () => {
           "_d": "bodyAttrs",
           "_p": 1025,
           "_w": 100,
+          "attrs": {
+            "class": Set {
+              "test",
+              "theme-dark",
+            },
+          },
           "props": {
             "class": Set {
               "test",
@@ -108,6 +126,11 @@ describe('resolveTags', () => {
           "_d": "htmlAttrs",
           "_p": 2048,
           "_w": 100,
+          "attrs": {
+            "class": Set {
+              "second-class",
+            },
+          },
           "props": {
             "class": Set {
               "second-class",
@@ -163,6 +186,12 @@ describe('resolveTags', () => {
           "_d": "htmlAttrs",
           "_p": 5120,
           "_w": 100,
+          "attrs": {
+            "class": Set {
+              "someTrue",
+              "someArrayClass",
+            },
+          },
           "props": {
             "class": Set {
               "someTrue",

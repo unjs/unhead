@@ -75,6 +75,11 @@ describe('vue e2e keys', () => {
           "_h": "main-icon",
           "_p": 2048,
           "_w": 100,
+          "attrs": {
+            "data-hid": "main-icon",
+            "href": "/page-about.ico",
+            "rel": "icon",
+          },
           "key": "main-icon",
           "props": {
             "data-hid": "main-icon",

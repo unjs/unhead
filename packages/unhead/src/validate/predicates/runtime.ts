@@ -7,7 +7,7 @@ import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, 
  */
 export interface RuntimeHeadTag {
   tag: string
-  props: Record<string, any>
+  attrs: Record<string, any>
   innerHTML?: string
   textContent?: string
   /** Top-level priority field on resolved runtime tags. */
@@ -59,7 +59,7 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
 
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
-  for (const [k, v] of Object.entries(tag.props)) {
+  for (const [k, v] of Object.entries(tag.attrs)) {
     keys.add(k)
     if (v == null) {
       // Mirror the runtime ValidatePlugin convention of coercing null `content`

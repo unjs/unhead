@@ -21,9 +21,9 @@ describe('ssr hot path invariants', () => {
 
     expect(calls.slice(0, 2)).toEqual([undefined, undefined])
     expect(tags).toEqual([
-      { tag: 'noscript', props: {}, innerHTML: 'fallback' },
-      { tag: 'style', props: {}, innerHTML: 'body { color: red }' },
-      { tag: 'title', props: {}, textContent: 'Resolved title' },
+      { tag: 'noscript', attrs: {}, props: {}, innerHTML: 'fallback' },
+      { tag: 'style', attrs: {}, props: {}, innerHTML: 'body { color: red }' },
+      { tag: 'title', attrs: {}, props: {}, textContent: 'Resolved title' },
     ])
   })
 
@@ -82,10 +82,10 @@ describe('ssr hot path invariants', () => {
       disableDefaults: true,
       hooks: {
         'ssr:render': ({ tags }) => {
-          const props = Object.assign(Object.create(inherited), tags[0].props)
-          props['bad name'] = 'unsafe'
-          props.title = 'safe" onload="alert(1)'
-          tags[0].props = props
+          const attrs = Object.assign(Object.create(inherited), tags[0].attrs)
+          attrs['bad name'] = 'unsafe'
+          attrs.title = 'safe" onload="alert(1)'
+          tags[0].attrs = attrs
         },
       },
     })

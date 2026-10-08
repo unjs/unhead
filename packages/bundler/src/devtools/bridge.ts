@@ -168,8 +168,11 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
         const weight = tag._w ?? weightFn(tag)
         allTags.push({
           tag: tagName,
-          // Props can hold non-cloneable values (event handlers); the channel uses structured clone.
-          props: safeSerialize(tag.props || {}),
+          // Wire shape keeps the `props` field name (see SerializedTag); read the live
+          // tag's `attrs`, falling back to the deprecated `props` alias for tag-shaped
+          // objects that only set it. Values can be non-cloneable (event handlers); the
+          // channel uses structured clone.
+          props: safeSerialize(tag.attrs ?? (tag.props || {})),
           innerHTML: tag.innerHTML,
           textContent: tag.textContent,
           position: tag.tagPosition,

@@ -15,8 +15,8 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
           continue
         }
         hasFlatMeta = true
-        for (const props of unpackMeta(t.props))
-          tagsToAdd.push({ ...t, tag: 'meta', props })
+        for (const attrs of unpackMeta(t.attrs))
+          tagsToAdd.push({ ...t, tag: 'meta', attrs, props: attrs })
       }
       if (!hasFlatMeta)
         return
