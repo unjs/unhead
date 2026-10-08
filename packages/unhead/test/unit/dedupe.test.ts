@@ -1,4 +1,5 @@
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { canonicalStringify, dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { normalizeEntryToTags } from '../../src/utils/normalize'
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {
@@ -106,8 +107,97 @@ describe('hashTag', () => {
     expect(hashTag({ tag: 'style', props: {}, innerHTML: 'body{}' })).toBe('body{}')
   })
 
+  // JSON-LD (and other object innerHTML) is serialized with JSON.stringify, which
+  // preserves insertion order, so two logically identical payloads with differently
+  // ordered keys must still fingerprint identically at every nesting depth.
+  it('gives object innerHTML a hash that is stable across key insertion order, at any nesting depth', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { 'address': { country: 'AU', city: 'Sydney' }, 'name': 'Acme', '@type': 'Organization' } }] }, [])
+    expect(hashTag(a)).toBe(hashTag(b))
+    expect(dedupeKey(a)).toBe(dedupeKey(b))
+  })
+
+  it('keeps array order significant inside object innerHTML', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [1, 2] } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [2, 1] } }] }, [])
+    expect(hashTag(a)).not.toBe(hashTag(b))
+    expect(dedupeKey(a)).not.toBe(dedupeKey(b))
+  })
+
   it('returns a string for non-string text content', () => {
     expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
     expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+  })
+})
+
+describe('canonical json identity across the ssr boundary', () => {
+  const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
+
+  it('renders boxed primitives as JSON primitives, not exploded objects', async () => {
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: { value: new Object(1), s: new Object('ab') } as any }] })
+    const { headTags } = await ssr.render()
+
+    expect(headTags).toContain('"value":1')
+    expect(headTags).toContain('"s":"ab"')
+    expect(headTags).not.toContain('"0":"a"')
+    expect(headTags).not.toContain('"1":"b"')
+  })
+
+  it('adopts the server-rendered block instead of adding a second', async () => {
+    const { JSDOM } = await import('jsdom')
+    const { createHead: createClientHead } = await import('../../src/client')
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    const doc = new JSDOM(`<!DOCTYPE html><html><head>${(await ssr.render()).headTags}</head><body></body></html>`).window.document
+
+    const client = createClientHead({ document: doc })
+    client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
+  })
+
+  // A null-prototype object can carry an own enumerable `__proto__` key, which
+  // native JSON.stringify renders. Dedupe identity must not silently drop it,
+  // or distinct payloads collide and one JSON-LD block is lost.
+  it('keeps own __proto__ keys on null-prototype payloads distinct', async () => {
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const plain: Record<string, unknown> = Object.create(null)
+    plain.a = 1
+    const protoKeyed: Record<string, unknown> = Object.create(null)
+    Object.defineProperty(protoKeyed, '__proto__', { value: 1, enumerable: true, configurable: true, writable: true })
+    protoKeyed.a = 1
+
+    expect(canonicalStringify(protoKeyed)).toBe(JSON.stringify(protoKeyed))
+    expect(canonicalStringify(plain)).not.toBe(canonicalStringify(protoKeyed))
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: plain as any }, { type: 'application/ld+json', innerHTML: protoKeyed as any }] })
+    const { headTags } = await ssr.render()
+
+    expect(headTags.match(/<script/g)).toHaveLength(2)
+    expect(headTags).toContain('"__proto__":1')
+  })
+
+  // Pages served from caches written before the fingerprinting change carry
+  // insertion-order JSON. The client must adopt that block, not append a twin.
+  it('adopts a pre-upgrade insertion-order json block instead of adding a second', async () => {
+    const { JSDOM } = await import('jsdom')
+    const { createHead: createClientHead } = await import('../../src/client')
+
+    const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
+    const doc = new JSDOM(`<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify(LD)}</script></head><body></body></html>`).window.document
+
+    const client = createClientHead({ document: doc })
+    client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 })
