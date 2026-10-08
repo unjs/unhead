@@ -2,7 +2,7 @@ import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
 import { renderSSRHead } from '../../../src/server'
-import { createClientHeadWithContext, useDom } from '../../util'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e textContent', () => {
   it('pretend json', async () => {
@@ -57,5 +57,18 @@ describe('unhead e2e textContent', () => {
 
       </body></html>"
     `)
+  })
+
+  it('renders meta tags with a non-string textContent (#1006)', async () => {
+    for (const textContent of [1, true]) {
+      const head = createServerHeadWithContext({ disableDefaults: true })
+      head.push({
+        meta: [
+          { content: 'c', textContent } as any,
+          { content: 'd', textContent } as any,
+        ],
+      })
+      expect((await renderSSRHead(head)).headTags).toBe('<meta content="d">')
+    }
   })
 })

@@ -1,3 +1,5 @@
+import { callRpc } from './rpc'
+
 export const latestVersion = ref<string | null>(null)
 export const hasUpdate = ref(false)
 
@@ -81,17 +83,21 @@ export function checkForUpdate(currentVersion: string) {
     return
   checking = true
 
-  // Fetch all dist-tags so we can pick the right channel for the user's
+  // Read all dist-tags so we can pick the right channel for the user's
   // current version (e.g. someone on 3.0.0-beta.12 should not be told to
   // "update" to the older stable 2.1.13 sitting on the `latest` tag).
-  fetch('https://registry.npmjs.org/-/package/unhead/dist-tags')
-    .then(r => r.json())
-    .then((tags: Record<string, string>) => {
+  // The dev server fetches them: the registry endpoint sends no CORS headers.
+  const onStable = parseVersion(currentVersion)?.prerelease === null
+  callRpc<Record<string, string> | null>('unhead:get-dist-tags')
+    .then((tags) => {
       if (!tags || typeof tags !== 'object')
         return
       let best: string | null = null
       for (const v of Object.values(tags)) {
         if (typeof v !== 'string')
+          continue
+        // A stable install is only told about stable releases, never a beta or next tag.
+        if (onStable && parseVersion(v)?.prerelease !== null)
           continue
         if (compareSemver(v, currentVersion) <= 0)
           continue

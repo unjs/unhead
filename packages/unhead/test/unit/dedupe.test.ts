@@ -123,6 +123,11 @@ describe('hashTag', () => {
     expect(hashTag(a)).not.toBe(hashTag(b))
     expect(dedupeKey(a)).not.toBe(dedupeKey(b))
   })
+
+  it('returns a string for non-string text content', () => {
+    expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
+    expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+  })
 })
 
 describe('canonical json identity across the ssr boundary', () => {

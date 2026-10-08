@@ -1,10 +1,12 @@
 <script setup lang="ts">
 const {
   icon = 'i-carbon-search',
+  iconClass,
   title,
   description,
 } = defineProps<{
   icon?: string
+  iconClass?: string
   title: string
   description?: string
 }>()
@@ -12,7 +14,7 @@ const {
 
 <template>
   <div class="text-center py-12">
-    <UIcon :name="icon" class="text-4xl text-muted mb-3" aria-hidden="true" />
+    <UIcon :name="icon" class="text-4xl text-muted mb-3" :class="iconClass" aria-hidden="true" />
     <p class="font-medium text-sm mb-1">
       {{ title }}
     </p>
