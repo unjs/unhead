@@ -1141,21 +1141,9 @@ importers:
 
   packages/react:
     dependencies:
-      '@unhead/bundler':
-        specifier: workspace:*
-        version: link:../bundler
-      magic-string:
-        specifier: 'catalog:'
-        version: 1.3.1
-      oxc-walker:
-        specifier: 'catalog:'
-        version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
       unhead:
         specifier: workspace:*
         version: link:../unhead
-      unplugin:
-        specifier: 'catalog:'
-        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       webpack:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.2)
@@ -1169,12 +1157,24 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.3.0(@types/react@19.3.0)
+      '@unhead/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      magic-string:
+        specifier: 'catalog:'
+        version: 1.3.1
+      oxc-walker:
+        specifier: 'catalog:'
+        version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
       react:
         specifier: 'catalog:'
         version: 19.3.0
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)
@@ -1203,21 +1203,9 @@ importers:
 
   packages/solid-js:
     dependencies:
-      '@unhead/bundler':
-        specifier: workspace:*
-        version: link:../bundler
-      magic-string:
-        specifier: 'catalog:'
-        version: 1.3.1
-      oxc-walker:
-        specifier: 'catalog:'
-        version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
       unhead:
         specifier: workspace:*
         version: link:../unhead
-      unplugin:
-        specifier: 'catalog:'
-        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       webpack:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.2)
@@ -1228,15 +1216,6 @@ importers:
       '@testing-library/user-event':
         specifier: 'catalog:'
         version: 14.6.1(@testing-library/dom@10.4.1)
-      solid-js:
-        specifier: 'catalog:'
-        version: 1.9.15
-      vite:
-        specifier: 'catalog:'
-        version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)
-
-  packages/svelte:
-    dependencies:
       '@unhead/bundler':
         specifier: workspace:*
         version: link:../bundler
@@ -1246,12 +1225,21 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.15
       unplugin:
         specifier: 'catalog:'
         version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
+      vite:
+        specifier: 'catalog:'
+        version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)
+
+  packages/svelte:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../unhead
       webpack:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.2)
@@ -1262,9 +1250,21 @@ importers:
       '@testing-library/svelte':
         specifier: 'catalog:'
         version: 5.4.2(svelte@5.57.0(@typescript-eslint/types@8.66.0))(vite@8.3.0)(vitest@5.0.0(@types/node@26.5.1)(jsdom@30.0.1)(vite@8.3.0))
+      '@unhead/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      magic-string:
+        specifier: 'catalog:'
+        version: 1.3.1
+      oxc-walker:
+        specifier: 'catalog:'
+        version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
       svelte:
         specifier: 'catalog:'
         version: 5.57.0(@typescript-eslint/types@8.66.0)
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)
@@ -1274,9 +1274,6 @@ importers:
       hookable:
         specifier: 'catalog:'
         version: 6.1.1
-      unplugin:
-        specifier: 'catalog:'
-        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
     devDependencies:
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
@@ -1284,31 +1281,31 @@ importers:
       rollup:
         specifier: ^4.63.2
         version: 4.63.2
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)
 
   packages/vue:
     dependencies:
-      '@unhead/bundler':
-        specifier: workspace:*
-        version: link:../bundler
-      hookable:
-        specifier: 'catalog:'
-        version: 6.1.1
       unhead:
         specifier: workspace:*
         version: link:../unhead
-      unplugin:
-        specifier: 'catalog:'
-        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       webpack:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.2)
     devDependencies:
+      '@unhead/bundler':
+        specifier: workspace:*
+        version: link:../bundler
       '@vue/server-renderer':
         specifier: 'catalog:'
         version: 3.5.42
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.0)(webpack@5.105.2(esbuild@0.28.2))
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@26.5.1)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.7)(sass@1.101.0)(terser@5.46.0)(yaml@2.9.0)

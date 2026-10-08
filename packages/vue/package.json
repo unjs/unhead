@@ -142,11 +142,19 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "@unhead/bundler": "workspace:^",
+    "unplugin": "catalog:",
     "vite": ">=6.4.2",
     "vue": ">=3.5.18",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "@unhead/bundler": {
+      "optional": true
+    },
+    "unplugin": {
+      "optional": true
+    },
     "vite": {
       "optional": true
     },
@@ -160,13 +168,12 @@
     ]
   },
   "dependencies": {
-    "@unhead/bundler": "workspace:*",
-    "hookable": "catalog:",
-    "unhead": "workspace:*",
-    "unplugin": "catalog:"
+    "unhead": "workspace:*"
   },
   "devDependencies": {
+    "@unhead/bundler": "workspace:*",
     "@vue/server-renderer": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:"
   }

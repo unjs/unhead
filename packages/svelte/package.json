@@ -104,11 +104,27 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "@unhead/bundler": "workspace:^",
+    "magic-string": "catalog:",
+    "oxc-walker": "catalog:",
     "svelte": ">=5.38.0",
+    "unplugin": "catalog:",
     "vite": ">=6.4.2",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "@unhead/bundler": {
+      "optional": true
+    },
+    "magic-string": {
+      "optional": true
+    },
+    "oxc-walker": {
+      "optional": true
+    },
+    "unplugin": {
+      "optional": true
+    },
     "vite": {
       "optional": true
     },
@@ -122,16 +138,16 @@
     ]
   },
   "dependencies": {
-    "@unhead/bundler": "workspace:*",
-    "magic-string": "catalog:",
-    "oxc-walker": "catalog:",
-    "unhead": "workspace:*",
-    "unplugin": "catalog:"
+    "unhead": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@testing-library/svelte": "catalog:",
+    "@unhead/bundler": "workspace:*",
+    "magic-string": "catalog:",
+    "oxc-walker": "catalog:",
     "svelte": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:"
   }
 }
