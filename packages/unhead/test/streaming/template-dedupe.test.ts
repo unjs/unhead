@@ -1,3 +1,4 @@
+import type { PreparedTemplate } from 'unhead/stream/server'
 import { createStreamableHead, prepareStreamingTemplate, wrapStream } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
@@ -13,7 +14,7 @@ function appStream() {
   })
 }
 
-async function renderWithApp(head: any, template: string) {
+async function renderWithApp(head: any, template: string | PreparedTemplate) {
   return new Response(wrapStream(head, appStream(), template)).text()
 }
 

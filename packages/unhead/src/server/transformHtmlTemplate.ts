@@ -5,7 +5,7 @@ import { dedupeKey, hashTag } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { capoTagWeight } from './sort'
 
-interface ExtractedTemplateCache {
+export interface ExtractedTemplateCache {
   template: PreparedHtmlTemplateWithIndexes
   tags: HeadTag[]
 }
