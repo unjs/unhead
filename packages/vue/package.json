@@ -133,7 +133,8 @@
   },
   "files": [
     "*.d.ts",
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "unbuild",
@@ -172,9 +173,11 @@
   },
   "devDependencies": {
     "@unhead/bundler": "workspace:*",
+    "@vue/compiler-sfc-vapor": "catalog:",
     "@vue/server-renderer": "catalog:",
     "unplugin": "catalog:",
     "vite": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "vue-vapor": "catalog:"
   }
 }
