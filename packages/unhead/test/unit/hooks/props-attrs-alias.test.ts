@@ -59,4 +59,42 @@ describe('tag.props / tag.attrs alias', () => {
     expect(result.headTags).toContain('content="replaced via props"')
     expect(result.headTags).not.toContain('content="original"')
   })
+
+  it('a hook reassigning tag.attrs wholesale still renders the replacement', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          for (const tag of tags) {
+            if (tag.tag === 'meta')
+              tag.attrs = { ...tag.attrs, content: 'replaced via attrs' }
+          }
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'original' }] })
+
+    const result = await renderSSRHead(head)
+    expect(result.headTags).toContain('content="replaced via attrs"')
+    expect(result.headTags).not.toContain('original')
+  })
+
+  it('a hook pushing an attrs-only script tag with innerHTML renders without throwing', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          tags.push({
+            tag: 'script',
+            attrs: { type: 'application/ld+json' },
+            innerHTML: JSON.stringify({ '@type': 'thing' }),
+          } as any)
+        },
+      },
+    })
+    head.push({ title: 'home' })
+
+    const result = await renderSSRHead(head)
+    expect(result.headTags).toContain('<script type="application/ld+json">{"@type":"thing"}</script>')
+  })
 })

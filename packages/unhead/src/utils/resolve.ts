@@ -239,23 +239,39 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
+  let hasTagMutatingHooks = false
   for (const name in hooks) {
     if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
       cloneTagsInPlace(ctx.tags)
+      hasTagMutatingHooks = true
       break
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
+  // snapshot the alias refs before tags:* hooks run so the reconcile pass
+  // below can tell which side a hook reassigned
+  let preHookRefs: Map<HeadTag, unknown> | undefined
+  if (hasTagMutatingHooks) {
+    preHookRefs = new Map()
+    for (const t of ctx.tags)
+      preHookRefs.set(t, t.attrs)
+  }
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
-  // a hook may still reassign the deprecated `tag.props` directly instead of `tag.attrs`;
-  // treat props as the winner and re-sync attrs so both point at the same object again
+  // A hook may desync the `props`/`attrs` alias, or push tags in a shape
+  // without the deprecated `props` field. Reconcile both ways: the canonical
+  // `attrs` is authoritative unless the deprecated `props` was itself
+  // reassigned, and an absent `props` joins the alias without touching attrs.
   for (const t of ctx.tags) {
-    if (t.props !== t.attrs)
+    if (t.props === undefined)
+      t.props = t.attrs
+    else if (t.props !== t.attrs && (preHookRefs === undefined || t.props !== preHookRefs.get(t)))
       t.attrs = t.props!
+    else if (t.props !== t.attrs)
+      t.props = t.attrs
   }
   return sanitizeTagsInPlace(ctx.tags)
 }
