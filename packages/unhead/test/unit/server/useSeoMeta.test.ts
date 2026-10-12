@@ -179,6 +179,44 @@ describe('useSeoMeta', () => {
     `)
   })
 
+  it('robots index and follow false render noindex and nofollow', async () => {
+    const head = createServerHeadWithContext()
+    useSeoMeta(head, {
+      robots: {
+        index: false,
+        follow: false,
+      },
+    })
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="robots" content="noindex, nofollow">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('robots index false keeps an explicit noindex value', async () => {
+    const head = createServerHeadWithContext()
+    useSeoMeta(head, {
+      robots: {
+        index: false,
+        noindex: true,
+      },
+    })
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="robots" content="noindex">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
   it('generates correct meta tags', async () => {
     const head = createServerHeadWithContext()
     const dateString = new Date(0).toISOString()

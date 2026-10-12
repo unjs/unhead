@@ -168,7 +168,8 @@
   },
   "files": [
     "*.d.ts",
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "unbuild",
@@ -201,8 +202,10 @@
     "unplugin": "catalog:"
   },
   "devDependencies": {
+    "@vue/compiler-sfc-vapor": "catalog:",
     "@vue/server-renderer": "catalog:",
     "vite": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "vue-vapor": "catalog:"
   }
 }
