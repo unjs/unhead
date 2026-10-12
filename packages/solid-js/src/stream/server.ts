@@ -320,10 +320,12 @@ export function HeadStream(): JSX.Element {
   if (!head._solidShellComplete)
     return null
 
-  const update = renderSSRHeadSuspenseChunk(head as unknown as Unhead<ResolvableHead, any>)
+  const unhead = head as unknown as Unhead<ResolvableHead, any>
+
+  const update = renderSSRHeadSuspenseChunk(unhead)
   if (!update)
     return null
 
-  const nonce = head._stream?.nonce
+  const nonce = unhead._stream?.nonce
   return ssr(scriptTemplate, nonce ? ` nonce="${escapeHtml(nonce)}"` : '', update) as unknown as JSX.Element
 }

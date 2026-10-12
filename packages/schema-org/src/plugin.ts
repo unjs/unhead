@@ -1,4 +1,4 @@
-import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
+import type { HeadPlugin, HeadTag, MetaFlat, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
@@ -79,7 +79,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
       // useSeoMeta() packs its meta into one `_flatMeta` tag. FlatMetaPlugin may
       // unpack it before or after this hook, so read both shapes.
       else if (tag.tag === '_flatMeta') {
-        for (const props of unpackMeta(tag.props))
+        for (const props of unpackMeta(tag.props as MetaFlat))
           collectMeta(props as Record<string, unknown>)
       }
       else if (tag.tag === 'htmlAttrs' && typeof tag.props.lang === 'string') {
