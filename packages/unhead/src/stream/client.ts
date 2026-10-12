@@ -1,11 +1,9 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadTag, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { UsesMergeStrategy } from '../utils/const'
-import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
-import { normalizeEntryToTags } from '../utils/normalize'
 import { dedupeTags } from '../utils/resolve'
 
 export type { StreamingGlobal, UnheadStreamQueue }
@@ -25,31 +23,6 @@ function propValueCoveredBy(client: unknown, streamed: unknown): boolean {
   if (streamed instanceof Map && client instanceof Map)
     return [...streamed].every(([k, v]) => client.get(k) === v)
   return streamed === client || String(streamed) === String(client)
-}
-
-function entryTags(head: Unhead<any>, entry: HeadEntry<any>): HeadTag[] {
-  if (entry._tags)
-    return entry._tags
-  const tags = normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || [])
-  for (let i = 0; i < tags.length; i++) {
-    const tag = tags[i]
-    Object.assign(tag, entry.options)
-    tag._w = head.resolvedOptions._tagWeight?.(tag) ?? 100
-    tag._p = (entry._i << 10) + i
-    tag._d = dedupeKey(tag)
-    if (!tag._d)
-      tag._h = hashTag(tag)
-  }
-  return tags
-}
-
-// A patched entry defers applying the new input to the next resolve; while
-// `_pending` is set, that input, not `entry.input`, is the entry's real state.
-// Tags computed for the pending state are not cached on the entry.
-function entryState(entry: HeadEntry<any>): HeadEntry<any> {
-  return entry._pending !== undefined
-    ? { ...entry, input: entry._pending, _tags: undefined }
-    : entry
 }
 
 function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
@@ -79,7 +52,10 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
       hasStreamed = true
       continue
     }
-    tags.push(...entryTags(head, entryState(entry)))
+    // The renderer populated these tags with its effective weight and input.
+    // Entries excluded from resolution cannot take ownership of streamed tags.
+    if (entry._tags)
+      tags.push(...entry._tags)
   }
   if (!hasStreamed || !tags.length)
     return
@@ -89,7 +65,7 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
   for (const [key, entry] of [...head.entries]) {
     if (!(entry as any)._streamed)
       continue
-    if (entryTags(head, entryState(entry)).every(tag => tagCovers(tag, owners))) {
+    if (entry._tags?.every(tag => tagCovers(tag, owners))) {
       head.entries.delete(key)
       released = true
     }
@@ -115,21 +91,12 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
       streamDepth--
     }
   }
-  const push = head.push.bind(head)
-  head.push = (input: any, opts?: any) => {
-    const active = push(input, opts)
+  // Wait for resolution so batches, patches, and per-render weight overrides
+  // share the renderer's ownership decision.
+  head.hooks.hook('dom:rendered', () => {
     if (streamDepth === 0)
       releaseCoveredStreamedEntries(head)
-    // Reactive updates bypass push, so release after a successful patch too.
-    return {
-      ...active,
-      patch(nextInput: any) {
-        active.patch(nextInput)
-        if (streamDepth === 0)
-          releaseCoveredStreamedEntries(head)
-      },
-    }
-  }
+  })
 }
 
 /**

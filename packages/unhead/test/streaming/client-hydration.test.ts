@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom'
+import { renderDOMHead } from 'unhead/client'
 import { createStreamableHead } from 'unhead/stream/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
@@ -424,6 +425,24 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it('releases streamed attributes after rendering with custom weights', async () => {
+      const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en' } }])
+      const head = createStreamableHead()!
+      head._b = true
+      const a = head.push({ htmlAttrs: { 'lang': 'fr', 'data-page': 'home' } })
+      const b = head.push({ htmlAttrs: { lang: 'fr' } })
+      a.patch({ htmlAttrs: { 'lang': 'en', 'data-page': 'home' } })
+      head._b = false
+      renderDOMHead(head, { tagWeight: tag => tag.props.lang === 'en' ? 200 : 100 })
+      expect(document.documentElement.lang).toBe('en')
+
+      a.dispose()
+      b.dispose()
+      await waitForDomUpdate()
+
+      expect(document.documentElement.hasAttribute('lang')).toBe(false)
+    })
+
     it.each([
       ['attributes', { 'lang': 'en', 'data-theme': 'dark' }, { lang: 'en' }, { 'data-theme': 'dark' }, 'lang'],
       ['classes', { class: 'page dark' }, { class: 'page' }, { class: 'dark' }, 'class'],
