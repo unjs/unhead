@@ -14,6 +14,7 @@ import {
   onActivated,
   onBeforeUnmount,
   onDeactivated,
+  onScopeDispose,
   ref,
   watchEffect,
 } from 'vue'
@@ -77,6 +78,10 @@ function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input: I, options: Hea
     onActivated(() => {
       deactivated.value = false
     })
+  }
+  else if (scope) {
+    // Vapor components have an effect scope but no VDOM instance.
+    onScopeDispose(() => entry.dispose())
   }
   return entry!
 }

@@ -93,6 +93,28 @@ function sanitizeObject(input: Record<string, any>) {
   return Object.fromEntries(Object.entries(input).filter(([k, v]) => String(v) !== 'false' && k))
 }
 
+/**
+ * Flips the robots directives that invert rather than disappear, so
+ * `sanitizeObject` cannot drop them silently. `index: false` blocks indexing
+ * instead of allowing it.
+ */
+function normalizeRobotsDirectives(input: Record<string, any>): Record<string, any> {
+  if (input.index !== false && input.follow !== false)
+    return input
+  const value = { ...input }
+  if (value.index === false) {
+    delete value.index
+    if (value.noindex === undefined)
+      value.noindex = true
+  }
+  if (value.follow === false) {
+    delete value.follow
+    if (value.nofollow === undefined)
+      value.nofollow = true
+  }
+  return value
+}
+
 function transformObject(obj: any): any {
   return Array.isArray(obj)
     ? obj.map(transformObject)
@@ -238,7 +260,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
         extras.push(...handleObjectEntry(key, value))
       }
       else {
-        primitives[key] = sanitizeObject(value)
+        primitives[key] = sanitizeObject(key === 'robots' ? normalizeRobotsDirectives(value) : value)
       }
     }
     else {

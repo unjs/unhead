@@ -1,16 +1,14 @@
 import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptHeadTarget, ScriptInstance, ScriptScope, UseFunctionType, UseScriptContextOptions, UseScriptLoaderInput, UseScriptStatus } from 'unhead/scripts'
 import type {
-  CompatibleHead,
   DataKeys,
   GenericScript,
   HeadEntryOptions,
-  ResolvableHead,
   SchemaAugmentations,
 } from 'unhead/types'
 import type { Ref, WatchHandle } from 'vue'
 import type { ReactiveHead, ResolvableProperties } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
-import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { getCurrentInstance, getCurrentScope, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
 
 export type * from 'unhead/scripts'
@@ -70,11 +68,12 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput | UseScriptLoaderInput<T>
   const options = { ..._options } as UseScriptOptions<T> | UseScriptLoaderOptions<T>
   const head = options?.head || injectHead()
-  const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   options.head = head
-  const scope = getCurrentInstance()
-  options.eventContext = scope
-  if (scope && typeof options.trigger === 'undefined') {
+  const vm = getCurrentInstance()
+  // Vapor components own effect scopes without exposing a VDOM instance.
+  const scope = getCurrentScope()
+  options.eventContext = vm
+  if (vm && typeof options.trigger === 'undefined') {
     options.trigger = load => onMounted(() => {
       void load()
     })
@@ -107,11 +106,17 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
       s._statusRef.value = s.status
     }
   })
-  const script = _useScript(scriptHead, input as unknown as BaseUseScriptInput, options as unknown as BaseUseScriptOptions<T>) as ScriptInstance<T> | ScriptScope<T>
   const scoped = options.scope === true
+  // Register shared triggers separately so cleanup owns the exact disposer.
+  const ownsTrigger = !scoped && !!scope && !head.ssr
+    && (options.trigger instanceof Promise || typeof options.trigger === 'function')
+  const coreOptions = ownsTrigger ? { ...options, trigger: 'manual' as const } : options
+  // @ts-expect-error untyped
+  const script = _useScript(head, input as BaseUseScriptInput, coreOptions) as ScriptInstance<T> | ScriptScope<T>
   const sharedScript = (scoped ? (script as ScriptScope<T>).script : script) as ScriptInstance<T>
   // @ts-expect-error untyped
   sharedScript._statusRef = sharedScript._statusRef || ref<UseScriptStatus>(sharedScript.status)
+  const disposeTrigger = ownsTrigger ? sharedScript._setupTriggerHandler(options.trigger as BaseUseScriptOptions['trigger'], false) : undefined
 
   let onLoaded = script.onLoaded
   let onError = script.onError
@@ -121,20 +126,17 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
       onScopeDispose((script as ScriptScope<T>).dispose)
     }
     else {
-      const baseOnLoaded = script.onLoaded
-      const baseOnError = script.onError
-      onLoaded = (cb, eventOptions) => {
-        const off = baseOnLoaded(cb, eventOptions)
-        onScopeDispose(off)
+      const bind = <A extends any[]>(base: (...args: A) => () => void) => (...args: A) => {
+        if (!scope.active)
+          return () => {}
+        const off = base(...args)
+        scope.run(() => onScopeDispose(off))
         return off
       }
-      onError = (cb, eventOptions) => {
-        const off = baseOnError(cb, eventOptions)
-        onScopeDispose(off)
-        return off
-      }
-      const triggerAbortController = script._triggerAbortController
-      onScopeDispose(() => triggerAbortController?.abort())
+      onLoaded = bind(script.onLoaded)
+      onError = bind(script.onError)
+      if (disposeTrigger)
+        onScopeDispose(disposeTrigger)
     }
   }
   return new Proxy(script, {
