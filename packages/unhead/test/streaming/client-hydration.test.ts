@@ -533,6 +533,55 @@ describe('streaming client hydration', () => {
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
     })
 
+    it('releases a streamed entry a client patch covers', async () => {
+      const { document } = setupStreamingDom([
+        { title: 'Async page', meta: [{ name: 'description', content: 'Async description' }] },
+      ])
+
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      const active = head.push({ title: 'Async page' })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toHaveLength(1)
+
+      // The reactive update never re-enters push, so it must still release.
+      active.patch({
+        title: 'Async page',
+        meta: [{ name: 'description', content: 'Async description' }],
+      })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toEqual([])
+
+      active.dispose()
+      await waitForDomUpdate()
+
+      expect(document.title).not.toBe('Async page')
+      expect(document.querySelector('meta[name="description"]')).toBeNull()
+    })
+
+    it('releases a streamed entry whose class and style the client supersedes', async () => {
+      const { document } = setupStreamingDom([
+        { htmlAttrs: { class: 'page', style: 'color:red' } },
+      ])
+
+      const head = createStreamableHead()!
+      const active = head.push({
+        htmlAttrs: { class: 'page dark', style: 'color:red;padding:10px' },
+      })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toEqual([])
+
+      active.dispose()
+      await waitForDomUpdate()
+
+      expect(document.documentElement.className).not.toContain('page')
+      expect(document.documentElement.getAttribute('style') ?? '').not.toContain('color')
+    })
+
     it('releases a streamed htmlAttrs entry an identical client entry merges', async () => {
       const { document } = setupStreamingDom([
         { htmlAttrs: { 'data-theme': 'dark' } },

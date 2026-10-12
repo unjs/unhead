@@ -16,13 +16,15 @@ export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHead
   streamKey?: string
 }
 
-// class/style normalize to Set/Map, so prop equality must look inside them.
-function samePropValue(a: unknown, b: unknown): boolean {
-  if (a instanceof Set && b instanceof Set)
-    return a.size === b.size && [...a].every(v => b.has(v))
-  if (a instanceof Map && b instanceof Map)
-    return a.size === b.size && [...a].every(([k, v]) => b.get(k) === v)
-  return a === b || String(a) === String(b)
+// class/style normalize to Set/Map, so coverage must look inside them. The
+// client value only needs to contain every streamed value: a superset (extra
+// classes or style properties) still fully covers the streamed one.
+function propValueCoveredBy(client: unknown, streamed: unknown): boolean {
+  if (streamed instanceof Set && client instanceof Set)
+    return [...streamed].every(v => client.has(v))
+  if (streamed instanceof Map && client instanceof Map)
+    return [...streamed].every(([k, v]) => client.get(k) === v)
+  return streamed === client || String(streamed) === String(client)
 }
 
 function entryTags(head: Unhead<any>, entry: HeadEntry<any>): HeadTag[] {
@@ -41,6 +43,15 @@ function entryTags(head: Unhead<any>, entry: HeadEntry<any>): HeadTag[] {
   return tags
 }
 
+// A patched entry defers applying the new input to the next resolve; while
+// `_pending` is set, that input, not `entry.input`, is the entry's real state.
+// Tags computed for the pending state are not cached on the entry.
+function entryState(entry: HeadEntry<any>): HeadEntry<any> {
+  return entry._pending !== undefined
+    ? { ...entry, input: entry._pending, _tags: undefined }
+    : entry
+}
+
 function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
   const owner = owners.get(streamed._d || streamed._h || '')
   if (!owner)
@@ -49,7 +60,7 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
     return true
   // Merge tags (htmlAttrs, bodyAttrs, templateParams) combine props across
   // entries, so compare the effective client tag with every streamed prop.
-  return Object.keys(streamed.props).every(key => samePropValue(owner.props[key], streamed.props[key]))
+  return Object.keys(streamed.props).every(key => propValueCoveredBy(owner.props[key], streamed.props[key]))
 }
 
 /**
@@ -68,7 +79,7 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
       hasStreamed = true
       continue
     }
-    tags.push(...entryTags(head, entry))
+    tags.push(...entryTags(head, entryState(entry)))
   }
   if (!hasStreamed || !tags.length)
     return
@@ -78,7 +89,7 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
   for (const [key, entry] of [...head.entries]) {
     if (!(entry as any)._streamed)
       continue
-    if (entryTags(head, entry).every(tag => tagCovers(tag, owners))) {
+    if (entryTags(head, entryState(entry)).every(tag => tagCovers(tag, owners))) {
       head.entries.delete(key)
       released = true
     }
@@ -109,7 +120,15 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
     const active = push(input, opts)
     if (streamDepth === 0)
       releaseCoveredStreamedEntries(head)
-    return active
+    // Reactive updates bypass push, so release after a successful patch too.
+    return {
+      ...active,
+      patch(nextInput: any) {
+        active.patch(nextInput)
+        if (streamDepth === 0)
+          releaseCoveredStreamedEntries(head)
+      },
+    }
   }
 }
 
