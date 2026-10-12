@@ -15,19 +15,19 @@
     "br": 4524
   },
   "vueClient": {
-    "size": 14851,
-    "gz": 6011,
-    "br": 5445
+    "size": 14894,
+    "gz": 6028,
+    "br": 5464
   },
   "vueClientFull": {
-    "size": 28979,
-    "gz": 11121,
-    "br": 10059
+    "size": 29164,
+    "gz": 11205,
+    "br": 10150
   },
   "vueServer": {
-    "size": 13629,
-    "gz": 5478,
-    "br": 4945
+    "size": 13672,
+    "gz": 5498,
+    "br": 4958
   },
   "reactClient": {
     "size": 14942,
