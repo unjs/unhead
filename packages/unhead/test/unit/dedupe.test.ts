@@ -107,7 +107,7 @@ describe('hashTag', () => {
   })
 
   it('returns a string for non-string text content', () => {
-    expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
-    expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+    expect(hashTag({ tag: 'meta', attrs: {}, textContent: 1 as any })).toBe('1')
+    expect(hashTag({ tag: 'meta', attrs: {}, textContent: true as any })).toBe('true')
   })
 })
