@@ -36,7 +36,7 @@ function freezeExtractedInput<T>(value: T): T {
   return value && typeof value === 'object' ? Object.freeze(value) : value
 }
 
-function hasHooks(head: Unhead<any>): boolean {
+function hasHooks<Input, RenderResult>(head: Unhead<Input, RenderResult>): boolean {
   const hooks = (head.hooks as any)?._hooks || {}
   for (const key in hooks) {
     if (hooks[key]?.length)

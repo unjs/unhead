@@ -8,8 +8,12 @@ import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
 export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPayload> {
-  hooks: HookableCore<ServerHeadHooks>
+  hooks: HookableCore<ServerHeadHooks<T>>
 }
+
+type CreateServerHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateServerHeadOptions<Input, Input>]
+  : [options: CreateServerHeadOptions<Input, Input> & { disableDefaults: true }]
 
 // hoisted so per-request `createHead()` calls (e.g. Nuxt) share one object;
 // walkResolver/normalizeProps never mutate entry input so sharing is safe
@@ -31,7 +35,7 @@ const DEFAULT_INIT = {
 // identity for anything but `on*` function handlers, so `_static` for the
 // default init fast path (the default entry has no event handlers)
 const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
-  (k?: string, v?: any) => {
+  (k: string | undefined, v: unknown) => {
     if (k && k.startsWith('on') && typeof v === 'function') {
       return `this.dataset.${k}fired = true`
     }
@@ -67,11 +71,15 @@ function getDefaultInitTags(): HeadTag[] {
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
+export function createHead(options?: CreateServerHeadOptions<ResolvableHead>): ServerUnhead<ResolvableHead>
+export function createHead<T>(options: CreateServerHeadOptions<T, T> & { disableDefaults: true }): ServerUnhead<T>
+export function createHead<T>(options: CreateServerHeadOptions<T, T | ResolvableHead>): ServerUnhead<T | ResolvableHead>
+export function createHead<T = ResolvableHead>(...args: CreateServerHeadArgs<T>): ServerUnhead<T>
+export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions<T, any> = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
   const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
     _tagWeight: tagWeight,
-    // @ts-expect-error untyped
+    // @ts-expect-error server heads do not have a document
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,
     propResolvers: [
@@ -79,7 +87,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       serverPropResolver,
     ],
     init: [
-      options.disableDefaults ? undefined : DEFAULT_INIT,
+      options.disableDefaults ? undefined : DEFAULT_INIT as T,
       ...(options.init || []),
     ],
   })
@@ -97,7 +105,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       defaultEntry._precomputedTags = getDefaultInitTags()
   }
 
-  core.hooks = createHooks<ServerHeadHooks>(options.hooks)
+  core.hooks = createHooks<ServerHeadHooks<T>>(options.hooks)
 
   // Register plugins
   options.plugins?.forEach(p => core.use(p))

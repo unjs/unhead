@@ -2,15 +2,15 @@ import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
 
-export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
-  hooks: HookableCore<ClientHeadHooks>
+export interface ClientUnhead<T = ResolvableHead, RenderResult = boolean> extends Unhead<T, RenderResult> {
+  hooks: HookableCore<ClientHeadHooks<T, RenderResult>>
   dirty: boolean
   invalidate: () => void
 }
 
-export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>): ClientUnhead<T> {
+export function createClientHeadAdapter<T, RenderResult>(core: Unhead<T, RenderResult>, hooks: HookableCore<ClientHeadHooks<T, RenderResult>>, render: HeadRenderer<RenderResult, T>): ClientUnhead<T, RenderResult> {
   const corePush = core.push
-  const head = core as ClientUnhead<T>
+  const head = core as ClientUnhead<T, RenderResult>
   head.ssr = false
   head.hooks = hooks
   head.dirty = !!head.dirty
@@ -28,7 +28,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     head.dirty = true
     notify()
   }
-  head.push = (input: T, entryOptions?: HeadEntryOptions) => {
+  head.push = (input: T, entryOptions?: HeadEntryOptions<T>) => {
     const unhook = entryOptions?.onRendered
       ? hooks.hook('dom:rendered', entryOptions.onRendered as any)
       : undefined
