@@ -107,12 +107,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       s._statusRef.value = s.status
     }
   })
-  // @ts-expect-error untyped
-  const script = _useScript(head, input as BaseUseScriptInput, options) as ScriptInstance<T> | ScriptScope<T>
   const scoped = options.scope === true
+  // Register shared triggers separately so cleanup owns the exact disposer.
+  const ownsTrigger = !scoped && !!scope && !head.ssr
+    && (options.trigger instanceof Promise || typeof options.trigger === 'function')
+  const coreOptions = ownsTrigger ? { ...options, trigger: 'manual' as const } : options
+  // @ts-expect-error untyped
+  const script = _useScript(head, input as BaseUseScriptInput, coreOptions) as ScriptInstance<T> | ScriptScope<T>
   const sharedScript = (scoped ? (script as ScriptScope<T>).script : script) as ScriptInstance<T>
   // @ts-expect-error untyped
   sharedScript._statusRef = sharedScript._statusRef || ref<UseScriptStatus>(sharedScript.status)
+  const disposeTrigger = ownsTrigger ? sharedScript._setupTriggerHandler(options.trigger as BaseUseScriptOptions['trigger'], false) : undefined
 
   let onLoaded = script.onLoaded
   let onError = script.onError
@@ -131,8 +136,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
       onLoaded = bind(script.onLoaded)
       onError = bind(script.onError)
-      const triggerAbortController = script._triggerAbortController
-      onScopeDispose(() => triggerAbortController?.abort())
+      if (disposeTrigger)
+        onScopeDispose(disposeTrigger)
     }
   }
   return new Proxy(script, {

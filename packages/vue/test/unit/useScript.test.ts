@@ -8,6 +8,39 @@ import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it.each(['promise', 'callback'] as const)('keeps another consumer\'s %s trigger when a manual consumer stops', async (kind) => {
+    const head = createHead({ document })
+    const owner = effectScope()
+    const manualOwner = effectScope()
+    const pending = Promise.withResolvers<void>()
+    let load!: () => void
+    const script = owner.run(() => useScript('/shared-trigger.js', {
+      head,
+      trigger: kind === 'promise'
+        ? pending.promise
+        : (start) => {
+            load = start
+            return () => {
+              load = () => {}
+            }
+          },
+    }))!
+    manualOwner.run(() => useScript('/shared-trigger.js', { head, trigger: 'manual' }))
+    try {
+      manualOwner.stop()
+      if (kind === 'promise')
+        pending.resolve()
+      else
+        load()
+      await vi.waitFor(() => expect(script.status.value).toBe('loading'))
+    }
+    finally {
+      owner.stop()
+      manualOwner.stop()
+      script.remove()
+    }
+  })
+
   it.each(['standalone', 'app context'] as const)('disposes a consumer in an %s effect scope without component warnings', (context) => {
     const head = createHead({ document })
     const scope = effectScope()
