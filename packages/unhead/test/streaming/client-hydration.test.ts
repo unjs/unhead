@@ -423,6 +423,101 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('streamed entry release', () => {
+    it('releases a streamed entry a hydrating entry covers', async () => {
+      const { document } = setupStreamingDom([
+        { title: 'Async page', meta: [{ name: 'description', content: 'Async description' }] },
+      ])
+
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      const active = head.push({
+        title: 'Async page',
+        meta: [{ name: 'description', content: 'Async description' }],
+      })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toEqual([])
+
+      // Unmounting the component removes its tags.
+      active.dispose()
+      await waitForDomUpdate()
+
+      expect(document.title).not.toBe('Async page')
+      expect(document.querySelector('meta[name="description"]')).toBeNull()
+    })
+
+    it('keeps a streamed entry a client entry only partly covers', async () => {
+      const { document } = setupStreamingDom([
+        { title: 'Async page', meta: [{ name: 'description', content: 'Async description' }] },
+      ])
+
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      head.push({ title: 'Async page' })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toHaveLength(1)
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Async description')
+    })
+
+    it('releases a streamed entry that arrives before its covering entry', async () => {
+      const { window, document } = setupStreamingDom([])
+
+      const head = createStreamableHead()!
+      window.__unhead__.push([{ title: 'Async page', meta: [{ name: 'description', content: 'Async description' }] }])
+      await waitForDomUpdate()
+
+      const active = head.push({
+        title: 'Async page',
+        meta: [{ name: 'description', content: 'Async description' }],
+      })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toEqual([])
+
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.title).not.toBe('Async page')
+    })
+
+    it('keeps a streamed htmlAttrs entry whose props no client entry merges', async () => {
+      const { document } = setupStreamingDom([
+        { htmlAttrs: { 'data-theme': 'dark' } },
+      ])
+
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      // A different entry owns htmlAttrs but with different props.
+      head.push({ htmlAttrs: { lang: 'en' } })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toHaveLength(1)
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    })
+
+    it('releases a streamed htmlAttrs entry an identical client entry merges', async () => {
+      const { document } = setupStreamingDom([
+        { htmlAttrs: { 'data-theme': 'dark' } },
+      ])
+
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      const active = head.push({ htmlAttrs: { 'data-theme': 'dark' } })
+      await waitForDomUpdate()
+
+      expect([...head.entries.values()].filter((e: any) => e._streamed)).toEqual([])
+
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    })
+  })
+
   describe('style tag updates with key', () => {
     it('updates style innerHTML when pushing styles with same key', async () => {
       const { window, document } = setupStreamingDom([])
