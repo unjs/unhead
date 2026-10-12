@@ -1,5 +1,5 @@
 import type { Component, Plugin } from 'vue-vapor'
-import { useHead } from '@unhead/vue'
+import { useHead, useScript } from '@unhead/vue'
 import { createHead, renderDOMHead } from '@unhead/vue/client'
 import { createApp, defineComponent, defineVaporComponent, h, nextTick, ref, vaporInteropPlugin } from 'vue-vapor'
 import Child from './Child.vue'
@@ -45,6 +45,64 @@ export function mount(kind: 'sfc' | 'component') {
     async flush() {
       await nextTick()
       renderDOMHead(head, { document })
+    },
+    unmount() {
+      app.unmount()
+      renderDOMHead(head, { document })
+    },
+  }
+}
+
+export function mountScript(scoped: boolean, late = false) {
+  const head = createHead({ document })
+  const visible = ref(true)
+  const calls = { childLoaded: 0, childError: 0, parentLoaded: 0, parentError: 0 }
+  let consumerSignal: AbortSignal
+  let parentSignal: AbortSignal
+  let registerChild = () => {}
+  const child = defineVaporComponent({
+    setup() {
+      const script = useScript('/vapor-shared.js', { trigger: 'client', scope: scoped })
+      consumerSignal = script.signal
+      registerChild = () => {
+        script.onLoaded(() => {
+          calls.childLoaded++
+        })
+        script.onError(() => {
+          calls.childError++
+        })
+      }
+      if (!late)
+        registerChild()
+      return document.createElement('p')
+    },
+  }) as unknown as Component
+  const app = createApp(defineComponent({
+    setup() {
+      const script = useScript('/vapor-shared.js', { trigger: 'client', scope: true })
+      parentSignal = script.signal
+      script.onLoaded(() => {
+        calls.parentLoaded++
+      })
+      script.onError(() => {
+        calls.parentError++
+      })
+      return () => h('div', visible.value ? [h(child)] : [])
+    },
+  })).use(head as unknown as Plugin).use(vaporInteropPlugin)
+  app.mount('#app')
+  return {
+    calls,
+    registerChild() {
+      registerChild()
+    },
+    get consumerAborted() { return consumerSignal.aborted },
+    get parentAborted() { return parentSignal.aborted },
+    setVisible(value: boolean) { visible.value = value },
+    async flush() {
+      await nextTick()
+      renderDOMHead(head, { document })
+      await nextTick()
     },
     unmount() {
       app.unmount()

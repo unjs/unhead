@@ -8,7 +8,7 @@ import type {
 import type { Ref, WatchHandle } from 'vue'
 import type { ResolvableProperties, VueHeadClient } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
-import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { getCurrentInstance, getCurrentScope, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
 
 export type * from 'unhead/scripts'
@@ -70,9 +70,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const options = { ..._options } as UseScriptOptions<T> | UseScriptLoaderOptions<T>
   const head = options?.head || injectHead()
   options.head = head
-  const scope = getCurrentInstance()
-  options.eventContext = scope
-  if (scope && typeof options.trigger === 'undefined') {
+  const vm = getCurrentInstance()
+  // Vapor components own effect scopes without exposing a VDOM instance.
+  const scope = getCurrentScope()
+  options.eventContext = vm
+  if (vm && typeof options.trigger === 'undefined') {
     options.trigger = onMounted
   }
   else if (isRef(options.trigger) || (typeof options.trigger === 'function' && options.trigger.length === 0)) {
@@ -121,8 +123,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
     else {
       const bind = <A extends any[]>(base: (...args: A) => () => void) => (...args: A) => {
+        if (!scope.active)
+          return () => {}
         const off = base(...args)
-        onScopeDispose(off)
+        scope.run(() => onScopeDispose(off))
         return off
       }
       onLoaded = bind(script.onLoaded)
