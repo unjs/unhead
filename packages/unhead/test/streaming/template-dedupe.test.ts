@@ -1,5 +1,5 @@
 import type { PreparedTemplate } from 'unhead/stream/server'
-import { createStreamableHead, prepareStreamingTemplate, wrapStream } from 'unhead/stream/server'
+import { createStreamableHead, prepareStreamingTemplate, prepareTemplate, wrapStream } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
 const TEMPLATE = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Template</title><meta name="description" content="Template"></head><body><div id="app"><!--app-html--></div></body></html>'
@@ -19,6 +19,24 @@ async function renderWithApp(head: any, template: string | PreparedTemplate) {
 }
 
 describe('streaming template head extraction', () => {
+  it.each([
+    ['string', TEMPLATE],
+    ['prepared', prepareTemplate(TEMPLATE)],
+  ] as const)('preserves template tags with a pre-rendered payload for %s templates', (_, template) => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    const state = head.render()
+    head.push({ title: 'Async page' })
+
+    const { shell } = prepareStreamingTemplate(head, template, state)
+
+    expect(shell).toContain('<title>Template</title>')
+    expect(shell).toContain('<meta name="description" content="Template">')
+    expect(shell).toContain('<meta charset="UTF-8">')
+    expect(shell).not.toContain('<title>Async page</title>')
+    expect(head.render().headTags).toContain('<title>Async page</title>')
+    expect(head.render().headTags).not.toContain('content="Template"')
+  })
+
   it('wrapStream dedupes template head tags against app tags', async () => {
     const { head } = createStreamableHead()
     head.push({

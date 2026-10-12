@@ -7,15 +7,15 @@ import { createStreamableServerHead } from '../../util'
 // indexes by literally re-parsing `${shellPart}</body></html>`. The optimized
 // version computes those indexes from the original parse; this fuzz locks
 // byte-identical behavior against the reference, including malformed inputs.
-// The reference mirrors the extraction parse: template head tags lift into
-// entry 0, so every split operates on the HTML they left.
+// Pre-rendered payloads preserve template tags. Other calls lift them into
+// entry 0, so the split uses the extracted HTML.
 function oldPrepareStreamingTemplate(head: any, template: string, preRenderedState?: any) {
   const ssr = preRenderedState ?? head.render()
   const streamKey = head.resolvedOptions.experimentalStreamKey || '__unhead__'
   // The fuzz locks shell-index derivation, not the bootstrap payload, so the
   // reference takes the script from the real function.
   const bootstrapScript = createBootstrapScript(streamKey)
-  const parsed = parseHtmlForUnheadExtraction(template)
+  const parsed = preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template)
   const html = parsed.html
   const bodyEnd = parsed.indexes.bodyTagEnd
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart

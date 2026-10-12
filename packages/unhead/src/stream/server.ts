@@ -775,7 +775,10 @@ export function prepareStreamingTemplate(
   let cached: ExtractedTemplateCache | undefined
   let parsed: PreparedHtmlTemplateWithIndexes
   if (typeof template === 'string') {
-    parsed = parseHtmlForUnheadExtraction(template)
+    parsed = preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template)
+  }
+  else if (preRenderedState) {
+    parsed = template
   }
   else {
     cached = extractPreparedTemplate(template)
@@ -791,7 +794,7 @@ export function prepareStreamingTemplate(
 
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
 
-  const layout = typeof template === 'string'
+  const layout = typeof template === 'string' || preRenderedState
     ? createStreamingTemplateLayout(parsed)
     : getPreparedStreamingLayout(template)
 
