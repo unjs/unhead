@@ -473,6 +473,23 @@ describe('streaming client hydration', () => {
       expect(document.documentElement.hasAttribute('lang')).toBe(false)
     })
 
+    it.each(['merge', 'replace'] as const)('honors %s ownership with differently weighted attributes', async (strategy) => {
+      const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en' } }])
+      const head = createStreamableHead()!
+      head._b = true
+      const a = head.push({ htmlAttrs: { lang: 'fr' } })
+      const b = head.push({ htmlAttrs: { lang: 'en' } }, { tagDuplicateStrategy: strategy })
+      head._b = false
+      renderDOMHead(head, { tagWeight: tag => tag.props.lang === 'en' ? 200 : 100 })
+
+      b.dispose()
+      a.dispose()
+      await waitForDomUpdate()
+
+      // Merge combines later props, while replace keeps the lower weight.
+      expect(document.documentElement.getAttribute('lang')).toBe(strategy === 'merge' ? null : 'en')
+    })
+
     it.each([
       ['attributes', { 'lang': 'en', 'data-theme': 'dark' }, { lang: 'en' }, { 'data-theme': 'dark' }, 'lang'],
       ['classes', { class: 'page dark' }, { class: 'page' }, { class: 'dark' }, 'class'],

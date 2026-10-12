@@ -4,7 +4,6 @@ import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { UsesMergeStrategy } from '../utils/const'
 import { createHooks } from '../utils/hooks'
-import { dedupeTags } from '../utils/resolve'
 
 export type { StreamingGlobal, UnheadStreamQueue }
 
@@ -18,10 +17,20 @@ export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHead
 // client value only needs to contain every streamed value: a superset (extra
 // classes or style properties) still fully covers the streamed one.
 function propValueCoveredBy(client: unknown, streamed: unknown): boolean {
-  if (streamed instanceof Set && client instanceof Set)
-    return [...streamed].every(v => client.has(v))
-  if (streamed instanceof Map && client instanceof Map)
-    return [...streamed].every(([k, v]) => client.get(k) === v)
+  if (streamed instanceof Set && client instanceof Set) {
+    for (const value of streamed) {
+      if (!client.has(value))
+        return false
+    }
+    return true
+  }
+  if (streamed instanceof Map && client instanceof Map) {
+    for (const [key, value] of streamed) {
+      if (client.get(key) !== value)
+        return false
+    }
+    return true
+  }
   return streamed === client || String(streamed) === String(client)
 }
 
@@ -45,22 +54,44 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
  * component unmounts.
  */
 function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[]) {
-  const tags: HeadTag[] = []
-  let hasStreamed = false
-  for (const entry of entries) {
-    if ((entry as any)._streamed) {
-      hasStreamed = true
-      continue
-    }
-    // The renderer populated these tags with its effective weight and input.
-    // Entries excluded from resolution cannot take ownership of streamed tags.
-    if (entry._tags)
-      tags.push(...entry._tags)
-  }
-  if (!hasStreamed || !tags.length)
+  if (!entries.some(entry => (entry as any)._streamed))
     return
   const owners = new Map<string, HeadTag>()
-  dedupeTags({ tags, tagMap: owners })
+  const mergeTags: HeadTag[] = []
+  for (const entry of entries) {
+    if ((entry as any)._streamed)
+      continue
+    // The renderer populated these tags with its effective weight and input.
+    // Entries excluded from resolution cannot take ownership of streamed tags.
+    for (const tag of entry._tags || []) {
+      // Normal tags only need an owner with the same normalized identity.
+      // Their winning value and array-meta grouping do not affect coverage.
+      if (UsesMergeStrategy.has(tag.tag))
+        mergeTags.push(tag)
+      else if (tag._d || tag._h)
+        owners.set((tag._d || tag._h)!, tag)
+    }
+  }
+  if (!owners.size && !mergeTags.length)
+    return
+  // Only merge tags need the renderer's weight/order and effective props.
+  for (const next of mergeTags.sort((a, b) => a._w! - b._w! || a._p! - b._p!)) {
+    const key = next._d || next._h || ''
+    if (!key)
+      continue
+    const prev = owners.get(key)
+    if (prev && (!next.tagDuplicateStrategy || next.tagDuplicateStrategy === 'merge')) {
+      const props = { ...prev.props, ...next.props }
+      if (next.props.class)
+        props.class = new Set([...(prev.props.class || []) as any, ...next.props.class as any]) as any
+      if (next.props.style)
+        props.style = new Map([...(prev.props.style || []) as any, ...next.props.style as any]) as any
+      owners.set(key, { ...next, props })
+    }
+    else if (!prev || (next._w === prev._w ? next._p! > prev._p! : next._w! < prev._w!)) {
+      owners.set(key, next)
+    }
+  }
   let released = false
   for (const entry of entries) {
     if (!(entry as any)._streamed)
