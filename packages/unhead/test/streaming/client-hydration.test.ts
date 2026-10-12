@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { renderDOMHead } from 'unhead/client'
+import { TemplateParamsPlugin } from 'unhead/plugins'
 import { createStreamableHead } from 'unhead/stream/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
@@ -425,6 +426,77 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it.each([
+      { titleTemplate: '%s | Shop' },
+      { templateParams: { siteName: 'Shop' } },
+    ])('releases a streamed entry whose virtual tags the client covers: %j', async (virtual) => {
+      const input = { title: 'Home', meta: [{ name: 'home-ready', content: 'yes' }], ...virtual }
+      const { document } = setupStreamingDom([input])
+      const head = createStreamableHead()!
+      const active = head.push(input)
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBe('yes')
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBeUndefined()
+      head.push({ title: 'About' })
+      await waitForDomUpdate()
+      expect(document.title).toBe('About')
+    })
+
+    it('releases streamed template parameters after the plugin consumes their separator', async () => {
+      const input = { title: 'Home', titleTemplate: '%s %separator %siteName', templateParams: { siteName: 'Shop', separator: '/' }, meta: [{ name: 'home-ready', content: '%siteName' }] }
+      const { document } = setupStreamingDom([input])
+      const head = createStreamableHead({ plugins: [TemplateParamsPlugin] })!
+      const active = head.push(input)
+      await waitForDomUpdate()
+      expect(document.title).toBe('Home / Shop')
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBe('Shop')
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBeUndefined()
+      head.push({ title: 'About' })
+      await waitForDomUpdate()
+      expect(document.title).toBe('About')
+    })
+
+    it('keeps unmatched streamed template parameters', async () => {
+      const { document } = setupStreamingDom([{ templateParams: { siteName: 'Shop', description: 'Server' }, meta: [{ name: 'home-ready', content: '%description' }] }])
+      const head = createStreamableHead({ plugins: [TemplateParamsPlugin] })!
+      const active = head.push({ templateParams: { siteName: 'Shop' }, meta: [{ name: 'home-ready', content: '%description' }] })
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBe('Server')
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBe('Server')
+    })
+
+    it.each(['titleTemplate', 'templateParams'] as const)('keeps streamed metadata when a hook removes its %s ownership proof', async (key) => {
+      const input = { title: 'Home', titleTemplate: '%s | Shop', templateParams: { siteName: 'Shop' }, meta: [{ name: 'home-ready', content: 'yes' }] }
+      const { document } = setupStreamingDom([input])
+      const head = createStreamableHead()!
+      head.hooks.hook('tags:afterResolve', ({ tagMap }) => {
+        tagMap.delete(key)
+      })
+      const active = head.push(input)
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('meta[name="home-ready"]')?.getAttribute('content')).toBe('yes')
+    })
+
+    it.each([50, 100, 200])('respects streamed template priority when the client template has weight %i', async (weight) => {
+      const { document } = setupStreamingDom([{ titleTemplate: '%s | Server' }])
+      const head = createStreamableHead()!
+      head._b = true
+      const active = head.push({ titleTemplate: '%s | Client' }, { tagPriority: weight })
+      head._b = false
+      renderDOMHead(head, { tagWeight: tag => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 })
+      active.dispose()
+      head.push({ title: 'About' })
+      await waitForDomUpdate()
+      expect(document.title).toBe(weight > 100 ? 'About | Server' : 'About')
+    })
+
     it.each([undefined, 'merge'] as const)('keeps streamed props merged into a keyed client script with strategy %s', async (strategy) => {
       const { document } = setupStreamingDom([{ script: [{ key: 'analytics', src: '/analytics.js', defer: true }] }])
       const head = createStreamableHead<any>()!

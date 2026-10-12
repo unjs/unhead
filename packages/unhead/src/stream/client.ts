@@ -56,11 +56,20 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>, rendered: Ma
  * are redundant: keeping them leaves orphaned tags behind when the owning
  * component unmounts.
  */
-function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[], renders: DomRenderTagContext[]) {
+function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[], renders: DomRenderTagContext[], tagMap: Map<string, HeadTag>) {
   if (!entries.some(entry => (entry as any)._streamed))
     return
   // Resolution hooks can remove tags after the entry cache was populated.
   const rendered = new Map(renders.map(({ tag }) => [tag._d || tag._h || '', tag]))
+  // Virtual tags affect resolution without producing DOM render records.
+  for (const key of ['titleTemplate', 'templateParams']) {
+    const tag = tagMap.get(key)
+    if (tag) {
+      rendered.set(key, key === 'templateParams' && head.plugins.has('template-params')
+        ? { ...tag, props: { ...tag.props, separator: head._separator || '|' } }
+        : tag)
+    }
+  }
   const hooks = (head.hooks as any)._hooks
   const mutatesTags = ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'].some(name => hooks[name]?.length)
   const clientIds = mutatesTags && new Set(entries.filter(entry => !(entry as any)._streamed).map(entry => entry._i))
@@ -113,11 +122,11 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
   ;(head as any)._streamedRelease = true
   // Batches the queue receives are server patches, not hydration pushes.
   let streamDepth = 0
-  let resolveContext: { entries: HeadEntry<any>[] } | undefined
-  let deferred: { entries: HeadEntry<any>[], renders: DomRenderTagContext[] } | undefined
+  let resolveContext: { entries: HeadEntry<any>[], tagMap: Map<string, HeadTag> } | undefined
+  let deferred: { entries: HeadEntry<any>[], renders: DomRenderTagContext[], tagMap: Map<string, HeadTag> } | undefined
   head.hooks.hook('entries:resolve', (ctx) => {
     // Keep the context so later hooks can replace its selected entries.
-    resolveContext = ctx
+    resolveContext = ctx as typeof ctx & { tagMap: Map<string, HeadTag> }
   })
   const queuePush = streamQueue.push.bind(streamQueue)
   streamQueue.push = (entries: any[]) => {
@@ -128,23 +137,23 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
     finally {
       streamDepth--
       if (streamDepth === 0 && deferred) {
-        const { entries, renders } = deferred
+        const { entries, renders, tagMap } = deferred
         deferred = undefined
-        releaseCoveredStreamedEntries(head, entries, renders)
+        releaseCoveredStreamedEntries(head, entries, renders, tagMap)
       }
     }
   }
   // Wait for resolution so batches, patches, and per-render weight overrides
   // share the renderer's ownership decision.
   head.hooks.hook('dom:rendered', ({ renders }) => {
-    const entries = resolveContext?.entries
+    const context = resolveContext
     resolveContext = undefined
-    if (!entries)
+    if (!context)
       return
     if (streamDepth === 0)
-      releaseCoveredStreamedEntries(head, entries, renders)
+      releaseCoveredStreamedEntries(head, context.entries, renders, context.tagMap)
     else
-      deferred = { entries, renders }
+      deferred = { ...context, renders }
   })
 }
 
