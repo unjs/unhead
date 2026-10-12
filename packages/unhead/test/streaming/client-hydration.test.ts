@@ -425,6 +425,60 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it('preserves a higher-priority streamed tag against a client fallback', async () => {
+      const { document } = setupStreamingDom([
+        { meta: [{ name: 'description', content: 'Server page description' }] },
+      ])
+      let hold = true
+      const head = createStreamableHead({
+        hooks: {
+          'dom:beforeRender': (ctx) => {
+            if (hold)
+              ctx.shouldRender = false
+          },
+        },
+      })!
+      const fallback = head.push({ meta: [{ name: 'description', content: 'Client site fallback' }] })
+      hold = false
+      renderDOMHead(head, { tagWeight: tag => tag.props.content === 'Client site fallback' ? 200 : 100 })
+
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Server page description')
+
+      fallback.dispose()
+      await waitForDomUpdate()
+
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Server page description')
+    })
+
+    it.each([50, 100])('releases a streamed tag covered by a client with weight %i before a weaker fallback', async (weight) => {
+      const { document } = setupStreamingDom([
+        { meta: [{ name: 'description', content: 'Server page description' }] },
+      ])
+      let hold = true
+      const head = createStreamableHead({
+        hooks: {
+          'dom:beforeRender': (ctx) => {
+            if (hold)
+              ctx.shouldRender = false
+          },
+        },
+      })!
+      const owner = head.push({ meta: [{ name: 'description', content: 'Client page description' }] })
+      const fallback = head.push({ meta: [{ name: 'description', content: 'Client site fallback' }] })
+      hold = false
+      renderDOMHead(head, {
+        tagWeight: tag => tag.props.content === 'Client page description' ? weight : tag.props.content === 'Client site fallback' ? 200 : 100,
+      })
+
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client page description')
+
+      owner.dispose()
+      fallback.dispose()
+      await waitForDomUpdate()
+
+      expect(document.querySelector('meta[name="description"]')).toBeNull()
+    })
+
     it('keeps streamed tags when a cached client entry is excluded', async () => {
       const { window, document } = setupStreamingDom([])
       let excludeClient = false
@@ -473,12 +527,12 @@ describe('streaming client hydration', () => {
       expect(document.documentElement.hasAttribute('lang')).toBe(false)
     })
 
-    it.each(['merge', 'replace'] as const)('honors %s ownership with differently weighted attributes', async (strategy) => {
+    it.each(['merge', 'replace'] as const)('honors explicit %s ownership with matching keys and differently weighted attributes', async (strategy) => {
       const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en' } }])
       const head = createStreamableHead()!
       head._b = true
-      const a = head.push({ htmlAttrs: { lang: 'fr' } })
-      const b = head.push({ htmlAttrs: { lang: 'en' } }, { tagDuplicateStrategy: strategy })
+      const a = head.push({ htmlAttrs: { lang: 'fr', key: 'page' } })
+      const b = head.push({ htmlAttrs: { lang: 'en', key: 'page' } }, { tagDuplicateStrategy: strategy })
       head._b = false
       renderDOMHead(head, { tagWeight: tag => tag.props.lang === 'en' ? 200 : 100 })
 

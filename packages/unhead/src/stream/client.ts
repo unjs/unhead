@@ -39,7 +39,7 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
   if (!owner)
     return false
   if (!UsesMergeStrategy.has(streamed.tag))
-    return true
+    return owner._w! <= streamed._w!
   // Merge tags (htmlAttrs, bodyAttrs, templateParams) combine props across
   // entries, so compare the effective client tag with every streamed prop.
   return Object.keys(streamed.props).every(key => propValueCoveredBy(owner.props[key], streamed.props[key]))
@@ -64,12 +64,16 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEnt
     // The renderer populated these tags with its effective weight and input.
     // Entries excluded from resolution cannot take ownership of streamed tags.
     for (const tag of entry._tags || []) {
-      // Normal tags only need an owner with the same normalized identity.
-      // Their winning value and array-meta grouping do not affect coverage.
-      if (UsesMergeStrategy.has(tag.tag))
+      // A lower-priority fallback cannot own a higher-priority streamed tag.
+      if (UsesMergeStrategy.has(tag.tag)) {
         mergeTags.push(tag)
-      else if (tag._d || tag._h)
-        owners.set((tag._d || tag._h)!, tag)
+      }
+      else if (tag._d || tag._h) {
+        const key = (tag._d || tag._h)!
+        const prev = owners.get(key)
+        if (!prev || tag._w! < prev._w!)
+          owners.set(key, tag)
+      }
     }
   }
   if (!owners.size && !mergeTags.length)
