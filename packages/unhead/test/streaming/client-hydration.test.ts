@@ -425,6 +425,125 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it.each([undefined, 'merge'] as const)('keeps streamed props merged into a keyed client script with strategy %s', async (strategy) => {
+      const { document } = setupStreamingDom([{ script: [{ key: 'analytics', src: '/analytics.js', defer: true }] }])
+      const head = createStreamableHead<any>()!
+      const active = head.push({ script: [{ 'key': 'analytics', 'data-client': 'ready', 'tagDuplicateStrategy': strategy }] })
+      await waitForDomUpdate()
+
+      expect(document.querySelector('script[src="/analytics.js"]')?.hasAttribute('defer')).toBe(true)
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('script[src="/analytics.js"]')?.hasAttribute('defer')).toBe(true)
+    })
+
+    it.each(['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'] as const)('keeps streamed tags when %s excludes the client owner', async (hook) => {
+      const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en' } }])
+      const head = createStreamableHead()!
+      let clientId = -1
+      head.hooks.hook(hook, (ctx) => {
+        ctx.tags = ctx.tags.filter(tag => (tag._p! >> 10) !== clientId)
+      })
+      head._b = true
+      const active = head.push({ htmlAttrs: { lang: 'en' } })
+      clientId = active._i
+      head._b = false
+      head.render()
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.documentElement.lang).toBe('en')
+    })
+
+    it.each((['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'] as const).flatMap(hook => (['lang', 'class', 'style'] as const).map(prop => [hook, prop] as const)))('keeps streamed %s attribute props when the client loses %s', async (hook, prop) => {
+      const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en', class: 'server', style: 'color: red' } }])
+      const head = createStreamableHead()!
+      let clientId = -1
+      head.hooks.hook(hook, ({ tags }) => {
+        for (const tag of tags) {
+          if ((tag._p! >> 10) !== clientId)
+            continue
+          if (prop === 'lang')
+            delete tag.props.lang
+          else if (prop === 'class')
+            (tag.props.class as unknown as Set<string>).delete('server')
+          else
+            (tag.props.style as unknown as Map<string, string>).delete('color')
+        }
+      })
+      head._b = true
+      const active = head.push({ htmlAttrs: { lang: 'en', class: 'server hydrated', style: 'color: red; padding: 1px' } })
+      clientId = active._i
+      head._b = false
+      head.render()
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.documentElement.lang).toBe('en')
+      expect(document.documentElement.classList.contains('server')).toBe(true)
+      expect(document.documentElement.style.color).toBe('red')
+    })
+
+    it.each(['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'] as const)('keeps a late streamed title when %s excludes its hidden client owner', async (hook) => {
+      const { window, document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      let clientId = -1
+      head.hooks.hook(hook, (ctx) => {
+        ctx.tags = ctx.tags.filter(tag => (tag._p! >> 10) !== clientId)
+      })
+      head._b = true
+      const active = head.push({ title: 'Client title' })
+      clientId = active._i
+      head._b = false
+      head.render()
+      window.__unhead__.push([{ title: 'Late server title' }])
+      await waitForDomUpdate()
+      expect(document.title).toBe('Late server title')
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.title).toBe('Late server title')
+    })
+
+    it.each(['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'] as const)('releases streamed tags with a client winner through %s', async (hook) => {
+      const { document } = setupStreamingDom([{ title: 'Hydrated', htmlAttrs: { lang: 'en' } }])
+      const head = createStreamableHead()!
+      head.hooks.hook(hook, () => {})
+      const active = head.push({ title: 'Hydrated', htmlAttrs: { lang: 'en' } })
+      await waitForDomUpdate()
+      expect(document.title).toBe('Hydrated')
+      expect(document.documentElement.lang).toBe('en')
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.title).not.toBe('Hydrated')
+      expect(document.documentElement.hasAttribute('lang')).toBe(false)
+    })
+
+    it('releases a keyed script whose props separate client entries fully cover', async () => {
+      const { document } = setupStreamingDom([{ script: [{ key: 'analytics', src: '/analytics.js', defer: true, class: 'server ready', style: 'color: red; padding: 1px' }] }])
+      const head = createStreamableHead<any>()!
+      const first = head.push({ script: [{ key: 'analytics', src: '/analytics.js', class: 'server', style: 'color: red' }] })
+      const second = head.push({ script: [{ key: 'analytics', defer: true, class: 'ready', style: 'padding: 1px' }] })
+      await waitForDomUpdate()
+      const script = document.querySelector('script[src="/analytics.js"]')!
+      expect(script.hasAttribute('defer')).toBe(true)
+      expect(script.classList.contains('server')).toBe(true)
+      expect(script.classList.contains('ready')).toBe(true)
+      expect((script as HTMLElement).style.padding).toBe('1px')
+      first.dispose()
+      second.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('script[src="/analytics.js"]')).toBeNull()
+    })
+
+    it('honors explicit replacement of a keyed streamed script', async () => {
+      const { document } = setupStreamingDom([{ script: [{ key: 'analytics', src: '/analytics.js', defer: true }] }])
+      const head = createStreamableHead<any>()!
+      const active = head.push({ script: [{ 'key': 'analytics', 'data-client': 'ready', 'tagDuplicateStrategy': 'replace' }] })
+      await waitForDomUpdate()
+      expect(document.querySelector('script[data-client="ready"]')?.hasAttribute('src')).toBe(false)
+      active.dispose()
+      await waitForDomUpdate()
+      expect(document.querySelector('script[data-hid="analytics"]')).toBeNull()
+    })
+
     it('preserves a higher-priority streamed tag against a client fallback', async () => {
       const { document } = setupStreamingDom([
         { meta: [{ name: 'description', content: 'Server page description' }] },

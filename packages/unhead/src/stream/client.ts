@@ -1,9 +1,9 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, DomRenderTagContext, HeadEntry, HeadTag, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
-import { UsesMergeStrategy } from '../utils/const'
 import { createHooks } from '../utils/hooks'
+import { isTagMerge, mergeTagProps } from '../utils/tagMerge'
 
 export type { StreamingGlobal, UnheadStreamQueue }
 
@@ -34,15 +34,18 @@ function propValueCoveredBy(client: unknown, streamed: unknown): boolean {
   return streamed === client || String(streamed) === String(client)
 }
 
-function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
-  const owner = owners.get(streamed._d || streamed._h || '')
-  if (!owner)
+function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>, rendered: Map<string, HeadTag>): boolean {
+  const key = streamed._d || streamed._h || ''
+  const owner = owners.get(key)
+  const effective = rendered.get(key)
+  if (!owner || !effective)
     return false
-  if (!UsesMergeStrategy.has(streamed.tag))
+  const next = owner._w! > streamed._w! || (owner._w === streamed._w && owner._p! > streamed._p!) ? owner : streamed
+  if (!isTagMerge(next, next === owner ? streamed : owner))
     return owner._w! <= streamed._w!
-  // Merge tags (htmlAttrs, bodyAttrs, templateParams) combine props across
-  // entries, so compare the effective client tag with every streamed prop.
-  return Object.keys(streamed.props).every(key => propValueCoveredBy(owner.props[key], streamed.props[key]))
+  // Default attribute merges, explicit merges, and matching keys can retain
+  // server props. Release only when client entries cover those props.
+  return Object.keys(streamed.props).every(key => propValueCoveredBy(owner.props[key], streamed.props[key]) && propValueCoveredBy(effective.props[key], streamed.props[key]))
 }
 
 /**
@@ -53,44 +56,38 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
  * are redundant: keeping them leaves orphaned tags behind when the owning
  * component unmounts.
  */
-function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[]) {
+function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[], renders: DomRenderTagContext[]) {
   if (!entries.some(entry => (entry as any)._streamed))
     return
+  // Resolution hooks can remove tags after the entry cache was populated.
+  const rendered = new Map(renders.map(({ tag }) => [tag._d || tag._h || '', tag]))
+  const hooks = (head.hooks as any)._hooks
+  const mutatesTags = ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'].some(name => hooks[name]?.length)
+  const clientIds = mutatesTags && new Set(entries.filter(entry => !(entry as any)._streamed).map(entry => entry._i))
   const owners = new Map<string, HeadTag>()
-  const mergeTags: HeadTag[] = []
+  const clientTags: HeadTag[] = []
   for (const entry of entries) {
     if ((entry as any)._streamed)
       continue
     // The renderer populated these tags with its effective weight and input.
     // Entries excluded from resolution cannot take ownership of streamed tags.
     for (const tag of entry._tags || []) {
-      // A lower-priority fallback cannot own a higher-priority streamed tag.
-      if (UsesMergeStrategy.has(tag.tag)) {
-        mergeTags.push(tag)
-      }
-      else if (tag._d || tag._h) {
-        const key = (tag._d || tag._h)!
-        const prev = owners.get(key)
-        if (!prev || tag._w! < prev._w!)
-          owners.set(key, tag)
-      }
+      const effective = rendered.get(tag._d || tag._h || '')
+      // A server winner hides the client's hook result. Replaying hooks would
+      // duplicate their side effects, so retain this ambiguous streamed entry.
+      if (effective && (!clientIds || clientIds.has(effective._p! >> 10)))
+        clientTags.push(tag)
     }
   }
-  if (!owners.size && !mergeTags.length)
+  if (!clientTags.length)
     return
-  // Only merge tags need the renderer's weight/order and effective props.
-  for (const next of mergeTags.sort((a, b) => a._w! - b._w! || a._p! - b._p!)) {
+  for (const next of clientTags.sort((a, b) => a._w! - b._w! || a._p! - b._p!)) {
     const key = next._d || next._h || ''
     if (!key)
       continue
     const prev = owners.get(key)
-    if (prev && (!next.tagDuplicateStrategy || next.tagDuplicateStrategy === 'merge')) {
-      const props = { ...prev.props, ...next.props }
-      if (next.props.class)
-        props.class = new Set([...(prev.props.class || []) as any, ...next.props.class as any]) as any
-      if (next.props.style)
-        props.style = new Map([...(prev.props.style || []) as any, ...next.props.style as any]) as any
-      owners.set(key, { ...next, props })
+    if (prev && isTagMerge(next, prev)) {
+      owners.set(key, { ...next, props: mergeTagProps(prev.props, next.props) })
     }
     else if (!prev || (next._w === prev._w ? next._p! > prev._p! : next._w! < prev._w!)) {
       owners.set(key, next)
@@ -100,7 +97,7 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEnt
   for (const entry of entries) {
     if (!(entry as any)._streamed)
       continue
-    if (entry._tags?.every(tag => tagCovers(tag, owners))) {
+    if (entry._tags?.every(tag => tagCovers(tag, owners, rendered))) {
       head.entries.delete(entry._i)
       released = true
     }
@@ -117,7 +114,7 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
   // Batches the queue receives are server patches, not hydration pushes.
   let streamDepth = 0
   let resolveContext: { entries: HeadEntry<any>[] } | undefined
-  let deferredEntries: HeadEntry<any>[] | undefined
+  let deferred: { entries: HeadEntry<any>[], renders: DomRenderTagContext[] } | undefined
   head.hooks.hook('entries:resolve', (ctx) => {
     // Keep the context so later hooks can replace its selected entries.
     resolveContext = ctx
@@ -130,24 +127,24 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
     }
     finally {
       streamDepth--
-      if (streamDepth === 0 && deferredEntries) {
-        const entries = deferredEntries
-        deferredEntries = undefined
-        releaseCoveredStreamedEntries(head, entries)
+      if (streamDepth === 0 && deferred) {
+        const { entries, renders } = deferred
+        deferred = undefined
+        releaseCoveredStreamedEntries(head, entries, renders)
       }
     }
   }
   // Wait for resolution so batches, patches, and per-render weight overrides
   // share the renderer's ownership decision.
-  head.hooks.hook('dom:rendered', () => {
+  head.hooks.hook('dom:rendered', ({ renders }) => {
     const entries = resolveContext?.entries
     resolveContext = undefined
     if (!entries)
       return
     if (streamDepth === 0)
-      releaseCoveredStreamedEntries(head, entries)
+      releaseCoveredStreamedEntries(head, entries, renders)
     else
-      deferredEntries = entries
+      deferred = { entries, renders }
   })
 }
 
