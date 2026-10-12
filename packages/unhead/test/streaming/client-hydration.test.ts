@@ -424,6 +424,40 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it.each([
+      ['attributes', { 'lang': 'en', 'data-theme': 'dark' }, { lang: 'en' }, { 'data-theme': 'dark' }, 'lang'],
+      ['classes', { class: 'page dark' }, { class: 'page' }, { class: 'dark' }, 'class'],
+      ['styles', { style: 'color: red; background-color: black' }, { style: 'color: red' }, { style: 'background-color: black' }, 'style'],
+    ] as const)('releases streamed %s covered by separate client entries', async (_, streamed, first, second, attribute) => {
+      const { document } = setupStreamingDom([{ htmlAttrs: streamed }])
+      const head = createStreamableHead()!
+      const a = head.push({ htmlAttrs: first })
+      const b = head.push({ htmlAttrs: second })
+      await waitForDomUpdate()
+
+      a.dispose()
+      b.dispose()
+      await waitForDomUpdate()
+
+      expect(document.documentElement.getAttribute(attribute) ?? '').toBe('')
+    })
+
+    it('keeps streamed attributes when the effective client value differs', async () => {
+      const { document } = setupStreamingDom([{ htmlAttrs: { 'lang': 'en', 'data-theme': 'dark' } }])
+      const head = createStreamableHead()!
+      const a = head.push({ htmlAttrs: { lang: 'en' } })
+      const b = head.push({ htmlAttrs: { 'lang': 'fr', 'data-theme': 'dark' } })
+      await waitForDomUpdate()
+      expect(document.documentElement.lang).toBe('fr')
+
+      a.dispose()
+      b.dispose()
+      await waitForDomUpdate()
+
+      expect(document.documentElement.lang).toBe('en')
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    })
+
     it('releases a streamed entry a hydrating entry covers', async () => {
       const { document } = setupStreamingDom([
         { title: 'Async page', meta: [{ name: 'description', content: 'Async description' }] },

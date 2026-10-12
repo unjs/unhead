@@ -6,6 +6,7 @@ import { UsesMergeStrategy } from '../utils/const'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
+import { dedupeTags } from '../utils/resolve'
 
 export type { StreamingGlobal, UnheadStreamQueue }
 
@@ -30,6 +31,9 @@ function entryTags(head: Unhead<any>, entry: HeadEntry<any>): HeadTag[] {
   const tags = normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || [])
   for (let i = 0; i < tags.length; i++) {
     const tag = tags[i]
+    Object.assign(tag, entry.options)
+    tag._w = head.resolvedOptions._tagWeight?.(tag) ?? 100
+    tag._p = (entry._i << 10) + i
     tag._d = dedupeKey(tag)
     if (!tag._d)
       tag._h = hashTag(tag)
@@ -37,17 +41,15 @@ function entryTags(head: Unhead<any>, entry: HeadEntry<any>): HeadTag[] {
   return tags
 }
 
-function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag[]>): boolean {
-  const candidates = owners.get(streamed._d || streamed._h || '')
-  if (!candidates)
+function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
+  const owner = owners.get(streamed._d || streamed._h || '')
+  if (!owner)
     return false
   if (!UsesMergeStrategy.has(streamed.tag))
     return true
   // Merge tags (htmlAttrs, bodyAttrs, templateParams) combine props across
-  // entries, so ownership only transfers when a client tag carries every prop
-  // the streamed tag contributed.
-  return candidates.some(owner =>
-    Object.keys(streamed.props).every(key => samePropValue(owner.props[key], streamed.props[key])))
+  // entries, so compare the effective client tag with every streamed prop.
+  return Object.keys(streamed.props).every(key => samePropValue(owner.props[key], streamed.props[key]))
 }
 
 /**
@@ -59,31 +61,24 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag[]>): boolean {
  * component unmounts.
  */
 function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
-  let owners: Map<string, HeadTag[]> | undefined
+  const tags: HeadTag[] = []
   let hasStreamed = false
   for (const entry of head.entries.values()) {
     if ((entry as any)._streamed) {
       hasStreamed = true
       continue
     }
-    for (const tag of entryTags(head, entry)) {
-      const key = tag._d || tag._h
-      if (!key)
-        continue
-      const list = owners?.get(key)
-      if (list)
-        list.push(tag)
-      else
-        (owners ||= new Map()).set(key, [tag])
-    }
+    tags.push(...entryTags(head, entry))
   }
-  if (!hasStreamed || !owners)
+  if (!hasStreamed || !tags.length)
     return
+  const owners = new Map<string, HeadTag>()
+  dedupeTags({ tags, tagMap: owners })
   let released = false
   for (const [key, entry] of [...head.entries]) {
     if (!(entry as any)._streamed)
       continue
-    if (entryTags(head, entry).every(tag => tagCovers(tag, owners!))) {
+    if (entryTags(head, entry).every(tag => tagCovers(tag, owners))) {
       head.entries.delete(key)
       released = true
     }
