@@ -425,6 +425,36 @@ describe('streaming client hydration', () => {
   })
 
   describe('streamed entry release', () => {
+    it('keeps streamed tags when a cached client entry is excluded', async () => {
+      const { window, document } = setupStreamingDom([])
+      let excludeClient = false
+      const head = createStreamableHead()!
+      head.hooks.hook('entries:resolve', (ctx) => {
+        if (excludeClient)
+          ctx.entries = ctx.entries.filter(entry => (entry as any)._streamed)
+      })
+      const active = head.push({ title: 'Client title' })
+      excludeClient = true
+      window.__unhead__.push([{ title: 'Streamed title' }])
+      head.dirty = true
+      head.render()
+      active.dispose()
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Streamed title')
+    })
+
+    it('releases late streamed tags already covered by a client entry', async () => {
+      const { window, document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      const active = head.push({ meta: [{ name: 'description', content: 'Client description' }] })
+      window.__unhead__.push([{ meta: [{ name: 'description', content: 'Late description' }] }])
+      active.dispose()
+      await waitForDomUpdate()
+
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBeUndefined()
+    })
+
     it('releases streamed attributes after rendering with custom weights', async () => {
       const { document } = setupStreamingDom([{ htmlAttrs: { lang: 'en' } }])
       const head = createStreamableHead()!

@@ -1,5 +1,5 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadTag, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { UsesMergeStrategy } from '../utils/const'
@@ -44,10 +44,10 @@ function tagCovers(streamed: HeadTag, owners: Map<string, HeadTag>): boolean {
  * are redundant: keeping them leaves orphaned tags behind when the owning
  * component unmounts.
  */
-function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
+function releaseCoveredStreamedEntries(head: ClientUnhead<any>, entries: HeadEntry<any>[]) {
   const tags: HeadTag[] = []
   let hasStreamed = false
-  for (const entry of head.entries.values()) {
+  for (const entry of entries) {
     if ((entry as any)._streamed) {
       hasStreamed = true
       continue
@@ -62,11 +62,11 @@ function releaseCoveredStreamedEntries(head: ClientUnhead<any>) {
   const owners = new Map<string, HeadTag>()
   dedupeTags({ tags, tagMap: owners })
   let released = false
-  for (const [key, entry] of [...head.entries]) {
+  for (const entry of entries) {
     if (!(entry as any)._streamed)
       continue
     if (entry._tags?.every(tag => tagCovers(tag, owners))) {
-      head.entries.delete(key)
+      head.entries.delete(entry._i)
       released = true
     }
   }
@@ -81,6 +81,12 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
   ;(head as any)._streamedRelease = true
   // Batches the queue receives are server patches, not hydration pushes.
   let streamDepth = 0
+  let resolveContext: { entries: HeadEntry<any>[] } | undefined
+  let deferredEntries: HeadEntry<any>[] | undefined
+  head.hooks.hook('entries:resolve', (ctx) => {
+    // Keep the context so later hooks can replace its selected entries.
+    resolveContext = ctx
+  })
   const queuePush = streamQueue.push.bind(streamQueue)
   streamQueue.push = (entries: any[]) => {
     streamDepth++
@@ -89,13 +95,24 @@ function installStreamedEntryRelease(head: ClientUnhead<any>, streamQueue: Unhea
     }
     finally {
       streamDepth--
+      if (streamDepth === 0 && deferredEntries) {
+        const entries = deferredEntries
+        deferredEntries = undefined
+        releaseCoveredStreamedEntries(head, entries)
+      }
     }
   }
   // Wait for resolution so batches, patches, and per-render weight overrides
   // share the renderer's ownership decision.
   head.hooks.hook('dom:rendered', () => {
+    const entries = resolveContext?.entries
+    resolveContext = undefined
+    if (!entries)
+      return
     if (streamDepth === 0)
-      releaseCoveredStreamedEntries(head)
+      releaseCoveredStreamedEntries(head, entries)
+    else
+      deferredEntries = entries
   })
 }
 
