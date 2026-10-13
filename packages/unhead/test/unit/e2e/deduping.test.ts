@@ -285,4 +285,13 @@ describe('unhead e2e deduping', () => {
       </body></html>"
     `)
   })
+
+  it('dedupes JSON-LD pushed twice with a different key order', async () => {
+    const head = createClientHeadWithContext()
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: { '@type': 'Organization', 'name': 'Acme' } }] })
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: { 'name': 'Acme', '@type': 'Organization' } }] })
+
+    const data = await renderSSRHead(head)
+    expect(data.headTags.match(/<script/g)).toHaveLength(1)
+  })
 })
