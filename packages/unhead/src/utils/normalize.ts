@@ -1,10 +1,10 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
-import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
+import { DupeableTags, hasContent, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-function normalizeStyleClassProps(
+export function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
 ): Map<string, string> | Set<string> {
@@ -18,7 +18,7 @@ function normalizeStyleClassProps(
       i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
     }
     else {
-      v.split(' ').forEach(c => c && store.add(c))
+      v.split(/[\t\n\f\r ]+/).forEach(c => c && store.add(c))
     }
   }
   if (typeof value === 'string') {
@@ -47,6 +47,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
 
   for (const prop in input) {
+    if (prop === 'attrs' && input.attrs && typeof input.attrs === 'object')
+      continue
     if (isUnsafeKey(prop))
       continue
     const isData = prop.startsWith('data-')
@@ -81,6 +83,22 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }
   }
+  const attrs = input.attrs
+  if (attrs && typeof attrs === 'object') {
+    const encoding = tag._attrEncoding ||= {}
+    for (const name in attrs) {
+      if (!Object.hasOwn(attrs, name))
+        continue
+      const key = name.toLowerCase()
+      if (isUnsafeKey(key) || !key || INVALID_ATTR_NAME_RE.test(key))
+        continue
+      const value = attrs[name]
+      if (value !== undefined) {
+        tag.props[key] = value === null ? false : value === true && (key === 'class' || key === 'style') ? '' : value
+        encoding[key] = 'text'
+      }
+    }
+  }
   return tag
 }
 
@@ -103,6 +121,10 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
+  const hasAttrs = input?.attrs && typeof input.attrs === 'object'
+  // Empty author meta input removes an earlier value. Literal attributes may describe marker tags.
+  if (tag.tag === 'meta' && !hasAttrs && !hasContent(tag.props.content) && !tag.props['http-equiv'] && !tag.props.charset)
+    tag.props.content = null as any
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
@@ -112,7 +134,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   if (Array.isArray(tag.props.content)) {
     const tags: HeadTag[] = []
     for (const content of tag.props.content) {
-      tags.push({ ...tag, props: { ...tag.props, content } })
+      tags.push({ ...tag, props: { ...tag.props, content: !hasAttrs && !hasContent(content) ? null : content } })
     }
     return tags
   }
