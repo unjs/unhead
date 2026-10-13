@@ -30,7 +30,7 @@ export default defineConfig(({ command, ssrBuild }) => ({
       build: true,
       outputDir: '.vite-inspect'
     }),
-    Unhead(),
+    Unhead({ experimental: { precompile: true } }),
     vuePlugin(),
     vueJsx(),
     {

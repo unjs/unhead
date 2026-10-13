@@ -18,7 +18,7 @@ export default defineConfig({
       ],
     }),
     vue(),
-    Unhead(),
+    Unhead({ experimental: { precompile: true } }),
   ],
   optimizeDeps: {
     include: ['vue-router'],
