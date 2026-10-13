@@ -1,8 +1,10 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
+import type { ExtractedTemplateCache } from '../server/transformHtmlTemplate'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
-import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
+import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 import { createHead } from '../server/createHead'
+import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
@@ -638,6 +640,21 @@ interface StreamingTemplateLayout {
   endAfterBodyTags: string
 }
 
+/**
+ * The shell index derivation below assumes the template's indexes are the
+ * FIRST occurrences of their tags, as `parseHtmlForIndexes` (and the literal
+ * re-parse fallback) would find them. Extraction indexes come from a scanner
+ * that can differ on malformed templates, e.g. a stray `</body>` before the
+ * `<body>` tag or a `<body` hidden inside another tag. When they disagree,
+ * the caller must take the re-parse path.
+ */
+function indexesAreFirstOccurrences(html: string, indexes: PreparedHtmlTemplateWithIndexes['indexes']): boolean {
+  return html.indexOf('<html') === indexes.htmlTagStart
+    && html.indexOf('</head>') === indexes.headTagEnd
+    && html.indexOf('<body') === indexes.bodyTagStart
+    && html.indexOf('</body>') === indexes.bodyCloseTagStart
+}
+
 function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
   const html = parsed.html
   const bodyEnd = parsed.indexes.bodyTagEnd
@@ -671,7 +688,7 @@ function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes):
   // template), `shellPart` is a prefix of `html`, so a first
   // occurrence that fits entirely inside it carries over unchanged.
   let shellTemplate: PreparedHtmlTemplateWithIndexes
-  if (bodyCloseStart >= bodyEnd) {
+  if (bodyCloseStart >= bodyEnd && indexesAreFirstOccurrences(html, parsed.indexes)) {
     const shellLen = shellPart.length
     const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes
     const shellHtmlTagStart = (htmlTagStart >= 0 && htmlTagStart + 5 <= shellLen) ? htmlTagStart : -1
@@ -712,7 +729,9 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
   const cache = preparedStreamingLayouts ||= new WeakMap()
   let layout = cache.get(template)
   if (layout === undefined) {
-    layout = createStreamingTemplateLayout(template) || null
+    // The template's own head tags move to entry 0, so the layout must split
+    // the HTML those tags were lifted out of.
+    layout = createStreamingTemplateLayout(extractPreparedTemplate(template).template) || null
     if (layout) {
       Object.freeze(layout.shellTemplate.indexes)
       Object.freeze(layout.shellTemplate)
@@ -753,10 +772,29 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
+  let cached: ExtractedTemplateCache | undefined
+  let parsed: PreparedHtmlTemplateWithIndexes
+  if (typeof template === 'string') {
+    parsed = preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template)
+  }
+  else if (preRenderedState) {
+    parsed = template
+  }
+  else {
+    cached = extractPreparedTemplate(template)
+    parsed = cached.template
+  }
+
+  // Lift the template's head tags into entry 0 (mirrors transformHtmlTemplate)
+  // so app tags dedupe against them instead of doubling up in the shell.
+  // A pre-rendered payload was rendered before this call without those tags;
+  // pushing entry 0 now would leak them into the stream chunks.
+  if (!preRenderedState)
+    pushExtractedTemplateEntry(head, cached, parsed)
+
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
 
-  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-  const layout = typeof template === 'string'
+  const layout = typeof template === 'string' || preRenderedState
     ? createStreamingTemplateLayout(parsed)
     : getPreparedStreamingLayout(template)
 

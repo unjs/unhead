@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyHeadToHtml, parseHtmlForIndexes } from '../../../src/parser'
+import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../../../src/parser'
 import { createBootstrapScript, prepareStreamingTemplate } from '../../../src/stream/server'
 import { createStreamableServerHead } from '../../util'
 
@@ -7,18 +7,21 @@ import { createStreamableServerHead } from '../../util'
 // indexes by literally re-parsing `${shellPart}</body></html>`. The optimized
 // version computes those indexes from the original parse; this fuzz locks
 // byte-identical behavior against the reference, including malformed inputs.
+// Pre-rendered payloads preserve template tags. Other calls lift them into
+// entry 0, so the split uses the extracted HTML.
 function oldPrepareStreamingTemplate(head: any, template: string, preRenderedState?: any) {
   const ssr = preRenderedState ?? head.render()
   const streamKey = head.resolvedOptions.experimentalStreamKey || '__unhead__'
   // The fuzz locks shell-index derivation, not the bootstrap payload, so the
   // reference takes the script from the real function.
   const bootstrapScript = createBootstrapScript(streamKey)
-  const parsed = parseHtmlForIndexes(template)
+  const parsed = preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template)
+  const html = parsed.html
   const bodyEnd = parsed.indexes.bodyTagEnd
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart
   let parts: any
   if (bodyEnd >= 0 && bodyCloseStart >= 0) {
-    const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
+    const bodyInterior = html.substring(bodyEnd, bodyCloseStart)
     const markerMatch = bodyInterior.match(/<!--\s*(?:app-html|ssr-outlet)\s*-->/)
     let beforeStream: string
     let afterStream: string
@@ -30,8 +33,8 @@ function oldPrepareStreamingTemplate(head: any, template: string, preRenderedSta
       beforeStream = ''
       afterStream = bodyInterior
     }
-    const shellPart = template.substring(0, bodyEnd) + beforeStream
-    const endPart = template.substring(bodyCloseStart)
+    const shellPart = html.substring(0, bodyEnd) + beforeStream
+    const endPart = html.substring(bodyCloseStart)
     const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
     const shell = applyHeadToHtml(shellParsed, {
       htmlAttrs: ssr.htmlAttrs,
