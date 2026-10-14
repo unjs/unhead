@@ -268,7 +268,11 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   for (const t of ctx.tags) {
     if (t.props === undefined)
       t.props = t.attrs
-    else if (t.props !== t.attrs && (preHookRefs === undefined || t.props !== preHookRefs.get(t)))
+    // Replaced tags have no baseline identity. Their `attrs` field is
+    // canonical, because a stale `props` reference may have been copied with
+    // the rest of the tag. Only a known original tag can establish that props
+    // was reassigned during a hook.
+    else if (t.props !== t.attrs && preHookRefs?.has(t) && t.props !== preHookRefs.get(t))
       t.attrs = t.props!
     else if (t.props !== t.attrs)
       t.props = t.attrs

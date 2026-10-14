@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createHead, renderSSRHead } from '../../../src/server'
+import { resolveTags } from '../../../src/utils/resolve'
 
 describe('tag.props / tag.attrs alias', () => {
   it('a tags:resolve hook reading tag.props sees the same values as tag.attrs', async () => {
@@ -77,6 +78,27 @@ describe('tag.props / tag.attrs alias', () => {
     const result = await renderSSRHead(head)
     expect(result.headTags).toContain('content="replaced via attrs"')
     expect(result.headTags).not.toContain('original')
+  })
+
+  it('a hook replacing a tag preserves its attrs replacement', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          const index = tags.findIndex(tag => tag.tag === 'meta')
+          const tag = tags[index]
+          tags[index] = { ...tag, attrs: { ...tag.attrs, content: 'new' } }
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'original' }] })
+
+    const tags = resolveTags(head)
+    const tag = tags.find(tag => tag.tag === 'meta')!
+    const result = await renderSSRHead(head, { resolvedTags: tags })
+
+    expect(result.headTags).toContain('content="new"')
+    expect(tag.attrs).toBe(tag.props)
   })
 
   it('a hook pushing an attrs-only script tag with innerHTML renders without throwing', async () => {
