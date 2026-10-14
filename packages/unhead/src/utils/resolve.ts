@@ -46,12 +46,12 @@ export interface ResolveTagsOptions {
 function cloneTagsInPlace(tags: HeadTag[]) {
   for (let i = 0; i < tags.length; i++) {
     const t = tags[i]
-    const props: Record<string, any> = { ...t.props }
-    if (props.class instanceof Set)
-      props.class = new Set(props.class)
-    if (props.style instanceof Map)
-      props.style = new Map(props.style)
-    tags[i] = { ...t, props }
+    const attrs: Record<string, any> = { ...t.attrs }
+    if (attrs.class instanceof Set)
+      attrs.class = new Set(attrs.class)
+    if (attrs.style instanceof Map)
+      attrs.style = new Map(attrs.style)
+    tags[i] = { ...t, attrs, props: attrs }
   }
 }
 
@@ -85,14 +85,14 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
+      const attrs = { ...prev.attrs }
+      for (const p in next.attrs) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        attrs[p] = p === 'style'
+          ? new Map([...(prev.attrs.style || new Map()) as any, ...next.attrs[p] as any])
+          : p === 'class' ? new Set([...(prev.attrs.class || []) as any, ...next.attrs[p] as any]) : next.attrs[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k, { ...next, attrs, props: attrs })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -135,15 +135,15 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
 function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
-    const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
+    const { innerHTML, tag, attrs } = t
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(attrs) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!hasContent(attrs.content) && !attrs['http-equiv'] && !attrs.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
-      const type = String(props.type)
+      const type = String(attrs.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
@@ -239,17 +239,43 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
+  let hasTagMutatingHooks = false
   for (const name in hooks) {
     if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
       cloneTagsInPlace(ctx.tags)
+      hasTagMutatingHooks = true
       break
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
+  // snapshot the alias refs before tags:* hooks run so the reconcile pass
+  // below can tell which side a hook reassigned
+  let preHookRefs: Map<HeadTag, unknown> | undefined
+  if (hasTagMutatingHooks) {
+    preHookRefs = new Map()
+    for (const t of ctx.tags)
+      preHookRefs.set(t, t.attrs)
+  }
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
+  // A hook may desync the `props`/`attrs` alias, or push tags in a shape
+  // without the deprecated `props` field. Reconcile both ways: the canonical
+  // `attrs` is authoritative unless the deprecated `props` was itself
+  // reassigned, and an absent `props` joins the alias without touching attrs.
+  for (const t of ctx.tags) {
+    if (t.props === undefined)
+      t.props = t.attrs
+    // Replaced tags have no baseline identity. Their `attrs` field is
+    // canonical, because a stale `props` reference may have been copied with
+    // the rest of the tag. Only a known original tag can establish that props
+    // was reassigned during a hook.
+    else if (t.props !== t.attrs && preHookRefs?.has(t) && t.props !== preHookRefs.get(t))
+      t.attrs = t.props!
+    else if (t.props !== t.attrs)
+      t.props = t.attrs
+  }
   return sanitizeTagsInPlace(ctx.tags)
 }

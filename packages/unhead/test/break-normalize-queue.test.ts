@@ -43,7 +43,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // This should pass but may fail with the original buggy code
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
-    expect(tags.find(t => t.tag === 'meta' && t.props.name === 'description')?.props.content).toBe('Init description')
+    expect(tags.find(t => t.tag === 'meta' && t.attrs.name === 'description')?.attrs.content).toBe('Init description')
   })
 
   it('breaks the normalize queue by examining internal state', async () => {

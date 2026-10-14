@@ -29,6 +29,9 @@ describe('tag priority', () => {
           "_h": "script:src:/very-important-script.js",
           "_p": 1024,
           "_w": 42,
+          "attrs": {
+            "src": "/very-important-script.js",
+          },
           "props": {
             "src": "/very-important-script.js",
           },
@@ -40,6 +43,9 @@ describe('tag priority', () => {
           "_h": "script:src:/not-important-script.js",
           "_p": 2048,
           "_w": 50,
+          "attrs": {
+            "src": "/not-important-script.js",
+          },
           "props": {
             "src": "/not-important-script.js",
           },
@@ -294,7 +300,7 @@ describe('tag priority', () => {
     const head = createServerHeadWithContext({
       tagWeight(tag) {
         // Promote all non-pragma meta tags above styles (60)
-        if (tag.tag === 'meta' && !tag.props.charset && tag.props.name !== 'viewport' && tag.props['http-equiv'] !== 'content-security-policy') {
+        if (tag.tag === 'meta' && !tag.attrs.charset && tag.attrs.name !== 'viewport' && tag.attrs['http-equiv'] !== 'content-security-policy') {
           return 55
         }
         return capoTagWeight(tag)
