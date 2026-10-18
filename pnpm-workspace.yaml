@@ -73,7 +73,7 @@ catalog:
   '@vitejs/devtools-kit': ^0.7.6
   '@vue/compiler-sfc-vapor': npm:@vue/compiler-sfc@3.6.0-rc.11
   '@vue/server-renderer': ^3.5.42
-  '@vueuse/nuxt': ^14.4.0
+  '@vueuse/nuxt': ^15.0.0
   bumpp: ^12.3.0
   citty: ^0.2.2
   devalue: ^5.9.2
