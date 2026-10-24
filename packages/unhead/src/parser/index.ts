@@ -18,7 +18,6 @@ const EQUALS_CHAR = 61 // '='
 const QUOTE_CHAR = 34 // '"'
 const APOS_CHAR = 39 // '\''
 const EXCLAMATION_CHAR = 33 // '!'
-const BACKSLASH_CHAR = 92 // '\'
 const DASH_CHAR = 45 // '-'
 
 // Map string tag names to numeric constants
@@ -636,7 +635,8 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
 
 /**
  * Find the closing tag for a given tag name
- * For script and style tags, this handles quotes to avoid matching closing tags inside string literals
+ * For script and style tags, content ends at the first closing tag as it does in browsers,
+ * so quotes in comments or regex literals can't hide it
  */
 function findClosingTag(html: string, startPos: number, tagName: string): number {
   const tagId = TagIdMap[tagName as keyof typeof TagIdMap]
@@ -649,48 +649,19 @@ function findClosingTag(html: string, startPos: number, tagName: string): number
     return index === -1 ? -1 : index
   }
 
-  // Quote-aware search for script and style tags
   const closingTag = `</${tagName}`
-  let pos = startPos
-  let inSingleQuote = false
-  let inDoubleQuote = false
-  let inBacktick = false
-  let lastCharWasBackslash = false
-
-  while (pos < html.length) {
-    const currentCharCode = html.charCodeAt(pos)
-
-    // Handle quote state transitions (only if not escaped)
-    if (!lastCharWasBackslash) {
-      if (currentCharCode === APOS_CHAR && !inDoubleQuote && !inBacktick) {
-        inSingleQuote = !inSingleQuote
-      }
-      else if (currentCharCode === QUOTE_CHAR && !inSingleQuote && !inBacktick) {
-        inDoubleQuote = !inDoubleQuote
-      }
-      else if (currentCharCode === 96 && !inSingleQuote && !inDoubleQuote) { // backtick
-        inBacktick = !inBacktick
-      }
+  let pos = html.indexOf(closingTag, startPos)
+  while (pos !== -1) {
+    // Verify it's a complete tag (followed by whitespace or >)
+    const afterTagPos = pos + closingTag.length
+    if (afterTagPos >= html.length) {
+      return pos
     }
-
-    // Track escape character state
-    lastCharWasBackslash = currentCharCode === BACKSLASH_CHAR && !lastCharWasBackslash
-
-    // Check for closing tag only when not inside quotes
-    const inQuotes = inSingleQuote || inDoubleQuote || inBacktick
-    if (!inQuotes && html.startsWith(closingTag, pos)) {
-      // Verify it's a complete tag (followed by whitespace or >)
-      const afterTagPos = pos + closingTag.length
-      if (afterTagPos >= html.length) {
-        return pos
-      }
-      const nextChar = html.charCodeAt(afterTagPos)
-      if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
-        return pos
-      }
+    const nextChar = html.charCodeAt(afterTagPos)
+    if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
+      return pos
     }
-
-    pos++
+    pos = html.indexOf(closingTag, afterTagPos)
   }
 
   return -1

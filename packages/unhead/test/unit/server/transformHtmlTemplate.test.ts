@@ -146,6 +146,33 @@ describe('transformHtmlTemplate edge cases', () => {
       expect(result).toContain('Content')
     })
 
+    it('ends script and style content at the first closing tag with unbalanced quotes', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>
+// don't flash the wrong theme
+document.documentElement.dataset.theme = 'dark'
+</script><style>/* it's dark */ body { color: white }</style></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>
+// don't flash the wrong theme
+document.documentElement.dataset.theme = 'dark'
+</script>
+<style>/* it's dark */ body { color: white }</style></head><body>Content</body></html>`)
+    })
+
+    it('does not merge separate scripts when quotes are balanced across them', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>// it's first</script><script src="/a.js"></script><script>// it's last</script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>// it's first</script>
+<script src="/a.js"></script>
+<script>// it's last</script></head><body>Content</body></html>`)
+    })
+
     it('handles style tags with complex CSS', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Test Title' })
