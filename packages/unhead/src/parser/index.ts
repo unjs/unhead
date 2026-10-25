@@ -649,22 +649,66 @@ function findClosingTag(html: string, startPos: number, tagName: string): number
     return index === -1 ? -1 : index
   }
 
-  const closingTag = `</${tagName}`
-  let pos = html.indexOf(closingTag, startPos)
-  while (pos !== -1) {
-    // Verify it's a complete tag (followed by whitespace or >)
-    const afterTagPos = pos + closingTag.length
-    if (afterTagPos >= html.length) {
-      return pos
-    }
-    const nextChar = html.charCodeAt(afterTagPos)
-    if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
-      return pos
-    }
-    pos = html.indexOf(closingTag, afterTagPos)
+  if (tagId === TAG_SCRIPT) {
+    return findScriptEnd(html, startPos)
   }
 
+  const closingTag = `</${tagName}`
+  let pos = html.indexOf(closingTag, startPos)
+  while (pos !== -1 && !isTagAt(html, pos, closingTag)) {
+    pos = html.indexOf(closingTag, pos + closingTag.length)
+  }
+  return pos
+}
+
+/**
+ * Find the closing script tag, following the browser's script data states:
+ * after `<!--`, a nested `<script>` keeps the next `</script>` as text until `-->`
+ */
+function findScriptEnd(html: string, startPos: number): number {
+  let escaped = false
+  let doubleEscaped = false
+  for (let pos = startPos; pos < html.length; pos++) {
+    const c = html.charCodeAt(pos)
+    if (c === GT_CHAR) {
+      // `-->` leaves both escaped states, its dashes may be the ones of `<!--`
+      if (escaped && html.charCodeAt(pos - 1) === DASH_CHAR && html.charCodeAt(pos - 2) === DASH_CHAR) {
+        escaped = false
+        doubleEscaped = false
+      }
+    }
+    else if (c === LT_CHAR) {
+      if (isTagAt(html, pos, '</script')) {
+        if (!doubleEscaped) {
+          return pos
+        }
+        doubleEscaped = false
+      }
+      else if (!escaped && html.startsWith('<!--', pos)) {
+        escaped = true
+        pos += 3
+      }
+      else if (escaped && !doubleEscaped && isTagAt(html, pos, '<script')) {
+        doubleEscaped = true
+      }
+    }
+  }
   return -1
+}
+
+/**
+ * Check for a complete tag name at pos (followed by whitespace, > or the end of input)
+ */
+function isTagAt(html: string, pos: number, tag: string): boolean {
+  if (!html.startsWith(tag, pos)) {
+    return false
+  }
+  const afterTagPos = pos + tag.length
+  if (afterTagPos >= html.length) {
+    return true
+  }
+  const nextChar = html.charCodeAt(afterTagPos)
+  return nextChar === GT_CHAR || isWhitespace(nextChar)
 }
 
 /**

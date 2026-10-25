@@ -173,6 +173,27 @@ document.documentElement.dataset.theme = 'dark'
 <script>// it's last</script></head><body>Content</body></html>`)
     })
 
+    it('keeps a closing tag inside a commented nested script as script text', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- document.write('<script src="/a.js"></script>') --></script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- document.write('<script src="/a.js"><\\/script>') --></script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends a commented script at the first closing tag when no nested script is open', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- <script> --></script><script><!-- </script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- <script> --></script>
+<script><!-- </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
     it('handles style tags with complex CSS', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Test Title' })
