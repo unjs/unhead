@@ -81,7 +81,6 @@ export function precomputeEntryTags(input: any, entryIndex: number, propResolver
  * const head = createHead({ init: [appHead] })
  * ```
  */
-/* @__NO_SIDE_EFFECTS__ */
 export function prepareHeadInput<T extends object>(input: T): T {
   const prepared = preparedInputs ||= new WeakMap()
   if (!prepared.has(input))
