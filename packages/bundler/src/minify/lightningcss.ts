@@ -1,6 +1,8 @@
 import type { MinifyFn } from '../unplugin/MinifyTransform'
 import { transform } from 'lightningcss'
 
+export type { MinifyFn }
+
 export function createCSSMinifier(): MinifyFn {
   return async (code: string) => {
     const result = transform({
