@@ -19,6 +19,9 @@ const QUOTE_CHAR = 34 // '"'
 const APOS_CHAR = 39 // '\''
 const EXCLAMATION_CHAR = 33 // '!'
 const DASH_CHAR = 45 // '-'
+const FORM_FEED_CHAR = 12 // '\f'
+const UPPER_A_CHAR = 65 // 'A'
+const UPPER_Z_CHAR = 90 // 'Z'
 
 // Map string tag names to numeric constants
 export const TagIdMap = /* @__PURE__ */ {
@@ -635,28 +638,18 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
 
 /**
  * Find the closing tag for a given tag name
- * For script and style tags, content ends at the first closing tag as it does in browsers,
+ * Content ends at the first closing tag as it does in browsers,
  * so quotes in comments or regex literals can't hide it
  */
 function findClosingTag(html: string, startPos: number, tagName: string): number {
-  const tagId = TagIdMap[tagName as keyof typeof TagIdMap]
-  const isScriptOrStyle = tagId === TAG_SCRIPT || tagId === TAG_STYLE
-
-  if (!isScriptOrStyle) {
-    // Simple search for non-script/style tags
-    const closingTag = `</${tagName}`
-    const index = html.indexOf(closingTag, startPos)
-    return index === -1 ? -1 : index
-  }
-
-  if (tagId === TAG_SCRIPT) {
+  if (TagIdMap[tagName as keyof typeof TagIdMap] === TAG_SCRIPT) {
     return findScriptEnd(html, startPos)
   }
 
   const closingTag = `</${tagName}`
-  let pos = html.indexOf(closingTag, startPos)
+  let pos = html.indexOf('</', startPos)
   while (pos !== -1 && !isTagAt(html, pos, closingTag)) {
-    pos = html.indexOf(closingTag, pos + closingTag.length)
+    pos = html.indexOf('</', pos + 2)
   }
   return pos
 }
@@ -697,18 +690,27 @@ function findScriptEnd(html: string, startPos: number): number {
 }
 
 /**
- * Check for a complete tag name at pos (followed by whitespace, > or the end of input)
+ * Check for a complete tag name at pos, as the HTML tokenizer reads it:
+ * ASCII letters match in any case (`tag` is lowercase) and the name ends at
+ * whitespace, a form feed, / or >, or at the end of input
  */
 function isTagAt(html: string, pos: number, tag: string): boolean {
-  if (!html.startsWith(tag, pos)) {
+  const afterTagPos = pos + tag.length
+  if (afterTagPos > html.length) {
     return false
   }
-  const afterTagPos = pos + tag.length
-  if (afterTagPos >= html.length) {
+  for (let i = 0; i < tag.length; i++) {
+    const c = html.charCodeAt(pos + i)
+    const lower = c >= UPPER_A_CHAR && c <= UPPER_Z_CHAR ? c + 32 : c
+    if (lower !== tag.charCodeAt(i)) {
+      return false
+    }
+  }
+  if (afterTagPos === html.length) {
     return true
   }
   const nextChar = html.charCodeAt(afterTagPos)
-  return nextChar === GT_CHAR || isWhitespace(nextChar)
+  return nextChar === GT_CHAR || nextChar === SLASH_CHAR || nextChar === FORM_FEED_CHAR || isWhitespace(nextChar)
 }
 
 /**

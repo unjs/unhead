@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { parseHtmlForUnheadExtraction } from '../../../src/parser'
 import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server/transformHtmlTemplate'
 import { createServerHeadWithContext } from '../../util'
 
@@ -192,6 +193,74 @@ document.documentElement.dataset.theme = 'dark'
       expect(result).toBe(`<html><head><script><!-- <script> --></script>
 <script><!-- </script>
 <script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends a script at a closing tag in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>a</SCRIPT><script>b</script/><script>c</script\f><script><!-- d </ScRiPt><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>a</script>
+<script>b</script>
+<script>c</script>
+<script><!-- d </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('detects a commented nested script in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- document.write('<SCRIPT src="/a.js"></script>') --></script><script><!-- document.write('<script/></script>') --></script><script><!-- document.write('<script\f></script>') --></script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- document.write('<SCRIPT src="/a.js"><\\/script>') --></script>
+<script><!-- document.write('<script/><\\/script>') --></script>
+<script><!-- document.write('<script\f><\\/script>') --></script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('leaves a commented nested script at a closing tag in any letter case or followed by a slash or form feed', () => {
+      const html = `<html><head><script><!-- <script></SCRIPT>a</script><script><!-- <script></script/>b</script><script><!-- <script></script\f>c</script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      expect(parseHtmlForUnheadExtraction(html).input.script).toEqual([
+        { innerHTML: '<!-- <script></SCRIPT>a' },
+        { innerHTML: '<!-- <script></script/>b' },
+        { innerHTML: '<!-- <script></script\f>c' },
+        { src: '/b.js', innerHTML: '' },
+      ])
+    })
+
+    it('does not treat other tag names after <!-- as a nested script', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- <scripts> </script><script><!-- <SCRIPTS> </script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- <scripts> </script>
+<script><!-- <SCRIPTS> </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends style content at a closing tag in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><style>a{}</STYLE><style>b{}</style/><style>c{}</style\f><style>d{}</style></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><style>a{}</style>
+<style>b{}</style>
+<style>c{}</style>
+<style>d{}</style></head><body>Content</body></html>`)
+    })
+
+    it('ends title content only at a complete closing tag in any letter case', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><title>a</titles> b</TITLE></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><title>a&lt;&#x2F;titles&gt; b</title></head><body>Content</body></html>`)
     })
 
     it('handles style tags with complex CSS', async () => {
