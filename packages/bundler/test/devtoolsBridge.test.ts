@@ -109,6 +109,10 @@ it('keeps script events mutable after initial and updated snapshots are frozen',
   expect(script.status).toBe('loading')
   head.render()
   expect(snapshots.at(-1)!.scripts[0]!.events.map(event => event.type)).toEqual(['loading'])
+  // Event records must also belong to the snapshot, not the live runtime.
+  const runtimeScript = head._scripts![script.id] as { _events: UnheadDevtoolsState['scripts'][number]['events'] }
+  const runtimeEvents = runtimeScript._events
+  expect(Object.isFrozen(runtimeEvents[0])).toBe(false)
 
   document.querySelector<HTMLScriptElement>('script[src="/devtools-script.js"]')!.dispatchEvent(new Event('load'))
   await vi.advanceTimersByTimeAsync(500)
@@ -116,6 +120,7 @@ it('keeps script events mutable after initial and updated snapshots are frozen',
   expect(snapshots.at(-1)!.scripts[0]!.status).toBe('loaded')
   expect(snapshots.at(-1)!.scripts[0]!.events.map(event => event.type)).toEqual(['loading', 'loaded'])
   expect(snapshots[0]!.scripts[0]!.events).toEqual([])
+  expect(runtimeEvents.map(event => event.type)).toEqual(['loading', 'loaded'])
   script.remove()
   head.render()
   expect(script.status).toBe('removed')
