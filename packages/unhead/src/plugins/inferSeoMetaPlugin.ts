@@ -8,7 +8,8 @@ function isImageMeta(tag: HeadTag): boolean {
   if (tag.tag !== 'meta')
     return false
   const content = tag.props.content
-  return IMAGE_META_KEYS.has(tag.props.property || tag.props.name) && !!hasContent(content) && String(content).trim() !== ''
+  const key = tag.props.property || tag.props.name
+  return typeof key === 'string' && IMAGE_META_KEYS.has(key) && !!hasContent(content) && String(content).trim() !== ''
 }
 
 export interface InferSeoMetaPluginOptions {
@@ -98,7 +99,7 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           if (cardIndex === -1)
             return
           const card = ctx.tags[cardIndex]!
-          const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
+          const props: HeadTag['props'] = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
           delete props['data-infer']
           ctx.tags[cardIndex] = { ...card, props }
         },
