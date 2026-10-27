@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { HeadPlugin, HeadTag, ResolvableHead, Unhead } from '../types'
 import { hasContent } from '../utils/const'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -37,7 +37,7 @@ export interface InferSeoMetaPluginOptions {
 }
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
-  return defineHeadPlugin((head) => {
+  return defineHeadPlugin(<RenderResult>(head: Unhead<ResolvableHead, RenderResult>): HeadPlugin<ResolvableHead, RenderResult> => {
     if (options.twitterCard !== false) {
       head.push({
         meta: [
