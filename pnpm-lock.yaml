@@ -164,12 +164,6 @@ settings:
 
 catalogs:
   default:
-    vue-vapor:
-      specifier: npm:vue@3.6.0-rc.11
-      version: 3.6.0-rc.11
-    '@vue/compiler-sfc-vapor':
-      specifier: npm:@vue/compiler-sfc@3.6.0-rc.11
-      version: 3.6.0-rc.11
     '@angular-devkit/build-angular':
       specifier: ^21.2.24
       version: 21.2.24
@@ -257,6 +251,9 @@ catalogs:
     '@vitejs/devtools-kit':
       specifier: ^0.7.6
       version: 0.7.6
+    '@vue/compiler-sfc-vapor':
+      specifier: npm:@vue/compiler-sfc@3.6.0-rc.11
+      version: 3.6.0-rc.11
     '@vue/server-renderer':
       specifier: ^3.5.42
       version: 3.5.42
@@ -362,6 +359,9 @@ catalogs:
     vue-tsc:
       specifier: ^3.3.11
       version: 3.3.11
+    vue-vapor:
+      specifier: npm:vue@3.6.0-rc.11
+      version: 3.6.0-rc.11
     zone.js:
       specifier: ^0.16.3
       version: 0.16.3
@@ -1312,9 +1312,6 @@ importers:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.2)
     devDependencies:
-      vue-vapor:
-        specifier: 'catalog:'
-        version: vue@3.6.0-rc.11(typescript@6.0.3)
       '@vue/compiler-sfc-vapor':
         specifier: 'catalog:'
         version: '@vue/compiler-sfc@3.6.0-rc.11'
@@ -1327,6 +1324,9 @@ importers:
       vue:
         specifier: 'catalog:'
         version: 3.5.42(typescript@6.0.3)
+      vue-vapor:
+        specifier: 'catalog:'
+        version: vue@3.6.0-rc.11(typescript@6.0.3)
 
   test/fixtures/nuxt-cloudflare-module:
     dependencies:
