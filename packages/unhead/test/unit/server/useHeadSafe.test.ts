@@ -247,7 +247,7 @@ describe('dom useHeadSafe', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset="utf-8&quot;><script>alert(&quot;pwned?&quot;)</script>">",
+        "headTags": "<meta charset="utf-8&quot;&gt;&lt;script&gt;alert(&quot;pwned?&quot;)&lt;/script&gt;">",
         "htmlAttrs": "",
       }
     `)
