@@ -57,6 +57,7 @@
   prepareHeadInput: function
   prepareTemplate: function
   propsToString: function
+  pushStaticPlan: function
   renderSSRHead: function
   ssrRenderTags: function
   tagToString: function
