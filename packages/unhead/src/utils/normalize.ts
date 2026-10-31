@@ -37,11 +37,12 @@ function normalizeStyleClassProps(
 }
 
 export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
-  tag.props = tag.props || {}
+  // attrs is the canonical field; props is a deprecated alias for the same object
+  tag.attrs = tag.props = tag.attrs || tag.props || {}
   if (!input)
     return tag
   if (tag.tag === 'templateParams') {
-    tag.props = input
+    tag.attrs = tag.props = input
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
@@ -56,16 +57,16 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       continue
     const value = input[prop]
     if (value === null) {
-      tag.props[key] = null as any
+      tag.attrs[key] = null as any
     }
     else if (prop === 'class' || prop === 'style') {
-      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
+      tag.attrs[prop] = normalizeStyleClassProps(prop, value) as any
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
         if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
-          tag.props.type = type
+          tag.attrs.type = type
           tag[prop] = JSON.stringify(value)
         }
       }
@@ -78,7 +79,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
       const str = String(value)
       const isMeta = tag.tag === 'meta' && key === 'content'
-      tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
+      tag.attrs[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }
   }
   return tag
@@ -98,21 +99,22 @@ export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any
   return walkResolver(input, resolve)
 }
 
-function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string): HeadTag | HeadTag[] {
+function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['attrs'] | string): HeadTag | HeadTag[] {
   const input = typeof _input === 'object' && typeof _input !== 'function'
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
-  const tag = normalizeProps({ tag: tagName, props: {} }, input)
+  const tag = normalizeProps({ tag: tagName, attrs: {} }, input)
   if (tag.key && DupeableTags.has(tag.tag))
-    tag.props['data-hid'] = tag._h = tag.key
+    tag.attrs['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
     tag.innerHTML = JSON.stringify(tag.innerHTML)
-    tag.props.type = tag.props.type || 'application/json'
+    tag.attrs.type = tag.attrs.type || 'application/json'
   }
-  if (Array.isArray(tag.props.content)) {
+  if (Array.isArray(tag.attrs.content)) {
     const tags: HeadTag[] = []
-    for (const content of tag.props.content) {
-      tags.push({ ...tag, props: { ...tag.props, content } })
+    for (const content of tag.attrs.content) {
+      const attrs = { ...tag.attrs, content }
+      tags.push({ ...tag, attrs, props: attrs })
     }
     return tags
   }

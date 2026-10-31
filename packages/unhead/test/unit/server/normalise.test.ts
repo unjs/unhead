@@ -72,13 +72,13 @@ describe('normalise', () => {
   })
 
   it('skips invalid null attribute names during normalization', () => {
-    const tag = normalizeProps({ tag: 'meta', props: {} }, {
+    const tag = normalizeProps({ tag: 'meta', attrs: {} }, {
       'name': 'description',
       'content': 'safe',
       '\'><script>alert(1)</script><meta data-x': null,
     } as any)
 
-    expect(tag.props).toStrictEqual({
+    expect(tag.attrs).toStrictEqual({
       name: 'description',
       content: 'safe',
     })
@@ -96,10 +96,10 @@ describe('normalise', () => {
       },
     })
 
-    const tag = normalizeProps({ tag: 'meta', props: {} }, input)
+    const tag = normalizeProps({ tag: 'meta', attrs: {} }, input)
 
     expect(read).toBe(false)
-    expect(tag.props).toStrictEqual({
+    expect(tag.attrs).toStrictEqual({
       name: 'description',
     })
   })
