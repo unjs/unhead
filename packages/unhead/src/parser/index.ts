@@ -325,12 +325,60 @@ export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndex
   return { html, input: {}, indexes }
 }
 
+function skipTemplateEndTag(html: string, start: number): number {
+  let quote = 0
+  for (let position = start; position < html.length; position++) {
+    const char = html.charCodeAt(position)
+    if (quote) {
+      if (char === quote)
+        quote = 0
+    }
+    else if (char === QUOTE_CHAR || char === APOS_CHAR) {
+      quote = char
+    }
+    else if (char === GT_CHAR) {
+      return position + 1
+    }
+  }
+  return html.length
+}
+
+// Script data has two escaped states. In the double-escaped state,
+// </script> returns to escaped data instead of closing the element.
+function skipTemplateScript(html: string, start: number): number {
+  const tokens = /<!--|-->|<\/?script(?=[\t\n\f\r />])/gi
+  tokens.lastIndex = start
+  let state: 'data' | 'escaped' | 'doubleEscaped' = 'data'
+  for (let match = tokens.exec(html); match; match = tokens.exec(html)) {
+    const token = match[0].toLowerCase()
+    if (token === '<!--') {
+      if (state === 'data')
+        state = 'escaped'
+    }
+    else if (token === '-->') {
+      state = 'data'
+    }
+    else if (token === '<script') {
+      if (state === 'escaped')
+        state = 'doubleEscaped'
+    }
+    else if (state === 'doubleEscaped') {
+      state = 'escaped'
+    }
+    else {
+      return skipTemplateEndTag(html, tokens.lastIndex)
+    }
+  }
+  return html.length
+}
+
 /* @__PURE__ */
 export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplateWithIndexes {
   const input = {} as SerializableHead
   const htmlParts: string[] = []
   let position = 0
   let inHead = false
+  let templateDepth = 0
   let foundBodyStart = false
   let lastCopyPosition = 0
   let currentOutputLength = 0
@@ -397,6 +445,14 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
 
     // Handle closing tags
     if (nextCharCode === SLASH_CHAR) {
+      if (templateDepth > 0) {
+        if (/^<\/template(?=[\t\n\f\r />])/i.test(html.substring(position, position + 12)))
+          templateDepth--
+        position = skipTemplateEndTag(html, position + 2)
+        copyAccumulatedText()
+        continue
+      }
+
       let tagEnd = position + 2
       while (tagEnd < html.length && html.charCodeAt(tagEnd) !== GT_CHAR) {
         tagEnd++
@@ -488,6 +544,30 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
       copyAccumulatedText()
       addText(html.substring(position))
       break
+    }
+
+    // Template descendants belong to an inert document fragment. Preserve
+    // their bytes and ignore their head/body tags and attributes entirely.
+    if (tagName === 'template' || templateDepth > 0) {
+      if (tagName === 'template')
+        templateDepth++ // HTML ignores the self-closing flag on templates.
+      position = tagEnd
+      if (tagName === 'script') {
+        position = skipTemplateScript(html, tagEnd)
+      }
+      else if (/^(?:style|title|textarea|xmp|iframe|noembed|noframes|noscript)$/.test(tagName)) {
+        // Raw text can contain apparent template tags. HTML ends raw text
+        // at a matching end tag, even inside a JavaScript or CSS string.
+        const closingTag = new RegExp(`</${tagName}(?=[\\t\\n\\f\\r />])`, 'gi')
+        closingTag.lastIndex = tagEnd
+        const match = closingTag.exec(html)
+        position = match ? skipTemplateEndTag(html, closingTag.lastIndex) : html.length
+      }
+      else if (tagName === 'plaintext') {
+        position = html.length
+      }
+      copyAccumulatedText()
+      continue
     }
 
     // Extract attributes from the tag
