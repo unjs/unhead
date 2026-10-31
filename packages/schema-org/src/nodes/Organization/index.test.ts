@@ -123,11 +123,11 @@ describe('defineOrganization', () => {
     })
   })
 
-  it('retains a compact node for specialized organizations', async () => {
+  it.each(['Corporation', 'OnlineStore'])('keeps the logo on a %s identity', async (type) => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
         defineOrganization({
-          '@type': 'Corporation',
+          '@type': type,
           'name': 'test',
           'logo': '/logo.png',
         }),
@@ -135,14 +135,12 @@ describe('defineOrganization', () => {
 
       const graph = await injectSchemaOrg(head)
       const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
-      const organization = graph.find(node => node['@id'] === 'https://example.com/#organization')
 
-      expect(identity).toMatchObject({ '@type': ['Organization', 'Corporation'] })
-      expect(identity).not.toHaveProperty('logo')
-      expect(organization).toMatchObject({
-        '@type': 'Organization',
-        'logo': 'https://example.com/logo.png',
+      expect(identity).toMatchObject({
+        '@type': ['Organization', type],
+        'logo': { '@id': 'https://example.com/#logo' },
       })
+      expect(graph.some(node => node['@id'] === 'https://example.com/#organization')).toBe(false)
     })
   })
 
