@@ -18,6 +18,7 @@ import type {
   ScriptHttpEvents,
   Stringable,
   Style,
+  TagAttributes,
   Unhead,
   UnheadMeta,
 } from 'unhead/types'
@@ -56,20 +57,20 @@ export interface BodyAttr extends Omit<BodyAttributesWithoutEvents, 'class' | 's
 
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = _ResolvableTitleTemplate | Ref<string>
-export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
+export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']> | ResolvableProperties<TagAttributes<Base>>
 type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
 type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
   ? T extends Events
     ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
     : ResolvableProperties<T & Aug>
   : never
-export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents>
-export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']>
-export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']>
-export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents>
-export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']>
-export type ResolvableHtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type ResolvableBodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
+export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents> | ResolvableProperties<TagAttributes<Link>>
+export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']> | ResolvableProperties<TagAttributes<UnheadMeta>>
+export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | ResolvableProperties<TagAttributes<Style & DataKeys>>
+export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | ResolvableProperties<TagAttributes<Script>>
+export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | ResolvableProperties<TagAttributes<Noscript & DataKeys>>
+export type ResolvableHtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> | ResolvableProperties<TagAttributes<HtmlAttr & DataKeys>>
+export type ResolvableBodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> | ResolvableProperties<TagAttributes<BodyAttr & DataKeys & BodyEvents>>
 
 export interface ReactiveHead {
   /**
