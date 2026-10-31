@@ -43,7 +43,6 @@ jobs:
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
           cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
-          cp bench/unplugin-transform.bench.ts /tmp/unplugin-transform.bench.ts
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
@@ -52,7 +51,8 @@ jobs:
           pnpm install
           # Use the PR runner for both measurements, including across Vitest major upgrades.
           pnpm add -Dw --save-exact --ignore-scripts "vitest@$VITEST_VERSION"
-          cp /tmp/unplugin-transform.bench.ts bench/unplugin-transform.bench.ts
+          # Keep the base transform harness with its source modules. The PR harness
+          # can import new transforms that do not exist on the base ref.
           node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json
           pnpm build
           # the base ref may predate some bundle configs (react, full, schema-org);
