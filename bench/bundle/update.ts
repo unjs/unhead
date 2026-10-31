@@ -25,7 +25,9 @@ const oldStats: Record<string, Stats> = fs.existsSync(lastJsonPath)
 
 const newStats: Record<string, Stats> = { ...oldStats }
 const stale: string[] = []
-for (const spec of BUNDLES) {
+// Same-commit comparison fixtures belong only in the PR report. They are not
+// base-vs-PR baselines and therefore must never enter last.json.
+for (const spec of BUNDLES.filter(spec => !spec.comparison)) {
   const p = path.resolve(distDir, spec.file)
   if (!fs.existsSync(p)) {
     // no fresh build AND no committed history: nothing to carry forward, fail loudly

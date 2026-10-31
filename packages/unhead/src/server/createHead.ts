@@ -11,22 +11,19 @@ export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPaylo
   hooks: HookableCore<ServerHeadHooks>
 }
 
-// hoisted so per-request `createHead()` calls (e.g. Nuxt) share one object;
-// walkResolver/normalizeProps never mutate entry input so sharing is safe
-const DEFAULT_INIT = {
-  htmlAttrs: {
-    lang: 'en',
-  },
-  meta: [
-    {
-      charset: 'utf-8',
-    },
-    {
-      name: 'viewport',
-      content: 'width=device-width, initial-scale=1',
-    },
-  ],
-}
+const DEFAULT_HTML_ATTRS = { lang: 'en' }
+const DEFAULT_CHARSET = { charset: 'utf-8' }
+const DEFAULT_VIEWPORT = { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+const DEFAULT_INIT = { htmlAttrs: DEFAULT_HTML_ATTRS, meta: [DEFAULT_CHARSET, DEFAULT_VIEWPORT] }
+
+// Per-instance clone in createHead: the precomputed tags are exposed verbatim
+// through the public resolveTags return value, which callers may mutate. A
+// shared array would leak those mutations into other head instances.
+const DEFAULT_INIT_TAGS = [
+  { props: DEFAULT_HTML_ATTRS, _w: 100, _d: 'htmlAttrs' },
+  { props: DEFAULT_CHARSET, _w: -20, _d: 'charset' },
+  { props: DEFAULT_VIEWPORT, _w: -15, _d: 'meta:viewport' },
+]
 
 // identity for anything but `on*` function handlers, so `_static` for the
 // default init fast path (the default entry has no event handlers)
@@ -41,7 +38,6 @@ const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
 )
 
 // normalized tags per entry index (`_i`), computed lazily once per process
-let defaultInitTags: HeadTag[][] | undefined
 let preparedInputs: WeakMap<object, HeadTag[][]> | undefined
 
 /**
@@ -113,9 +109,14 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   if (tagWeight === capoTagWeight && !options.propResolvers?.some(r => !r._static)) {
     for (const entry of core.entries.values()) {
       const input = entry.input as object
-      const cache = input === DEFAULT_INIT ? (defaultInitTags ||= []) : preparedInputs?.get(input)
-      if (cache)
-        entry._precomputedTags = cache[entry._i] ||= precomputeEntryTags(input, entry._i, core.resolvedOptions.propResolvers!)
+      if (input === DEFAULT_INIT) {
+        entry._precomputedTags = DEFAULT_INIT_TAGS.map((tag, i) => ({ ...tag, tag: i ? 'meta' : 'htmlAttrs', props: { ...tag.props }, _p: (entry._i << 10) + i }))
+      }
+      else {
+        const cache = preparedInputs?.get(input)
+        if (cache)
+          entry._precomputedTags = cache[entry._i] ||= precomputeEntryTags(input, entry._i, core.resolvedOptions.propResolvers!)
+      }
     }
   }
 

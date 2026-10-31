@@ -37,6 +37,9 @@ jobs:
       - name: Run Vue bundle size test
         run: pnpm test:vue-bundle-size
 
+      - name: Run Vue SEO bundle size test
+        run: pnpm test:vue-seo-bundle-size
+
       - name: Run React bundle size test
         run: pnpm test:react-bundle-size
 

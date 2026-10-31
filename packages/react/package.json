@@ -21,6 +21,26 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
+    "./precompiled": {
+      "types": "./dist/precompiled.d.ts",
+      "default": "./dist/precompiled.mjs"
+    },
+    "./precompiled/client": {
+      "types": "./dist/precompiled/client.d.ts",
+      "default": "./dist/precompiled/client.mjs"
+    },
+    "./precompiled/client-csr": {
+      "types": "./dist/precompiled/client-csr.d.ts",
+      "default": "./dist/precompiled/client-csr.mjs"
+    },
+    "./precompiled/client-deferred": {
+      "types": "./dist/precompiled/client-deferred.d.ts",
+      "default": "./dist/precompiled/client-deferred.mjs"
+    },
+    "./precompiled/server": {
+      "types": "./dist/precompiled/server.d.ts",
+      "default": "./dist/precompiled/server.mjs"
+    },
     "./server": {
       "types": "./dist/server.d.ts",
       "default": "./dist/server.mjs"
@@ -67,6 +87,21 @@
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "precompiled": [
+        "dist/precompiled.d.ts"
+      ],
+      "precompiled/client": [
+        "dist/precompiled/client.d.ts"
+      ],
+      "precompiled/client-csr": [
+        "dist/precompiled/client-csr.d.ts"
+      ],
+      "precompiled/client-deferred": [
+        "dist/precompiled/client-deferred.d.ts"
+      ],
+      "precompiled/server": [
+        "dist/precompiled/server.d.ts"
+      ],
       "server": [
         "dist/server"
       ],
