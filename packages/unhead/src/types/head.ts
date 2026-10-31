@@ -29,9 +29,10 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
-   * Precomputed normalized tags shared across head instances (SSR default init
-   * entry). Only used when no entry hooks, tag weight overrides or entry
-   * options could observe or alter normalization, see `resolveTags`.
+   * Precomputed normalized tags shared across head instances (SSR default and
+   * prepared init entries, prepared templates). Only used when no entry hooks,
+   * tag weight overrides or entry options could observe or alter
+   * normalization, see `resolveTags`.
    *
    * @internal
    */
@@ -82,8 +83,8 @@ export type PropResolver = ((key: string | undefined, value: unknown, tag?: Head
   /**
    * Marks the resolver as the identity function for plain non-reactive JSON
    * values (strings/numbers/booleans/plain objects/arrays). When every
-   * configured resolver is static, the SSR default init entry can use the
-   * precomputed fast path (see `server/createHead.ts`).
+   * configured resolver is static, SSR init entries can use the precomputed
+   * fast path (see `server/createHead.ts`).
    *
    * @internal
    */

@@ -205,7 +205,7 @@ export function resolveTags<Input, RenderResult>(head: Unhead<Input, RenderResul
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     if (!tags) {
-      // Precomputed shared tags (SSR default init entry, see server/createHead.ts).
+      // Precomputed shared tags (SSR init entries, see server/createHead.ts).
       // Valid only while nothing can observe or alter normalization for this entry:
       // no per-resolve tagWeight override (the array was weighted with the head's
       // default weight fn), no entries:normalize hook (it must see every entry's

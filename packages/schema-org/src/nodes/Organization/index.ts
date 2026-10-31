@@ -21,7 +21,7 @@ import {
   withBase,
 } from '../../utils'
 import { definedRegionResolver } from '../DefinedRegion'
-import { imageResolver, isImageObject } from '../Image'
+import { imageResolver } from '../Image'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { monetaryAmountResolver, quantitativeValueResolver } from '../MonetaryAmount'
 import { unitPriceSpecificationResolver } from '../Offer'
@@ -423,37 +423,10 @@ export const organizationResolver
         if (webPage && logoNode)
           setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
 
-        if (node['@type'] === 'Organization') {
-          node.logo = logoNode
-        }
-        // Specialized organizations retain a compact Organization node for
-        // Google's Organization rich result.
-        // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
-        else if (!ctx.find('#organization')) {
-          const resolvedLogo = logoNode && typeof logoNode === 'object' && logoNode['@id']
-            ? ctx.find(logoNode['@id'], isImageObject)
-            : null
-
-          // push a separate node that will just be used for the Logo rich result
-          ctx.nodes.push({
-            // we want to make a simple node that has the essentials, this will allow parent nodes to inject
-            // as well without inserting invalid data (i.e LocalBusiness operatingHours)
-            '@type': 'Organization',
-            'name': node.name,
-            'url': node.url,
-            'sameAs': node.sameAs,
-            // 'image': idReference(logoNode),
-            'address': node.address,
-            // needs to be a URL
-            'logo': resolvedLogo?.url,
-            '_priority': -1,
-            // Distinct from #identity so the specialized identity node stays the linkable one;
-            // the id is stable so repeat resolves dedupe on the ctx.find('#organization') guard.
-            '@id': prefixId(ctx.meta.host, '#organization'),
-          })
-        }
-        if (node['@type'] !== 'Organization')
-          delete node.logo
+        // Every Organization subtype inherits `logo`, and Google's Organization
+        // guide puts it on the subtype's own node (its OnlineStore example), so
+        // the identity keeps it whatever its type.
+        node.logo = logoNode
       }
 
       // Default the homepage's about relation to the site identity.
