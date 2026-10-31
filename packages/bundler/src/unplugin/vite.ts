@@ -6,7 +6,7 @@ import { UnheadTransforms } from './createTransformPipeline'
 import { resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 
-export type { VitePluginOptions }
+export type { InternalFrameworkContext, VitePluginOptions }
 
 /**
  * Vite plugin factory that composes the core Unhead build-time transforms

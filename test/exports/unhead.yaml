@@ -93,6 +93,7 @@
   createHead: function
   createServerRenderer: function
   escapeHtml: function
+  prepareHeadInput: function
   prepareTemplate: function
   propsToString: function
   renderSSRHead: function
