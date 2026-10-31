@@ -398,37 +398,37 @@ function sealedRuntimePathForms(id: string): string[] {
   return forms
 }
 
-function resolveSealedRuntimeIds(ctx: unknown): Promise<Set<string>> {
-  const specifiers = [
-    ...PRECOMPILED_RUNTIME_SUBPATHS.map(subpath => `unhead/precompiled/${subpath}`),
-    ...PRECOMPILED_FRAMEWORKS.flatMap(framework =>
-      PRECOMPILED_RUNTIME_SUBPATHS.flatMap((subpath) => {
-        const clientProfiles = ['client', 'client-csr', 'client-deferred']
-        return clientProfiles.includes(subpath)
-          ? [`${framework}/precompiled`, `${framework}/precompiled/${subpath}`]
-          : [`${framework}/precompiled/${subpath}`]
-      })),
-  ]
-  // node-resolution fallback: some bundler contexts (e.g. Nuxt's ssr
-  // environment) cannot resolve bare specifiers through `this.resolve`
-  const nodeResolve = (specifier: string): string[] => {
-    try {
-      return sealedRuntimePathForms(createRequire(import.meta.url).resolve(specifier))
-    }
-    catch {
-      return []
-    }
+const SEALED_RUNTIME_SPECIFIERS = [
+  ...PRECOMPILED_RUNTIME_SUBPATHS.map(subpath => `unhead/precompiled/${subpath}`),
+  ...PRECOMPILED_FRAMEWORKS.flatMap(framework =>
+    PRECOMPILED_RUNTIME_SUBPATHS.flatMap((subpath) => {
+      const clientProfiles = ['client', 'client-csr', 'client-deferred']
+      return clientProfiles.includes(subpath)
+        ? [`${framework}/precompiled`, `${framework}/precompiled/${subpath}`]
+        : [`${framework}/precompiled/${subpath}`]
+    })),
+]
+
+function nodeResolveSealedRuntime(specifier: string): string[] {
+  try {
+    return sealedRuntimePathForms(createRequire(import.meta.url).resolve(specifier))
   }
+  catch {
+    return []
+  }
+}
+
+function resolveSealedRuntimeIds(ctx: unknown): Promise<Set<string>> {
   const resolve = (ctx as { resolve?: (id: string) => Promise<{ id?: string } | string | null> })?.resolve
   if (typeof resolve !== 'function')
-    return Promise.resolve(new Set(specifiers.flatMap(nodeResolve)))
+    return Promise.resolve(new Set(SEALED_RUNTIME_SPECIFIERS.flatMap(nodeResolveSealedRuntime)))
   return Promise.all(
-    specifiers.map(specifier =>
+    SEALED_RUNTIME_SPECIFIERS.map(specifier =>
       resolve.call(ctx, specifier)
         .then((resolved: { id?: string } | string | null | undefined) =>
           typeof resolved === 'string' ? resolved : resolved?.id)
-        .then(id => (id ? sealedRuntimePathForms(id) : nodeResolve(specifier)))
-        .catch(() => nodeResolve(specifier) as string[]),
+        .then(id => (id ? sealedRuntimePathForms(id) : nodeResolveSealedRuntime(specifier)))
+        .catch(() => nodeResolveSealedRuntime(specifier)),
     ),
   ).then(idGroups => new Set(idGroups.flat()))
 }
@@ -884,9 +884,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   // first transform call (see resolveSealedRuntimeIds). Workspace-linked
   // packages resolve outside node_modules and must skip the strict transforms.
   let sealedRuntimeIds: Promise<Set<string>> | undefined
+  let installedSealedRuntimeIds: Set<string> | undefined
   const isSealedRuntimeModule = (id: string, ctx: unknown): Promise<boolean> => {
-    sealedRuntimeIds ??= resolveSealedRuntimeIds(ctx)
-    return sealedRuntimeIds.then((ids) => {
+    const matches = (ids: Set<string>) => {
       if (!ids.size)
         return false
       // match both the raw id (query stripped) and its realpath, so symlinked
@@ -902,7 +902,15 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       catch {
         return false
       }
-    })
+    }
+    // CommonJS resolution can load and transform a runtime before this.resolve
+    // completes. Recognize installed entries synchronously so that transform
+    // never waits on the resolution promise that caused it to run.
+    installedSealedRuntimeIds ??= new Set(SEALED_RUNTIME_SPECIFIERS.flatMap(nodeResolveSealedRuntime))
+    if (matches(installedSealedRuntimeIds))
+      return Promise.resolve(true)
+    sealedRuntimeIds ??= resolveSealedRuntimeIds(ctx)
+    return sealedRuntimeIds.then(matches)
   }
 
   const idPredicates: ((id: string) => boolean)[] = []
