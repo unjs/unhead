@@ -111,6 +111,7 @@ function isWhitespace(charCode: number): boolean {
   return charCode === 32 // SPACE_CHAR
     || charCode === 9 // TAB_CHAR
     || charCode === 10 // NEWLINE_CHAR
+    || charCode === 12 // FORM_FEED_CHAR
     || charCode === 13 // CARRIAGE_RETURN_CHAR
 }
 

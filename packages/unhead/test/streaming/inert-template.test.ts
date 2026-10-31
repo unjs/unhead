@@ -28,6 +28,27 @@ const contents = [
 ]
 
 describe.each(Object.entries(renderers))('%s preserves inert template contents', (_, render) => {
+  it.each([false, true])('keeps form-feed-delimited templates inert, prepared: %s', async (prepared) => {
+    for (const location of ['head', 'body']) {
+      for (const whitespace of [' ', '\t', '\n', '\f', '\r']) {
+        const inert = `<template${whitespace}id="lazy"><script id="lazy-script">globalThis.lazyRan=true</script><style id="lazy-style">body{display:none}</style></template>`
+        const source = `<html><head>${location === 'head' ? inert : ''}</head><body>${location === 'body' ? inert : ''}<!--app-html--></body></html>`
+        const html = await render(prepared ? prepareTemplate(source) : source)
+        const dom = new JSDOM(html, { runScripts: 'dangerously' })
+        try {
+          expect(dom.window.lazyRan).toBeUndefined()
+          expect(dom.window.document.querySelector('#lazy-script, #lazy-style')).toBeNull()
+          const template = dom.window.document.querySelector<HTMLTemplateElement>('#lazy')
+          expect(template?.content.querySelector('#lazy-script')?.textContent).toBe('globalThis.lazyRan=true')
+          expect(template?.content.querySelector('#lazy-style')?.textContent).toBe('body{display:none}')
+        }
+        finally {
+          dom.window.close()
+        }
+      }
+    }
+  })
+
   it.each([false, true])('keeps scripts and styles inert, prepared: %s', async (prepared) => {
     for (const content of contents) {
       const inert = `<template id="lazy">${content}</template>`
