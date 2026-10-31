@@ -53,6 +53,7 @@
     "eslint-plugin-harlanzw": "catalog:",
     "js-yaml": "catalog:",
     "jsdom": "catalog:",
+    "less": "catalog:",
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
