@@ -24,6 +24,8 @@ See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `
 
 ### Entry Hooks
 
+- [entries:beforePush](/docs/head/api/hooks/entries-before-push): Called before an entry is created and can suppress the push
+- [entries:beforeDispose](/docs/head/api/hooks/entries-before-dispose): Called before a client entry is disposed and can defer cleanup
 - [entries:updated](/docs/head/api/hooks/entries-updated): Called after client entries change
 - [entries:resolve](/docs/head/api/hooks/entries-resolve): Called before the entry snapshot is resolved to tags
 - [entries:normalize](/docs/head/api/hooks/entries-normalize): Called after one entry has been normalized to tags
