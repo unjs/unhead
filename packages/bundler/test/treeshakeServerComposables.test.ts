@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { describe, expect, it } from 'vitest'
 import { TreeshakeServerComposables } from '../src/unplugin/TreeshakeServerComposables'
 import { runTransform } from './utils'
@@ -18,6 +19,58 @@ async function transform(code: string | string[], id = 'some-id.js', ctx?: any) 
 }
 
 describe('treeshakeServerComposables', () => {
+  describe('statement structure', () => {
+    const cases = [
+      ['if', 'if (flag) CALL', [0, 0]],
+      ['if/else', 'if (flag) CALL; else count++', [1, 0]],
+      ['else', 'if (flag) count++; else CALL', [0, 1]],
+      ['nested if', 'if (flag) if (false) CALL; else count++', [0, 1]],
+      ['while', 'while (flag && count++ < 2) CALL', [0, 3]],
+      ['do/while', 'do CALL; while (flag && count++ < 2)', [0, 3]],
+      ['for', 'for (; flag && count < 2; count++) CALL', [0, 2]],
+      ['for/of', 'for (const value of flag ? [1, 2] : []) CALL', [0, 0]],
+      ['for/in', 'for (const key in flag ? { a: 1 } : {}) CALL', [0, 0]],
+    ] as const
+
+    const bindings = [
+      ...['useServerHead', 'useServerHeadSafe', 'useServerSeoMeta', 'useSchemaOrg'].map(name => ({
+        name,
+        preamble: '',
+      })),
+      { name: 'schema', preamble: 'import { useSchemaOrg as schema } from "@unhead/schema-org";\n' },
+    ]
+
+    for (const { name, preamble } of bindings) {
+      it.each(cases)(`preserves %s bodies for ${name}`, async (_label, statement, counts) => {
+        const source = `${preamble}(function setup(flag) {
+          let count = 0;
+          ${statement.replace('CALL', `${name}({})`)}
+          return () => count;
+        })`
+        const code = await transform(source, 'component.vue?vue&type=script')
+        const setup = runInNewContext(code!.slice(preamble.length)) as (flag: boolean) => () => number
+        expect(setup(false)()).toBe(counts[0])
+        expect(setup(true)()).toBe(counts[1])
+      })
+    }
+
+    it('retains conditional server calls and the following render return', async () => {
+      const source = `(function setup(flag) {
+        if (flag) useSchemaOrg({});
+        return () => 'render';
+      })`
+      const code = await transform(source, 'component.vue?vue&type=script', environmentContext('server'))
+      let calls = 0
+      const setup = runInNewContext(code ?? source, {
+        useSchemaOrg() { calls++ },
+      }) as (flag: boolean) => () => string
+      expect(setup(false)()).toBe('render')
+      expect(calls).toBe(0)
+      expect(setup(true)()).toBe('render')
+      expect(calls).toBe(1)
+    })
+  })
+
   const couldTransform = [
     'import { useServerHead } from \'unhead\'',
     'useServerHead({ title: \'Hello\', description: \'World\' })',
@@ -57,9 +110,9 @@ describe('treeshakeServerComposables', () => {
   it('useServerSeoMeta', async () => {
     const code = await transform([
       'useServerSeoMeta({ title: \'Hello\', description: \'World\'  })',
+      '42',
     ])
-    expect(code).toBeDefined()
-    expect(code).toMatchInlineSnapshot('""')
+    expect(runInNewContext(code!)).toBe(42)
   })
 
   it('vue sfc example', async () => {
@@ -128,7 +181,7 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
         __name: "app",
         setup(__props, { expose }) {
           expose();
-          
+          ;
           const route = useRouter().currentRoute;
           useHead({
             htmlAttrs: {
