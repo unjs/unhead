@@ -1,5 +1,5 @@
 export const hookImports = {
-  '@unhead/solid': [
+  '@unhead/solid-js': [
     'useUnhead',
     'useHead',
     'useSeoMeta',

@@ -1,3 +1,4 @@
+import type { Unhead } from '../types/head'
 import type { HeadTag, TemplateParams } from '../types/tags'
 import { processTemplateParams } from '../utils'
 import { defineHeadPlugin } from './defineHeadPlugin'
@@ -16,7 +17,7 @@ function processIfNeeded(value: string, params: TemplateParams, separator: strin
     : value
 }
 
-export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
+export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
   return {
     key: 'template-params',
     hooks: {
@@ -56,7 +57,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
       'tags:afterResolve': ({ tagMap }) => {
         // we need to re-process in case then user had a function as the titleTemplate
         const title: HeadTag | undefined = tagMap.get('title')
-        if (title?.textContent && title.processTemplateParams !== false) {
+        if (typeof title?.textContent === 'string' && title.processTemplateParams !== false) {
           title.textContent = processIfNeeded(title.textContent, head._templateParams!, head._separator!)
         }
       },

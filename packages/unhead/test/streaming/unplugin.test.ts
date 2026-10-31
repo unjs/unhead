@@ -1,3 +1,4 @@
+import type { StreamingPluginOptions } from '../../src/stream/unplugin'
 import { runInNewContext } from 'node:vm'
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -32,6 +33,14 @@ function callLoad(plugin: any, id: string) {
 }
 
 describe('streaming unplugin', () => {
+  it('accepts the standard string transform result', () => {
+    const options: StreamingPluginOptions = {
+      framework: '@unhead/test',
+      transform: code => code,
+    }
+    expect(options.transform?.('code', 'entry.ts')).toBe('code')
+  })
+
   it('rejects inline stream keys containing closing script tags', () => {
     expect(() => buildStreamingPluginOptions({
       framework: '@unhead/test',

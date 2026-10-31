@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { HeadPlugin, HeadTag, ResolvableHead, Unhead } from '../types'
 import { hasContent } from '../utils/const'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -8,7 +8,8 @@ function isImageMeta(tag: HeadTag): boolean {
   if (tag.tag !== 'meta')
     return false
   const content = tag.props.content
-  return IMAGE_META_KEYS.has(tag.props.property || tag.props.name) && !!hasContent(content) && String(content).trim() !== ''
+  const key = tag.props.property || tag.props.name
+  return typeof key === 'string' && IMAGE_META_KEYS.has(key) && !!hasContent(content) && String(content).trim() !== ''
 }
 
 export interface InferSeoMetaPluginOptions {
@@ -36,7 +37,7 @@ export interface InferSeoMetaPluginOptions {
 }
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
-  return defineHeadPlugin((head) => {
+  return defineHeadPlugin(<RenderResult>(head: Unhead<ResolvableHead, RenderResult>): HeadPlugin<ResolvableHead, RenderResult> => {
     if (options.twitterCard !== false) {
       head.push({
         meta: [
@@ -66,16 +67,13 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
       key: 'infer-seo-meta',
       hooks: {
         'tags:beforeResolve': ({ tagMap }) => {
-          let title = head._titleTemplate || head._title
+          const titleSource = head._titleTemplate || head._title
+          const title = typeof titleSource === 'function' ? titleSource(head._title) : titleSource
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            if (typeof title === 'function') {
-              // @ts-expect-error untyped
-              title = title(head._title)
-            }
-            title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            const resolvedTitle = hasContent(title) ? String(title) : undefined
+            ogTitle.props!.content = options.ogTitle ? options.ogTitle(resolvedTitle) : resolvedTitle || ''
             ogTitle.processTemplateParams = true
           }
 
@@ -101,7 +99,7 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           if (cardIndex === -1)
             return
           const card = ctx.tags[cardIndex]!
-          const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
+          const props: HeadTag['props'] = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
           delete props['data-infer']
           ctx.tags[cardIndex] = { ...card, props }
         },

@@ -42,7 +42,7 @@ export interface ScriptBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Bloc
 /**
  * Props that are invalid on non-loadable script types (data scripts, inline scripts)
  */
-interface NoLoadableScriptProps {
+export interface NoLoadableScriptProps {
   src?: never
   async?: never
   defer?: never
@@ -517,4 +517,15 @@ export type InferScript<T>
           : DeepReadonly<MatchScriptByType<U>>
         : DeepReadonly<GenericScript> & { type: U }
       : DeepReadonly<Script>
-    : DeepReadonly<Script>
+    : 'type' extends keyof T
+      ? T extends { type?: infer U }
+        ? string extends U
+          ? DeepReadonly<GenericScript>
+          : DeepReadonly<Script>
+        : DeepReadonly<Script>
+      : DeepReadonly<Script>
+
+declare const DefinedGenericScriptBrand: unique symbol
+
+/** @internal */
+export type DefinedGenericScript = GenericScript & { readonly [DefinedGenericScriptBrand]: true }
