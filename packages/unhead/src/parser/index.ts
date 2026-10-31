@@ -18,8 +18,10 @@ const EQUALS_CHAR = 61 // '='
 const QUOTE_CHAR = 34 // '"'
 const APOS_CHAR = 39 // '\''
 const EXCLAMATION_CHAR = 33 // '!'
-const BACKSLASH_CHAR = 92 // '\'
 const DASH_CHAR = 45 // '-'
+const FORM_FEED_CHAR = 12 // '\f'
+const UPPER_A_CHAR = 65 // 'A'
+const UPPER_Z_CHAR = 90 // 'Z'
 
 // Map string tag names to numeric constants
 export const TagIdMap = /* @__PURE__ */ {
@@ -636,64 +638,79 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
 
 /**
  * Find the closing tag for a given tag name
- * For script and style tags, this handles quotes to avoid matching closing tags inside string literals
+ * Content ends at the first closing tag as it does in browsers,
+ * so quotes in comments or regex literals can't hide it
  */
 function findClosingTag(html: string, startPos: number, tagName: string): number {
-  const tagId = TagIdMap[tagName as keyof typeof TagIdMap]
-  const isScriptOrStyle = tagId === TAG_SCRIPT || tagId === TAG_STYLE
-
-  if (!isScriptOrStyle) {
-    // Simple search for non-script/style tags
-    const closingTag = `</${tagName}`
-    const index = html.indexOf(closingTag, startPos)
-    return index === -1 ? -1 : index
+  if (TagIdMap[tagName as keyof typeof TagIdMap] === TAG_SCRIPT) {
+    return findScriptEnd(html, startPos)
   }
 
-  // Quote-aware search for script and style tags
   const closingTag = `</${tagName}`
-  let pos = startPos
-  let inSingleQuote = false
-  let inDoubleQuote = false
-  let inBacktick = false
-  let lastCharWasBackslash = false
-
-  while (pos < html.length) {
-    const currentCharCode = html.charCodeAt(pos)
-
-    // Handle quote state transitions (only if not escaped)
-    if (!lastCharWasBackslash) {
-      if (currentCharCode === APOS_CHAR && !inDoubleQuote && !inBacktick) {
-        inSingleQuote = !inSingleQuote
-      }
-      else if (currentCharCode === QUOTE_CHAR && !inSingleQuote && !inBacktick) {
-        inDoubleQuote = !inDoubleQuote
-      }
-      else if (currentCharCode === 96 && !inSingleQuote && !inDoubleQuote) { // backtick
-        inBacktick = !inBacktick
-      }
-    }
-
-    // Track escape character state
-    lastCharWasBackslash = currentCharCode === BACKSLASH_CHAR && !lastCharWasBackslash
-
-    // Check for closing tag only when not inside quotes
-    const inQuotes = inSingleQuote || inDoubleQuote || inBacktick
-    if (!inQuotes && html.startsWith(closingTag, pos)) {
-      // Verify it's a complete tag (followed by whitespace or >)
-      const afterTagPos = pos + closingTag.length
-      if (afterTagPos >= html.length) {
-        return pos
-      }
-      const nextChar = html.charCodeAt(afterTagPos)
-      if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
-        return pos
-      }
-    }
-
-    pos++
+  let pos = html.indexOf('</', startPos)
+  while (pos !== -1 && !isTagAt(html, pos, closingTag)) {
+    pos = html.indexOf('</', pos + 2)
   }
+  return pos
+}
 
+/**
+ * Find the closing script tag, following the browser's script data states:
+ * after `<!--`, a nested `<script>` keeps the next `</script>` as text until `-->`
+ */
+function findScriptEnd(html: string, startPos: number): number {
+  let escaped = false
+  let doubleEscaped = false
+  for (let pos = startPos; pos < html.length; pos++) {
+    const c = html.charCodeAt(pos)
+    if (c === GT_CHAR) {
+      // `-->` leaves both escaped states, its dashes may be the ones of `<!--`
+      if (escaped && html.charCodeAt(pos - 1) === DASH_CHAR && html.charCodeAt(pos - 2) === DASH_CHAR) {
+        escaped = false
+        doubleEscaped = false
+      }
+    }
+    else if (c === LT_CHAR) {
+      if (isTagAt(html, pos, '</script')) {
+        if (!doubleEscaped) {
+          return pos
+        }
+        doubleEscaped = false
+      }
+      else if (!escaped && html.startsWith('<!--', pos)) {
+        escaped = true
+        pos += 3
+      }
+      else if (escaped && !doubleEscaped && isTagAt(html, pos, '<script')) {
+        doubleEscaped = true
+      }
+    }
+  }
   return -1
+}
+
+/**
+ * Check for a complete tag name at pos, as the HTML tokenizer reads it:
+ * ASCII letters match in any case (`tag` is lowercase) and the name ends at
+ * whitespace, a form feed, / or >, or at the end of input
+ */
+function isTagAt(html: string, pos: number, tag: string): boolean {
+  const afterTagPos = pos + tag.length
+  if (afterTagPos > html.length) {
+    return false
+  }
+  for (let i = 0; i < tag.length; i++) {
+    const c = html.charCodeAt(pos + i)
+    const lower = c >= UPPER_A_CHAR && c <= UPPER_Z_CHAR ? c + 32 : c
+    if (lower !== tag.charCodeAt(i)) {
+      return false
+    }
+  }
+  if (afterTagPos === html.length) {
+    return true
+  }
+  const nextChar = html.charCodeAt(afterTagPos)
+  return nextChar === GT_CHAR || nextChar === SLASH_CHAR || nextChar === FORM_FEED_CHAR || isWhitespace(nextChar)
 }
 
 /**
