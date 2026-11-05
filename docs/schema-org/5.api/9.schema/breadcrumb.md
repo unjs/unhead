@@ -7,6 +7,8 @@ navigation:
 
 [Breadcrumb structured data](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb) uses a `BreadcrumbList` to describe the position of a page in the site hierarchy. Google uses breadcrumb markup to categorize the page in search results.
 
+For step-by-step setup with a matching visible navigation and a second trail, see the [breadcrumbs recipe](/docs/schema-org/guides/recipes/breadcrumbs).
+
 ## JSON-LD Example
 
 Unhead renders this JSON-LD for the [minimal example](#minimal). It converts relative paths to absolute URLs and adds the `position` of each item.
