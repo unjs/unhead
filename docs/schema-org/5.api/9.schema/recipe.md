@@ -1,7 +1,52 @@
 ---
-title: Recipe Schema
-description: Use defineRecipe() to add Recipe structured data with cooking time, ingredients, nutrition, and step-by-step instructions.
+title: "Recipe Schema Markup: JSON-LD Example and API"
+description: Add recipe schema markup with defineRecipe(). See Recipe JSON-LD with ingredients and steps, plus the name and image that Google requires.
+navigation:
+  title: Recipe
 ---
+
+[Recipe structured data](https://developers.google.com/search/docs/appearance/structured-data/recipe) describes the ingredients, steps, and cooking times of a recipe. Google can show eligible recipes as rich results.
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for the [minimal example](#minimal). It converts each instruction to a `HowToStep` and moves the image to its own `ImageObject` node.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/blog/my-article#recipe",
+      "@type": "Recipe",
+      "name": "Peanut Butter Cookies",
+      "image": {
+        "@id": "https://example.com/#/schema/image/1"
+      },
+      "recipeIngredient": [
+        "Peanut Butter",
+        "Cookie Dough"
+      ],
+      "recipeInstructions": [
+        {
+          "@type": "HowToStep",
+          "text": "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Eat them up"
+        }
+      ]
+    },
+    {
+      "@id": "https://example.com/#/schema/image/1",
+      "@type": "ImageObject",
+      "contentUrl": "https://example.com/photos/1x1/photo.jpg",
+      "inLanguage": "en-AU",
+      "url": "https://example.com/photos/1x1/photo.jpg"
+    }
+  ]
+}
+```
 
 ## Schema.org Recipe
 
