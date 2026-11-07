@@ -4,7 +4,7 @@ import type { Scenario } from './corpus'
 import { JSDOM } from 'jsdom'
 import { createHead as createV3Head } from '../../../src/client'
 import { compileTags } from '../../../src/compiled/compile'
-import { createLazyHead, lazyTemplateParams } from '../../../src/lazy'
+import { acceptCompiledTags, createLazyHead, lazyTemplateParams } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
@@ -30,6 +30,11 @@ export function ssrDom(inputs: { input: any, options?: HeadEntryOptions, dispose
   }
   const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(head)
   return new JSDOM(`<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}<div>app</div>${bodyTags}</body></html>`)
+}
+
+/** A lazy head with compiled tag support, as `useCompiledHead` sets it up. */
+export function compiledTagsHead(options: Parameters<typeof createLazyHead>[0] = {}) {
+  return acceptCompiledTags(createLazyHead(options))
 }
 
 export const tick = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms))
@@ -62,7 +67,7 @@ export function createPair(server: { input: any, options?: HeadEntryOptions, dis
   const v3 = createV3Head<any>({ document: v3Dom.window.document, plugins: params === 'none' ? [] : [TemplateParamsPlugin] })
   // batch, so both heads render at the same points
   v3._b = true
-  const compiledTags = createLazyHead({
+  const compiledTags = compiledTagsHead({
     document: compiledDom.window.document,
     plugins: params === 'none' ? [] : [params === 'lazy' ? lazyTemplateParams : TemplateParamsPlugin],
   })

@@ -33,6 +33,7 @@
   renderSSRHead: function
   templateParams: object
 ./lazy:
+  acceptCompiledTags: function
   createLazyHead: function
   lazyTemplateParams: object
 ./legacy:

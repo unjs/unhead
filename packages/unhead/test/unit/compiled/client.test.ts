@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { compileTags, dynamicValue } from '../../../src/compiled/compile'
 import { createLazyHead, lazyTemplateParams } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
-import { createPair, settle, ssrDom, toCompiledTags } from './client-util'
+import { compiledTagsHead, createPair, settle, ssrDom, toCompiledTags } from './client-util'
 
 const v3Runtime = vi.hoisted(() => ({ heads: new Set<unknown>(), fail: 0 }))
 vi.mock('../../../src/lazy/runtime', async (importOriginal) => {
@@ -39,7 +39,7 @@ const page: ResolvableHead = {
 
 async function loaded(input: ResolvableHead, options: Parameters<typeof createLazyHead>[0] = {}) {
   const dom = ssrDom([{ input }], 'none')
-  const head = createLazyHead({ document: dom.window.document, ...options })
+  const head = compiledTagsHead({ document: dom.window.document, ...options })
   const entry = head.push(toCompiledTags(input))
   head.render()
   await head.load()
@@ -51,7 +51,7 @@ describe('compiled entries in the eager shell', () => {
   it('stores compiled tags with their values and touches nothing', async () => {
     const dom = ssrDom([{ input: page }], 'none')
     const before = dom.serialize()
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     const compiledTags = compile({ title: dynamicValue(0) }, 1)
     const entry = head.push(compiledTags, { values: ['x'], tagPriority: 'low' })
     head.render()
@@ -65,12 +65,31 @@ describe('compiled entries in the eager shell', () => {
   })
 })
 
+describe('a head without acceptCompiledTags', () => {
+  it('renders compiled tags through the v3 runtime', async () => {
+    const pair = createPair([{ input: page }], 'none')
+    const dom = ssrDom([{ input: page }], 'none')
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(toCompiledTags(page))
+    pair.push(page)
+    head.render()
+    await head.load()
+    await pair.render()
+    await settle(head)
+    expect(v3Runtime.heads.has(head)).toBe(true)
+    expect(dom.serialize()).toBe(pair.v3Dom.serialize())
+    entry.patch(toCompiledTags({ title: 'Next' }), { values: [] })
+    await settle(head)
+    expect(dom.window.document.title).toBe('Next')
+  })
+})
+
 describe('compiled runtime', () => {
   it('adopts the server head with no DOM change and no v3 runtime', async () => {
     const dom = ssrDom([{ input: page }], 'none')
     const before = dom.serialize()
     const nodes = [...dom.window.document.head.childNodes]
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     head.push(toCompiledTags(page))
     head.render()
     await head.load()
@@ -104,7 +123,7 @@ describe('compiled runtime', () => {
   it('restores the server title, attributes, and classes when an entry goes', async () => {
     const dom = ssrDom([{ input: { title: 'Server' } }], 'none')
     dom.window.document.documentElement.setAttribute('data-ssr', 'keep')
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     head.push(toCompiledTags({ title: 'Server' }))
     head.render()
     await head.load()
@@ -265,7 +284,7 @@ describe('values', () => {
   it('writes a value as text or an attribute, never as markup', async () => {
     const attack = '<img src=x onerror="alert(1)"></script><script>alert(2)</script>'
     const dom = ssrDom([], 'none')
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     head.push(compiledTags, { values: [attack, attack] })
     head.render()
     await head.load()
@@ -302,7 +321,7 @@ describe('template params', () => {
 
   it('loads the lazy plugin only once a value holds %', async () => {
     const dom = ssrDom([], 'none')
-    const head = createLazyHead({ document: dom.window.document, plugins: [lazyTemplateParams] })
+    const head = compiledTagsHead({ document: dom.window.document, plugins: [lazyTemplateParams] })
     head.push(toCompiledTags({ title: 'Plain', meta: [{ name: 'a', content: 'b' }] }))
     head.render()
     await head.load()
@@ -446,7 +465,7 @@ describe('server entries changed before hydration ends', () => {
 
   it.each([false, true])('removes a server stylesheet whose compiled tags were disposed (render: %s)', async (render) => {
     const dom = ssrDom([{ input: stylesheet }], 'none')
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     head.push(toCompiledTags(stylesheet)).dispose()
     if (render)
       head.render()
@@ -459,7 +478,7 @@ describe('server entries changed before hydration ends', () => {
   it.each([false, true])('removes an obsolete link patched repeatedly (render: %s)', async (render) => {
     const link = (href: string) => toCompiledTags({ link: [{ rel: 'prev', href }] })
     const dom = ssrDom([{ input: { link: [{ rel: 'prev', href: '/server' }] } }], 'none')
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     const entry = head.push(link('/server'))
     entry.patch(link('/intermediate'))
     entry.patch(link('/client'))
@@ -474,7 +493,7 @@ describe('server entries changed before hydration ends', () => {
   it.each([false, true])('adopts with the values the server rendered after a patch with new values (render: %s)', async (render) => {
     const compiledTags = compile({ meta: [{ name: 'description', content: dynamicValue(0) }] }, 1)
     const dom = ssrDom([{ input: { meta: [{ name: 'description', content: 'server' }] } }], 'none')
-    const head = createLazyHead({ document: dom.window.document })
+    const head = compiledTagsHead({ document: dom.window.document })
     const entry = head.push(compiledTags, { values: ['server'] })
     // an empty value hands the head to v3, which drops a meta with no content
     entry.patch(compiledTags, { values: [''] })
@@ -493,7 +512,7 @@ describe('server entries changed before hydration ends', () => {
     const dom = ssrDom([{ input: stylesheet }], 'none')
     const started = Promise.withResolvers<void>()
     const plugins = Promise.withResolvers<[]>()
-    const head = createLazyHead({
+    const head = compiledTagsHead({
       document: dom.window.document,
       lazyPlugins: () => {
         started.resolve()
@@ -592,7 +611,7 @@ it('registers the template params plugin from lazyPlugins natively', async () =>
   const input = { title: 'a', titleTemplate: '%s %separator b' }
   const pair = createPair([{ input }], 'plugin')
   const dom = ssrDom([{ input }], 'plugin')
-  const head = createLazyHead({ document: dom.window.document, lazyPlugins: async () => [TemplateParamsPlugin] })
+  const head = compiledTagsHead({ document: dom.window.document, lazyPlugins: async () => [TemplateParamsPlugin] })
   head.push(toCompiledTags(input))
   pair.push(input)
   head.render()

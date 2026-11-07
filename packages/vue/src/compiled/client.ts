@@ -1,6 +1,7 @@
 import type { CompiledTags, LazyHeadEntry, LazyUnhead } from 'unhead/lazy'
 import type { MaybeRefOrGetter } from 'vue'
 import type { UseHeadOptions } from '../types'
+import { acceptCompiledTags } from 'unhead/lazy'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated, onScopeDispose, toValue, watchEffect } from 'vue'
 import { injectHead } from '../install'
 
@@ -13,7 +14,7 @@ export type { CompiledTags } from 'unhead/lazy'
  * @experimental
  */
 export function useCompiledHead(compiledTags: CompiledTags, values?: readonly MaybeRefOrGetter<unknown>[], options: UseHeadOptions = {}): LazyHeadEntry<any> {
-  const head = (options.head || injectHead()) as unknown as LazyUnhead<any>
+  const head = acceptCompiledTags((options.head || injectHead()) as unknown as LazyUnhead<any>)
   const scope = getCurrentScope()
   // a stopped scope cannot run an effect, so the component is gone
   if (scope && !scope.active)
