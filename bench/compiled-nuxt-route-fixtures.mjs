@@ -156,8 +156,16 @@ function createRoute(size, m) {
     head.push({ script: entryScripts })
   }
 
-  // The renderer a Nuxt patch would write. The key joins per request, because a real patch
-  // has to. A hit skips compile, and the input objects are built anyway, as in Nuxt today.
+  // The renderer a Nuxt patch would write. It keeps its own compiled tags per route, so no unhead
+  // module holds request-derived state. The key joins per request, because a real patch has
+  // to. A hit skips compile, and the input objects are built anyway, as in Nuxt today.
+  const routeTags = new Map()
+  const cached = (key, input) => {
+    let compiledTags = routeTags.get(key)
+    if (!compiledTags)
+      routeTags.set(key, compiledTags = ok(compileTags(input)))
+    return compiledTags
+  }
   const payloadTags = ok(compileTags({
     // `innerHTML` goes last: a `null` value lands in props, at the place the rebuilt input gives it
     script: [{ 'type': 'application/json', 'data-nuxt-data': 'nuxt-app', 'data-ssr': true, 'id': '__NUXT_DATA__', 'innerHTML': dynamicValue(0), 'tagPosition': 'bodyClose', 'tagPriority': 'high' }],
@@ -165,13 +173,13 @@ function createRoute(size, m) {
   const payloadValues = payloads.map(text => [text])
   const compiledRenderer = (head, t) => {
     const key = [...modules].join()
-    head.push(prepareHeadInput(importMap(), ENTRY_PATH))
-    head.push(prepareHeadInput({ link: stylesheets }, `css:${key}`))
-    head.push(prepareHeadInput({ style: inlineStyles }, `style:${key}`))
-    head.push(prepareHeadInput({ link: hints }, `hints:${key}`))
+    head.push(cached(ENTRY_PATH, importMap()))
+    head.push(cached(`css:${key}`, { link: stylesheets }))
+    head.push(cached(`style:${key}`, { style: inlineStyles }))
+    head.push(cached(`hints:${key}`, { link: hints }))
     head.push(payloadTags, { values: payloadValues[t] })
-    head.push(prepareHeadInput({ script: [{ innerHTML: CONFIG_SCRIPT, tagPosition: 'bodyClose', tagPriority: 'high' }] }, CONFIG_SCRIPT))
-    head.push(prepareHeadInput({ script: entryScripts }, `scripts:${key}`))
+    head.push(cached(CONFIG_SCRIPT, { script: [{ innerHTML: CONFIG_SCRIPT, tagPosition: 'bodyClose', tagPriority: 'high' }] }))
+    head.push(cached(`scripts:${key}`, { script: entryScripts }))
   }
 
   const options = { disableDefaults: true, plugins: [m.TemplateParamsPlugin] }
