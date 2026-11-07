@@ -229,8 +229,16 @@ const renderer: CompiledRenderer = {
     // a spread copy keeps `_src`, and a copy may hold new values
     if (tag._src === tag)
       return tag._html
-    const clean = sanitizeTags([tag as HeadTag])[0]
-    const html = clean ? tagToString(clean) : ''
+    let html: string
+    const { innerHTML } = tag
+    // v3 escapes script text only at a `<`, so a payload with none skips both regex scans
+    if (tag.tag === 'script' && innerHTML && typeof innerHTML === 'string' && tag.textContent == null && !innerHTML.includes('<')) {
+      html = `<script${propsToString(tag.props)}>${innerHTML}</script>`
+    }
+    else {
+      const clean = sanitizeTags([tag as HeadTag])[0]
+      html = clean ? tagToString(clean) : ''
+    }
     if (tag._c) {
       tag._src = tag
       tag._html = html
