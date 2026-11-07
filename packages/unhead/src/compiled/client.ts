@@ -195,7 +195,6 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
   let v3: Promise<unknown> | undefined
   const loadV3 = () => v3 ||= upgrade(import('../lazy/runtime')).then(loaded => loaded || (v3 = undefined))
   const dom = head.resolvedOptions.document!
-  let adopt: HeadEntry<any>[] | false | undefined = head.dirty && adoptionEntries()
 
   // Returns true when it rendered, and nothing when a load took over. With claims, it is the
   // silent render that adopts the server head. A claim is a copy of a server entry as it was
@@ -337,20 +336,21 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
     clearTimeout(timer)
     timer = setTimeout(() => {
       const ctx = { shouldRender: true, tags: [] }
-      if (!dom || !head.dirty)
+      // the first draw creates the DOM state, even with no change since hydration
+      if (!dom || (!head.dirty && head._dom))
         return
       head.hooks.callHook('dom:beforeRender', ctx)
       if (!ctx.shouldRender)
         return
       const live = [...head.entries.values()]
+      // Rendering the hydrated entries first adopts the server elements of an entry that changed
+      // since hydration, so the live entries below remove the stale ones. It waits for the first
+      // draw, so a change after the load still adopts. `dirty` means changed since hydration.
+      const adopt = !head._dom && head.dirty && adoptionEntries()
       if (options.render || ![...live, ...adopt || []].every(isCompiled) || hasForeignHooks(head))
         return loadV3()
-      // Rendering the hydrated entries first adopts the server elements of an entry that
-      // changed before load, so the live entries below remove the stale ones.
-      if (!adopt || draw(adopt.filter(entry => entry._i < CLAIM), adopt.filter(entry => entry._i >= CLAIM))) {
-        adopt = undefined
+      if (!adopt || draw(adopt.filter(entry => entry._i < CLAIM), adopt.filter(entry => entry._i >= CLAIM)))
         draw(live)
-      }
     })
   }
 }

@@ -1,11 +1,12 @@
 import type { ResolvableHead } from '../../../src/types'
 import { describe, expect, it, vi } from 'vitest'
+import { createHead as createV3Head } from '../../../src/client'
 import { compileTags, dynamicValue } from '../../../src/compiled/compile'
 import { createLazyHead, lazyTemplateParams } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { compiledTagsHead, createPair, settle, ssrDom, toCompiledTags } from './client-util'
 
-const v3Runtime = vi.hoisted(() => ({ heads: new Set<unknown>(), fail: 0 }))
+const v3Runtime = vi.hoisted(() => ({ heads: new Set<unknown>(), fail: 0, gate: undefined as Promise<void> | undefined }))
 vi.mock('../../../src/lazy/runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../src/lazy/runtime')>()
   return {
@@ -16,7 +17,8 @@ vi.mock('../../../src/lazy/runtime', async (importOriginal) => {
         v3Runtime.fail--
         return Promise.reject(new Error('chunk failed'))
       }
-      return actual.upgradeHead(...args)
+      // a gate holds the v3 chunk, as a slow download does
+      return v3Runtime.gate ? v3Runtime.gate.then(() => actual.upgradeHead(...args)) : actual.upgradeHead(...args)
     },
   }
 })
@@ -562,6 +564,65 @@ describe('server entries changed before hydration ends', () => {
     await settle(head)
     expect(hrefs(dom, 'stylesheet')).toEqual([])
     expect(v3Runtime.heads.has(head)).toBe(v3)
+  })
+})
+
+describe('adoption at the first draw', () => {
+  const root = { title: 'Root', meta: [{ name: 'description', content: 'root' }] }
+  const page: ResolvableHead = { link: [{ rel: 'canonical', href: '/old' }], meta: [{ name: 'robots', content: 'noindex' }] }
+
+  it.each(['debounce', 'pause'] as const)('removes a server tag that a change drops after the load, before the first draw: %s', async (window) => {
+    const next: ResolvableHead = { link: [{ rel: 'icon', href: '/new.ico' }] }
+    const expected = ssrDom([{ input: root }, { input: page }], 'none')
+    const v3 = createV3Head({ document: expected.window.document })
+    v3.push(root)
+    v3.push(page).dispose()
+    v3.push(next)
+    v3.render()
+
+    const dom = ssrDom([{ input: root }, { input: page }], 'none')
+    let paused = false
+    const head = compiledTagsHead({ document: dom.window.document, hooks: { 'dom:beforeRender': (ctx) => {
+      ctx.shouldRender = !paused
+    } } })
+    head.push(toCompiledTags(root))
+    const entry = head.push(toCompiledTags(page))
+    head.render()
+    paused = window === 'pause'
+    expect(await head.load()).toBe(true)
+    // with a pause, the first draw runs and waits, so no DOM state exists yet
+    if (paused)
+      await settle()
+    entry.dispose()
+    head.push(toCompiledTags(next))
+    paused = false
+    head.render()
+    await settle(head)
+    expect(dom.window.document.head.innerHTML).toBe(expected.window.document.head.innerHTML)
+    expect(v3Runtime.heads.has(head)).toBe(false)
+  })
+
+  it('removes a server tag that a change drops while the v3 chunk downloads', async () => {
+    const server = { meta: [{ name: 'robots', content: 'noindex' }, { name: 'description', content: '' }] }
+    const dom = ssrDom([{ input: { title: 'Root' } }, { input: server }], 'none')
+    const gate = Promise.withResolvers<void>()
+    v3Runtime.gate = gate.promise
+    const head = compiledTagsHead({ document: dom.window.document })
+    head.push(toCompiledTags({ title: 'Root' }))
+    // an empty value is one v3 must decide, so the first draw hands the head to v3
+    const old = head.push(compile({ meta: [{ name: 'robots', content: 'noindex' }, { name: 'description', content: dynamicValue(0) }] }, 1), { values: [''] })
+    head.render()
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect(v3Runtime.heads.has(head)).toBe(true))
+    old.dispose()
+    head.push(toCompiledTags({ link: [{ rel: 'canonical', href: '/new' }] }))
+    // the compiled runtime draws the new page while the v3 chunk still downloads
+    await settle()
+    v3Runtime.gate = undefined
+    gate.resolve()
+    await settle(head)
+    expect(dom.window.document.querySelector('meta[name="robots"]')?.outerHTML).toBeUndefined()
+    expect(dom.window.document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('/new')
   })
 })
 

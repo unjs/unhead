@@ -188,6 +188,45 @@ describe('useCompiledHead', () => {
     expect(document.title).toBe('Home')
   })
 
+  it('removes a server tag that a navigation drops before the first draw after a client-only push', async () => {
+    const showTitle = ref(false)
+    const showCanonical = ref(true)
+    const Title = defineComponent({
+      setup() {
+        headOf({ title: 'Client' })
+        return () => h('i', 'title')
+      },
+    })
+    const Canonical = defineComponent({
+      setup() {
+        headOf({ link: [{ rel: 'canonical', href: '/page' }] })
+        return () => h('i', 'canonical')
+      },
+    })
+    const App = defineComponent({
+      setup() {
+        headOf({ title: 'Root', meta: [{ name: 'description', content: 'root' }] })
+        return () => h('div', [showTitle.value ? h(Title) : h('b'), showCanonical.value ? h(Canonical) : h('b')])
+      },
+    })
+    await serverRender(App)
+    const { head } = hydrate(App)
+    // a push the server never rendered loads the runtime at once
+    showTitle.value = true
+    await nextTick()
+    head.render()
+    await head.load()
+    // the navigation removes the page before the first draw
+    head.blockLoad()
+    showCanonical.value = false
+    await nextTick()
+    head.render()
+    await settle()
+    expect(document.querySelector('link[rel="canonical"]')?.outerHTML).toBeUndefined()
+    expect(document.title).toBe('Client')
+    expect(v3Runtime.heads.has(head)).toBe(false)
+  })
+
   it('disposes with an effect scope when there is no component', async () => {
     const head = createLazyHead()
     document.head.innerHTML = ''
