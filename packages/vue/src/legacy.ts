@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput, SSRHeadPayload } from 'unhead/types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput, ResolvableHead, SSRHeadPayload } from 'unhead/types'
 import type { UseHeadInput, VueHeadClient } from './types'
 import { DeprecationsPlugin } from 'unhead/legacy'
 import { AliasSortingPlugin, PromisesPlugin, TemplateParamsPlugin } from 'unhead/plugins'
@@ -29,7 +29,7 @@ export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlu
  * `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient<UseHeadInput, boolean> {
+export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient<ResolvableHead, boolean> {
   return _createClientHead({
     ...options,
     plugins: [...legacyPlugins, ...(options.plugins || [])],
