@@ -11,8 +11,6 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
-./lazy:
-  createLazyHead: function
 ./compiled/compile:
   compileTags: function
   dynamicValue: function
@@ -34,6 +32,8 @@
   createServerRenderer: function
   renderSSRHead: function
   templateParams: object
+./lazy:
+  createLazyHead: function
 ./legacy:
   activeHead: object
   createHead: function
