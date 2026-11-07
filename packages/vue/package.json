@@ -87,6 +87,7 @@
     },
     "./compiled": {
       "types": "./dist/compiled.d.ts",
+      "node": "./dist/compiled.node.mjs",
       "default": "./dist/compiled.mjs"
     },
     "./compiled/server": {

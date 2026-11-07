@@ -16,6 +16,7 @@ export default defineBuildConfig({
     { input: 'src/components', name: 'components' },
     { input: 'src/server', name: 'server' },
     { input: 'src/compiled/index', name: 'compiled' },
+    { input: 'src/compiled/node', name: 'compiled.node' },
     { input: 'src/compiled/server', name: 'compiled/server' },
     { input: 'src/compiled/server-strict', name: 'compiled/server-strict' },
     { input: 'src/client', name: 'client' },

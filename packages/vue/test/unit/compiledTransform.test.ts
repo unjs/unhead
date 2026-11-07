@@ -333,7 +333,7 @@ describe('useCompiledHead', () => {
     ['a client head', () => createClientHead()],
   ])('refuses %s and names the fix', async (_, create) => {
     expect(await ssr(create(), () => compiledRuntime.useCompiledHead(compiledTags))).toEqual({
-      threw: '[unhead] For compiled head calls, use @unhead/vue/compiled/server, or turn off compile.',
+      threw: '[unhead] Compiled head calls need @unhead/vue/compiled/server or @unhead/vue/lazy. Or turn off compile.',
     })
   })
 

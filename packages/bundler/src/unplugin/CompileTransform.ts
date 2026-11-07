@@ -2,14 +2,13 @@ import type { SourceMapInput } from 'rollup'
 import type { CompiledTags } from 'unhead/compiled/compile'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
-import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { compileTags, dynamicValue } from 'unhead/compiled/compile'
 import { normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, splitTransformId } from './utils'
 
 const HEAD_CALL_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b/
 const COMMONJS_RE = /\.c[jt]s$/
@@ -32,13 +31,6 @@ const SHAPE_NODES = new Set(['ObjectExpression', 'ArrayExpression'])
 const ENTRY_SEO_KEYS = new Set([...TagConfigKeys, 'class', 'style', '_flatMeta'])
 
 const BAIL = Symbol('bail')
-
-/**
- * Which builds compile head calls. Only server builds have a compiled runtime for now.
- */
-function compilesFor(consumer: BuildConsumer | undefined): boolean {
-  return consumer === 'server'
-}
 
 export interface CompileTransformOptions extends BaseTransformerTypes {
   /**
@@ -251,8 +243,6 @@ function insertAfterImports(s: MagicString, body: any[], text: string): void {
  */
 export const CompileTransform = createUnplugin<CompileTransformOptions, false>((options: CompileTransformOptions = {}) => {
   const importPaths = new Set(options.importPaths)
-  // Fallback for bundlers without a per-transform environment, as in `TreeshakeServerComposables`.
-  let fallbackConsumer: BuildConsumer | undefined
 
   function shouldTransformId(id: string): boolean {
     const { pathname, query } = splitTransformId(id)
@@ -275,7 +265,9 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         id: createJsVueTransformIdFilter(options.filter?.include),
       },
       handler(code, id) {
-        if (!compilesFor(resolveBuildConsumer(this, fallbackConsumer)) || !shouldTransformId(id))
+        // Server and client builds both compile: the compiled server head and the lazy
+        // client head take the same compiled tags.
+        if (!shouldTransformId(id))
           return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
@@ -382,20 +374,10 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         }
       },
     },
-    webpack(ctx) {
-      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
-    },
     vite: {
-      // Per-call target resolution via `this.environment` makes the plugin
-      // safe to share across environments in a single build pipeline.
       sharedDuringBuild: true,
-      apply(_config: UserConfig, env: ConfigEnv) {
-        // The dev server shares one module graph between client and SSR renders.
-        if (env.command === 'serve')
-          return false
-        fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
-        return true
-      },
+      // The dev server keeps its loose head calls, so it needs no compiled head.
+      apply: (_config: UserConfig, env: ConfigEnv) => env.command !== 'serve',
     },
   }
 })

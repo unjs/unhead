@@ -38,7 +38,9 @@
 ./components:
   Head: object
 ./lazy:
+  acceptCompiledTags: function
   createLazyHead: function
+  lazyTemplateParams: object
 ./legacy:
   createClientHead: function
   createHead: function
