@@ -23,6 +23,8 @@
 ./compiled:
   useCompiledHead: function
   useCompiledSeoMeta: function
+./compiled/client:
+  useCompiledHead: function
 ./compiled/server:
   createHead: function
   prepareHeadInput: function
@@ -32,6 +34,7 @@
   Head: object
 ./lazy:
   createLazyHead: function
+  lazyTemplateParams: object
 ./legacy:
   createClientHead: function
   createHead: function

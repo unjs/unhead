@@ -17,6 +17,7 @@ export default defineBuildConfig({
     { input: 'src/server', name: 'server' },
     { input: 'src/compiled/index', name: 'compiled' },
     { input: 'src/compiled/server', name: 'compiled/server' },
+    { input: 'src/compiled/client', name: 'compiled/client' },
     { input: 'src/client', name: 'client' },
     { input: 'src/lazy', name: 'lazy' },
     { input: 'src/stream/server', name: 'stream/server' },
