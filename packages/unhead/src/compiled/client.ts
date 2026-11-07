@@ -50,10 +50,11 @@ function elementKey(el: Element, tag: string): string {
   const props: Record<string, any> = {}
   for (const name of el.getAttributeNames()) {
     const value = el.getAttribute(name)!
+    // v3 hashes these as a Set and a Map
     props[name] = name === 'class'
-      ? '[object Set]'
+      ? new Set()
       : name === 'style'
-        ? '[object Map]'
+        ? new Map()
         : ((value === 'true' || !value) && !name.startsWith('data-') && (tag !== 'meta' || name !== 'content')) || value
   }
   const { rel, charset, hreflang, id } = props
@@ -108,7 +109,7 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
       if (classes != null)
         tag.props.class = new Set(classes && classes.split(' '))
       if (style != null)
-        tag.props.style = new Map(style && style.split(';').map((part: string) => [part.slice(0, part.indexOf(':')), part.slice(part.indexOf(':') + 1)]))
+        tag.props.style = new Map(style && style.split(';').map((part: string) => part.split(/:([\s\S]*)/)))
       tags.push(tag)
     })
   }
