@@ -81,12 +81,18 @@ function hookStore(head: CompiledHead): HookableCore<any> {
   return store
 }
 
-function hasListeners(head: CompiledHead, ignoreNative: boolean): boolean {
+// The hooks v3 `resolveTags` and `renderSSRHead` call: `entries:normalize`,
+// `entries:resolve`, every `tags:` hook, `ssr:beforeRender`, `ssr:render`, and
+// `ssr:rendered`. A listener for any other hook, such as the `script:updated` one
+// `useScript` adds, cannot change a render.
+const RENDER_HOOK_RE = /^(?:entries:[nr]|tags:|ssr:[br])/
+
+function hasListeners(head: CompiledHead): boolean {
   const hooks = (head._hookStore as any)?._hooks
-  const native = ignoreNative ? head._tp : undefined
+  const native = head._tp
   for (const name in hooks) {
     const listeners = hooks[name]
-    if (listeners?.length && !(native && listeners.length === 1 && listeners[0] === native[name]))
+    if (RENDER_HOOK_RE.test(name) && listeners?.length && !(native && listeners.length === 1 && listeners[0] === native[name]))
       return true
   }
   return false
@@ -101,8 +107,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     head._tp = resolved.hooks
     // another plugin with this key has hooks this entry cannot run natively
     head._v3 ||= Object.keys(resolved.hooks).join() !== 'tags:resolve,tags:afterResolve'
-    // a listener that registered first runs first, as it does in v3
-    if (head._v3 || hasListeners(head, false))
+    // Once the store exists, a reader may hold it and add a listener later, so the
+    // hooks register now and keep the v3 order. The fast tiers skip them as native.
+    if (head._v3 || head._hookStore)
       hookStore(head)
     return
   }
@@ -336,7 +343,7 @@ function usesV3Pipeline(head: CompiledHead, options?: RenderSSRHeadOptions): boo
   return head._v3 !== false
     || !!options?.resolvedTags
     || (!!options?.tagWeight && options.tagWeight !== capoTagWeight)
-    || hasListeners(head, true)
+    || hasListeners(head)
 }
 
 /**
