@@ -49,6 +49,8 @@ describe('corpus compiled tags coverage', () => {
     'nuxt: renderer pushes, 4.6.4, payload extraction',
     // the value holds a private-use character, so only the template compiles
     'nuxt: renderer compiled tags, payload value 2',
+    // AliasSortingPlugin moves this tag, and the fast tiers never run it on compiled tags
+    'priority: alias strategy string',
   ])
 
   it('compiles every scenario input it should', () => {
