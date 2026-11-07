@@ -58,6 +58,11 @@ export const DEFAULT_COMPILED_TAGS: CompiledTags = [
   ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1' }, -15, 'meta:viewport', 0, 1],
 ]
 
+/** @returns whether a tag of the compiled tags takes values */
+export function hasDynamicValues(compiledTags: CompiledTags): boolean {
+  return compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES)
+}
+
 /** @returns whether an object has no enumerable keys */
 export function isEmpty(value: object | undefined): boolean {
   // eslint-disable-next-line no-unreachable-loop -- intentional: any key means non-empty
@@ -118,7 +123,7 @@ export function renderTags(tags: RuntimeTag[], omitLineBreaks: boolean | undefin
 /** Builds the memo of a sequence of compiled tags with no values. A sequence with dynamic values always takes the slow path. */
 export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean | undefined, renderer: CompiledRenderer): Memo {
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    if (entry._compiled!.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES))
+    if (hasDynamicValues(entry._compiled!))
       return { b: {}, x: true }
   }
   return { b: renderTags(renderer.r(renderer.c(head), head), omitLineBreaks, renderer) as any }

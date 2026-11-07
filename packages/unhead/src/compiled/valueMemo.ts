@@ -3,7 +3,7 @@ import type { CompiledEntry, CompiledRenderer, CompiledTagsHead, Memo, RuntimeTa
 import type { CompiledTag } from './types'
 import { escapeHtml } from '../server/util/tagToString'
 import { renderTags } from './core'
-import { DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE } from './tags'
+import { copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE } from './tags'
 
 type EntryValues = (readonly unknown[] | undefined)[]
 
@@ -119,7 +119,7 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
   if (!memo.d) {
     Object.assign(head, state)
     if (tp)
-      head._templateParams = { ...state._templateParams }
+      head._templateParams = copyValue(state._templateParams)
     return html as unknown as SSRHeadPayload
   }
   const values: EntryValues = []
@@ -142,6 +142,6 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
   Object.assign(head, state)
   head._title = resolveState(state._title, values)
   if (tp)
-    head._templateParams = { ...state._templateParams, pageTitle: resolveState(state._templateParams.pageTitle, values) }
+    head._templateParams = { ...copyValue(state._templateParams), pageTitle: resolveState(state._templateParams.pageTitle, values) }
   return html as unknown as SSRHeadPayload
 }

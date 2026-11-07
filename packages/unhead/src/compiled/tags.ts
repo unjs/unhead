@@ -22,6 +22,19 @@ export function dynamicValue(index: number): string {
 }
 
 /**
+ * A deep copy of compiled tag JSON. Compiled tags are shared by every request, so no head may hold
+ * a nested template param of it.
+ */
+export function copyValue<T>(value: T): T {
+  if (!value || typeof value !== 'object')
+    return value
+  const out: any = Array.isArray(value) ? [] : {}
+  for (const key in value)
+    out[key] = copyValue(value[key])
+  return out
+}
+
+/**
  * Replaces the dynamic values of a value. A value that is only a dynamic value keeps the raw value,
  * so `normalizeProps` sees what the author passed.
  */
@@ -41,7 +54,8 @@ export function resolveDynamicValues(value: string, values?: readonly unknown[])
 export function toHeadInput(compiledTags: CompiledTags, values?: readonly unknown[]): Record<string, any> {
   const input: Record<string, any> = {}
   for (const [tag, props, , , extra, flags] of compiledTags) {
-    let value: any = { ...(props || undefined), ...(extra || undefined) }
+    // a reader may edit the input in place, as the Nuxt island handler does
+    let value: any = Object.assign(copyValue(props || {}), extra)
     if (flags! & FLAG_DYNAMIC_VALUES) {
       for (const key in value) {
         if (typeof value[key] === 'string')
