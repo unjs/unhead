@@ -22,6 +22,8 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'serverSelfContained', name: 'Server (Self-Contained)', category: 'Core', file: 'server-sc/server/minimal.mjs' },
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },
+  { id: 'vueClientLazy', name: 'Vue Client (Lazy, eager)', category: 'Vue', file: 'vue-client-lazy/vue-client/lazy.mjs' },
+  { id: 'vueClientLazyRuntime', name: 'Vue Client (Lazy, runtime chunk)', category: 'Vue', file: 'vue-client-lazy/chunks/runtime.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
   { id: 'reactClient', name: 'React Client (Minimal)', category: 'React', file: 'react-client/react-client/minimal.mjs' },
   { id: 'reactClientFull', name: 'React Client (Full)', category: 'React', file: 'react-client-full/react-client/full.mjs' },

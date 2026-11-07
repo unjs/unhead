@@ -22,6 +22,8 @@
   VueHeadMixin: object
 ./components:
   Head: object
+./lazy:
+  createLazyHead: function
 ./legacy:
   createClientHead: function
   createHead: function

@@ -371,6 +371,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         script.entry = head.push({
           script: [{ ...defaults, ...input }],
         }, entryOptions)
+        // a lazy head must not hold a script back until browser idle
+        ;(head as { load?: () => unknown }).load?.()
       }
       if (cb)
         _registerCb('loaded', cb)
