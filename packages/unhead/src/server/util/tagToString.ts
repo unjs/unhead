@@ -13,7 +13,7 @@ export function escapeHtml(str: string) {
 
 /* @__PURE__ */
 export function tagToString<T extends HeadTag>(tag: T) {
-  const attrs = propsToString(tag.props)
+  const attrs = propsToString(tag.attrs)
   const openTag = `<${tag.tag}${attrs}>`
   // self-closing (meta/link/base) is the common SSR tag: one Set lookup, no close tag.
   // SelfClosingTags and TagsWithInnerContent are disjoint, so the second SelfClosingTags.has()
