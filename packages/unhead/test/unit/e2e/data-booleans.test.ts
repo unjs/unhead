@@ -54,7 +54,7 @@ describe('unhead e2e data true', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content="true">
+      <meta name="foo" data-foo="true" data-empty-string="" content="true">
       </head>
       <body>
 
