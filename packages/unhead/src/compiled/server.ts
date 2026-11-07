@@ -403,9 +403,12 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): (head:
  * must not change afterwards. For input built per request, keep `compileTags` results
  * on your own renderer instead, so no module holds request-derived state.
  *
+ * Literal input keeps its literal types, such as `rel: 'stylesheet'`, so `head.push` takes the
+ * result with no `satisfies`.
+ *
  * @experimental
  */
-export function prepareHeadInput<T extends object>(input: T): T | CompiledTags {
+export function prepareHeadInput<T extends ResolvableHead | object>(input: T): T | CompiledTags {
   if (Array.isArray(input))
     return input
   const cache = prepared ||= new WeakMap()

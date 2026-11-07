@@ -2,7 +2,7 @@ import type { CompiledTags } from 'unhead/compiled/server'
 import type { SSRHeadPayload } from 'unhead/types'
 import type { RawInput, SerializableHead } from '../../src/'
 import { createHead } from '@unhead/vue/client'
-import { createHead as createCompiledServerHead } from '@unhead/vue/compiled/server'
+import { createHead as createCompiledServerHead, prepareHeadInput } from '@unhead/vue/compiled/server'
 import { createHead as createStrictServerHead } from '@unhead/vue/compiled/server-strict'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { dynamicValue } from 'unhead/compiled/compile'
@@ -170,6 +170,11 @@ describe('types', () => {
     expectTypeOf(head.push).toBeCallableWith(compiledTags, { values: 'Title' })
     // the high priority entry wins, with its value
     expect(head.render().headTags).toBe('<title>1</title>')
+  })
+  it('types prepareHeadInput literals for a compiled server head push', () => {
+    const head = createCompiledServerHead({ disableDefaults: true })
+    head.push(prepareHeadInput({ link: [{ rel: 'stylesheet', href: '/a.css' }], htmlAttrs: { lang: 'en' } }))
+    expect(head.render().headTags).toBe('<link rel="stylesheet" href="/a.css">')
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'
