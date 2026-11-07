@@ -138,9 +138,13 @@ export const lazyTemplateParams: HeadPlugin & { _load: (head: Unhead<any>) => Pr
 
 /**
  * Lets a lazy head render compiled tags on the compiled runtime, which loads instead of the
- * v3 runtime when every entry holds compiled tags. It also lets \`entry.patch(compiledTags, { values })\`
+ * v3 runtime when every entry holds compiled tags. It also lets `entry.patch(compiledTags, { values })`
  * update values. A head without it still takes compiled tags, through the v3 runtime.
- * \`useCompiledHead\` calls it, and its code stays out of a bundle that never does.
+ *
+ * Call it where the head is created when the bundler compiles head calls. The first
+ * compiled call also calls it, but an idle load can start before that call, for
+ * example while the router loads a page, and then picks the v3 runtime. Its code
+ * stays out of a bundle that never calls it.
  *
  * @experimental
  */
