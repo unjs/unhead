@@ -8,6 +8,8 @@ import { DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE } from './tag
 type EntryValues = (readonly unknown[] | undefined)[]
 
 const DOUBLE_QUOTE_RE = /"/g
+const LT_RE = /</g
+const JSON_TYPE_RE = /json$|^importmap$|^speculationrules$/
 const TOKEN_MARKED_RE = /\uE000(\d+)\.(\d+)\.(\d)\uE001/
 const TOKEN_ENTRY_RE = /\uE000(\d+)\.(\d+)\uE001/g
 // a static prefix of a closing tag or a template param next to a dynamic value
@@ -18,6 +20,7 @@ const PARAM_UNSAFE_RE = /%|^\s|\s$/
 const MODE_ATTR = 0
 const MODE_TITLE = 1
 const MODE_RAW = 2
+const MODE_JSON = 3
 
 function markMode(value: string, mode: number): string {
   return value.replace(TOKEN_ENTRY_RE, `${DYNAMIC_VALUE_OPEN}$1.$2.${mode}${DYNAMIC_VALUE_CLOSE}`)
@@ -54,7 +57,7 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
       if (tag[key]?.includes?.(DYNAMIC_VALUE_OPEN)) {
         // a param expansion escapes JSON values, which a raw value would not
         unsafe ||= !!tag.processTemplateParams
-        tag[key] = markMode(tag[key], tag.tag === 'title' ? MODE_TITLE : MODE_RAW)
+        tag[key] = markMode(tag[key], tag.tag === 'title' ? MODE_TITLE : tag.tag === 'script' && JSON_TYPE_RE.test(String(tag.props.type)) ? MODE_JSON : MODE_RAW)
       }
     }
   })
@@ -81,18 +84,23 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 }
 
 // Returns undefined when the value could change a v3 decision. Escaping matches
-// v3: `escapeHtml` for title text, `encodeAttribute` for attributes, and raw text
-// holds no `<`, so no closing tag or JSON rule applies.
+// v3: `escapeHtml` for title text, `encodeAttribute` for attributes, a `\u003C`
+// escape for each `<` of JSON script text, and other raw text holds no `<`, so no closing
+// tag rule applies. Template params never reach script text, because the build
+// sends a tag that opts in to the slow path. So a large payload costs one
+// `includes` scan, and a regex only when it holds a `<`.
 function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
-  if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true' || (tp && PARAM_UNSAFE_RE.test(entryValue)))
+  if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
+    return
+  if (mode >= MODE_RAW)
+    return !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
+  if (tp && PARAM_UNSAFE_RE.test(entryValue))
     return
   return mode === MODE_ATTR
     ? entryValue.includes('"') ? entryValue.replace(DOUBLE_QUOTE_RE, '&quot;') : entryValue
-    : mode === MODE_TITLE
-      ? entryValue.includes('$') ? undefined : escapeHtml(entryValue)
-      : entryValue.includes('<') ? undefined : entryValue
+    : entryValue.includes('$') ? undefined : escapeHtml(entryValue)
 }
 
 function resolveState(value: any, values: EntryValues): any {

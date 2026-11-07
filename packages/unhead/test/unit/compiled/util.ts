@@ -1,5 +1,5 @@
 import type { CreateServerHeadOptions, HeadTag, RenderSSRHeadOptions } from '../../../src/types'
-import type { Scenario } from './corpus'
+import type { Scenario, ScenarioEntry } from './corpus'
 import { compileTags } from '../../../src/compiled/compile'
 import { createHead as createCompiledHead, renderSSRHead as renderCompiled } from '../../../src/compiled/server'
 import { TemplateParamsPlugin } from '../../../src/plugins'
@@ -22,6 +22,14 @@ export function toCompiledTags(input: any): any {
   return result._tag === 'Ok' ? result.tags : input
 }
 
+// compiled tags with values for an entry that has a template, otherwise `toCompiledTags`
+function toCompiledEntry({ input, template, values, options }: ScenarioEntry): [any, any] {
+  if (!template)
+    return [toCompiledTags(input), options]
+  const result = compileTags(template, { dynamicValues: values!.length })
+  return result._tag === 'Ok' ? [result.tags, { ...options, values }] : [input, options]
+}
+
 // every head state a reader can observe after a render
 export function headState(head: any) {
   return {
@@ -41,9 +49,11 @@ export function attempt<T>(fn: () => T): { value: T } | { threw: true } {
   }
 }
 
-function applyEntries(head: any, scenario: Scenario, compiledTags: (input: any, index: number) => any) {
-  scenario.entries.forEach(({ input, options, dispose, patch }, index) => {
-    const entry = head.push(compiledTags(input, index), options)
+function applyEntries(head: any, scenario: Scenario, compiledTags: (input: any, index: number) => any, compiledEntry?: (entry: ScenarioEntry, index: number) => [any, any] | undefined) {
+  scenario.entries.forEach((scenarioEntry, index) => {
+    const { input, options, dispose, patch } = scenarioEntry
+    const [pushed, pushOptions] = compiledEntry?.(scenarioEntry, index) || [compiledTags(input, index), options]
+    const entry = head.push(pushed, pushOptions)
     if (dispose)
       entry.dispose()
     if (patch !== undefined)
@@ -68,7 +78,7 @@ export function renderScenarioV3(scenario: Scenario, tp: boolean) {
 
 export function renderScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode) {
   const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input))
-  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input)
+  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input, (entry, index) => usesCompiledTags(mode, index) ? toCompiledEntry(entry) : undefined)
   return renderAll(head, renderCompiled, scenario.render)
 }
 
@@ -105,6 +115,6 @@ export function resolveScenarioV3(scenario: Scenario, tp: boolean) {
 
 export function resolveScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode) {
   const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input))
-  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input)
+  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input, (entry, index) => usesCompiledTags(mode, index) ? toCompiledEntry(entry) : undefined)
   return attempt(() => projectTags(resolveTags(head)))
 }
