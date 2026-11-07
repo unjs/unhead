@@ -1,10 +1,11 @@
 import { useHead, useSeoMeta } from '@unhead/vue'
+import { useCompiledHead } from '@unhead/vue/compiled'
 import { createHead as createCompiled, renderSSRHead as renderCompiled } from '@unhead/vue/compiled/server'
 import { createHead as createV3, renderSSRHead as renderV3 } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { compileTags, dynamicValue } from 'unhead/compiled'
 import { TemplateParamsPlugin } from 'unhead/plugins'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, ref } from 'vue'
 
 function compiledTags(input: any, dynamicValues?: number): any {
@@ -29,6 +30,16 @@ async function ssr(head: any, setup: () => void) {
   app.use(head)
   await renderToString(app)
 }
+
+describe('useCompiledHead outside setup', () => {
+  // a router guard or a store, for example
+  it('throws the v3 error, with no Vue warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(() => useCompiledHead(compiledTags({ title: 'A' }))).toThrow('useHead() was called without provide context')
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})
 
 describe('@unhead/vue/compiled/server', () => {
   it('equals @unhead/vue/server for compiled tags in a Vue app', async () => {

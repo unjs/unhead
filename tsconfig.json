@@ -31,6 +31,7 @@
       "@unhead/vue/client": ["./packages/vue/src/client"],
       "@unhead/vue/lazy": ["./packages/vue/src/lazy"],
       "@unhead/vue/server": ["./packages/vue/src/server"],
+      "@unhead/vue/compiled": ["./packages/vue/src/compiled/index"],
       "@unhead/vue/compiled/server": ["./packages/vue/src/compiled/server"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
