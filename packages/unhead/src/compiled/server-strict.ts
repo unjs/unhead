@@ -2,7 +2,7 @@ import type { CreateServerHeadOptions, RenderSSRHeadOptions, SSRHeadPayload, Unh
 import type { CompiledEntry, CompiledRenderer, CompiledTagsHead, RuntimeTag } from './core'
 import type { CompiledTags } from './types'
 import { escapeHtml } from '../server/util/tagToString'
-import { buildStaticMemo, DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
+import { buildStaticMemo, DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, settleValues } from './core'
 import { DYNAMIC_VALUE_RE } from './tags'
 import { applyTemplateParams } from './templateParams'
 
@@ -178,6 +178,7 @@ const renderer: CompiledRenderer = {
  * @experimental
  */
 export function renderSSRHead(head: Unhead<any>, options?: Pick<RenderSSRHeadOptions, 'omitLineBreaks'>): SSRHeadPayload {
+  head.entries.forEach(settleValues)
   return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
 }
 
@@ -208,6 +209,7 @@ export function createHead(options: StrictHeadOptions = {}): Unhead<CompiledTags
     }
   }
   const head = {
+    _acceptsCompiled: 1,
     _entryCount: 1,
     plugins: new Map(),
     resolvedOptions: options,
