@@ -5,6 +5,7 @@ import { createHead as createCompiledHead, renderSSRHead as renderCompiled } fro
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 import { resolveTags } from '../../../src/utils'
+import { sanitizeTags } from '../../../src/utils/resolve'
 
 export type Mode = 'compiled' | 'loose' | 'mixed-even' | 'mixed-odd'
 export const MODES: Mode[] = ['compiled', 'loose', 'mixed-even', 'mixed-odd']
@@ -61,23 +62,36 @@ function applyEntries(head: any, scenario: Scenario, compiledTags: (input: any, 
   })
 }
 
-function headOptions(scenario: Scenario, tp: boolean, init: (input: any) => any): CreateServerHeadOptions {
+function headOptions(scenario: Scenario, tp: boolean, init: (input: any) => any, seen?: unknown[]): CreateServerHeadOptions {
   return {
     disableDefaults: true,
     ...scenario.head,
     init: scenario.head?.init?.map(input => input && init(input)),
     plugins: tp ? [TemplateParamsPlugin] : [],
+    // a listener moves a compiled head to the full runtime tier, and it records what a module would see.
+    // Compiled tags drop a tag that sanitize drops and that has no identity, so the record does too
+    hooks: seen && {
+      'tags:resolve': ({ tags }: { tags: HeadTag[] }) => {
+        const kept = tags.filter(tag => tag._d || sanitizeTags([tag]).length)
+        seen.push(projectTags(kept).map((projected, i) => ({
+          ...projected,
+          h: kept[i]!._h,
+          classIsSet: kept[i]!.props.class === undefined || kept[i]!.props.class instanceof Set,
+          styleIsMap: kept[i]!.props.style === undefined || kept[i]!.props.style instanceof Map,
+        })))
+      },
+    },
   }
 }
 
-export function renderScenarioV3(scenario: Scenario, tp: boolean) {
-  const head = createV3Head(headOptions(scenario, tp, input => input))
+export function renderScenarioV3(scenario: Scenario, tp: boolean, seen?: unknown[]) {
+  const head = createV3Head(headOptions(scenario, tp, input => input, seen))
   applyEntries(head, scenario, input => input)
   return renderAll(head, renderV3, scenario.render)
 }
 
-export function renderScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode) {
-  const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input))
+export function renderScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode, seen?: unknown[]) {
+  const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input, seen))
   applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input, (entry, index) => usesCompiledTags(mode, index) ? toCompiledEntry(entry) : undefined)
   return renderAll(head, renderCompiled, scenario.render)
 }
