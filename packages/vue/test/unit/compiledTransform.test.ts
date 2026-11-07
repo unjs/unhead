@@ -216,6 +216,54 @@ title.value = 'Hello again'
   })
 })
 
+// Each flat meta key that `unpackMeta` also expands from an object or a list, with a
+// value of each shape: [key, text, object, list]
+const OBJECT_SEO_VALUES: [string, string, string, string][] = [
+  ['ogImage', `'https://e.com/a.png'`, `{ url: '/o.png', width: 1200, alt: 'O' }`, `['/1.png', { url: '/2.png', alt: 'Two' }]`],
+  ['ogImageUrl', `'https://e.com/a.png'`, `{ url: '/o.png' }`, `['/1.png', '/2.png']`],
+  ['ogVideo', `'https://e.com/a.mp4'`, `{ url: '/v.mp4', type: 'video/mp4' }`, `['/1.mp4', '/2.mp4']`],
+  ['ogVideoUrl', `'https://e.com/a.mp4'`, `{ url: '/v.mp4' }`, `['/1.mp4', '/2.mp4']`],
+  ['ogAudio', `'https://e.com/a.mp3'`, `{ url: '/a.mp3', secureUrl: 'https://e.com/a.mp3' }`, `['/1.mp3', '/2.mp3']`],
+  ['ogAudioUrl', `'https://e.com/a.mp3'`, `{ url: '/a.mp3' }`, `['/1.mp3', '/2.mp3']`],
+  ['twitterImage', `'https://e.com/t.png'`, `{ url: '/t.png', alt: 'T' }`, `['/1.png', '/2.png']`],
+  ['themeColor', `'#ffffff'`, `{ content: 'red', media: 'print' }`, `[{ content: 'red', media: '(prefers-color-scheme: light)' }, 'blue']`],
+  ['googleSiteVerification', `'abc'`, `{ content: 'abc' }`, `['a', 'b']`],
+  ['author', `'Ada'`, `{ content: 'Ada' }`, `['Ada', 'Grace']`],
+  ['ogLocaleAlternate', `'fr_FR'`, `{ content: 'fr_FR' }`, `['fr_FR', 'de_DE']`],
+  ['articleAuthor', `'Ada'`, `{ content: 'Ada' }`, `['Ada', 'Grace']`],
+  ['articleTag', `'vue'`, `{ content: 'vue' }`, `['vue', 'nuxt']`],
+  ['bookAuthor', `'Ada'`, `{ content: 'Ada' }`, `['Ada', 'Grace']`],
+  ['bookTag', `'vue'`, `{ content: 'vue' }`, `['vue', 'nuxt']`],
+  ['robots', `'noindex, nofollow'`, `{ index: true, follow: false, maxSnippet: -1 }`, `['noindex', 'nofollow']`],
+  ['refresh', `'5;url=/next'`, `{ seconds: 5, url: '/next' }`, `['5', '10']`],
+  ['contentSecurityPolicy', `"default-src 'self'"`, `{ defaultSrc: "'self'", imgSrc: '*' }`, `["default-src 'self'", 'img-src *']`],
+  ['appleItunesApp', `'app-id=1'`, `{ appId: '1', appArgument: 'x' }`, `['app-id=1', 'app-id=2']`],
+]
+
+describe('a dynamic value of an object-capable seo key renders like v3', () => {
+  const pick = () => ({ pick: (value: unknown) => value })
+  const valueWrappers: [string, (value: string) => string][] = [...WRAPPERS.slice(1), ['call', value => `pick(${value})`]]
+  const cases = OBJECT_SEO_VALUES.flatMap(([key, text, object, list]) => valueWrappers.flatMap(([wrapper, wrap]) => [
+    ['text', text],
+    ['object', object],
+    ['list', list],
+    ['undefined', 'undefined'],
+    ['null', 'null'],
+    ['empty', `''`],
+  ].map(([name, value]) => [`${key}, ${wrapper} ${name}`, key, wrap(value!)] as const)))
+
+  it.each(cases)('%s', async (_, key, value) => {
+    // the layout sets the same key, so a page value that renders no tag must not hide it
+    const source = snippet(`useSeoMeta({ ${key}: 'layout', ogTitle: 'Layout' })
+  useSeoMeta({ ${key}: ${value}, description: 'Page' })`, false)
+    expect(compile(source).match(COMPILED_CALL_RE)).toEqual(['__unhead_useCompiledHead(', '__unhead_useCompiledSeoMeta('])
+    for (const tp of [false, true]) {
+      const { v3, compiled } = await renderBoth(source, tp, pick)
+      expect(compiled).toEqual(v3)
+    }
+  })
+})
+
 describe('compiled values keep v3 evaluation', () => {
   it('evaluates a value expression once at the call, and a getter once at render', async () => {
     const counts: { expression: number, getter: number }[] = []

@@ -6,7 +6,7 @@ import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { compileTags, dynamicValue } from 'unhead/compiled/compile'
-import { MetaTagsArrayable, normalizeProps, resolveMetaKeyValue, TagConfigKeys, unpackMeta } from 'unhead/utils'
+import { normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
@@ -27,8 +27,7 @@ const CALLEES = new Map<string, HeadKind>([['useHead', 'head'], ['useServerHead'
 
 const WRAPPERS = new Set(['ParenthesizedExpression', 'TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSTypeAssertion'])
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-// flat meta keys that accept an object or a list, which `unpackMeta` expands by shape
-const PACKED_SEO_KEYS = new Set(['robots', 'refresh', 'contentSecurityPolicy', 'appleItunesApp'])
+const SHAPE_NODES = new Set(['ObjectExpression', 'ArrayExpression'])
 // keys v3 reads as config of the whole flat entry, not as meta
 const ENTRY_SEO_KEYS = new Set([...TagConfigKeys, 'class', 'style', '_flatMeta'])
 
@@ -160,10 +159,14 @@ function decodeHeadInput(node: any, values: any[]): unknown {
     : decodeTags(value, values))
 }
 
+// Any flat meta key takes a value, including the keys `unpackMeta` also expands from an
+// object or a list: a string makes one tag, as v3 makes it, and `useCompiledSeoMeta` takes
+// the v3 input for any other value. A value written as an object or a list is never
+// text, so it must be static.
 function decodeSeoInput(node: any, values: any[]): unknown {
   return decodeProperties(node, (key, value) => ENTRY_SEO_KEYS.has(key)
     ? BAIL
-    : PACKED_SEO_KEYS.has(key) || MetaTagsArrayable.has(resolveMetaKeyValue(key))
+    : SHAPE_NODES.has(unwrap(value)?.type)
       ? decodeStatic(value)
       : decodeLeaf(value, values))
 }
