@@ -336,6 +336,17 @@ describe('createLazyHead', () => {
     expect(head.entries.size).toBe(1)
   })
 
+  it('leaves the document to a custom render option during adoption', async () => {
+    const dom = ssrDom(titled)
+    const render = vi.fn()
+    const head = createLazyHead({ document: dom.window.document, render })
+    const entry = head.push({ title: 'Client' })
+    entry.patch({ title: 'Patched' })
+    expect(await head.load()).toBe(true)
+    expect(render).toHaveBeenCalledWith(head)
+    expect(dom.window.document.title).toBe('Server')
+  })
+
   it('fires dom:rendered once when a load follows a change', async () => {
     const dom = ssrDom(titled)
     const rendered = vi.fn()

@@ -38,7 +38,8 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyH
   head.resolvedOptions._tagWeight = tagWeight
   plugins?.forEach(p => head.use(p))
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
-  if (head.dirty)
+  // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts
+  if (head.dirty && !options.render)
     adoptHydratedEntries(head, renderDom, adoptionEntries())
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => renderDom(head), fn => setTimeout(fn, 0))
 }
