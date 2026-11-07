@@ -289,9 +289,11 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
           ctx.$el = elements.get(ctx.id)
           ctx.$el ? sync(ctx) : pending.push(ctx)
         }
-        // a claim skips the title, which a cleanup restores and never removes
+        // A claim skips the title, which a cleanup restores and never removes. The title is a
+        // document property with no element to adopt, so only the live draw writes it, as v3
+        // writes it once. Adoption tracks its restore, as the v3 render at hydration end does.
         else if (!claim) {
-          dom.title = tag.textContent
+          claimed || (dom.title = tag.textContent)
           track('title:', () => dom.title = state._t)
         }
       }

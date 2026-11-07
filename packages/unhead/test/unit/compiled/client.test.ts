@@ -570,6 +570,14 @@ describe('server entries changed before hydration ends', () => {
 describe('adoption at the first draw', () => {
   const root = { title: 'Root', meta: [{ name: 'description', content: 'root' }] }
   const page: ResolvableHead = { link: [{ rel: 'canonical', href: '/old' }], meta: [{ name: 'robots', content: 'noindex' }] }
+  const titled = { title: 'Server', meta: [{ name: 'description', content: 'desc' }] }
+
+  function titleWrites(dom: ReturnType<typeof ssrDom>) {
+    const records: MutationRecord[] = []
+    const observer = new dom.window.MutationObserver(list => records.push(...list))
+    observer.observe(dom.window.document.head, { subtree: true, childList: true, characterData: true })
+    return () => [...records, ...observer.takeRecords()].filter(record => record.target.nodeName === 'TITLE' || record.target.parentNode?.nodeName === 'TITLE').length
+  }
 
   it.each(['debounce', 'pause'] as const)('removes a server tag that a change drops after the load, before the first draw: %s', async (window) => {
     const next: ResolvableHead = { link: [{ rel: 'icon', href: '/new.ico' }] }
@@ -623,6 +631,27 @@ describe('adoption at the first draw', () => {
     await settle(head)
     expect(dom.window.document.querySelector('meta[name="robots"]')?.outerHTML).toBeUndefined()
     expect(dom.window.document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('/new')
+  })
+
+  it('writes the title once, as v3 does, when entries change during hydration', async () => {
+    const changed = { ...titled, meta: [{ name: 'description', content: 'changed' }] }
+    const expected = ssrDom([{ input: titled }], 'none')
+    const v3Writes = titleWrites(expected)
+    const v3 = createV3Head({ document: expected.window.document })
+    v3._b = true
+    v3.push(titled).patch(changed)
+    v3.render()
+
+    const dom = ssrDom([{ input: titled }], 'none')
+    const writes = titleWrites(dom)
+    const head = compiledTagsHead({ document: dom.window.document })
+    head.push(toCompiledTags(titled)).patch(toCompiledTags(changed))
+    head.render()
+    expect(await head.load()).toBe(true)
+    await settle(head)
+    expect(dom.window.document.head.innerHTML).toBe(expected.window.document.head.innerHTML)
+    expect(writes()).toBe(v3Writes())
+    expect(v3Runtime.heads.has(head)).toBe(false)
   })
 })
 
