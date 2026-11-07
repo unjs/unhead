@@ -103,12 +103,6 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | u
     : entryValue.includes('$') ? undefined : escapeHtml(entryValue)
 }
 
-function resolveState(value: any, values: EntryValues): any {
-  return value?.includes?.(DYNAMIC_VALUE_OPEN)
-    ? value.replace(TOKEN_ENTRY_RE, (_: string, entry: string, entryValue: string) => String(values[+entry]?.[+entryValue]))
-    : value
-}
-
 /**
  * Restores the head fields of a memo and joins its pieces with escaped values.
  */
@@ -116,15 +110,24 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
   const state = memo.s!
   const tp = !!state._templateParams
   const html: Record<string, unknown> = { ...memo.b }
-  if (!memo.d) {
-    Object.assign(head, state)
-    if (tp)
-      head._templateParams = copyValue(state._templateParams)
-    return html as unknown as SSRHeadPayload
-  }
   const values: EntryValues = []
+  let safe = true
   for (const entry of head.entries.values() as Iterable<CompiledEntry>)
     values.push(entry._values)
+  // A title value sets the title state even when a title template hides it from the
+  // HTML, so it passes the title checks either way. A value that is the whole title
+  // keeps its type, as in v3.
+  const resolveState = (value: any): any => {
+    let whole: unknown
+    const out = value?.includes?.(DYNAMIC_VALUE_OPEN) && value.replace(TOKEN_ENTRY_RE, (token: string, entry: string, index: string) => {
+      const entryValue = values[+entry]?.[+index]
+      safe &&= escapeValue(entryValue, MODE_TITLE, tp) !== undefined
+      if (token === value)
+        whole = entryValue
+      return entryValue
+    })
+    return out ? whole ?? out : value
+  }
   for (const key in html) {
     const bucket = html[key]
     if (typeof bucket !== 'string') {
@@ -139,9 +142,15 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
       html[key] = out
     }
   }
+  const title = resolveState(state._title)
+  const params = copyValue(state._templateParams)
+  if (params)
+    params.pageTitle = resolveState(params.pageTitle)
+  if (!safe)
+    return
   Object.assign(head, state)
-  head._title = resolveState(state._title, values)
-  if (tp)
-    head._templateParams = { ...copyValue(state._templateParams), pageTitle: resolveState(state._templateParams.pageTitle, values) }
+  head._title = title
+  if (params)
+    head._templateParams = params
   return html as unknown as SSRHeadPayload
 }
