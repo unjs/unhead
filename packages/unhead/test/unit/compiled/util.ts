@@ -1,0 +1,110 @@
+import type { CreateServerHeadOptions, HeadTag, RenderSSRHeadOptions } from '../../../src/types'
+import type { Scenario } from './corpus'
+import { compileTags } from '../../../src/compiled/compile'
+import { createHead as createCompiledHead, renderSSRHead as renderCompiled } from '../../../src/compiled/server'
+import { TemplateParamsPlugin } from '../../../src/plugins'
+import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
+import { resolveTags } from '../../../src/utils'
+
+export type Mode = 'compiled' | 'loose' | 'mixed-even' | 'mixed-odd'
+export const MODES: Mode[] = ['compiled', 'loose', 'mixed-even', 'mixed-odd']
+
+export function usesCompiledTags(mode: Mode, index: number): boolean {
+  if (mode === 'compiled')
+    return true
+  if (mode === 'loose')
+    return false
+  return mode === 'mixed-even' ? index % 2 === 0 : index % 2 === 1
+}
+
+export function toCompiledTags(input: any): any {
+  const result = compileTags(input)
+  return result._tag === 'Ok' ? result.tags : input
+}
+
+// every head state a reader can observe after a render
+export function headState(head: any) {
+  return {
+    title: head._title,
+    titleTemplate: head._titleTemplate,
+    templateParams: head._templateParams,
+    separator: head._separator,
+  }
+}
+
+export function attempt<T>(fn: () => T): { value: T } | { threw: true } {
+  try {
+    return { value: fn() }
+  }
+  catch {
+    return { threw: true }
+  }
+}
+
+function applyEntries(head: any, scenario: Scenario, compiledTags: (input: any, index: number) => any) {
+  scenario.entries.forEach(({ input, options, dispose, patch }, index) => {
+    const entry = head.push(compiledTags(input, index), options)
+    if (dispose)
+      entry.dispose()
+    if (patch !== undefined)
+      entry.patch(compiledTags(patch, index))
+  })
+}
+
+function headOptions(scenario: Scenario, tp: boolean, init: (input: any) => any): CreateServerHeadOptions {
+  return {
+    disableDefaults: true,
+    ...scenario.head,
+    init: scenario.head?.init?.map(input => input && init(input)),
+    plugins: tp ? [TemplateParamsPlugin] : [],
+  }
+}
+
+export function renderScenarioV3(scenario: Scenario, tp: boolean) {
+  const head = createV3Head(headOptions(scenario, tp, input => input))
+  applyEntries(head, scenario, input => input)
+  return renderAll(head, renderV3, scenario.render)
+}
+
+export function renderScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode) {
+  const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input))
+  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input)
+  return renderAll(head, renderCompiled, scenario.render)
+}
+
+function renderAll(head: any, render: (head: any, options?: RenderSSRHeadOptions) => any, options?: RenderSSRHeadOptions) {
+  return attempt(() => ({
+    first: render(head, options),
+    state: headState(head),
+    again: render(head, options),
+    method: head.render(),
+    stateAfter: headState(head),
+  }))
+}
+
+// the resolved tag fields a reader of resolveTags() sees. `_p` is left out: compiled tags
+// drop inert tags, so a later tag index may shift while its relative order holds
+export function projectTags(tags: HeadTag[]) {
+  return tags.map(tag => ({
+    tag: tag.tag,
+    props: tag.props,
+    textContent: tag.textContent,
+    innerHTML: tag.innerHTML,
+    tagPosition: tag.tagPosition,
+    tagPriority: tag.tagPriority,
+    w: tag._w,
+    d: tag._d,
+  }))
+}
+
+export function resolveScenarioV3(scenario: Scenario, tp: boolean) {
+  const head = createV3Head(headOptions(scenario, tp, input => input))
+  applyEntries(head, scenario, input => input)
+  return attempt(() => projectTags(resolveTags(head)))
+}
+
+export function resolveScenarioCompiled(scenario: Scenario, tp: boolean, mode: Mode) {
+  const head = createCompiledHead<any>(headOptions(scenario, tp, input => usesCompiledTags(mode, 0) ? toCompiledTags(input) : input))
+  applyEntries(head, scenario, (input, index) => usesCompiledTags(mode, index) ? toCompiledTags(input) : input)
+  return attempt(() => projectTags(resolveTags(head)))
+}

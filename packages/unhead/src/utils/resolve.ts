@@ -55,7 +55,7 @@ function cloneTagsInPlace(tags: HeadTag[]) {
   }
 }
 
-function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+export function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
   // reuse the pre-dedupe array; the map never holds more tags than went in
   const tags = ctx.tags
   let w = 0
