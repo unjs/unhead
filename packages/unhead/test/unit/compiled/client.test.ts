@@ -120,6 +120,16 @@ describe('compiled runtime', () => {
     expect(dom.window.document.documentElement.getAttribute('data-ssr')).toBe('keep')
   })
 
+  it('removes a server class that a patch before the first render dropped, as v3 does', async () => {
+    const input = { htmlAttrs: { class: 'a b' }, bodyAttrs: { class: 'c' } }
+    const pair = createPair([{ input }], 'none')
+    const entry = pair.push(input)
+    entry.patch({ htmlAttrs: { class: 'b' }, bodyAttrs: { class: 'd' } })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    expect(pair.compiledDom.window.document.documentElement.className).toBe('b')
+  })
+
   it('adopts a body element before a head element with the same key, as v3 does', async () => {
     const input = { script: [{ src: '/a.js' }] }
     const pair = createPair([{ input }], 'none')
