@@ -11,6 +11,27 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./compiled/compile:
+  compileTags: function
+  dynamicValue: function
+./compiled/server:
+  capoTagWeight: function
+  createHead: function
+  createServerRenderer: function
+  escapeHtml: function
+  prepareHeadInput: function
+  prepareTemplate: function
+  propsToString: function
+  renderSSRHead: function
+  ssrRenderTags: function
+  tagToString: function
+  transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
+./compiled/server-strict:
+  createHead: function
+  createServerRenderer: function
+  renderSSRHead: function
+  templateParams: object
 ./lazy:
   createLazyHead: function
 ./legacy:
