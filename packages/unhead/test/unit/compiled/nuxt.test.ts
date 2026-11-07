@@ -18,7 +18,7 @@ describe('prepareHeadInput with a key', () => {
     const a = prepareHeadInput({ link: [{ rel: 'modulepreload', as: 'script', crossorigin: '', href: '/a.js' }] }, 'keyed:hints:a')
     const b = prepareHeadInput({ link: [{ rel: 'modulepreload', as: 'script', crossorigin: '', href: '/b.js' }] }, 'keyed:hints:b')
     expect(a).not.toBe(b)
-    const head = createHead({ disableDefaults: true })
+    const head = createHead<any>({ disableDefaults: true })
     head.push(b)
     expect(renderSSRHead(head).headTags).toBe('<link rel="modulepreload" as="script" crossorigin href="/b.js">')
   })
