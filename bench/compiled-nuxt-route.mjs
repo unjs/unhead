@@ -25,6 +25,7 @@ const { createHead: createV3Head, renderSSRHead: renderV3 } = await dist('vue', 
 const { createHead: createCompiledHead, prepareHeadInput, renderSSRHead: renderCompiled } = await dist('vue', 'compiled/server.mjs')
 const { compileTags, dynamicValue } = await dist('unhead', 'compiled/compile.mjs')
 const { TemplateParamsPlugin } = await dist('unhead', 'plugins.mjs')
+const { legacyPlugins } = await dist('unhead', 'legacy.mjs')
 const { unpackMeta } = await dist('unhead', 'utils.mjs')
 
 const ROUNDS = Number(process.env.ROUNDS || 15)
@@ -65,7 +66,7 @@ function round(fn) {
 
 const load = () => loadavg().map(value => value.toFixed(2)).join(' ')
 
-const routes = createNuxtRoutes({ compileTags, dynamicValue, prepareHeadInput, unpackMeta, useHead, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, TemplateParamsPlugin })
+const routes = createNuxtRoutes({ compileTags, dynamicValue, prepareHeadInput, unpackMeta, useHead, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, TemplateParamsPlugin, legacyPlugins })
 const rows = []
 const startLoad = load()
 for (const route of routes) {

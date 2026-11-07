@@ -200,6 +200,20 @@ function createRoute(size, m) {
     return m.renderCompiled(head, renderOptions)
   }
 
+  // Nuxt 4.x below compatibility version 5 passes `legacyPlugins` of `@unhead/vue/legacy`. A
+  // component `useSeoMeta` that stays loose, as an object `ogImage` does, adds
+  // `FlatMetaPlugin`. None of these plugins can change compiled tags.
+  const legacyOptions = { disableDefaults: true, plugins: m.legacyPlugins }
+  const looseSeo = texts.map(text => ({ ogImage: { url: SEO_IMAGE, width: 1200, height: 630, alt: text.title }, ogUrl: `https://example.com/${size.name}` }))
+  const legacyLooseRoute = (t) => {
+    const head = m.createV3Head(legacyOptions)
+    head.push(APP_HEAD)
+    looseCalls(head, t)
+    useSeoMeta(looseSeo[t], { head })
+    looseRenderer(head, t)
+    return m.renderV3(head, renderOptions)
+  }
+
   let tick = 0
   const nextT = () => tick++ % 3
   return {
@@ -228,9 +242,39 @@ function createRoute(size, m) {
       'F B + entries:normalize': (t = nextT()) => compiledEntry(entriesNormalize, t),
       'G A + tags:resolve': (t = nextT()) => looseRoute(tagsResolve, t),
       'H A + entries:normalize': (t = nextT()) => looseRoute(entriesNormalize, t),
+      'I A + Nuxt 4 plugins, loose seo': (t = nextT()) => legacyLooseRoute(t),
+      'J C + Nuxt 4 plugins, loose seo': (t = nextT()) => {
+        const head = m.createCompiledHead(legacyOptions)
+        head.push(appHeadTags)
+        compiledCalls(head, t)
+        useSeoMeta(looseSeo[t], { head })
+        compiledRenderer(head, t)
+        return m.renderCompiled(head, renderOptions)
+      },
+      'K B + Nuxt 4 plugins, loose seo': (t = nextT()) => {
+        const head = m.createCompiledHead(legacyOptions)
+        head.push(APP_HEAD)
+        compiledCalls(head, t)
+        useSeoMeta(looseSeo[t], { head })
+        looseRenderer(head, t)
+        return m.renderCompiled(head, renderOptions)
+      },
+      // J with the Nuxt 5 list, so J against L is the cost of the legacy plugins
+      'L C + loose seo': (t = nextT()) => {
+        const head = m.createCompiledHead(options)
+        head.push(appHeadTags)
+        compiledCalls(head, t)
+        useSeoMeta(looseSeo[t], { head })
+        compiledRenderer(head, t)
+        return m.renderCompiled(head, renderOptions)
+      },
     },
-    // D renders one more tag than the rest, so it has its own loose twin to compare with
+    // D, I, J, and K render more tags than the rest, so each has its own loose twin
     expected: {
+      'I A + Nuxt 4 plugins, loose seo': legacyLooseRoute,
+      'J C + Nuxt 4 plugins, loose seo': legacyLooseRoute,
+      'K B + Nuxt 4 plugins, loose seo': legacyLooseRoute,
+      'L C + loose seo': legacyLooseRoute,
       'D C + loose call': (t) => {
         const head = m.createV3Head(options)
         head.push(APP_HEAD)
@@ -255,4 +299,8 @@ export const BASELINES = {
   'F B + entries:normalize': 'H A + entries:normalize',
   'G A + tags:resolve': 'A v3',
   'H A + entries:normalize': 'A v3',
+  'I A + Nuxt 4 plugins, loose seo': 'A v3',
+  'J C + Nuxt 4 plugins, loose seo': 'I A + Nuxt 4 plugins, loose seo',
+  'K B + Nuxt 4 plugins, loose seo': 'I A + Nuxt 4 plugins, loose seo',
+  'L C + loose seo': 'J C + Nuxt 4 plugins, loose seo',
 }

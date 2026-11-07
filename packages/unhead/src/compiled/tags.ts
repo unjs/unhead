@@ -10,6 +10,8 @@ export const FLAG_DYNAMIC_VALUES = 4
 export const DYNAMIC_VALUE_OPEN = '\uE000'
 export const DYNAMIC_VALUE_CLOSE = '\uE001'
 export const DYNAMIC_VALUE_RE = /\uE000(\d+)\uE001/g
+/** A `tagPriority` that `AliasSortingPlugin` moves. Compiled tags never hold one. */
+export const ALIAS_PRIORITY_RE = /^(?:before|after):/
 const WHOLE_DYNAMIC_VALUE_RE = /^\uE000(\d+)\uE001$/
 
 /**

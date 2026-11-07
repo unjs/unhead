@@ -82,6 +82,41 @@ describe('compileTags', () => {
     expectBail({ meta: Array.from({ length: 1024 }, (_, i) => ({ name: `m${i}`, content: 'c' })) })
   })
 
+  // The fast tiers skip the hooks of these plugins for compiled entries, so compiled tags must hold
+  // nothing they would change.
+  it('refuses input that a built-in plugin rewrites', () => {
+    // DeprecationsPlugin, in entries:normalize
+    for (const key of ['hid', 'vmid', 'children', 'body']) {
+      expectBail({ script: [{ src: '/a.js', [key]: 'x' }] })
+      expectBail({ templateParams: { [key]: 'x' } })
+    }
+    expectBail({ script: [{ src: '/a.js', body: false }] })
+    expectBail({ script: [{ src: '/a.js', body: null }] })
+    expectBail({ title: { textContent: 'a', renderPriority: 1 } })
+    expectBail({ titleTemplate: { textContent: '%s', renderPriority: 1 } })
+    expectBail({ htmlAttrs: { hid: 'x' } })
+    // AliasSortingPlugin, in tags:resolve
+    expectBail({ script: [{ src: '/a.js', tagPriority: 'before:script:b' }] })
+    expectBail({ link: [{ rel: 'x', href: '/a', tagPriority: 'after:link:b' }] })
+    expectBail({ title: { textContent: 'a', tagPriority: 'before:meta:x' } })
+    // PromisesPlugin, in entries:resolve
+    expectBail({ title: Promise.resolve('a') })
+    expectBail({ meta: [{ name: 'a', content: Promise.resolve('b') }] })
+    expectBail({ meta: [Promise.resolve({ name: 'a', content: 'b' })] })
+    expectBail({ templateParams: { a: Promise.resolve('b') } })
+    expectBail({ meta: [{ name: 'a', content: { then: () => {} } }] })
+  })
+
+  it('keeps input that a built-in plugin leaves alone', () => {
+    // an element tag lowercases the name, so DeprecationsPlugin never reads it
+    for (const input of [
+      { link: [{ rel: 'x', href: '/a', renderPriority: 1 }] },
+      { script: [{ src: '/a.js', tagPriority: 'high' }] },
+      { meta: [{ name: 'description', content: 'before: and after: are text here' }] },
+    ])
+      expect(compileTags(input)._tag).toBe('Ok')
+  })
+
   it('refuses private-use tokens that are not declared dynamic values', () => {
     expectBail({ title: dynamicValue(0) })
     expectBail({ title: dynamicValue(1) }, 1)

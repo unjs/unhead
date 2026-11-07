@@ -12,10 +12,10 @@ import { DupeableTags } from '../utils/const'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
-import { dedupeTags, resolveTitleTemplate, sanitizeTags, valuesToTags } from '../utils/resolve'
+import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
 import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
-import { copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
+import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
 export { prepareTemplate } from '../parser'
@@ -61,6 +61,19 @@ type CompiledHead = CompiledTagsHead & {
   /** Hooks of the native `TemplateParamsPlugin`. They register only when something can observe them. */
   _tp?: Record<string, any>
   _tpActive?: boolean
+  /** Listeners of built-in plugins that the fast tiers run themselves. */
+  _known?: Set<unknown>
+}
+
+// The built-in plugins the fast tiers run, with the hooks each must have. Compiled tags hold
+// nothing their hooks change, so they run on loose entries only. Template params run
+// natively, and a tag with a priority alias takes the v3 tier.
+const BUILT_IN: Record<string, string> = {
+  'template-params': 'tags:resolve,tags:afterResolve',
+  'flatMeta': 'entries:normalize',
+  'deprecations': 'entries:normalize',
+  'promises': 'entries:resolve',
+  'aliasSorting': 'tags:resolve',
 }
 
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
@@ -89,33 +102,39 @@ const RENDER_HOOK_RE = /^(?:entries:[nr]|tags:|ssr:[br])/
 
 function hasListeners(head: CompiledHead): boolean {
   const hooks = (head._hookStore as any)?._hooks
-  const native = head._tp
   for (const name in hooks) {
-    const listeners = hooks[name]
-    if (RENDER_HOOK_RE.test(name) && listeners?.length && !(native && listeners.length === 1 && listeners[0] === native[name]))
+    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: unknown) => !head._known?.has(listener)))
       return true
   }
   return false
 }
 
 function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
+  const key = plugin.key!
   // Nuxt always registers this plugin. A head runs its hooks natively until something
   // can observe them. Matching by key keeps the plugin out of a bundle that never uses it.
-  if (typeof plugin === 'function' && plugin.key === 'template-params' && !head.plugins.has(plugin.key)) {
+  if (typeof plugin === 'function' && key === 'template-params' && !head.plugins.has(key)) {
     const resolved = plugin(head) as any
-    head.plugins.set(plugin.key, resolved)
+    head.plugins.set(key, resolved)
     head._tp = resolved.hooks
     // another plugin with this key has hooks this entry cannot run natively
-    head._v3 ||= Object.keys(resolved.hooks).join() !== 'tags:resolve,tags:afterResolve'
+    head._v3 ||= Object.keys(resolved.hooks).join() !== BUILT_IN[key]
     // Once the store exists, a reader may hold it and add a listener later, so the
     // hooks register now and keep the v3 order. The fast tiers skip them as native.
     if (head._v3 || head._hookStore)
       hookStore(head)
-    return
   }
-  registerPlugin(head, plugin)
-  // the key changes how v3 applies a title template, but this plugin has no native rules
-  head._v3 ||= head.plugins.has('template-params') && !head._tp
+  else {
+    registerPlugin(head, plugin)
+    // the key changes how v3 applies a title template, but this plugin has no native rules
+    head._v3 ||= head.plugins.has('template-params') && !head._tp
+  }
+  // matched by key and hook names, as for template params, so no plugin is bundled
+  const resolved = head.plugins.get(key)
+  if (resolved && BUILT_IN[key] === Object.keys(resolved.hooks || {}).join()) {
+    for (const name in resolved.hooks)
+      (head._known ||= new Set()).add(resolved.hooks[name as keyof typeof resolved.hooks])
+  }
 }
 
 // v3 keeps class and style as a Set and a Map. The props are a deep copy, so a tag
@@ -177,17 +196,19 @@ function supplyV3CompiledTags(head: CompiledHead) {
   }
 }
 
-function looseTags(entry: CompiledEntry, head: CompiledTagsHead): RuntimeTag[] {
+// v3 normalize, with the `entries:normalize` call of v3. Only built-in listeners reach here.
+function looseTags(entry: CompiledEntry, head: CompiledHead): RuntimeTag[] {
   if (entry._tags)
     return entry._tags
-  const hasOptions = !isEmpty(entry.options)
-  if (entry._precomputedTags && !hasOptions)
-    return entry._precomputedTags
-  const tags: HeadTag[] = normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || [])
+  const ctx = { tags: normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || []), entry }
+  if (!isEmpty(entry.options)) {
+    for (const tag of ctx.tags)
+      Object.assign(tag, entry.options)
+  }
+  head._hookStore?.callHook('entries:normalize', ctx)
+  const tags = ctx.tags
   for (let i = 0; i < tags.length; i++) {
     const tag = tags[i]!
-    if (hasOptions)
-      Object.assign(tag, entry.options)
     tag._w = capoTagWeight(tag)
     tag._p = (entry._i << 10) + i
     tag._d = dedupeKey(tag)
@@ -248,23 +269,33 @@ const renderer: CompiledRenderer = {
     return html
   },
   a: propsToString,
-  c(head) {
-    const entries = head.entries as Map<number, CompiledEntry>
-    // an entry hook that was removed invalidates what it normalized, as in v3
-    if (head._h) {
-      head._h = 0
-      for (const entry of entries.values())
-        entry._tags = undefined
-    }
-    const tags: RuntimeTag[] = []
-    for (const entry of entries.values()) {
+  c(compiledTagsHead) {
+    const head = compiledTagsHead as CompiledHead
+    const store = head._hookStore
+    // a change to the entry hooks invalidates what they normalized, as in v3
+    syncEntryHookCache(head, (store as any)?._hooks || {})
+    const lists: (RuntimeTag[] | CompiledEntry)[] = []
+    const loose: CompiledEntry[] = []
+    for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
       if (entry._pending !== undefined) {
         entry.input = entry._pending
         entry._pending = entry._tags = entry._precomputedTags = undefined
       }
-      const list = (entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)) || looseTags(entry, head)
-      for (let i = 0; i < list.length; i++)
-        tags.push(list[i]!)
+      lists.push((entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)) || loose[loose.push(entry) - 1]!)
+    }
+    // the v3 call, with only the entries a listener can change: compiled tags hold no promise
+    store?.callHook('entries:resolve', { entries: loose, tagMap: new Map(), tags: [] })
+    const alias = head.plugins.has('aliasSorting')
+    const tags: RuntimeTag[] = []
+    for (const item of lists) {
+      // an entry the listener removed is left out, as in v3
+      const list = Array.isArray(item) ? item : loose.includes(item) ? looseTags(item, head) : []
+      for (const tag of list) {
+        // only v3 runs `AliasSortingPlugin`, and compile refuses an alias in compiled tags
+        if (alias && tag.tagPriority && ALIAS_PRIORITY_RE.test(tag.tagPriority))
+          throw renderer
+        tags.push(tag)
+      }
     }
     return tags
   },
@@ -348,8 +379,16 @@ function usesV3Pipeline(head: CompiledHead, options?: RenderSSRHeadOptions): boo
  * @experimental
  */
 export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
-  if (!usesV3Pipeline(head as CompiledHead, options))
-    return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
+  try {
+    if (!usesV3Pipeline(head as CompiledHead, options))
+      return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
+  }
+  catch (error) {
+    // A loose tag has a priority alias. v3 calls `entries:resolve` a second time in this
+    // render, and reuses the loose tags, so `entries:normalize` still runs once per entry.
+    if (error !== renderer)
+      throw error
+  }
   supplyV3CompiledTags(head as CompiledHead)
   return createV3Renderer(options)(head)
 }
