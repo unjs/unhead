@@ -96,6 +96,10 @@
     "./compiled/server-strict": {
       "types": "./dist/compiled/server-strict.d.ts",
       "default": "./dist/compiled/server-strict.mjs"
+    },
+    "./compiled/client": {
+      "types": "./dist/compiled/client.d.ts",
+      "default": "./dist/compiled/client.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -156,6 +160,9 @@
       ],
       "compiled/server-strict": [
         "dist/compiled/server-strict"
+      ],
+      "compiled/client": [
+        "dist/compiled/client"
       ]
     }
   },

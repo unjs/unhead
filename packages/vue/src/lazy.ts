@@ -1,4 +1,4 @@
-import type { CreateLazyHeadOptions, LazyUnhead } from 'unhead/lazy'
+import type { CompiledTags, CreateLazyHeadOptions, LazyEntryOptions, LazyHeadEntry, LazyUnhead } from 'unhead/lazy'
 import type { UseHeadInput, VueHeadClient } from './types'
 import { createLazyHead as _createLazyHead } from 'unhead/lazy'
 import { getCurrentInstance } from 'vue'
@@ -25,6 +25,11 @@ export function createLazyHead(options: CreateLazyHeadOptions = {}): VueLazyHead
   return head
 }
 
+export { lazyTemplateParams } from 'unhead/lazy'
+
 export type {
+  CompiledTags,
   CreateLazyHeadOptions,
+  LazyEntryOptions,
+  LazyHeadEntry,
 }
