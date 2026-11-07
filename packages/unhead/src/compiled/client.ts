@@ -23,7 +23,8 @@ const CLAIM = 1e6
 
 const sortTags = (a: RuntimeTag, b: RuntimeTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
-const isCompiled = (entry: HeadEntry<any>) => Array.isArray(entry._pending ?? entry.input)
+// a `null` patch is empty input to v3, so only `undefined` falls back to the input
+const isCompiled = (entry: HeadEntry<any>) => Array.isArray(entry._pending === undefined ? entry.input : entry._pending)
 
 // v3 `hasContent`. A compiled tag value is finite, and a value passes `isRenderableValue`.
 const hasContent = (value: unknown) => value === 0 || value

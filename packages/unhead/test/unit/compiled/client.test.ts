@@ -421,6 +421,15 @@ describe('handoff to the v3 runtime', () => {
     expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
   })
 
+  it('on a null patch, which v3 renders as empty input', async () => {
+    const { pair, entry } = await hydrated()
+    await pair.render()
+    entry.patch(null)
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    expect(pair.compiledDom.window.document.querySelector('meta[name="description"]')).toBeNull()
+  })
+
   it('with values live, after a dispose, with arrayable tags', async () => {
     const compiledTags = compile({ title: dynamicValue(0), meta: [{ property: 'og:image', content: '/a.png' }, { property: 'og:image', content: dynamicValue(1) }, { name: 'description', content: dynamicValue(0) }] }, 2)
     const loose = (a: string, b: string) => ({ title: a, meta: [{ property: 'og:image', content: '/a.png' }, { property: 'og:image', content: b }, { name: 'description', content: a }] })
