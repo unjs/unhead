@@ -34,7 +34,8 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    * Blocks the load while the user changes page, including any pending idle load.
    * The next `head.render()` releases it, and loads at once if entries changed.
    * So call `head.render()` when the navigation ends, even if it aborted.
-   * A direct `load()` still runs.
+   * A direct `load()` still runs. A load already in flight finishes, and its first render
+   * waits for that next `head.render()`.
    */
   blockLoad: () => void
 }
@@ -106,6 +107,8 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   let loading: Promise<boolean> | undefined
   let cancelIdle: (() => void) | undefined
   let blocked = false
+  // blockLoad ran while a load was in flight, so its first render waits for the release
+  let held = false
   let render: HeadRenderer<any>
 
   const head = createClientHeadAdapter<T>(
@@ -164,15 +167,27 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   head.load = () => loading ||= import('./runtime')
     .then(runtime => runtime.upgradeHead(head, options, () => hydrated || [...hydrationEntries.values()]))
     .then((renderer) => {
-      render = renderer
-      hydrated ||= []
+      // the runtime adopts these at its first render
+      hydrated ||= [...hydrationEntries.values()]
       hydrationEntries.clear()
       hooks.removeHook('entries:updated', onChange)
-      head._b = false
-      head.dirty = true
-      head.render()
+      // While held, the head keeps batching, so a change waits for the render that releases it.
+      render = held
+        ? (h) => {
+            held = false
+            render = renderer
+            head._b = false
+            return renderer(h)
+          }
+        : renderer
+      if (!held) {
+        head._b = false
+        head.render()
+      }
       return true
-    }, (error) => {
+    })
+    // a failed first render takes the same path as a failed import, so a later load retries
+    .catch((error) => {
       loading = undefined
       ;(options.onLoadError || console.error)(error)
       return false
@@ -201,13 +216,14 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   head.blockLoad = () => {
     markHydrated()
     blocked = true
+    held = !!loading && !!head._b
     cancelIdle?.()
     cancelIdle = undefined
   }
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
   render = () => {
-    blocked = false
+    blocked = held = false
     if (hydrated && head.dirty) {
       onChange()
     }

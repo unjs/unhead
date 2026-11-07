@@ -5,9 +5,9 @@ import { createHead as createClientHead } from '../../../src/client'
 import { createLazyHead } from '../../../src/lazy'
 import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
-function ssrDom(input: ResolvableHead) {
+function ssrDom(...inputs: ResolvableHead[]) {
   const head = createServerHead({ disableDefaults: true })
-  head.push(input)
+  inputs.forEach(input => head.push(input))
   const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(head)
   return new JSDOM(`<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}<div>app</div>${bodyTags}</body></html>`)
 }
@@ -131,6 +131,26 @@ describe('createLazyHead', () => {
 
     head.render()
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Client'))
+  })
+
+  it('blockLoad during a load keeps its first render until the next render', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    head.push({ title: 'Client' })
+    const loaded = head.load()
+    head.blockLoad()
+    expect(await loaded).toBe(true)
+    head.push({ meta: [{ name: 'held', content: 'yes' }] })
+    await settle()
+    expect(dom.window.document.title).toBe('Server')
+    expect(dom.window.document.querySelector('meta[name="held"]')).toBeNull()
+
+    head.render()
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Client'))
+    expect(dom.window.document.querySelector('meta[name="held"]')?.getAttribute('content')).toBe('yes')
+    // the release ends the block, so a change renders again
+    head.push({ meta: [{ name: 'after', content: 'yes' }] })
+    await vi.waitFor(() => expect(dom.window.document.querySelector('meta[name="after"]')).not.toBeNull())
   })
 
   it('loads at once for a change after hydration', async () => {
@@ -279,8 +299,8 @@ describe('createLazyHead', () => {
     const entry = head.push(titled)
     entry.patch({ title: 'Patched' })
     expect(await head.load()).toBe(true)
-    expect(pushed).toBe(true)
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Patched'))
+    expect(pushed).toBe(true)
     expect(dom.window.document.querySelector('meta[name="plugin"]')?.getAttribute('content')).toBe('yes')
   })
 
@@ -434,6 +454,24 @@ describe('createLazyHead', () => {
     expect(head.load()).not.toBe(first)
   })
 
+  it('reports a failed first render as a failed load', async () => {
+    const dom = ssrDom(titled)
+    const onLoadError = vi.fn()
+    const error = new Error('render failed')
+    const head = createLazyHead({
+      document: dom.window.document,
+      onLoadError,
+      render: () => {
+        throw error
+      },
+    })
+    head.push({ title: 'Client' })
+    const first = head.load()
+    expect(await first).toBe(false)
+    expect(onLoadError).toHaveBeenCalledWith(error)
+    expect(head.load()).not.toBe(first)
+  })
+
   it('keeps the hook contract: unhook, ordered calls, and context mutation', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
@@ -472,5 +510,39 @@ describe('createLazyHead', () => {
     await settle()
     expect(head.ssr).toBe(false)
     expect(head.entries.size).toBe(1)
+  })
+})
+
+describe('adoption at the first render', () => {
+  const root = { title: 'Root', meta: [{ name: 'description', content: 'root' }] }
+  const page: ResolvableHead = { link: [{ rel: 'canonical', href: '/old' }], meta: [{ name: 'robots', content: 'noindex' }] }
+  const next: ResolvableHead = { link: [{ rel: 'icon', href: '/new.ico' }] }
+
+  it.each(['debounce', 'pause'] as const)('removes a server tag that a change drops after the load, before the first render: %s', async (window) => {
+    const expected = ssrDom(root, page)
+    const v3 = createClientHead({ document: expected.window.document })
+    v3.push(root)
+    v3.push(page).dispose()
+    v3.push(next)
+    v3.render()
+
+    const dom = ssrDom(root, page)
+    let paused = false
+    const head = createLazyHead({ document: dom.window.document, hooks: { 'dom:beforeRender': (ctx) => {
+      ctx.shouldRender = !paused
+    } } })
+    head.push(root)
+    const entry = head.push(page)
+    head.render()
+    paused = window === 'pause'
+    expect(await head.load()).toBe(true)
+    // with a pause, the first render runs and waits, so no DOM state exists yet
+    if (paused)
+      await settle(20)
+    entry.dispose()
+    head.push(next)
+    paused = false
+    head.render()
+    await vi.waitFor(() => expect(dom.window.document.head.innerHTML).toBe(expected.window.document.head.innerHTML))
   })
 })
