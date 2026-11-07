@@ -26,7 +26,7 @@ it('hydration head work', async ({ bench }) => {
     bench('lazy head', () => {
       const head = createLazyHead({ document })
       entries.forEach(entry => head.push(entry))
-      head.cancelLoad()
+      head.blockLoad()
     }),
   )
 })
