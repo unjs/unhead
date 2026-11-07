@@ -1,4 +1,4 @@
-import { useHead } from '@unhead/vue'
+import { useCompiledHead } from '@unhead/vue/compiled'
 import { createHead, renderSSRHead } from '@unhead/vue/compiled/server'
 
 // compileTags() output for the input in the v3 fixture of this bundle
@@ -13,7 +13,7 @@ const compiledTags = [
 async function doHead() {
   const head = createHead()
 
-  useHead(compiledTags as any, { head })
+  useCompiledHead(compiledTags as any, undefined, { head })
 
   return renderSSRHead(head)
 }

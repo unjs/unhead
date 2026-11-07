@@ -1,6 +1,7 @@
 import { useHead, useSeoMeta } from '@unhead/vue'
+import { useCompiledHead } from '@unhead/vue/compiled'
 import { createHead as createCompiled, renderSSRHead as renderCompiled } from '@unhead/vue/compiled/server'
-import { createHead as createStrict, renderSSRHead as renderStrict, useHead as useStrictHead } from '@unhead/vue/compiled/server-strict'
+import { createHead as createStrict, renderSSRHead as renderStrict } from '@unhead/vue/compiled/server-strict'
 import { createHead as createV3, renderSSRHead as renderV3 } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { compileTags, dynamicValue } from 'unhead/compiled/compile'
@@ -77,7 +78,7 @@ describe('@unhead/vue/compiled/server-strict', () => {
     const { templateParams } = await import('@unhead/vue/compiled/server-strict')
     const head = createStrict({ disableDefaults: true, plugins: [templateParams], init: [compiledTags(appHead)] })
     await ssr(head, () => {
-      useStrictHead(compiledTags(page))
+      useCompiledHead(compiledTags(page))
     })
     expect(renderStrict(head)).toEqual(renderV3(v3))
   })
@@ -99,7 +100,7 @@ describe('@unhead/vue/compiled/server-strict', () => {
 
   it('takes the head option and values', () => {
     const head = createStrict({ disableDefaults: true })
-    useStrictHead(compiledTags({ title: dynamicValue(0) }, 1), { head, values: ['x'] })
+    useCompiledHead(compiledTags({ title: dynamicValue(0) }, 1), ['x'], { head })
     expect(renderStrict(head).headTags).toBe('<title>x</title>')
   })
 })

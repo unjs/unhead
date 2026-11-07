@@ -1,4 +1,5 @@
-import { createHead, renderSSRHead, useHead } from '@unhead/vue/compiled/server-strict'
+import { useCompiledHead } from '@unhead/vue/compiled'
+import { createHead, renderSSRHead } from '@unhead/vue/compiled/server-strict'
 
 // compileTags() output for the input in the v3 fixture of this bundle
 const compiledTags = [
@@ -12,7 +13,7 @@ const compiledTags = [
 async function doHead() {
   const head = createHead()
 
-  useHead(compiledTags as any, { head })
+  useCompiledHead(compiledTags as any, undefined, { head })
 
   return renderSSRHead(head)
 }

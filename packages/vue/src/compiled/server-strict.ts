@@ -1,10 +1,9 @@
 import type { CompiledEntryOptions, CompiledTags } from 'unhead/compiled/server'
 import type { StrictHeadOptions } from 'unhead/compiled/server-strict'
 import type { ActiveHeadEntry, CreateServerHeadOptions, SSRHeadPayload } from 'unhead/types'
-import type { UseHeadInput, UseHeadOptions, VueHeadClient } from '../types'
+import type { VueHeadClient } from '../types'
 import { createHead as _createServerHead } from 'unhead/compiled/server-strict'
-import { inject } from 'vue'
-import { headSymbol, vueInstall } from '../install'
+import { vueInstall } from '../install'
 
 export { renderSSRHead, type SSRHeadPayload, type StrictHeadOptions, templateParams } from 'unhead/compiled/server-strict'
 
@@ -27,16 +26,6 @@ export function createHead(options: StrictHeadOptions = {}): StrictVueHeadClient
   const head = _createServerHead(options) as unknown as StrictVueHeadClient
   head.install = vueInstall(head)
   return head
-}
-
-/**
- * `useHead` for a strict head. It takes compiled tags and skips the client branch of the
- * `@unhead/vue` composable, which a server bundle never runs.
- *
- * @experimental
- */
-export function useHead(input: UseHeadInput, options: UseHeadOptions & { values?: readonly unknown[] } = {}): ActiveHeadEntry<any> {
-  return (options.head || inject<VueHeadClient>(headSymbol)!).push(input, options as any) as ActiveHeadEntry<any>
 }
 
 export type {
