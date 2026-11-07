@@ -203,8 +203,18 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
       params._load(head).then(() => head.render(), loadV3)
       return
     }
-    const state: any = head._dom ||= { _d: dom, _t: dom.title, _e: new Map<string, Element>([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _s: {} } as any
-    const elements: Map<string, Element> = state._e
+    let state: any = head._dom
+    const elements: Map<string, Element> = state?._e || new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]])
+    if (!state) {
+      state = head._dom = { _d: dom, _t: dom.title, _e: elements, _s: {} } as any
+      // v3 removes a server class that the first render drops, so the pushed input is its baseline
+      for (const { _o } of entries) {
+        for (const [name, props] of Array.isArray(_o) ? _o as CompiledTag[] : []) {
+          for (const item of name.endsWith('Attrs') && (props as any).class ? (props as any).class.split(' ') : [])
+            state._s[`${name}:attr:class:${item}`] = () => elements.get(name)!.classList.remove(item)
+        }
+      }
+    }
     const previous = state._p = state._s
     const next: Record<string, () => void> = state._s = {}
     // a claim never replaces the cleanup of a rendered tag
