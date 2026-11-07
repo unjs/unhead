@@ -1,42 +1,80 @@
 import type { CompiledTags } from 'unhead/compiled/server'
+import type { LazyHeadEntry, LazyUnhead } from 'unhead/lazy'
 import type { ActiveHeadEntry } from 'unhead/types'
-import type { UseHeadOptions, VueHeadClient } from '../types'
-import { FlatMetaPlugin } from 'unhead/plugins'
-import { inject, toValue } from 'vue'
-import { headSymbol } from '../install'
+import type { UseHeadOptions } from '../types'
+import type { CompiledTagsHead } from './tags'
+import { acceptCompiledTags } from 'unhead/lazy'
+import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated, onScopeDispose, watchEffect } from 'vue'
+import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, resolveValues, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
 
-type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: 1 }
-
-// v3 `injectHead`, with one error for a missing head and for a v3 head, which would
-// push the compiled tags as loose input and render nothing for them
+// A v3 head would push the compiled tags as loose input and render nothing for them. A lazy
+// client head takes compiled tags once `acceptCompiledTags` ran, so the first call enables it.
 function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
-  const head = (options.head || inject(headSymbol)) as CompiledTagsHead | undefined
-  if (!head?._acceptsCompiled)
-    throw new Error('[unhead] For compiled head calls, use @unhead/vue/compiled/server, or turn off compile.')
+  const head = injectCompiledTagsHead(options)
+  if (!head?._acceptsCompiled) {
+    if (!head?.blockLoad)
+      throw new Error(COMPILED_TAGS_HEAD_ERROR)
+    acceptCompiledTags(head as unknown as LazyUnhead<any>)
+  }
   return head
 }
 
-function resolveValues(values: readonly unknown[]): unknown[] {
-  return values.map(entryValue => toValue(entryValue))
-}
+// `clientUseHead` for compiled tags: one effect reads the values and patches the entry, and
+// with no values there is no effect.
+function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => CompiledTags | object, values: readonly unknown[] | undefined, options: UseHeadOptions): LazyHeadEntry<any> {
+  const scope = getCurrentScope()
+  // a stopped scope cannot run an effect, so the component is gone
+  if (scope && !scope.active)
+    return { patch() {}, dispose() {}, _i: -1 }
+  if (options.onRendered && scope) {
+    const onRendered = options.onRendered
+    options = { ...options, onRendered: ctx => scope.run(() => onRendered(ctx)) }
+  }
 
-// The flat meta values that `useSeoMeta` renders the same way compiled tags do.
-function isText(value: unknown): boolean {
-  return typeof value === 'string' ? !!value && value !== 'true' : Number.isFinite(value)
+  let active = true
+  let entry: LazyHeadEntry<any>
+  const apply = () => {
+    const resolved = values && resolveValues(values)
+    const next = active ? input(resolved!) : []
+    if (entry)
+      entry.patch(next, { values: resolved })
+    else
+      entry = (head as unknown as LazyUnhead<any>).push(next, { ...options, values: resolved } as any)
+  }
+  values ? watchEffect(apply) : apply()
+
+  if (getCurrentInstance()) {
+    onBeforeUnmount(() => entry.dispose())
+    onDeactivated(() => {
+      active = false
+      apply()
+    })
+    onActivated(() => {
+      active = true
+      apply()
+    })
+  }
+  else if (scope) {
+    onScopeDispose(() => entry.dispose())
+  }
+  return entry!
 }
 
 /**
  * Pushes compiled tags that the bundler `compile` option made from a `useHead` call. The
- * call site evaluates each value. A ref or getter value resolves once, on the first
- * render, as v3 resolves it.
+ * call site evaluates each value. On the server a ref or getter value resolves once, on
+ * the first render, as v3 resolves it. On a lazy client head one effect tracks the
+ * values, and a call with no values creates no effect.
  *
  * @experimental
  */
 export function useCompiledHead(compiledTags: CompiledTags, values?: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
-  return head.push(compiledTags as any, values ? { ...options, values: () => resolveValues(values) } as any : options)
+  return head.ssr
+    ? serverCompiledHead(head, compiledTags, values, options)
+    : clientPush(head, () => compiledTags, values, options)
 }
 
 /**
@@ -48,16 +86,7 @@ export function useCompiledHead(compiledTags: CompiledTags, values?: readonly un
  */
 export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: unknown[]) => object, values: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
-  const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
-    ...options,
-    values: () => {
-      const resolved = resolveValues(values)
-      if (!resolved.every(isText)) {
-        head.use(FlatMetaPlugin)
-        head.entries.get(active._i)!.input = loose(resolved)
-      }
-      return resolved
-    },
-  } as any)
-  return active
+  return head.ssr
+    ? serverCompiledSeoMeta(head, compiledTags, loose, values, options)
+    : clientPush(head, resolved => seoMetaInput(head, compiledTags, loose, resolved), values, options)
 }

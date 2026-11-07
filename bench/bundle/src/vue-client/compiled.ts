@@ -1,4 +1,4 @@
-import { useCompiledHead } from '@unhead/vue/compiled/client'
+import { useCompiledHead } from '@unhead/vue/compiled'
 import { createLazyHead } from '@unhead/vue/lazy'
 
 // compileTags() output for the input of minimal.ts, so the total compares directly with Vue Client (Minimal)
