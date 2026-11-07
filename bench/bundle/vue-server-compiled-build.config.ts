@@ -21,10 +21,12 @@ export default defineBuildConfig({
     alias: {
       entries: [
         { find: '@unhead/vue/compiled/server', replacement: path.join(packagesDir, 'vue/dist/compiled/server.mjs') },
-        { find: '@unhead/vue/compiled', replacement: path.join(packagesDir, 'vue/dist/compiled.mjs') },
+        // a Node server bundle resolves the `node` condition
+        { find: '@unhead/vue/compiled', replacement: path.join(packagesDir, 'vue/dist/compiled.node.mjs') },
         { find: '@unhead/vue/server', replacement: path.join(packagesDir, 'vue/dist/server.mjs') },
         { find: '@unhead/vue', replacement: path.join(packagesDir, 'vue/dist/index.mjs') },
         { find: 'unhead/client', replacement: path.join(packagesDir, 'unhead/dist/client.mjs') },
+        { find: 'unhead/lazy', replacement: path.join(packagesDir, 'unhead/dist/lazy.mjs') },
         { find: 'unhead/compiled/server', replacement: path.join(packagesDir, 'unhead/dist/compiled/server.mjs') },
         { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
         { find: 'unhead/plugins', replacement: path.join(packagesDir, 'unhead/dist/plugins.mjs') },

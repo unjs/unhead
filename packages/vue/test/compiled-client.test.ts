@@ -4,7 +4,7 @@ import { compileTags, dynamicValue } from 'unhead/compiled/compile'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent, effectScope, getCurrentScope, h, KeepAlive, nextTick, onMounted, ref } from 'vue'
 import { useHead } from '../src'
-import { useCompiledHead } from '../src/compiled/client'
+import { useCompiledHead } from '../src/compiled'
 import { Head } from '../src/components'
 import { createLazyHead } from '../src/lazy'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
@@ -133,7 +133,7 @@ describe('useCompiledHead', () => {
       setup() {
         const scope = getCurrentScope() as any
         const before = scope.effects.length
-        useCompiledHead(homeTags)
+        headOf(home)
         effects = scope.effects.length - before
         return () => h('div', 'x')
       },

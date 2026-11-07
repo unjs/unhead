@@ -20,7 +20,7 @@ export default defineBuildConfig({
     },
     alias: {
       entries: [
-        { find: '@unhead/vue/compiled/client', replacement: path.join(packagesDir, 'vue/dist/compiled/client.mjs') },
+        { find: '@unhead/vue/compiled', replacement: path.join(packagesDir, 'vue/dist/compiled.mjs') },
         { find: '@unhead/vue/lazy', replacement: path.join(packagesDir, 'vue/dist/lazy.mjs') },
         { find: 'unhead/lazy', replacement: path.join(packagesDir, 'unhead/dist/lazy.mjs') },
         { find: '@unhead/vue/client', replacement: path.join(packagesDir, 'vue/dist/client.mjs') },

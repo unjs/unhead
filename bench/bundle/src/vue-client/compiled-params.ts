@@ -1,4 +1,4 @@
-import { useCompiledHead } from '@unhead/vue/compiled/client'
+import { useCompiledHead } from '@unhead/vue/compiled'
 import { createLazyHead, lazyTemplateParams } from '@unhead/vue/lazy'
 
 // compiled.ts with template params, which load only once a value holds `%`
