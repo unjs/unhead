@@ -259,6 +259,83 @@ describe('createLazyHead', () => {
     })
   })
 
+  it('keeps an entry a plugin pushes during the adoption render', async () => {
+    const dom = ssrDom(titled)
+    let pushed = false
+    const head = createLazyHead({
+      document: dom.window.document,
+      plugins: [h => ({
+        key: 'pusher',
+        hooks: {
+          'tags:resolve': () => {
+            if (!pushed) {
+              pushed = true
+              h.push({ meta: [{ name: 'plugin', content: 'yes' }] })
+            }
+          },
+        },
+      })],
+    })
+    const entry = head.push(titled)
+    entry.patch({ title: 'Patched' })
+    expect(await head.load()).toBe(true)
+    expect(pushed).toBe(true)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Patched'))
+    expect(dom.window.document.querySelector('meta[name="plugin"]')?.getAttribute('content')).toBe('yes')
+  })
+
+  it('keeps a dispose a plugin makes during the adoption render', async () => {
+    const dom = ssrDom(titled)
+    let other: { dispose: () => void } | undefined
+    const head = createLazyHead({
+      document: dom.window.document,
+      plugins: [{
+        key: 'disposer',
+        hooks: {
+          'tags:resolve': () => {
+            other?.dispose()
+            other = undefined
+          },
+        },
+      }],
+    })
+    const entry = head.push(titled)
+    const pushed = head.push({ meta: [{ name: 'other', content: 'yes' }] })
+    entry.patch({ title: 'Patched' })
+    other = pushed
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Patched'))
+    expect(dom.window.document.querySelector('meta[name="other"]')?.outerHTML).toBeUndefined()
+  })
+
+  it('keeps a dispose a plugin makes during the adoption render of a client only entry', async () => {
+    const dom = ssrDom(titled)
+    let clientOnly = false
+    let other: { dispose: () => void } | undefined
+    const head = createLazyHead({
+      document: dom.window.document,
+      isClientOnlyPush: () => clientOnly,
+      plugins: [{
+        key: 'disposer',
+        hooks: {
+          'tags:resolve': () => {
+            other?.dispose()
+            other = undefined
+          },
+        },
+      }],
+    })
+    const entry = head.push(titled)
+    entry.patch({ title: 'Patched' })
+    clientOnly = true
+    other = head.push({ meta: [{ name: 'client', content: 'yes' }] })
+    clientOnly = false
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Patched'))
+    expect(dom.window.document.querySelector('meta[name="client"]')?.outerHTML).toBeUndefined()
+    expect(head.entries.size).toBe(1)
+  })
+
   it('fires dom:rendered once when a load follows a change', async () => {
     const dom = ssrDom(titled)
     const rendered = vi.fn()
