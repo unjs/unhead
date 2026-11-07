@@ -391,6 +391,14 @@ describe('handoff to the full runtime', () => {
         head.dirty = true
       }
     }],
+    ['a tags:beforeResolve listener', (pair: any) => {
+      for (const head of [pair.v3, pair.compiled]) {
+        head.hooks.hook('tags:beforeResolve', ({ tags }: any) => {
+          tags.push({ tag: 'meta', props: { name: 'before', content: 'yes' }, _w: 100, _p: 0, _d: 'meta:before' })
+        })
+        head.dirty = true
+      }
+    }],
     ['a plugin with hooks', (pair: any) => {
       for (const head of [pair.v3, pair.compiled]) {
         head.use({ key: 'meta', hooks: { 'tags:afterResolve': ({ tags }: any) => {

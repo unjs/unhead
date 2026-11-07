@@ -61,11 +61,12 @@ function elementKey(el: Element, tag: string): string {
   const { rel, charset, hreflang, id } = props
   const key = props['data-hid']
   const meta = props.name ?? props.property ?? props['http-equiv']
+  const link = tag === 'link'
   return tag === 'base'
     ? tag
-    : tag === 'link' && rel === 'canonical'
+    : link && rel === 'canonical'
       ? rel
-      : tag === 'link' && rel === 'alternate' && hreflang
+      : link && rel === 'alternate' && hreflang
         ? `alternate:${hreflang}`
         : charset
           ? 'charset'
@@ -75,7 +76,7 @@ function elementKey(el: Element, tag: string): string {
               ? `${tag}:key:${key}`
               : id
                 ? `${tag}:id:${id}`
-                : tag === 'link' && rel && props.href
+                : link && rel && props.href
                   ? `link:${rel}:${props.href}`
                   : el.innerHTML
                     ? `${tag}:content:${el.innerHTML}`
@@ -122,7 +123,8 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
   for (const next of tags.sort(sortTags)) {
     const key = next._d
     const prev = tagMap.get(key)
-    if (prev && (next.tagDuplicateStrategy || (next.tag.endsWith('Attrs') || next.tag === 'templateParams' || (next.key && next.key === prev.key) ? 'merge' : 0)) === 'merge') {
+    // htmlAttrs, bodyAttrs, and templateParams merge, and they are the compiled tag names that end in `s`
+    if (prev && (next.tagDuplicateStrategy || (next.tag.endsWith('s') || (next.key && next.key === prev.key) ? 'merge' : 0)) === 'merge') {
       const props = { ...prev.props }
       for (const name in next.props) {
         const value = next.props[name]
@@ -154,7 +156,8 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
   const ctx = { tagMap, tags: [...tagMap.values()].flat() }
   if (hasFlatMeta)
     ctx.tags.sort(sortTags)
-  for (const hook of ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'])
+  // the template params plugin, the only `tags:` listener a compiled head keeps, uses these two
+  for (const hook of ['tags:resolve', 'tags:afterResolve'])
     head.hooks.callHook(hook as 'tags:resolve', ctx as any)
 
   return ctx.tags.filter((tag) => {
@@ -291,7 +294,7 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
     if (pending[0]) {
       const tracked = new Set(elements.values())
       for (const el of [...dom.body.children, ...dom.head.children]) {
-        const name = el.tagName.toLowerCase()
+        const name = el.localName
         if (ELEMENT_TAG_RE.test(name) && !tracked.has(el)) {
           const key = elementKey(el, name)
           let id = key
