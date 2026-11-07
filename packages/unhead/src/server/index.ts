@@ -1,7 +1,7 @@
 export { prepareTemplate } from '../parser'
 export type { PreparedTemplate } from '../parser'
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
-export { createHead } from './createHead'
+export { createHead, prepareHeadInput } from './createHead'
 export type { ServerUnhead } from './createHead'
 export { createServerRenderer, renderSSRHead } from './renderSSRHead'
 export { capoTagWeight } from './sort'

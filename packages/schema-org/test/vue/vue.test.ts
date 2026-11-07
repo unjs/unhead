@@ -194,6 +194,32 @@ describe('schema.org e2e', () => {
     expect(updated).toContain('"@type": "WebPage"')
   })
 
+  it('resolves reactive getters and accepts getter patches', () => {
+    const head = createServerHead({ disableDefaults: true })
+    const name = ref('First')
+    const entry = useSchemaOrg(() => defineWebPage({ name: name.value }), { head })
+
+    expect(renderSSRHead(head).bodyTags).toContain('"name": "First"')
+    name.value = 'Second'
+    expect(renderSSRHead(head).bodyTags).toContain('"name": "Second"')
+
+    entry.patch([() => defineWebPage({ name: 'Patched' })])
+    expect(renderSSRHead(head).bodyTags).toContain('"name": "Patched"')
+    expect(renderSSRHead(head).bodyTags).not.toContain('"name": "Second"')
+  })
+
+  it.each([null, undefined, false] as const)('resolves a getter returning %s without a script', (empty) => {
+    const head = createServerHead({ disableDefaults: true })
+    const show = ref(false)
+    const entry = useSchemaOrg(() => show.value ? defineWebPage({ name: 'Visible' }) : empty, { head })
+
+    expect(renderSSRHead(head).bodyTags).toBe('')
+    show.value = true
+    expect(renderSSRHead(head).bodyTags).toContain('"name": "Visible"')
+    entry.patch(() => empty)
+    expect(renderSSRHead(head).bodyTags).toBe('')
+  })
+
   it('keeps resolvers on recomputed and frozen ref values', () => {
     const head = createServerHead({
       disableDefaults: true,

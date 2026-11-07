@@ -10,7 +10,7 @@ The plugin generates these tags from existing content:
 
 - `og:title`: Inferred from your page title
 - `og:description`: Inferred from your description meta
-- `twitter:card`: Added as `summary_large_image` by default, whether or not `og:image` is present
+- `twitter:card`: `summary_large_image` when the resolved head has an `og:image` or `twitter:image`, otherwise `summary`. A `twitter:card` that you set always wins.
 
 ## Generated output
 
@@ -30,7 +30,7 @@ useHead({
 <meta name="description" content="A description of my page">
 <meta property="og:title" content="My Page Title">
 <meta property="og:description" content="A description of my page">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 ```
 
 ::
@@ -80,8 +80,10 @@ export interface InferSeoMetaPluginOptions {
   /**
    * The twitter card to use.
    *
+   * By default, the card is `summary_large_image` when the resolved head has an `og:image` or `twitter:image`,
+   * and `summary` otherwise. A `twitter:card` set elsewhere in the head always wins.
+   *
    * @deprecated Set this to false and rely on Open Graph metadata instead.
-   * @default 'summary_large_image'
    */
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }

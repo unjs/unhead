@@ -1,7 +1,30 @@
 ---
-title: WebSite Schema
-description: Use defineWebSite() to add WebSite structured data and connect the site to its publisher, pages, language, and internal search action.
+title: "WebSite Schema Markup: JSON-LD Example and API"
+description: Add WebSite schema markup with defineWebSite(). See the JSON-LD that Unhead renders and how the WebSite node connects to your pages and publisher.
+navigation:
+  title: WebSite
 ---
+
+WebSite structured data names your site and connects it to its publisher and pages. Google reads WebSite markup on the home page to choose the [site name](https://developers.google.com/search/docs/appearance/site-names) that it shows in search results.
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for the [example](#example). It sets `url` to the canonical host and `inLanguage` from page metadata.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/#website",
+      "@type": "WebSite",
+      "inLanguage": "en-AU",
+      "name": "My Site",
+      "url": "https://example.com/"
+    }
+  ]
+}
+```
 
 ## Schema.org WebSite
 

@@ -1,8 +1,6 @@
 import type { TemplateParams } from '../types'
 
-const BACKSLASH_RE = /\\/g
 const LT_RE = /</g
-const DOUBLE_QUOTE_RE = /"/g
 const TOKEN_RE = /%\w+(?:\.\w+)?/g
 
 const SepSub = '%separator'
@@ -24,10 +22,7 @@ function sub(p: TemplateParams, token: string, isJson = false) {
     // numbers are kept, including 0, while null and false still render as empty
     const str = typeof val === 'number' ? String(val) : String(val || '')
     return isJson
-      ? str
-          .replace(BACKSLASH_RE, '\\\\')
-          .replace(LT_RE, '\\u003C')
-          .replace(DOUBLE_QUOTE_RE, '\\"')
+      ? JSON.stringify(str).slice(1, -1).replace(LT_RE, '\\u003C')
       : str
   }
   return undefined

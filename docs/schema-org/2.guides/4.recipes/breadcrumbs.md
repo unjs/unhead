@@ -1,11 +1,15 @@
 ---
-title: Schema.org Breadcrumbs
-description: 'Add BreadcrumbList structured data with defineBreadcrumb() so Google can use a page hierarchy in search results.'
+title: How to Add Breadcrumb Markup to Your Pages
+description: 'Mark up a breadcrumb trail with defineBreadcrumb(), match it to the visible navigation, and add a second trail with its own @id.'
 navigation:
   title: Breadcrumbs
 ---
 
 Use `defineBreadcrumb()` with an array of `{ name, item }` objects to create breadcrumb navigation markup. Google may use this markup to categorize a page in search results.
+
+::tip
+This recipe shows the steps. For the BreadcrumbList JSON-LD that Unhead renders, the required properties, and the types, see the [Breadcrumb schema reference](/docs/schema-org/api/schema/breadcrumb).
+::
 
 ::note
 Breadcrumb structured data describes a readable navigation path such as Home > Category > Page. Search appearance is not guaranteed.

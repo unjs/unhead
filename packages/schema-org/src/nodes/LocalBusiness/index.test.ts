@@ -48,6 +48,9 @@ describe('defineLocalBusiness', () => {
               "streetAddress": "123 st",
             },
             "currenciesAccepted": "AUD",
+            "logo": {
+              "@id": "https://example.com/#logo",
+            },
             "name": "test",
             "openingHoursSpecification": [
               {
@@ -75,19 +78,6 @@ describe('defineLocalBusiness', () => {
             "contentUrl": "https://example.com/logo.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/logo.png",
-          },
-          {
-            "@id": "https://example.com/#organization",
-            "@type": "Organization",
-            "address": {
-              "@type": "PostalAddress",
-              "addressCountry": "Australia",
-              "postalCode": "2000",
-              "streetAddress": "123 st",
-            },
-            "logo": "https://example.com/logo.png",
-            "name": "test",
-            "url": "https://example.com/",
           },
         ]
       `)

@@ -1,8 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../../../src'
+import { renderDOMHead } from '../../../src/client'
 import { InferSeoMetaPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('inferSeoMetaPlugin', () => {
   it('simple', async () => {
@@ -116,7 +118,7 @@ describe('inferSeoMetaPlugin', () => {
       "<title>Title</title>
       <meta property="og:description" content="My OG description">
       <meta property="og:title" content="My OG title">
-      <meta name="twitter:card" content="summary_large_image">"
+      <meta name="twitter:card" content="summary">"
     `)
   })
   it('empty meta', async () => {
@@ -134,7 +136,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="Title">",
         "htmlAttrs": "",
       }
@@ -161,7 +163,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="Title - My Site">",
         "htmlAttrs": "",
       }
@@ -186,7 +188,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="Title">",
         "htmlAttrs": "",
       }
@@ -203,7 +205,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="twitter:card" content="summary_large_image">",
+        "headTags": "<meta name="twitter:card" content="summary">",
         "htmlAttrs": "",
       }
     `)
@@ -223,7 +225,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="twitter:card" content="summary_large_image">",
+        "headTags": "<meta name="twitter:card" content="summary">",
         "htmlAttrs": "",
       }
     `)
@@ -238,7 +240,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="test">",
         "htmlAttrs": "",
       }
@@ -264,7 +266,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="Title - My Site">",
         "htmlAttrs": "",
       }
@@ -293,7 +295,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>My Site</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="My Site">",
         "htmlAttrs": "",
       }
@@ -324,7 +326,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="test">",
         "htmlAttrs": "",
       }
@@ -386,7 +388,7 @@ describe('inferSeoMetaPlugin', () => {
 
     expect(result.headTags).toMatchInlineSnapshot(`
       "<title>Nuxt SEO – Hello World</title>
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="Nuxt SEO – Hello World">"
     `)
   })
@@ -431,7 +433,7 @@ describe('inferSeoMetaPlugin', () => {
     expect(result.headTags).toMatchInlineSnapshot(`
       "<title>My Title</title>
       <meta name="description" content="My Description">
-      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:card" content="summary">
       <meta property="og:title" data-infer="" content="My Title">
       <meta property="og:description" data-infer="" content="My Description">"
     `)
@@ -451,5 +453,115 @@ describe('inferSeoMetaPlugin', () => {
       "<title>My Title</title>
       <meta property="og:title" data-infer="" content="My Title">"
     `)
+  })
+})
+
+describe('inferSeoMetaPlugin twitter:card', () => {
+  function createInferHead() {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+    head.push({ title: 'Title', meta: [{ name: 'description', content: 'Description' }] })
+    return head
+  }
+
+  function twitterCards(head: ReturnType<typeof createInferHead>) {
+    return [...renderSSRHead(head).headTags.matchAll(/<meta name="twitter:card"[^>]*>/g)].map(m => m[0])
+  }
+
+  it('uses summary when the head has no image', () => {
+    const head = createInferHead()
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+  })
+
+  it.each([
+    { property: 'og:image' },
+    { property: 'og:image:url' },
+    { property: 'og:image:secure_url' },
+    { name: 'twitter:image' },
+    { name: 'twitter:image:src' },
+  ])('uses summary_large_image for %o', (attr) => {
+    const head = createInferHead()
+    head.push({ meta: [{ ...attr, content: 'https://example.com/og.png' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+  })
+
+  it('uses summary when the og:image has empty content', () => {
+    const head = createInferHead()
+    head.push({ meta: [{ property: 'og:image', content: '  ' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+  })
+
+  it('follows an image that is added, removed, and disposed later', () => {
+    const head = createInferHead()
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+    const entry = head.push({ meta: [{ property: 'og:image', content: 'https://example.com/og.png' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+    entry.patch({ meta: [{ property: 'og:image', content: '' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+    entry.patch({ meta: [{ property: 'og:image', content: 'https://example.com/og.png' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+    entry.dispose()
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+  })
+
+  it('uses summary_large_image for an image from useSeoMeta', () => {
+    const head = createInferHead()
+    useSeoMeta(head, { ogImage: { url: 'https://example.com/og.png', width: 1200 } })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+  })
+
+  it('keeps a user summary when the head has an image', () => {
+    const head = createInferHead()
+    useSeoMeta(head, { ogImage: 'https://example.com/og.png', twitterCard: 'summary' })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary">'])
+  })
+
+  it('keeps a user summary_large_image when the head has no image', () => {
+    const head = createInferHead()
+    useHead(head, { meta: [{ name: 'twitter:card', content: 'summary_large_image' }] })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+  })
+
+  it('renders one twitter:card next to a high priority image entry', () => {
+    const head = createInferHead()
+    head.push({
+      meta: [
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:image', content: 'https://example.com/og.png' },
+        { property: 'og:image', content: 'https://example.com/og.png' },
+      ],
+    }, { tagPriority: 'high' })
+    expect(twitterCards(head)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+  })
+
+  it('keeps the twitterCard option value without an image', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({ twitterCard: 'summary_large_image' })],
+    })
+    head.push({ title: 'Title' })
+    expect(renderSSRHead(head).headTags).toContain('<meta name="twitter:card" content="summary_large_image">')
+  })
+
+  it('updates the DOM when an image is added on the client', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({
+      document: dom.window.document,
+      plugins: [InferSeoMetaPlugin()],
+    })
+    head.push({ title: 'Title' })
+    const card = () => dom.window.document.querySelectorAll('meta[name="twitter:card"]')
+    renderDOMHead(head, { document: dom.window.document })
+    expect([...card()].map(el => el.outerHTML)).toEqual(['<meta name="twitter:card" content="summary">'])
+
+    const entry = head.push({ meta: [{ property: 'og:image', content: 'https://example.com/og.png' }] })
+    renderDOMHead(head, { document: dom.window.document })
+    expect([...card()].map(el => el.outerHTML)).toEqual(['<meta name="twitter:card" content="summary_large_image">'])
+
+    entry.dispose()
+    renderDOMHead(head, { document: dom.window.document })
+    expect([...card()].map(el => el.outerHTML)).toEqual(['<meta name="twitter:card" content="summary">'])
   })
 })

@@ -271,7 +271,8 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
         size: scriptSize(src),
         status: s.status || 'unknown',
         warmupStrategy: s._warmupEl ? (s._warmupStrategy || 'preload') : undefined,
-        events: s._events || [],
+        // Shared state may freeze snapshots; keep runtime events mutable.
+        events: (s._events || []).map(({ type, timestamp }: SerializedScript['events'][number]) => ({ type, timestamp })),
         fetchpriority: s.input?.fetchpriority,
         crossorigin: s.input?.crossorigin,
         defer: s.input?.defer,
