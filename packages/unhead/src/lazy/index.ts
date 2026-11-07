@@ -62,6 +62,12 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    * waits for that next `head.render()`.
    */
   blockLoad: () => void
+  /**
+   * Set by `acceptCompiledTags`: the compiled runtime when every entry holds compiled tags.
+   *
+   * @internal
+   */
+  _acceptsCompiled?: () => Promise<typeof import('../compiled/client')> | undefined
 }
 
 // The id offset of a claim: a copy of a server entry as it was pushed. It also makes a claim
@@ -130,6 +136,34 @@ export const lazyTemplateParams: HeadPlugin & { _load: (head: Unhead<any>) => Pr
       head.use(TemplateParamsPlugin)
     }
   }),
+}
+
+/**
+ * Lets a lazy head render compiled tags on the compiled runtime, which loads instead of the
+ * full runtime when every entry holds compiled tags. It also lets \`entry.patch(compiledTags, { values })\`
+ * update values. A head without it still takes compiled tags, through the full runtime.
+ * \`useCompiledHead\` calls it, and its code stays out of a bundle that never does.
+ *
+ * @experimental
+ */
+export function acceptCompiledTags<T>(head: LazyUnhead<T>): LazyUnhead<T> {
+  if (!head._acceptsCompiled) {
+    head._acceptsCompiled = () => [...head.entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
+      ? import('../compiled/client')
+      : undefined
+    const push = head.push
+    head.push = (input, entryOptions) => {
+      const active = push(input, entryOptions)
+      // The values of compiled tags stay in the entry options, where the core push put them.
+      // The full runtime replaces those options, so they are read on each patch. A patch
+      // replaces them too, so a claim keeps the values that the server rendered.
+      const entry = head.entries.get(active._i)!
+      const patch = active.patch
+      active.patch = (next, patchOptions) => patch(next, entry.options = { ...entry.options, ...patchOptions })
+      return active
+    }
+  }
+  return head
 }
 
 /**
@@ -204,22 +238,16 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     // a hook may push inside this push, so restore the outer value, even if the push throws
     const outer = pushing
     pushing = serverRendered
-    let active: LazyHeadEntry<T>
+    let active: ReturnType<typeof push>
     try {
-      active = push(input as T, entryOptions) as LazyHeadEntry<T>
+      active = push(input as T, entryOptions)
     }
     finally {
       pushing = outer
     }
-    const entry = head.entries.get(active._i)!
     // its claim keeps the input that the server rendered
     if (!hydrated && serverRendered && !hydrationEntries.has(active._i))
-      hydrationEntries.set(active._i, { ...entry, _i: active._i + CLAIM })
-    // The values of compiled tags stay in the entry options, where the core push put them.
-    // The full runtime replaces those options, so they are read on each patch. A patch
-    // replaces them too, so a claim keeps the values that the server rendered.
-    const patch = active.patch
-    active.patch = (next, patchOptions) => patch(next, entry.options = { ...entry.options, ...patchOptions })
+      hydrationEntries.set(active._i, { ...head.entries.get(active._i)!, _i: active._i + CLAIM })
     return active
   }
 
@@ -255,9 +283,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       return false
     })
 
-  head.load = () => loading ||= upgrade([...head.entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
-    ? import('../compiled/client')
-    : import('./runtime'))
+  head.load = () => loading ||= upgrade(head._acceptsCompiled?.() || import('./runtime'))
 
   const armIdle = () => {
     if (loading || cancelIdle || !document)
