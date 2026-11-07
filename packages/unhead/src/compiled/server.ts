@@ -14,8 +14,8 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
-import { FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
+import { DEFAULT_COMPILED_TAGS, hasDynamicValues, isEmpty, renderCompiledHead, reviveTag } from './core'
+import { copyValue, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
 export { prepareTemplate } from '../parser'
@@ -66,7 +66,6 @@ type CompiledHead = CompiledTagsHead & {
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
 const MAX_CACHED_INDEX = 256
 const compiledTagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][] | 0>()
-const v3TagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][] | 0>()
 // a key per route list stays far below this, and a key built from request data stops here
 const MAX_PREPARED_KEYS = 1024
 let prepared: WeakMap<object, CompiledTags | 0> | undefined
@@ -112,48 +111,34 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   head._v3 ||= head.plugins.has('template-params') && !head._tp
 }
 
-// v3 keeps class and style as a Set and a Map
-function toV3Tag(tag: RuntimeTag): RuntimeTag {
-  const { class: classes, style } = tag.props
-  if (tag.tag !== 'templateParams' && (typeof classes === 'string' || typeof style === 'string')) {
-    tag.props = { ...tag.props }
-    if (typeof classes === 'string')
-      tag.props.class = normalizeStyleClassProps('class', classes)
-    if (typeof style === 'string')
-      tag.props.style = normalizeStyleClassProps('style', style)
+// v3 keeps class and style as a Set and a Map. The props are a deep copy, so a tag
+// never holds a nested template param of the compiled tags
+function revive(compiledTag: CompiledTag, p: number, resolve?: (value: string, key: string | 0, tag: string) => unknown): RuntimeTag {
+  const tag = reviveTag(compiledTag, p, resolve)
+  const props = tag.props = copyValue(tag.props)
+  if (tag.tag !== 'templateParams') {
+    if (typeof props.class === 'string')
+      props.class = normalizeStyleClassProps('class', props.class)
+    if (typeof props.style === 'string')
+      props.style = normalizeStyleClassProps('style', props.style)
   }
   return tag
 }
 
-function revive(compiledTag: CompiledTag, p: number, resolve?: (value: string, key: string | 0, tag: string) => unknown): RuntimeTag {
-  return toV3Tag(reviveTag(compiledTag, p, resolve))
-}
-
-// The revived tags of compiled tags with no dynamic values at one entry index, shared across renders and heads.
-// 0 marks compiled tags with dynamic values. The v3 flavour matches v3 normalize, like the precomputed
-// init tags of v3: no `_d` and a hash `_h` without an identity, and the key as `_h`
-// of a tag that may repeat. The other flavour caches its HTML on the tag.
-function compiledTagsAt(entry: CompiledEntry, cache: WeakMap<CompiledTags, RuntimeTag[][] | 0>, v3?: boolean): RuntimeTag[] | undefined {
+// The revived tags of compiled tags with no dynamic values at one entry index, shared across renders and heads,
+// with their HTML cached on them. 0 marks compiled tags with dynamic values.
+function compiledTagsAt(entry: CompiledEntry): RuntimeTag[] | undefined {
   const compiledTags = entry._compiled!
-  let list = cache.get(compiledTags)
+  let list = compiledTagCache.get(compiledTags)
   if (list === undefined)
-    cache.set(compiledTags, list = compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES) ? 0 : [])
+    compiledTagCache.set(compiledTags, list = hasDynamicValues(compiledTags) ? 0 : [])
   if (!list)
     return
   let tags = list[entry._i]
   if (!tags) {
     tags = compiledTags.map((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i)
-      if (!v3) {
-        tag._c = 1
-      }
-      else if (!(compiledTag[5]! & FLAG_IDENTITY)) {
-        tag._h = tag._d
-        tag._d = undefined
-      }
-      else if (tag.key && DupeableTags.has(tag.tag)) {
-        tag._h = tag.key
-      }
+      tag._c = 1
       return tag
     })
     if (entry._i < MAX_CACHED_INDEX)
@@ -164,14 +149,29 @@ function compiledTagsAt(entry: CompiledEntry, cache: WeakMap<CompiledTags, Runti
 
 // v3 `resolveTags` takes these through its precomputed slot, which it already skips
 // for an entry hook, a weight override, and entry options. A head weight or a dynamic
-// resolver would change the tags, so then nothing is supplied.
+// resolver would change the tags, so then nothing is supplied. v3 hands them to hooks
+// and to `resolveTags` readers, so each head gets its own, in the shape v3 normalize
+// gives: no `_d` and a hash `_h` without an identity, and the key as `_h` of a tag
+// that may repeat.
 function supplyV3CompiledTags(head: CompiledHead) {
   const { _tagWeight, propResolvers } = head.resolvedOptions
   if (_tagWeight !== capoTagWeight || propResolvers?.some(resolver => !resolver._static))
     return
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    if (entry._compiled && !entry._precomputedTags)
-      entry._precomputedTags = compiledTagsAt(entry, v3TagCache, true) as HeadTag[] | undefined
+    const compiledTags = entry._compiled
+    if (compiledTags && !entry._precomputedTags && !hasDynamicValues(compiledTags)) {
+      entry._precomputedTags = compiledTags.map((compiledTag, i) => {
+        const tag = revive(compiledTag, (entry._i << 10) + i)
+        if (!(compiledTag[5]! & FLAG_IDENTITY)) {
+          tag._h = tag._d
+          tag._d = undefined
+        }
+        else if (tag.key && DupeableTags.has(tag.tag)) {
+          tag._h = tag.key
+        }
+        return tag
+      }) as HeadTag[]
+    }
   }
 }
 
@@ -202,11 +202,12 @@ function hasParam(value: any): boolean {
 
 // Runs the real `TemplateParamsPlugin` hooks. A hook mutates tags in place and tags
 // may be shared across renders, so it only sees copies of the tags a param can change.
+// The params become `head._templateParams`, so their nested values are copied too.
 function applyNativeTemplateParams(tags: RuntimeTag[], tagMap: Map<string, any>, hooks: Record<string, any>) {
   const changing: RuntimeTag[] = []
   const paramsTag = tagMap.get('templateParams')
   if (paramsTag)
-    tagMap.set('templateParams', { ...paramsTag, props: { ...paramsTag.props } })
+    tagMap.set('templateParams', { ...paramsTag, props: copyValue(paramsTag.props) })
   const title = tagMap.get('title')
   for (let i = 0; i < tags.length; i++) {
     const tag = tags[i]!
@@ -259,7 +260,7 @@ const renderer: CompiledRenderer = {
         entry.input = entry._pending
         entry._pending = entry._tags = entry._precomputedTags = undefined
       }
-      const list = (entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry, compiledTagCache)) || looseTags(entry, head)
+      const list = (entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)) || looseTags(entry, head)
       for (let i = 0; i < list.length; i++)
         tags.push(list[i]!)
     }
