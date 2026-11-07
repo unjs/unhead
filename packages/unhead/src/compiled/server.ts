@@ -7,7 +7,7 @@ import { createServerRenderer as createV3Renderer } from '../server/renderSSRHea
 import { capoTagWeight } from '../server/sort'
 import { propsToString } from '../server/util/propsToString'
 import { tagToString } from '../server/util/tagToString'
-import { createUnhead, registerPlugin } from '../unhead'
+import { registerPlugin } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
@@ -99,7 +99,10 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     head.plugins.set(plugin.key, resolved)
     head._tp = resolved.hooks
     // another plugin with this key has hooks this entry cannot run natively
-    head._v3 ||= Object.keys(resolved.hooks).join() !== 'tags:resolve,tags:afterResolve'
+    let count = 0
+    for (const _ in resolved.hooks)
+      count++
+    head._v3 ||= count !== 2 || !resolved.hooks['tags:resolve'] || !resolved.hooks['tags:afterResolve']
     // a listener that registered first runs first, as it does in v3
     if (head._v3 || hasListeners(head, false))
       hookStore(head)
@@ -245,7 +248,8 @@ const renderer: CompiledRenderer = {
 }
 
 // The `input` of a compiled entry is rebuilt on first read. It lives on a shared prototype
-// because accessors in an object literal cost more per push than the rest of the push.
+// because accessors in an object literal cost more per push than the rest of the push,
+// and `Object.create` because a `__proto__` literal costs four times as much again.
 const COMPILED_ENTRY = {
   get input(): unknown {
     const entry = this as unknown as CompiledEntry & { _in: unknown }
@@ -258,6 +262,15 @@ const COMPILED_ENTRY = {
   },
 }
 
+// Shared by every compiled head. A per-head `Object.defineProperty` would turn each head
+// into a dictionary object, which made `createHead` cost five times the v3 one.
+const COMPILED_HEAD = {
+  // any reader of `head.hooks` may run the full runtime, which needs the real listeners
+  get hooks(): HookableCore<any> {
+    return hookStore(this as unknown as CompiledHead)
+  },
+}
+
 function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntryOptions): any {
   const _i = options?._index ?? head._entryCount++
   const entryOptions: Record<string, unknown> = {}
@@ -265,9 +278,17 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
     if (key !== 'head' && key !== 'onRendered' && key !== '_index' && key !== 'values')
       entryOptions[key] = options[key as keyof CompiledEntryOptions]
   }
-  const entry: CompiledEntry = Array.isArray(input)
-    ? { __proto__: COMPILED_ENTRY, _i, options: entryOptions, _compiled: input, _values: options?.values, _in: undefined } as any
-    : { _i, input, options: entryOptions, _compiled: undefined, _values: undefined }
+  let entry: CompiledEntry
+  if (Array.isArray(input)) {
+    entry = Object.create(COMPILED_ENTRY)
+    entry._i = _i
+    entry.options = entryOptions
+    entry._compiled = input
+    entry._values = options?.values
+  }
+  else {
+    entry = { _i, input, options: entryOptions, _compiled: undefined, _values: undefined }
+  }
   head.entries.set(_i, entry)
   return {
     _i,
@@ -345,31 +366,30 @@ export function prepareHeadInput<T extends object>(input: T, key?: string): T | 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CompiledServerHeadOptions = {}): CompiledServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
-  const init = [
-    options.disableDefaults ? undefined : DEFAULT_COMPILED_TAGS as any,
-    ...(options.init || []),
-  ]
-  const head = createUnhead<any, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
+  const renderOptions = { tagWeight, omitLineBreaks: options.omitLineBreaks }
+  // `createUnhead` fields, in one order, so every head shares one shape
+  const head: CompiledHead = Object.create(COMPILED_HEAD)
+  head._entryCount = 1
+  head._h = 0
+  head.plugins = new Map()
+  head.resolvedOptions = {
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,
-    propResolvers: [
-      ...(options.propResolvers || []),
-      serverPropResolver,
-    ],
-  }) as unknown as CompiledHead
-  head._v3 = tagWeight !== capoTagWeight || !!options.propResolvers?.some(resolver => !resolver._static)
-  if (options.hooks)
-    head._hookStore = createHooks<ServerHeadHooks>(options.hooks)
-  // any reader of `head.hooks` may run the full runtime, which needs the real listeners
-  Object.defineProperty(head, 'hooks', { get: () => hookStore(head) })
-  head.push = (input: unknown, entryOptions?: HeadEntryOptions) => addEntry(head, input, entryOptions) as any
-  head.use = plugin => usePlugin(head, plugin)
-  for (const input of init) {
-    if (input)
-      head.push(input)
+    propResolvers: [...(options.propResolvers || []), serverPropResolver],
   }
-  options.plugins?.forEach(plugin => head.use(plugin))
+  head.ssr = true
+  head.entries = new Map()
+  head.render = () => renderSSRHead(head, renderOptions)
+  head.use = plugin => usePlugin(head, plugin)
+  head.push = (input: unknown, entryOptions?: HeadEntryOptions) => addEntry(head, input, entryOptions)
+  head._v3 = tagWeight !== capoTagWeight || !!options.propResolvers?.some(resolver => !resolver._static)
+  head._hookStore = options.hooks && createHooks<ServerHeadHooks>(options.hooks)
+  head._tp = head._tpActive = undefined
+  if (!options.disableDefaults)
+    head.push(DEFAULT_COMPILED_TAGS)
+  options.init?.forEach(input => input && head.push(input))
+  options.plugins?.forEach(head.use)
   return head as unknown as CompiledServerUnhead<T>
 }
