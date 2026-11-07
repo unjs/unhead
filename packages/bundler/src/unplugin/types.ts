@@ -22,6 +22,16 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    * to override the target.
    */
   transformInlineScripts?: InlineScriptTransformOptions | false
+  /**
+   * Compile static `useHead` and `useSeoMeta` calls of `@unhead/vue` to compiled tags in
+   * server builds. A call that cannot compile stays as written. The server head
+   * must come from `@unhead/vue/compiled/server`.
+   *
+   * Applies to the `@unhead/vue` bundler plugin only. Off by default.
+   *
+   * @experimental
+   */
+  compile?: boolean
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
