@@ -37,6 +37,10 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
+    },
     "./stream/server": {
       "types": "./dist/stream/server.d.ts",
       "default": "./dist/stream/server.mjs"
@@ -95,6 +99,9 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "lazy": [
+        "dist/lazy"
       ],
       "stream/server": [
         "dist/stream/server"
