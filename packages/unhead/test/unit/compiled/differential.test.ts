@@ -14,6 +14,19 @@ describe.each([
   })
 })
 
+describe('the full runtime tier with a tags:resolve listener equals v3', () => {
+  describe.each(MODES)('%s', (mode) => {
+    it.each(corpus.map(scenario => [scenario.name, scenario] as const))('%s', (_name, scenario) => {
+      for (const tp of [false, true]) {
+        const seenV3: unknown[] = []
+        const seen: unknown[] = []
+        expect(renderScenarioCompiled(scenario, tp, mode, seen)).toEqual(renderScenarioV3(scenario, tp, seenV3))
+        expect(seen).toEqual(seenV3)
+      }
+    })
+  })
+})
+
 describe('resolveTags over the compiled head equals v3', () => {
   describe.each(MODES)('%s', (mode) => {
     it.each(corpus.map(scenario => [scenario.name, scenario] as const))('%s', (_name, scenario) => {
