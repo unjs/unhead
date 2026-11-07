@@ -22,6 +22,7 @@ export default defineBuildConfig({
       entries: [
         { find: '@unhead/vue/compiled/server-strict', replacement: path.join(packagesDir, 'vue/dist/compiled/server-strict.mjs') },
         { find: '@unhead/vue/compiled/server', replacement: path.join(packagesDir, 'vue/dist/compiled/server.mjs') },
+        { find: '@unhead/vue/compiled', replacement: path.join(packagesDir, 'vue/dist/compiled.mjs') },
         { find: '@unhead/vue/server', replacement: path.join(packagesDir, 'vue/dist/server.mjs') },
         { find: '@unhead/vue', replacement: path.join(packagesDir, 'vue/dist/index.mjs') },
         { find: 'unhead/client', replacement: path.join(packagesDir, 'unhead/dist/client.mjs') },

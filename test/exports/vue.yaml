@@ -20,6 +20,9 @@
   createHead: function
   renderDOMHead: function
   VueHeadMixin: object
+./compiled:
+  useCompiledHead: function
+  useCompiledSeoMeta: function
 ./compiled/server:
   createHead: function
   prepareHeadInput: function
@@ -32,7 +35,6 @@
   createHead: function
   renderSSRHead: function
   templateParams: object
-  useHead: function
 ./components:
   Head: object
 ./lazy:
