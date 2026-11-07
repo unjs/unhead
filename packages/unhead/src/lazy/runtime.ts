@@ -30,12 +30,12 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyHeadOptions, hydrated?: HeadEntry<T>[]): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyHeadOptions, adoptionEntries: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
   const plugins = await options.lazyPlugins?.()
   head.resolvedOptions._tagWeight = tagWeight
   plugins?.forEach(p => head.use(p))
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
-  if (hydrated && head.dirty)
-    adoptHydratedEntries(head, renderDom, hydrated)
+  if (head.dirty)
+    adoptHydratedEntries(head, renderDom, adoptionEntries())
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => renderDom(head), fn => setTimeout(fn, 0))
 }

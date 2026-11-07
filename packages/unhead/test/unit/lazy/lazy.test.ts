@@ -154,6 +154,25 @@ describe('createLazyHead', () => {
     expect(load).toHaveBeenCalledTimes(1)
   })
 
+  it('treats a push from an entries:updated hook during hydration as server rendered', async () => {
+    const dom = ssrDom(titled, { meta: [{ name: 'nested', content: 'yes' }] })
+    let nested = false
+    const head = createLazyHead({
+      document: dom.window.document,
+      hooks: {
+        'entries:updated': (h) => {
+          if (!nested) {
+            nested = true
+            h.push({ meta: [{ name: 'nested', content: 'yes' }] })
+          }
+        },
+      },
+    })
+    const load = vi.spyOn(head, 'load')
+    head.push(titled)
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('blocks a change after hydration while paused', async () => {
     const dom = ssrDom(titled)
     const { head, setPaused } = pausableHead(dom)
@@ -175,6 +194,53 @@ describe('createLazyHead', () => {
     entry.dispose()
     head.render()
     await vi.waitFor(() => expect(dom.window.document.querySelector('meta[name="description"]')).toBeNull())
+  })
+
+  it.each([false, true])('removes an SSR stylesheet disposed before hydration ends (render: %s)', async (render) => {
+    const input: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/server.css' }] }
+    const dom = ssrDom(input)
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(input)
+    entry.dispose()
+    if (render)
+      head.render()
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual([]))
+  })
+
+  it('removes obsolete links patched repeatedly before hydration ends', async () => {
+    const input: ResolvableHead = { link: [{ rel: 'prev', href: '/server' }] }
+    const dom = ssrDom(input)
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(input)
+    entry.patch({ link: [{ rel: 'prev', href: '/intermediate' }] })
+    entry.patch({ link: [{ rel: 'prev', href: '/client' }] })
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => {
+      const links = dom.window.document.querySelectorAll('link[rel="prev"]')
+      expect([...links].map(link => link.getAttribute('href'))).toEqual(['/client'])
+    })
+  })
+
+  it('adopts entries disposed while lazy plugins load during hydration', async () => {
+    const input: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/server.css' }] }
+    const dom = ssrDom(input)
+    const started = Promise.withResolvers<void>()
+    const plugins = Promise.withResolvers<[]>()
+    const head = createLazyHead({
+      document: dom.window.document,
+      lazyPlugins: () => {
+        started.resolve()
+        return plugins.promise
+      },
+    })
+    const loading = head.load()
+    await started.promise
+    const entry = head.push(input)
+    entry.dispose()
+    plugins.resolve([])
+    expect(await loading).toBe(true)
+    await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual([]))
   })
 
   it('removes the server element when a patch before load changes its identity', async () => {
