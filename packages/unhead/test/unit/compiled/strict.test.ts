@@ -118,3 +118,31 @@ describe('strict entry points', () => {
     expect(renderSSRHead(createHead())).toEqual(renderV3(createV3Head()))
   })
 })
+
+describe('strict head isolation', () => {
+  it('never hands out compiled tags through entry.input, so a reader cannot change later heads', () => {
+    const compiledTags = compileOrSkip({ title: 'Shared', meta: [{ name: 'description', content: 'Shared' }] })!
+    const other = compileOrSkip({ meta: [{ name: 'robots', content: 'index' }] })!
+    const snapshot = JSON.stringify([compiledTags, other])
+    const render = () => {
+      const head = createHead({ disableDefaults: true })
+      head.push(compiledTags)
+      head.push(other)
+      // the shape of Nuxt's island loop: it keeps arrays it reads from entry.input and pushes into them
+      const merged: Record<string, any> = {}
+      for (const entry of head.entries.values()) {
+        for (const [key, value] of Object.entries((entry.input || {}) as Record<string, any>)) {
+          if (Array.isArray(merged[key]))
+            merged[key].push(...value)
+          else
+            merged[key] = value
+        }
+      }
+      return renderSSRHead(head).headTags
+    }
+    const first = render()
+    expect(render()).toBe(first)
+    expect(render()).toBe(first)
+    expect(JSON.stringify([compiledTags, other])).toBe(snapshot)
+  })
+})
