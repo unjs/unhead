@@ -89,6 +89,8 @@ const WRAPPERS: [string, (value: string) => string][] = [
   ['ref', value => `ref(${value})`],
   ['getter', value => `() => (${value})`],
   ['computed', value => `computed(() => (${value}))`],
+  // v3 unwraps a ref that a getter returns
+  ['getter of a ref', value => `() => ref(${value})`],
 ]
 
 const LAYOUT = `useHead({ title: 'Layout', meta: [{ name: 'description', content: 'layout' }, { property: 'og:title', content: 'layout' }], link: [{ rel: 'canonical', href: '/layout' }], htmlAttrs: { lang: 'en' } })
@@ -341,7 +343,7 @@ describe('useCompiledHead', () => {
     ['a client head', () => createClientHead()],
   ])('refuses %s and names the fix', async (_, create) => {
     expect(await ssr(create(), () => compiledRuntime.useCompiledHead(compiledTags))).toEqual({
-      threw: '[unhead] Use createHead from @unhead/vue/compiled/server or createLazyHead from @unhead/vue/lazy, or turn off compile.',
+      threw: '[unhead] This head cannot take compiled tags. Create it with createHead() from @unhead/vue/compiled/server or createLazyHead() from @unhead/vue/lazy. Or set compile: false in the Unhead plugin.',
     })
   })
 

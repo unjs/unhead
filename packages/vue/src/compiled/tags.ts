@@ -2,12 +2,12 @@ import type { CompiledTags } from 'unhead/compiled/server'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions, VueHeadClient } from '../types'
 import { FlatMetaPlugin } from 'unhead/plugins'
-import { toValue } from 'vue'
+import { toValue, unref } from 'vue'
 import { injectHead } from '../install'
 
 export type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: unknown, blockLoad?: unknown }
 
-export const COMPILED_TAGS_HEAD_ERROR = '[unhead] Use createHead from @unhead/vue/compiled/server or createLazyHead from @unhead/vue/lazy, or turn off compile.'
+export const COMPILED_TAGS_HEAD_ERROR = '[unhead] This head cannot take compiled tags. Create it with createHead() from @unhead/vue/compiled/server or createLazyHead() from @unhead/vue/lazy. Or set compile: false in the Unhead plugin.'
 
 // v3 `injectHead`, with its error outside `setup()`. It may return a head that cannot take compiled tags.
 export function injectCompiledTagsHead(options: UseHeadOptions): CompiledTagsHead | undefined {
@@ -17,9 +17,9 @@ export function injectCompiledTagsHead(options: UseHeadOptions): CompiledTagsHea
 /** The values of a call, or a getter that returns them, as the build makes of a getter input. */
 export type CompiledValues = readonly unknown[] | (() => readonly unknown[])
 
-// A getter input runs once for all its values
+// v3 unwraps a ref that a getter returns. A getter input runs once for all its values.
 export function resolveValues(values: CompiledValues): unknown[] {
-  return (typeof values === 'function' ? values() : values).map(value => toValue(value))
+  return (typeof values === 'function' ? values() : values).map(value => unref(toValue(value)))
 }
 
 // The flat meta values that `useSeoMeta` renders the same way compiled tags do.

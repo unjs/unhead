@@ -114,6 +114,8 @@ const WRAPPERS: [string, string][] = [
   ['ref', 'value'],
   ['getter', '() => value.value'],
   ['computed', 'computed(() => value.value)'],
+  // v3 unwraps a ref that a getter returns
+  ['getter of a ref', '() => value'],
 ]
 
 const POSITIONS: [string, (value: string) => string][] = [
@@ -153,6 +155,6 @@ describe('a v3 client head with compile on', () => {
     const app = vue.createApp({ setup: evaluate(compile(snippet('')), {}), render: () => null }).use(head)
     app.config.errorHandler = error => errors.push((error as Error).message)
     app.mount(dom.window.document.getElementById('app')!)
-    expect(errors).toEqual(['[unhead] Use createHead from @unhead/vue/compiled/server or createLazyHead from @unhead/vue/lazy, or turn off compile.'])
+    expect(errors).toEqual(['[unhead] This head cannot take compiled tags. Create it with createHead() from @unhead/vue/compiled/server or createLazyHead() from @unhead/vue/lazy. Or set compile: false in the Unhead plugin.'])
   })
 })
