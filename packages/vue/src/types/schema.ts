@@ -5,6 +5,7 @@ import type {
   BodyEvents,
   DataKeys,
   HeadEntryOptions,
+  HeadEntryTarget,
   HtmlAttributes,
   Link,
   LinkHttpEvents,
@@ -57,8 +58,8 @@ export interface BodyAttr extends Omit<BodyAttributesWithoutEvents, 'class' | 's
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = _ResolvableTitleTemplate | Ref<string>
 export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
-type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
-type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
+type DistributeResolvable<T, Aug> = T extends unknown ? ResolvableProperties<T & Aug> : never
+type DistributeResolvableWithEvents<T, Aug, Events> = T extends unknown
   ? T extends Events
     ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
     : ResolvableProperties<T & Aug>
@@ -142,7 +143,9 @@ export interface ReactiveHead {
   bodyAttrs?: ResolvableBodyAttributes
 }
 
-export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
+export type UseHeadOptions<I = UseHeadInput> = Omit<HeadEntryOptions<I>, 'head'> & {
+  head?: HeadEntryTarget<I> | HeadEntryTarget<UseHeadInput>
+}
 
 export type UseHeadInput<_Deprecated = never> = ResolvableValue<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }

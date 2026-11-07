@@ -963,3 +963,8 @@ export type InferLink<T>
         ? DeepReadonly<GenericLink> & { rel: R }
         : never
     : never
+
+declare const DefinedGenericLinkBrand: unique symbol
+
+/** @internal */
+export type DefinedGenericLink = GenericLink & { readonly [DefinedGenericLinkBrand]: true }

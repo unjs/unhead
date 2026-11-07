@@ -1,16 +1,9 @@
-import type { InferLink, InferScript, Link, Script } from './types'
+import type { InferLink, InferScript } from './types'
+import type { DefinedGenericLink } from './types/schema/link'
+import type { DefinedGenericScript } from './types/schema/script'
 
-type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
-type DefinedLink<T extends { rel: string }> = T extends { rel: infer U }
-  ? IsUnion<U> extends false
-    ? T extends Link ? T : Link & Omit<T, 'rel'>
-    : Link & Omit<T, 'rel'>
-  : never
-type DefinedScript<T extends object> = T extends { type: infer U }
-  ? IsUnion<U> extends false
-    ? T extends Script ? T : Script & Omit<T, 'type'>
-    : Script & Omit<T, 'type'>
-  : T extends Script ? T : Script & Omit<T, 'type'>
+type DefinedLink<T extends { rel: string }> = T & InferLink<T> & DefinedGenericLink
+type DefinedScript<T extends object> = T & InferScript<T> & DefinedGenericScript
 
 /**
  * Typed helper for declaring a `<link>` element inside {@link useHead}.
@@ -37,8 +30,9 @@ type DefinedScript<T extends object> = T extends { type: infer U }
  * })
  * ```
  */
-export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): DefinedLink<T> {
-  return link as unknown as DefinedLink<T>
+export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): DefinedLink<T>
+export function defineLink(link: object): object {
+  return link
 }
 
 /**
@@ -60,6 +54,7 @@ export function defineLink<const T extends { rel: string }>(link: T & InferLink<
  * })
  * ```
  */
-export function defineScript<const T extends object>(script: T & InferScript<T>): DefinedScript<T> {
-  return script as unknown as DefinedScript<T>
+export function defineScript<const T extends object>(script: T & InferScript<T>): DefinedScript<T>
+export function defineScript(script: object): object {
+  return script
 }

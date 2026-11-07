@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
-import { normalizeProps } from '../../../src/utils'
+import { normalizeEntryToTags, normalizeProps } from '../../../src/utils'
 import { createServerHeadWithContext } from '../../util'
 
 const TEST_RE = /a/
 
 describe('normalise', () => {
+  it('retains title-template callbacks until title resolution', () => {
+    const template = (title?: string) => `${title || 'Fallback'} · Site`
+    const [tag] = normalizeEntryToTags({ titleTemplate: template }, [])
+    const [numericTitle] = normalizeEntryToTags({ title: 42 }, [])
+
+    expect(tag.tag).toBe('titleTemplate')
+    expect(tag.textContent).toBe(template)
+    expect(numericTitle.textContent).toBe(42)
+  })
+
   it('handles booleans nicely', async () => {
     const head = createServerHeadWithContext()
 

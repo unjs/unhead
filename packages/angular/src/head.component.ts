@@ -1,11 +1,14 @@
 import type { OnDestroy } from '@angular/core'
+import type { UseHeadInput } from 'unhead/types'
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
 import { useHead } from './composables'
 
-interface NodeProps {
+export type HeadNodeChild = HeadNode | number | string
+
+export interface HeadNode {
   type: string | symbol
-  props?: Record<string, any>
-  children?: NodeProps[]
+  props?: Readonly<Record<string, unknown>>
+  children?: readonly HeadNodeChild[]
 }
 
 @Component({
@@ -17,17 +20,20 @@ interface NodeProps {
 export class Head implements OnDestroy {
   private headEntry = useHead({})
 
-  updateHead(nodes: NodeProps[]) {
+  updateHead(nodes: readonly HeadNode[]): void {
     const transformed = this.transformNodes(nodes)
     this.headEntry.patch(transformed)
   }
 
-  private transformNodes(nodes: NodeProps[]) {
-    const result: Record<string, any> = {}
+  private transformNodes(nodes: readonly HeadNode[]): UseHeadInput {
+    const result: Record<string, unknown> = {}
 
-    const processNode = (node: NodeProps) => {
+    const processNode = (node: HeadNode) => {
       if (typeof node.type === 'symbol') {
-        node.children?.forEach(child => processNode(child as NodeProps))
+        node.children?.forEach((child) => {
+          if (typeof child === 'object')
+            processNode(child)
+        })
         return
       }
 
@@ -36,13 +42,14 @@ export class Head implements OnDestroy {
         result[type] = node.children[0]
       }
       else if (Object.keys(node.props || {}).length) {
-        result[type] = result[type] || []
-        result[type].push(node.props)
+        const entries = Array.isArray(result[type]) ? result[type] : []
+        entries.push(node.props)
+        result[type] = entries
       }
     }
 
     nodes.forEach(processNode)
-    return result
+    return result as UseHeadInput
   }
 
   ngOnDestroy() {
