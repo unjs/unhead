@@ -15,7 +15,7 @@ it('stops compiling new keys once the keyed cache is full', () => {
   // keys from before the cap still hit
   const compiledTags = prepareHeadInput(input(0), 'route:0')
   expect(Array.isArray(compiledTags)).toBe(true)
-  const head = createHead({ disableDefaults: true })
+  const head = createHead<any>({ disableDefaults: true })
   head.push(compiledTags)
   head.push(late)
   expect(renderSSRHead(head).headTags).toBe(`<link rel="stylesheet" href="/0.css">\n<link rel="stylesheet" href="/${full + 1}.css">`)

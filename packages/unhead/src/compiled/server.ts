@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadEntryOptions, HeadPluginInput, HeadTag, RenderSSRHeadOptions, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import type { CompiledEntry, CompiledRenderer, CompiledTagsHead, RuntimeTag } from './core'
-import type { CompiledTag, CompiledTagExtra, CompiledTags } from './types'
+import type { CompiledTag, CompiledTags } from './types'
 import { serverPropResolver } from '../server/createHead'
 import { createServerRenderer as createV3Renderer } from '../server/renderSSRHead'
 import { capoTagWeight } from '../server/sort'
@@ -144,7 +144,6 @@ function compiledTagsAt(entry: CompiledEntry, cache: WeakMap<CompiledTags, Runti
   if (!tags) {
     tags = compiledTags.map((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i)
-      const key = (compiledTag[4] as CompiledTagExtra | 0)?.key
       if (!v3) {
         tag._c = 1
       }
@@ -152,8 +151,8 @@ function compiledTagsAt(entry: CompiledEntry, cache: WeakMap<CompiledTags, Runti
         tag._h = tag._d
         tag._d = undefined
       }
-      else if (key && DupeableTags.has(tag.tag)) {
-        tag._h = key
+      else if (tag.key && DupeableTags.has(tag.tag)) {
+        tag._h = tag.key
       }
       return tag
     })

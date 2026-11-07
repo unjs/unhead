@@ -76,8 +76,8 @@ function headOptions(scenario: Scenario, tp: boolean, init: (input: any) => any,
         seen.push(projectTags(kept).map((projected, i) => ({
           ...projected,
           h: kept[i]!._h,
-          classIsSet: kept[i]!.props.class === undefined || kept[i]!.props.class instanceof Set,
-          styleIsMap: kept[i]!.props.style === undefined || kept[i]!.props.style instanceof Map,
+          classIsSet: kept[i]!.props.class === undefined || (kept[i]!.props.class as unknown) instanceof Set,
+          styleIsMap: kept[i]!.props.style === undefined || (kept[i]!.props.style as unknown) instanceof Map,
         })))
       },
     },
