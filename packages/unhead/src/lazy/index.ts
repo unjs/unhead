@@ -1,10 +1,12 @@
 import type { HookableCore } from 'hookable'
 import type { ClientUnhead } from '../client/adapter'
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
+import type { CompiledTags } from '../compiled/types'
+import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { createUnhead } from '../unhead'
 
 export type { ClientUnhead } from '../client/adapter'
+export type { CompiledTags } from '../compiled/types'
 
 export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
   /**
@@ -24,7 +26,29 @@ export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
   onLoadError?: (error: unknown) => void
 }
 
+/**
+ * @experimental
+ */
+export interface LazyEntryOptions extends HeadEntryOptions {
+  /**
+   * Values for the dynamic values of compiled tags. A non-empty string other than `'true'` and a finite
+   * number other than `0` render on the compiled runtime. Any other value loads the v3 runtime.
+   */
+  values?: readonly unknown[]
+}
+
+/**
+ * @experimental
+ */
+export interface LazyHeadEntry<T> extends ActiveHeadEntry<T> {
+  patch: (input: T | CompiledTags, options?: LazyEntryOptions) => void
+}
+
 export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
+  /**
+   * Adds loose input or compiled tags from `compileTags` or the bundler.
+   */
+  push: (input: T | CompiledTags, options?: LazyEntryOptions) => LazyHeadEntry<T>
   /**
    * Loads the runtime now. Safe to call more than once.
    * Resolves `false` if the load failed, and `onLoadError` receives the error.
@@ -38,6 +62,10 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   blockLoad: () => void
 }
+
+// The id offset of a claim: a copy of a server entry as it was pushed. It also makes a claim
+// win a v3 dedupe tie with its entry. The compiled runtime reads it in `compiled/client`.
+const CLAIM = 1e6
 
 type HookFn = (...args: any[]) => any
 
@@ -86,6 +114,23 @@ function createHookStore(initial?: Record<string, any>) {
 }
 
 /**
+ * `TemplateParamsPlugin`, loaded only once a value holds `%`. A head with no `%`
+ * renders the same with or without the plugin.
+ *
+ * @experimental
+ */
+export const lazyTemplateParams: HeadPlugin & { _load: (head: Unhead<any>) => Promise<void> } = {
+  key: 'template-params',
+  _load: head => import('../plugins/templateParams').then(({ TemplateParamsPlugin }) => {
+    // a render that waits on this load may call it again
+    if (head.plugins.get('template-params') === lazyTemplateParams) {
+      head.plugins.delete('template-params')
+      head.use(TemplateParamsPlugin)
+    }
+  }),
+}
+
+/**
  * Creates a client head for a server rendered page. It keeps entries without
  * touching the document, then loads the DOM runtime when the browser is idle or
  * when a change must reach the document.
@@ -98,9 +143,10 @@ function createHookStore(initial?: Record<string, any>) {
 export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOptions = {}): LazyUnhead<T> {
   const document = options.document || (typeof window !== 'undefined' ? window.document : undefined)
   const hooks = createHookStore(options.hooks)
-  // Keep server inputs separate from live entries throughout hydration.
+  // the claim of each server entry, so a runtime can remove the server elements of an
+  // entry that hydration disposed or patched
   const hydrationEntries = new Map<number, HeadEntry<T>>()
-  let hydrationChanged = false
+  // the claims and entries that the first runtime render adopts
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
   let cancelIdle: (() => void) | undefined
@@ -117,8 +163,19 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
 
   const markHydrated = () => {
     if (!hydrated) {
-      hydrated = [...hydrationEntries.values()]
-      head.dirty = hydrationChanged
+      // The server rendered an entry as pushed, or as patched if it ran the same patch. So an
+      // entry that hydration disposed or patched adopts its claim. Then every entry adopts
+      // as it is now, as a v3 head renders it when hydration ends.
+      hydrated = []
+      for (const [i, claim] of hydrationEntries) {
+        const entry = head.entries.get(i)
+        if (!entry || entry._pending !== undefined)
+          hydrated.push(claim)
+      }
+      // with no claim, the entries match the server and need no adoption
+      head.dirty = !!hydrated[0]
+      for (const entry of head.entries.values())
+        hydrated.push({ ...entry })
     }
   }
 
@@ -134,8 +191,6 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   // need the runtime now. After hydration, every change loads unless a load block or pause stops it.
   let pushing = false
   const onChange = () => {
-    if (!hydrated && !pushing)
-      hydrationChanged = true
     if (hydrated ? !blocked && !isPaused() : !pushing)
       head.load()
   }
@@ -143,22 +198,29 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   head.push = (input, entryOptions) => {
     const serverRendered = !options.isClientOnlyPush?.()
     pushing = serverRendered
-    const active = push(input, entryOptions)
+    const active = push(input as T, entryOptions) as LazyHeadEntry<T>
     pushing = false
-    if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
-      const entry = head.entries.get(active._i)
-      if (entry)
-        hydrationEntries.set(active._i, { ...entry })
-    }
+    const entry = head.entries.get(active._i)!
+    // its claim keeps the input that the server rendered
+    if (!hydrated && serverRendered && !hydrationEntries.has(active._i))
+      hydrationEntries.set(active._i, { ...entry, _i: active._i + CLAIM })
+    // The values of compiled tags stay in the entry options, where the core push put them.
+    // The v3 runtime replaces those options, so they are read on each patch. A patch
+    // replaces them too, so a claim keeps the values that the server rendered.
+    const patch = active.patch
+    active.patch = (next, patchOptions) => patch(next, entry.options = { ...entry.options, ...patchOptions })
     return active
   }
 
-  head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, () => hydrated || [...hydrationEntries.values()]))
+  // A load before hydration ends adopts every claim. Hydration ends with the first load,
+  // and the adoption stays, so the compiled runtime can hand it to v3.
+  const adoption = () => hydrated ||= [...hydrationEntries.values()]
+  // The compiled runtime passes the v3 runtime here when it meets anything it cannot render
+  const upgrade = (runtime: Promise<any>): Promise<boolean> => runtime
+    .then((r: typeof import('./runtime') | typeof import('../compiled/client')) => r.upgradeHead(head, options, adoption, upgrade))
     .then((renderer) => {
       render = renderer
-      hydrated ||= []
-      hydrationEntries.clear()
+      adoption()
       hooks.removeHook('entries:updated', onChange)
       head._b = false
       head.dirty = true
@@ -169,6 +231,10 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       ;(options.onLoadError || console.error)(error)
       return false
     })
+
+  head.load = () => loading ||= upgrade([...head.entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
+    ? import('../compiled/client')
+    : import('./runtime'))
 
   const armIdle = () => {
     if (loading || cancelIdle || !document)
