@@ -5,31 +5,7 @@ import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 
 // What Nuxt's renderer pushes per request, see bench/compiled-nuxt-route-fixtures.mjs
-describe('prepareHeadInput with a key', () => {
-  it('returns the compiled tags of the first input for the same key, with no compile', () => {
-    const first = prepareHeadInput({ link: [{ rel: 'stylesheet', href: '/a.css', crossorigin: '' }] }, 'keyed:css')
-    expect(Array.isArray(first)).toBe(true)
-    expect(prepareHeadInput({ link: [{ rel: 'stylesheet', href: '/a.css', crossorigin: '' }] }, 'keyed:css')).toBe(first)
-    // a compile would refuse this input, so only the cache can return compiled tags for it
-    expect(prepareHeadInput({ title: () => 'dynamic' } as any, 'keyed:css')).toBe(first)
-  })
-
-  it('keeps one set of compiled tags per key', () => {
-    const a = prepareHeadInput({ link: [{ rel: 'modulepreload', as: 'script', crossorigin: '', href: '/a.js' }] }, 'keyed:hints:a')
-    const b = prepareHeadInput({ link: [{ rel: 'modulepreload', as: 'script', crossorigin: '', href: '/b.js' }] }, 'keyed:hints:b')
-    expect(a).not.toBe(b)
-    const head = createHead<any>({ disableDefaults: true })
-    head.push(b)
-    expect(renderSSRHead(head).headTags).toBe('<link rel="modulepreload" as="script" crossorigin href="/b.js">')
-  })
-
-  it('returns each input under a key it cannot compile', () => {
-    const first = { title: () => 'a' }
-    const second = { title: () => 'b' }
-    expect(prepareHeadInput(first, 'keyed:dynamic')).toBe(first)
-    expect(prepareHeadInput(second, 'keyed:dynamic')).toBe(second)
-  })
-
+describe('prepareHeadInput', () => {
   it('keeps the identity form', () => {
     const input = { link: [{ rel: 'icon', href: '/favicon.ico' }] }
     const compiledTags = prepareHeadInput(input)

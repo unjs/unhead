@@ -1,7 +1,7 @@
 import type { HeadTag } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
 import { compileTags, dynamicValue } from '../../../src/compiled/compile'
-import { createHead, prepareHeadInput, renderSSRHead } from '../../../src/compiled/server'
+import { createHead, renderSSRHead } from '../../../src/compiled/server'
 import { createHead as createStrictHead, renderSSRHead as renderStrict, templateParams } from '../../../src/compiled/server-strict'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
@@ -166,13 +166,16 @@ describe('nested template params', () => {
     expect(request(false)).toEqual({ before: pageInput(), html: v3Html().headTags })
   })
 
-  it('stay per request when a keyed prepareHeadInput input changes after the call', () => {
+  it('stay per request when the input of cached compiled tags changes after the call', () => {
     const loose = { meta: [{ name: 'loose', content: 'keeps the route off the memo' }] }
+    // a renderer builds the input per request and keeps the compiled tags of the first one
+    const compiledTagSets = new Map<string, any>()
     const request = (tenant: string) => {
-      // a renderer builds the input per request, and the key decides it
       const input = pageInput()
+      if (!compiledTagSets.has('tenant-page'))
+        compiledTagSets.set('tenant-page', (compileTags(input) as any).tags)
       const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
-      head.push(prepareHeadInput(input, 'isolation:tenant-page'))
+      head.push(compiledTagSets.get('tenant-page'))
       head.push(loose)
       const html = renderSSRHead(head).headTags
       input.templateParams.site.name = tenant
