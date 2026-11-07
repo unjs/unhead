@@ -421,6 +421,30 @@ describe('entries', () => {
     expect(renderSSRHead(head)).toEqual(renderV3(v3))
   })
 
+  it('patch keeps the entry object, as v3 does', () => {
+    const head = createHead({ disableDefaults: true })
+    const active = head.push(compiledTags({ title: 'a' }))
+    const entry = head.entries.get(active._i)
+    active.patch({ title: 'b' })
+    expect(head.entries.get(active._i)).toBe(entry)
+    expect(entry!.input).toEqual({ title: 'b' })
+    active.patch(compiledTags({ title: 'c' }))
+    expect(head.entries.get(active._i)).toBe(entry)
+    expect(renderSSRHead(head).headTags).toBe('<title>c</title>')
+  })
+
+  it('runs a value function once, on the first render', () => {
+    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 })
+    const a = result._tag === 'Ok' ? result.tags : []
+    const head = createHead({ disableDefaults: true })
+    let calls = 0
+    head.push(a, { values: () => [`render ${++calls}`] })
+    expect(calls).toBe(0)
+    expect(renderSSRHead(head).headTags).toBe('<title>render 1</title>')
+    expect(renderSSRHead(head).headTags).toBe('<title>render 1</title>')
+    expect(calls).toBe(1)
+  })
+
   it('patch values', () => {
     const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 })
     const a = result._tag === 'Ok' ? result.tags : []
