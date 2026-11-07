@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { compileTags, dynamicValue, readCompiledEntry, toHeadInput } from '../../../src/compiled'
-import { createHead } from '../../../src/compiled/server'
+import { createHead, renderSSRHead } from '../../../src/compiled/server'
 
 function compiled(input: any, dynamicValues?: number) {
   const result = compileTags(input, { dynamicValues })
@@ -16,6 +16,18 @@ describe('readCompiledEntry on a compiled server head', () => {
     head.push(tags, { values: ['Page'] })
     const [entry] = head.entries.values()
     expect(readCompiledEntry(entry!)).toEqual({ tags, values: ['Page'] })
+  })
+
+  it('leaves a value function to the first render', () => {
+    const tags = compiled({ title: dynamicValue(0) }, 1)
+    const head = createHead({ disableDefaults: true })
+    let calls = 0
+    head.push(tags, { values: () => [`Page ${++calls}`] })
+    const [entry] = head.entries.values()
+    expect(readCompiledEntry(entry!)).toEqual({ tags, values: undefined })
+    expect(calls).toBe(0)
+    renderSSRHead(head)
+    expect(readCompiledEntry(entry!)).toEqual({ tags, values: ['Page 1'] })
   })
 
   it('returns nothing for loose input, also after a patch to it', () => {

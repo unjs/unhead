@@ -13,6 +13,8 @@ export interface CompiledEntry extends HeadEntry<any> {
 export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   /** Set while template params run natively: the hooks of `TemplateParamsPlugin`. */
   _tp?: unknown
+  /** Marks a head that renders compiled tags, for `useCompiledHead`. */
+  _acceptsCompiled?: 1
 }
 
 export interface Memo {
@@ -56,6 +58,17 @@ export const DEFAULT_COMPILED_TAGS: CompiledTags = [
   ['meta', { charset: 'utf-8' }, -20, 'charset', 0, 1],
   ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1' }, -15, 'meta:viewport', 0, 1],
 ]
+
+/**
+ * Runs the value function of an entry once, before a render reads its values. v3
+ * resolves refs and getters on the first render, and the function may also
+ * replace the input of its entry.
+ */
+export function settleValues(entry: CompiledEntry): void {
+  const values: unknown = entry._values
+  if (typeof values === 'function')
+    entry._values = values()
+}
 
 /** @returns whether an object has no enumerable keys */
 export function isEmpty(value: object | undefined): boolean {

@@ -48,6 +48,6 @@ export type CompiledTags = readonly CompiledTag[]
  */
 export interface CompiledEntryContent {
   tags: CompiledTags
-  /** Values for the dynamic values. Undefined when the entry has none. */
+  /** Values for the dynamic values. Undefined when the entry has none, or before a value function runs. */
   values: readonly unknown[] | undefined
 }

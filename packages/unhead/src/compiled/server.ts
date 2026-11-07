@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -27,8 +27,8 @@ export type { CompiledTags } from './types'
  * @experimental
  */
 export interface CompiledEntryOptions extends HeadEntryOptions {
-  /** Values for the dynamic values of compiled tags. */
-  values?: readonly unknown[]
+  /** Values for the dynamic values of compiled tags. A function runs once, before the first render reads them. */
+  values?: readonly unknown[] | (() => readonly unknown[])
 }
 
 /**
@@ -311,6 +311,7 @@ const renderer: CompiledRenderer = {
 const COMPILED_ENTRY = {
   get input(): unknown {
     const entry = this as unknown as CompiledEntry & { _in: unknown }
+    settleValues(entry)
     return entry._compiled ? entry._in ||= toHeadInput(entry._compiled, entry._values) : entry._in
   },
   set input(value: unknown) {
@@ -329,6 +330,24 @@ const COMPILED_HEAD = {
   },
 }
 
+// v3 updates the same entry on patch, so a reader that holds it sees the new input.
+// A loose entry that becomes a compiled entry moves onto the compiled entry prototype, which is rare.
+function setInput(entry: CompiledEntry & { _in?: unknown }, input: unknown, values: CompiledEntryOptions['values']) {
+  entry._tags = entry._precomputedTags = undefined
+  if (Array.isArray(input)) {
+    if (Object.getPrototypeOf(entry) !== COMPILED_ENTRY) {
+      delete (entry as { input?: unknown }).input
+      Object.setPrototypeOf(entry, COMPILED_ENTRY)
+    }
+    entry._compiled = input
+    entry._values = values as CompiledEntry['_values']
+    entry._in = undefined
+  }
+  else {
+    entry.input = input
+  }
+}
+
 function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntryOptions): any {
   const _i = options?._index ?? head._entryCount++
   const entryOptions: Record<string, unknown> = {}
@@ -342,7 +361,7 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
     entry._i = _i
     entry.options = entryOptions
     entry._compiled = input
-    entry._values = options?.values
+    entry._values = options?.values as CompiledEntry['_values']
   }
   else {
     entry = { _i, input, options: entryOptions, _compiled: undefined, _values: undefined }
@@ -353,8 +372,12 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
     dispose() {
       head.entries.delete(_i)
     },
-    // v3 keeps the index, so the entry keeps its place in the dedupe order
-    patch: (next: unknown, patchOptions?: CompiledEntryOptions) => addEntry(head, next, { ...entryOptions, ...patchOptions, _index: _i }),
+    // v3 updates the same entry, so it keeps its place in the dedupe order and a
+    // reader that holds it sees the new input
+    patch(next: unknown, patchOptions?: CompiledEntryOptions) {
+      setInput(entry, next, patchOptions?.values)
+      head.entries.set(_i, entry)
+    },
   }
 }
 
@@ -372,6 +395,7 @@ function usesV3Pipeline(head: CompiledHead, options?: RenderSSRHeadOptions): boo
  * @experimental
  */
 export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
+  head.entries.forEach(settleValues)
   try {
     if (!usesV3Pipeline(head as CompiledHead, options))
       return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
@@ -445,6 +469,7 @@ export function createHead<T = ResolvableHead>(options: CompiledServerHeadOption
   head.use = plugin => usePlugin(head, plugin)
   head.push = (input: unknown, entryOptions?: HeadEntryOptions) => addEntry(head, input, entryOptions)
   head._v3 = tagWeight !== capoTagWeight || !!options.propResolvers?.some(resolver => !resolver._static)
+  head._acceptsCompiled = 1
   head._hookStore = options.hooks && createHooks<ServerHeadHooks>(options.hooks)
   if (!options.disableDefaults)
     head.push(DEFAULT_COMPILED_TAGS)
