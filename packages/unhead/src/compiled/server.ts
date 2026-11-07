@@ -8,13 +8,14 @@ import { capoTagWeight } from '../server/sort'
 import { propsToString } from '../server/util/propsToString'
 import { tagToString } from '../server/util/tagToString'
 import { registerPlugin } from '../unhead'
+import { DupeableTags } from '../utils/const'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
 import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
-import { FLAG_DYNAMIC_VALUES, toHeadInput } from './tags'
+import { FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
 export { prepareTemplate } from '../parser'
@@ -65,6 +66,7 @@ type CompiledHead = CompiledTagsHead & {
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
 const MAX_CACHED_INDEX = 256
 const compiledTagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][]>()
+const v3TagCache = /* @__PURE__ */ new WeakMap<CompiledTags, HeadTag[][] | 0>()
 // a key per route list stays far below this, and a key built from request data stops here
 const MAX_PREPARED_KEYS = 1024
 let prepared: WeakMap<object, CompiledTags | 0> | undefined
@@ -150,6 +152,45 @@ function compiledTagsAt(entry: CompiledEntry): RuntimeTag[] | undefined {
       list[entry._i] = tags
   }
   return tags
+}
+
+// The tags v3 normalize makes for compiled tags with no dynamic values, at one entry index, shared
+// across heads like the v3 precomputed init tags. 0 marks compiled tags with dynamic values.
+function v3CompiledTags(compiledTags: CompiledTags, _i: number): HeadTag[] | undefined {
+  let list = v3TagCache.get(compiledTags)
+  if (list === undefined)
+    v3TagCache.set(compiledTags, list = compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES) ? 0 : [])
+  if (!list)
+    return
+  let tags = list[_i]
+  if (!tags) {
+    tags = compiledTags.map(([name, props, _w, identity, extra, flags], i) => {
+      const tag = toV3Tag({ tag: name, props: props || {}, ...(extra || undefined), _w, _p: (_i << 10) + i, _d: flags! & FLAG_IDENTITY ? identity : undefined }) as HeadTag
+      // v3 keeps the key of a tag that may repeat, and the hash of a tag with no identity
+      const key = extra && extra.key
+      if (key && DupeableTags.has(name))
+        tag._h = key as string
+      else if (!tag._d)
+        tag._h = identity
+      return tag
+    })
+    if (_i < MAX_CACHED_INDEX)
+      list[_i] = tags
+  }
+  return tags
+}
+
+// v3 `resolveTags` takes these through its precomputed slot, which it already skips
+// for an entry hook, a weight override, and entry options. A head weight or a dynamic
+// resolver would change the tags, so then nothing is supplied.
+function supplyV3CompiledTags(head: CompiledHead) {
+  const { _tagWeight, propResolvers } = head.resolvedOptions
+  if (_tagWeight !== capoTagWeight || propResolvers?.some(resolver => !resolver._static))
+    return
+  for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
+    if (entry._compiled && !entry._precomputedTags)
+      entry._precomputedTags = v3CompiledTags(entry._compiled, entry._i)
+  }
 }
 
 function looseTags(entry: CompiledEntry, head: CompiledTagsHead): RuntimeTag[] {
@@ -257,7 +298,7 @@ const COMPILED_ENTRY = {
   },
   set input(value: unknown) {
     const entry = this as unknown as CompiledEntry & { _in: unknown }
-    entry._compiled = entry._values = undefined
+    entry._compiled = entry._values = entry._precomputedTags = undefined
     entry._in = value
   },
 }
@@ -314,9 +355,10 @@ function usesV3Pipeline(head: CompiledHead, options?: RenderSSRHeadOptions): boo
  * @experimental
  */
 export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
-  return usesV3Pipeline(head as CompiledHead, options)
-    ? createV3Renderer(options)(head)
-    : renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
+  if (!usesV3Pipeline(head as CompiledHead, options))
+    return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
+  supplyV3CompiledTags(head as CompiledHead)
+  return createV3Renderer(options)(head)
 }
 
 /**
