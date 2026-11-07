@@ -3,11 +3,13 @@ import type { HeadEntry, HeadRenderer } from '../types'
 import type { CreateLazyHeadOptions } from './index'
 import { createDomRenderer } from '../client/renderDOMHead'
 import { createDebouncedFn, tagWeight } from '../client/util'
+import { toHeadInput } from '../compiled/tags'
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
 // element unknown to the renderer. Rendering the hydrated entries first adopts those
-// elements, so the next render removes the stale ones. The pause and render hooks stay
-// silent, because this render is internal and must not wait. The render reads a separate
+// elements, so the next render removes the stale ones. A claim wins a tie with its entry,
+// so a tag that a patch emptied still adopts its server element. The pause and render hooks
+// stay silent, because this render is internal and must not wait. The render reads a separate
 // map, so an entry that a hook pushes or disposes during it changes the live map through
 // the entry, and the restore keeps that change.
 function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<boolean>, hydrated: HeadEntry<T>[]) {
@@ -34,17 +36,40 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<
   }
 }
 
+// The full runtime reads loose input, so a compiled entry turns back into the input it came from.
+// Its values stay in the entry options until then. A hydrated copy shares those options, so
+// they are replaced, never changed.
+function toLooseEntry(entry: HeadEntry<any>) {
+  const { values, ...options } = entry.options as Record<string, any>
+  for (const key of ['input', '_pending', '_o'] as const) {
+    if (Array.isArray(entry[key]))
+      entry[key] = toHeadInput(entry[key], values)
+  }
+  entry.options = options
+}
+
 export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyHeadOptions, adoptionEntries: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
   const plugins = await options.lazyPlugins?.()
   head.resolvedOptions._tagWeight = tagWeight
   plugins?.forEach(p => head.use(p))
+  await (head.plugins.get('template-params') as any)?._load?.(head)
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
+  // the compiled runtime rendered already, so its state holds what the hydrated entries would adopt
+  if (head._dom)
+    (head._dom as any)._l = new Map()
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
   // Adoption waits for the first render that creates the DOM state, so a change after the
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
-  return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    if (!head._dom && head.dirty)
-      adoptHydratedEntries(head, renderDom, adoptionEntries())
+  const render = (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
+    if (!head._dom && head.dirty) {
+      const hydrated = adoptionEntries()
+      hydrated.forEach(toLooseEntry)
+      adoptHydratedEntries(head, renderDom, hydrated)
+    }
     renderDom(head)
   }, fn => setTimeout(fn, 0))
+  return (h) => {
+    head.entries.forEach(toLooseEntry)
+    return render(h)
+  }
 }

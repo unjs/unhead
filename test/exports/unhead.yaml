@@ -25,6 +25,7 @@
   transformHtmlTemplateRaw: function
 ./lazy:
   createLazyHead: function
+  lazyTemplateParams: object
 ./legacy:
   activeHead: object
   createHead: function
