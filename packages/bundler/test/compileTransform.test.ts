@@ -374,15 +374,15 @@ useHead(headData)`)
   it.each([
     ['client', { environment: { config: { consumer: 'client' } } }],
     ['unknown', {}],
-  ])('leaves a %s build alone', (_, ctx) => {
-    expect(transform(`${IMPORTS}useHead({ title: 'A' })`, undefined, ctx)).toBeUndefined()
+  ])('compiles a %s build', (_, ctx) => {
+    expect(calls(transform(`${IMPORTS}useHead({ title: 'A' })`, undefined, ctx)).map(call => call.fn)).toEqual(['useCompiledHead'])
   })
 
   it('applies to builds only', () => {
     const plugin = CompileTransform.vite({}) as any
     expect(plugin.apply({}, { command: 'serve' })).toBe(false)
     expect(plugin.apply({}, { command: 'build', isSsrBuild: true })).toBe(true)
-    expect(transform(`${IMPORTS}useHead({ title: 'A' })`, undefined, {}, {})).toBeUndefined()
+    expect(plugin.apply({}, { command: 'build', isSsrBuild: false })).toBe(true)
   })
 
   it.each([
@@ -495,12 +495,14 @@ describe('compile option', () => {
     expect(UnheadReact({ ...options, compile: true }).vite().map(plugin => plugin.name)).not.toContain('unhead:compile-transform')
   })
 
-  it('leaves client builds byte-identical when on', async () => {
+  it('compiles client builds once server composables are gone', async () => {
     const code = `${IMPORTS}useHead({ title: 'A' })\nuseSeoMeta({ description: 'B' })\nuseServerHead({ title: 'C' })`
     const client = { environment: { config: { consumer: 'client' } } }
     const output = await pipeline(Unhead({ ...base, compile: true }, vue), code, '/src/page.js', client)
-    expect(output).toBe(await pipeline(Unhead(base, vue), code, '/src/page.js', client))
-    expect(calls(output).map(call => call.fn)).toEqual(['useHead', 'useHead'])
+    expect(calls(output)).toEqual([
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' })] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
+    ])
   })
 
   // a build without compile renders the `useHead` call that the transform writes
