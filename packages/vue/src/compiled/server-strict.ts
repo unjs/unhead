@@ -1,7 +1,7 @@
 import type { CompiledEntryOptions, CompiledTags } from 'unhead/compiled/server'
 import type { StrictHeadOptions } from 'unhead/compiled/server-strict'
-import type { CreateServerHeadOptions, SSRHeadPayload } from 'unhead/types'
-import type { UseHeadInput, VueHeadClient } from '../types'
+import type { ActiveHeadEntry, CreateServerHeadOptions, SSRHeadPayload } from 'unhead/types'
+import type { VueHeadClient } from '../types'
 import { createHead as _createServerHead } from 'unhead/compiled/server-strict'
 import { vueInstall } from '../install'
 
