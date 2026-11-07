@@ -65,7 +65,10 @@ type CompiledHead = CompiledTagsHead & {
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
 const MAX_CACHED_INDEX = 256
 const compiledTagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][]>()
-let prepared: WeakMap<object, unknown> | undefined
+// a key per route list stays far below this, and a key built from request data stops here
+const MAX_PREPARED_KEYS = 1024
+let prepared: WeakMap<object, CompiledTags | 0> | undefined
+let preparedByKey: Map<string, CompiledTags | 0> | undefined
 
 function hookStore(head: CompiledHead): HookableCore<any> {
   const store = head._hookStore ||= createHooks<ServerHeadHooks>()
@@ -304,21 +307,33 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): (head:
 
 /**
  * Compiles static head input once and returns compiled tags when it can, otherwise the
- * original input. Call it at process scope. The input must not change afterwards.
+ * original input. Without a key, call it at process scope: the input object is
+ * the cache key, and it must not change afterwards.
+ *
+ * With a key, the input may be built per request, for example a route's links. The
+ * key must decide the input exactly: a hit returns the compiled tags of the first input
+ * with that key and never reads the new one. Once the cache holds
+ * `MAX_PREPARED_KEYS` keys, a new key returns its input.
  *
  * @experimental
  */
-export function prepareHeadInput<T extends object>(input: T): T | CompiledTags {
+export function prepareHeadInput<T extends object>(input: T, key?: string): T | CompiledTags {
   if (Array.isArray(input))
     return input
-  const cache = prepared ||= new WeakMap()
-  let result = cache.get(input) as T | CompiledTags | undefined
-  if (!result) {
+  const cache: Map<unknown, CompiledTags | 0> = key === undefined
+    ? (prepared ||= new WeakMap()) as unknown as Map<unknown, CompiledTags | 0>
+    : preparedByKey ||= new Map()
+  const lookup = key ?? input
+  let compiledTags = cache.get(lookup)
+  if (compiledTags === undefined) {
+    // a WeakMap has no size, so only the keyed cache stops growing
+    if (cache.size >= MAX_PREPARED_KEYS)
+      return input
     const compiled = compileTags(input)
-    result = compiled._tag === 'Ok' ? compiled.tags : input
-    cache.set(input, result)
+    compiledTags = compiled._tag === 'Ok' ? compiled.tags : 0
+    cache.set(lookup, compiledTags)
   }
-  return result
+  return compiledTags || input
 }
 
 /**

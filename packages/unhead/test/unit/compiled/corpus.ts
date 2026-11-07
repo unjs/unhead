@@ -1,10 +1,14 @@
 import type { CreateServerHeadOptions, HeadEntryOptions, RenderSSRHeadOptions } from '../../../src/types'
+import { dynamicValue } from '../../../src/compiled/tags'
 
 export interface ScenarioEntry {
   input: any
   options?: HeadEntryOptions
   dispose?: boolean
   patch?: any
+  /** The input with `dynamicValue(i)` for `values[i]`. A compiled head pushes it as compiled tags with values. */
+  template?: any
+  values?: unknown[]
 }
 
 export interface Scenario {
@@ -17,6 +21,60 @@ export interface Scenario {
 function entries(name: string, ...inputs: any[]): Scenario {
   return { name, entries: inputs.map(input => ({ input })) }
 }
+
+// `build` gets an argument for each value: a dynamic value token for the compiled tags, the value itself for the input
+function withValues(build: (...values: unknown[]) => any, values: unknown[], options?: HeadEntryOptions): ScenarioEntry {
+  return { input: build(...values), template: build(...values.map((_, i) => dynamicValue(i))), values, options }
+}
+
+// Nuxt's renderer on the normal non-streaming path, main and 4.6.4. See bench/compiled-nuxt-route-fixtures.mjs
+const nuxtAppHead = {
+  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }, { charset: 'utf-8' }],
+  link: [],
+  style: [],
+  script: [],
+  noscript: [],
+  charset: 'utf-8',
+  viewport: 'width=device-width, initial-scale=1',
+  titleTemplate: '%s %separator %siteName',
+  templateParams: { siteName: 'E2E Site', separator: '|' },
+}
+// what a Nuxt patch compiles: v3 drops the two unknown tags at render, and compile refuses them
+const { charset: _charset, viewport: _viewport, ...nuxtAppHeadTagsInput } = nuxtAppHead
+const nuxtStylesheets = { link: [{ rel: 'stylesheet', href: '/_nuxt/entry.qZqG9Fkf.css', crossorigin: '' }, { rel: 'stylesheet', href: '/_nuxt/index.B1x.css', crossorigin: '' }] }
+const nuxtHints = {
+  link: [
+    { rel: 'modulepreload', as: 'script', type: null, crossorigin: '', href: '/_nuxt/BQR-mvRI.js' },
+    { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '', href: '/_nuxt/inter.woff2' },
+    { rel: 'preload', as: 'image', type: null, crossorigin: null, href: '/_nuxt/hero.webp' },
+    { rel: 'prefetch', as: 'script', type: null, crossorigin: '', href: '/_nuxt/DJbzmi7I.js' },
+    { rel: 'prefetch', as: 'style', type: null, crossorigin: '', href: '/_nuxt/lazy.css' },
+  ],
+}
+const nuxtEntryScripts = { script: [{ type: 'module', src: '/_nuxt/Dq3kTz9f.js', defer: null, tagPosition: 'head', crossorigin: '' }] }
+const nuxtConfigScript = 'window.__NUXT__={};window.__NUXT__.config={public:{},app:{baseURL:"/",buildId:"b",buildAssetsDir:"/_nuxt/",cdnURL:""}}'
+const nuxtPayloadOptions: HeadEntryOptions = { tagPosition: 'bodyClose', tagPriority: 'high' }
+function nuxtPayload(contents: unknown, extra: Record<string, unknown> = {}) {
+  return {
+    script: [
+      { 'type': 'application/json', 'innerHTML': contents, 'data-nuxt-data': 'nuxt-app', 'data-ssr': true, 'id': '__NUXT_DATA__', ...extra },
+      { innerHTML: nuxtConfigScript },
+    ],
+  }
+}
+// the payload as a Nuxt patch compiles it: one script with a value and the entry options inside
+function nuxtPayloadTags(contents: unknown, extra: Record<string, unknown> = {}) {
+  return {
+    script: [{ 'type': 'application/json', 'data-nuxt-data': 'nuxt-app', 'data-ssr': true, 'id': '__NUXT_DATA__', ...extra, 'innerHTML': contents, 'tagPosition': 'bodyClose', 'tagPriority': 'high' }],
+  }
+}
+const nuxtConfigTags = { script: [{ innerHTML: nuxtConfigScript, tagPosition: 'bodyClose', tagPriority: 'high' }] }
+const nuxtPayloadTexts = [
+  '[["ShallowReactive",1],{"data":2},{"slug":"\\u002Fposts\\u002Fa"}]',
+  '[{"html":"</script><script>alert(1)</script>","b":"<b>","s":"</SCRIPT"}]',
+  '[{"t":"é ✓ \u2028 \uD83D\uDE00 \uE000"},"%s %siteName 100% \\u003C"]',
+  ' [{"pad":true}] ',
+]
 
 // Inputs come from the scenarios in test/unit/{server,plugins,e2e}. Every one runs
 // through the compiled head with compiled tags, loose input, and a mix of both.
@@ -187,6 +245,71 @@ export const corpus: Scenario[] = [
       { input: { title: 'late', meta: [{ name: 'a', content: 'x' }] }, options: { _index: 50 } },
       { input: { title: 'early', meta: [{ name: 'a', content: 'y' }] } },
       { input: { meta: [{ name: 'a', content: 'zero' }] }, options: { _index: 0 } },
+    ],
+  },
+  // Nuxt renderer
+  entries('nuxt: app head as built', nuxtAppHead, { title: 'Page' }),
+  entries('nuxt: app head as a patch compiles it', nuxtAppHeadTagsInput, { title: 'Page' }),
+  ...nuxtPayloadTexts.map((text, i): Scenario => ({
+    name: `nuxt: renderer pushes, main, payload ${i}`,
+    render: { omitLineBreaks: true },
+    entries: [
+      { input: nuxtAppHead },
+      { input: { title: 'Page', meta: [{ name: 'description', content: 'About %siteName' }] } },
+      { input: { script: [{ tagPosition: 'head', tagPriority: 'critical', type: 'importmap', innerHTML: { imports: { '#entry': '/_nuxt/Dq3kTz9f.js' } } }] } },
+      { input: nuxtStylesheets },
+      { input: { style: [{ innerHTML: '.a[data-v-1]{color:red}</style>' }] } },
+      { input: nuxtHints },
+      { input: nuxtPayload(text), options: nuxtPayloadOptions },
+      { input: nuxtEntryScripts },
+    ],
+  })),
+  ...nuxtPayloadTexts.map((text, i): Scenario => ({
+    name: `nuxt: renderer compiled tags, payload value ${i}`,
+    render: { omitLineBreaks: true },
+    entries: [
+      { input: nuxtAppHeadTagsInput },
+      withValues(title => ({ title, meta: [{ name: 'description', content: 'About %siteName' }] }), ['Page "one" & more']),
+      { input: { script: [{ tagPosition: 'head', tagPriority: 'critical', type: 'importmap', innerHTML: { imports: { '#entry': '/_nuxt/Dq3kTz9f.js' } } }] } },
+      { input: nuxtStylesheets },
+      { input: nuxtHints },
+      withValues(contents => nuxtPayloadTags(contents), [text]),
+      { input: nuxtConfigTags },
+      { input: nuxtEntryScripts },
+    ],
+  })),
+  {
+    name: 'nuxt: renderer pushes, 4.6.4, payload extraction',
+    entries: [
+      { input: nuxtAppHead },
+      { input: { script: [{ type: 'importmap', innerHTML: { imports: { '#entry': '/_nuxt/Dq3kTz9f.js' } } }] } },
+      { input: { link: [{ rel: 'preload', as: 'fetch', crossorigin: 'anonymous', href: '/posts/a/_payload.json?b' }] } },
+      { input: nuxtStylesheets },
+      { input: nuxtHints },
+      { input: nuxtPayload('[{"a":1}]', { 'data-src': '/posts/a/_payload.json?b' }), options: nuxtPayloadOptions },
+      { input: { script: [{ type: null, src: '/_nuxt/legacy.js', defer: true, tagPosition: 'head', crossorigin: '' }] } },
+    ],
+  },
+  {
+    name: 'nuxt: renderer compiled tags, no ssr and payload extraction',
+    entries: [
+      withValues(contents => nuxtPayloadTags(contents, { 'data-ssr': false, 'data-src': '/a/_payload.json' }), ['[{"a":1}]']),
+      { input: nuxtConfigTags },
+    ],
+  },
+  {
+    name: 'nuxt: no scripts hints',
+    entries: [
+      { input: { script: [{ tagPosition: 'head', type: 'speculationrules', innerHTML: { prefetch: [{ where: { href_matches: '/*' }, eagerness: 'moderate' }], prerender: [{ where: { href_matches: '/*' }, eagerness: 'moderate' }] } }] } },
+      { input: { style: [{ tagPosition: 'head', innerHTML: '@view-transition{navigation:auto}' }] } },
+    ],
+  },
+  {
+    name: 'nuxt: payload value that is not text',
+    entries: [
+      withValues(contents => nuxtPayloadTags(contents), [{ a: '<b>' }]),
+      withValues(contents => nuxtPayloadTags(contents, { id: 'second' }), [null]),
+      withValues(contents => nuxtPayloadTags(contents, { id: 'third' }), ['']),
     ],
   },
   // head and render options
