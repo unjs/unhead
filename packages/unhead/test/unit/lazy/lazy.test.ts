@@ -85,11 +85,47 @@ describe('createLazyHead', () => {
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Next'))
   })
 
-  it('cancelLoad stops the pending idle load until the next render', async () => {
+  it('blockLoad blocks a change until the next render, with no pause active', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(titled)
+    head.render()
+    head.blockLoad()
+    const load = vi.spyOn(head, 'load')
+    entry.patch({ title: 'Next' })
+    head.push({ meta: [{ name: 'next', content: 'yes' }] })
+    await settle()
+    expect(load).not.toHaveBeenCalled()
+    expect(dom.window.document.title).toBe('Server')
+
+    head.render()
+    expect(load).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Next'))
+  })
+
+  it('a render after blockLoad with no change arms the idle load again', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
     head.push({ title: 'Client' })
-    head.cancelLoad()
+    head.blockLoad()
+    head.render()
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Client'))
+  })
+
+  it('load runs during a load block when called directly', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    head.blockLoad()
+    head.push({ title: 'Direct' })
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Direct'))
+  })
+
+  it('blockLoad stops the pending idle load until the next render', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    head.push({ title: 'Client' })
+    head.blockLoad()
     await settle()
     expect(dom.window.document.title).toBe('Server')
 
@@ -102,8 +138,9 @@ describe('createLazyHead', () => {
     const head = createLazyHead({ document: dom.window.document })
     head.push(titled)
     head.render()
-    head.cancelLoad()
+    const load = vi.spyOn(head, 'load')
     head.push({ title: 'After' })
+    expect(load).toHaveBeenCalledTimes(1)
     await vi.waitFor(() => expect(dom.window.document.title).toBe('After'))
   })
 
@@ -123,7 +160,6 @@ describe('createLazyHead', () => {
     setPaused(false)
     const entry = head.push(titled)
     head.render()
-    head.cancelLoad()
     setPaused(true)
     const load = vi.spyOn(head, 'load')
     entry.patch({ title: 'Patched' })
@@ -135,8 +171,9 @@ describe('createLazyHead', () => {
     const head = createLazyHead({ document: dom.window.document })
     const entry = head.push(titled)
     head.render()
-    head.cancelLoad()
+    head.blockLoad()
     entry.dispose()
+    head.render()
     await vi.waitFor(() => expect(dom.window.document.querySelector('meta[name="description"]')).toBeNull())
   })
 
@@ -146,8 +183,9 @@ describe('createLazyHead', () => {
     const head = createLazyHead({ document: dom.window.document })
     const entry = head.push(input)
     head.render()
-    head.cancelLoad()
+    head.blockLoad()
     entry.patch({ link: [{ rel: 'prev', href: '/b' }] })
+    head.render()
     await vi.waitFor(() => {
       const links = dom.window.document.querySelectorAll('link[rel="prev"]')
       expect(links).toHaveLength(1)
@@ -161,8 +199,9 @@ describe('createLazyHead', () => {
     const head = createLazyHead({ document: dom.window.document, hooks: { 'dom:rendered': rendered } })
     const entry = head.push(titled)
     head.render()
-    head.cancelLoad()
+    head.blockLoad()
     entry.dispose()
+    head.render()
     await vi.waitFor(() => expect(rendered).toHaveBeenCalled())
     await settle(40)
     expect(rendered).toHaveBeenCalledTimes(1)

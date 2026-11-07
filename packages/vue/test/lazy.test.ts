@@ -35,7 +35,7 @@ describe('vue lazy head', () => {
     const nodes = [...document.head.children]
     const { head } = hydrate(App)
     head.render()
-    head.cancelLoad()
+    head.blockLoad()
     expect(document.title).toBe('Home')
     expect(head.entries.size).toBe(1)
 
@@ -74,7 +74,6 @@ describe('vue lazy head', () => {
     await serverRender(App)
     const { head } = hydrate(App)
     head.render()
-    head.cancelLoad()
     title.value = 'Two'
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
@@ -97,8 +96,10 @@ describe('vue lazy head', () => {
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const { head } = hydrate(App)
     head.render()
-    head.cancelLoad()
+    head.blockLoad()
     show.value = false
+    await nextTick()
+    head.render()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
@@ -180,6 +181,35 @@ describe('vue lazy head', () => {
       await vi.waitFor(() => expect(document.title).toBe('Mounted'))
     })
 
+    it('a new page after blockLoad does not load before the pause starts', async () => {
+      const Page = defineComponent({
+        setup() {
+          useHead({ title: 'Next page' })
+          return () => h('span', 'next')
+        },
+      })
+      const page = ref(false)
+      const App = defineComponent({
+        setup() {
+          useHead({ title: 'First page' })
+          return () => h('div', page.value ? h(Page) : 'first')
+        },
+      })
+      await serverRender(App)
+      const head = createLazyHead()
+      createSSRApp(App).use(head).mount('#app')
+      head.blockLoad()
+      const load = vi.spyOn(head, 'load')
+      page.value = true
+      await nextTick()
+      await settle()
+      expect(load).not.toHaveBeenCalled()
+
+      head.render()
+      expect(load).toHaveBeenCalledTimes(1)
+      await vi.waitFor(() => expect(document.title).toBe('Next page'))
+    })
+
     it('a new page during a navigation pause does not load until the pause lifts', async () => {
       const Page = defineComponent({
         setup() {
@@ -205,7 +235,7 @@ describe('vue lazy head', () => {
       })
       createSSRApp(App).use(head).mount('#app')
       head.render()
-      head.cancelLoad()
+      head.blockLoad()
 
       paused = true
       const load = vi.spyOn(head, 'load')

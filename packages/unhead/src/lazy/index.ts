@@ -17,8 +17,9 @@ export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
    */
   isClientOnlyPush?: () => boolean
   /**
-   * Called when the runtime fails to load. A later change or `load()` tries again.
-   * The default logs with `console.error`.
+   * Called when the runtime fails to load. The default logs with `console.error`.
+   * A later change or `load()` tries again, but a browser may keep a failed `import()`
+   * for this page. Use this to recover, for example with a reload on the next navigation.
    */
   onLoadError?: (error: unknown) => void
 }
@@ -30,10 +31,12 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   load: () => Promise<boolean>
   /**
-   * Cancels a pending idle load, for example when the user starts a navigation.
-   * The next `head.render()` arms it again, or loads at once if entries changed.
+   * Blocks the load while the user changes page, including any pending idle load.
+   * The next `head.render()` releases it, and loads at once if entries changed.
+   * So call `head.render()` when the navigation ends, even if it aborted.
+   * A direct `load()` still runs.
    */
-  cancelLoad: () => void
+  blockLoad: () => void
 }
 
 type HookFn = (...args: any[]) => any
@@ -100,6 +103,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
   let cancelIdle: (() => void) | undefined
+  let blocked = false
   let render: HeadRenderer<any>
 
   const head = createClientHeadAdapter<T>(
@@ -128,10 +132,10 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
 
   // During hydration a push is a page entry the server rendered, unless the adapter says
   // otherwise. A patch or dispose means the client already differs from the server. Both
-  // need the runtime now. After hydration, every change loads unless a page pause blocks it.
+  // need the runtime now. After hydration, every change loads unless a load block or pause stops it.
   let pushing = false
   const onChange = () => {
-    if (hydrated ? !isPaused() : !pushing)
+    if (hydrated ? !blocked && !isPaused() : !pushing)
       head.load()
   }
   const push = head.push
@@ -177,14 +181,16 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     }
   }
 
-  head.cancelLoad = () => {
+  head.blockLoad = () => {
     markHydrated()
+    blocked = true
     cancelIdle?.()
     cancelIdle = undefined
   }
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
   render = () => {
+    blocked = false
     if (hydrated && head.dirty) {
       onChange()
     }
