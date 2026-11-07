@@ -1,11 +1,18 @@
 import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 
-const DOUBLE_QUOTE_RE = /"/g
+const HAS_ATTR_ESCAPE_RE = /[&<>"]/
+// & is only escaped when it does not already start a character reference, so
+// pre-escaped values (e.g. `&amp;`) pass through unchanged. Numeric and hex
+// references decode in browsers with or without a trailing `;`. Legacy named
+// references (the HTML4 set) decode only when not followed by `=` or an ASCII
+// alphanumeric, keeping `&amp=` and `&copy=1` literal.
+const ESCAPE_ATTR_RE = /&(?!#\d|#x[\da-f]|[a-z][a-z0-9]*;|(?:aacute|acirc|acute|aelig|agrave|amp|aring|atilde|auml|brvbar|ccedil|cedil|cent|copy|curren|deg|divide|eacute|ecirc|egrave|eth|euml|frac12|frac14|frac34|gt|iacute|icirc|iexcl|igrave|iquest|iuml|laquo|lt|macr|micro|middot|nbsp|not|ntilde|oacute|ocirc|ograve|ordf|ordm|oslash|otilde|ouml|para|plusmn|pound|quot|raquo|reg|sect|shy|sup1|sup2|sup3|szlig|thorn|times|uacute|ucirc|ugrave|uml|uuml|yacute|yen|yuml)(?![=0-9a-z]))|[<>"]/gi
+const ESCAPE_ATTR_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
 
 /* @__PURE__ */
 function encodeAttribute(value: string) {
   const s = typeof value === 'string' ? value : String(value)
-  return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
+  return HAS_ATTR_ESCAPE_RE.test(s) ? s.replace(ESCAPE_ATTR_RE, c => ESCAPE_ATTR_MAP[c]) : s
 }
 
 /* @__PURE__ */
