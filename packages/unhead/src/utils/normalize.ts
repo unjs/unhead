@@ -4,7 +4,7 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-function normalizeStyleClassProps(
+export function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
 ): Map<string, string> | Set<string> {
