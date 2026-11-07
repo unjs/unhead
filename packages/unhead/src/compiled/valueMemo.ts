@@ -47,11 +47,11 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
   }
   const previousTemplate = head._titleTemplate
   head._titleTemplate = undefined
-  const html = renderTags(renderer.r(tags, head), omitLineBreaks, renderer, (tag) => {
+  const buckets: Memo['b'] = renderTags(renderer.r(tags, head), omitLineBreaks, renderer, (tag) => {
+    // a value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in tag.props) {
-      const value = tag.props[key]
-      if (typeof value === 'string' && value.includes(DYNAMIC_VALUE_OPEN))
-        tag.props[key] = markMode(value, MODE_ATTR)
+      if (tag.props[key]?.includes?.(DYNAMIC_VALUE_OPEN))
+        tag.props[key] = markMode(tag.props[key], MODE_ATTR)
     }
     for (const key of ['textContent', 'innerHTML']) {
       if (tag[key]?.includes?.(DYNAMIC_VALUE_OPEN)) {
@@ -60,13 +60,10 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
         tag[key] = markMode(tag[key], tag.tag === 'title' ? MODE_TITLE : tag.tag === 'script' && JSON_TYPE_RE.test(String(tag.props.type)) ? MODE_JSON : MODE_RAW)
       }
     }
-  })
-  let dynamic = false
-  const buckets: Memo['b'] = html as any
-  for (const key in html) {
-    const bucket: string = (html as any)[key]
+  }) as any
+  for (const key in buckets) {
+    const bucket = buckets[key] as string
     if (bucket.includes(DYNAMIC_VALUE_OPEN)) {
-      dynamic = true
       unsafe ||= RAW_NEIGHBOUR_RE.test(bucket) || (tp && PARAM_NEIGHBOUR_RE.test(bucket))
       buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
     }
@@ -80,7 +77,7 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     state._templateParams = head._templateParams
     state._separator = head._separator
   }
-  return { b: buckets, x: unsafe, d: dynamic, s: state }
+  return { b: buckets, x: unsafe, s: state }
 }
 
 // Returns undefined when the value could change a v3 decision. Escaping matches

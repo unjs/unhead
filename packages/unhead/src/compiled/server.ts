@@ -14,8 +14,8 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, hasDynamicValues, isEmpty, renderCompiledHead, reviveTag } from './core'
-import { copyValue, FLAG_IDENTITY, toHeadInput } from './tags'
+import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from './core'
+import { copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
 export { prepareTemplate } from '../parser'
@@ -123,32 +123,42 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
 function revive(compiledTag: CompiledTag, p: number, resolve?: (value: string, key: string | 0, tag: string) => unknown): RuntimeTag {
   const tag = reviveTag(compiledTag, p, resolve)
   const props = tag.props = copyValue(tag.props)
-  if (tag.tag !== 'templateParams') {
-    if (typeof props.class === 'string')
-      props.class = normalizeStyleClassProps('class', props.class)
-    if (typeof props.style === 'string')
-      props.style = normalizeStyleClassProps('style', props.style)
+  for (const key of ['class', 'style'] as const) {
+    if (tag.tag !== 'templateParams' && typeof props[key] === 'string')
+      props[key] = normalizeStyleClassProps(key, props[key])
   }
   return tag
 }
 
-// The revived tags of compiled tags with no dynamic values at one entry index, shared across renders and heads,
-// with their HTML cached on them. 0 marks compiled tags with dynamic values.
-function compiledTagsAt(entry: CompiledEntry): RuntimeTag[] | undefined {
+// The revived tags of compiled tags with no dynamic values at one entry index. 0 in the cache marks compiled tags
+// with dynamic values. The fast tiers share them across renders and heads, with their HTML
+// cached on them. v3 hands its tags to hooks and to `resolveTags` readers, so each
+// head gets its own, in the shape v3 normalize gives: no `_d` and a hash `_h`
+// without an identity, and the key as `_h` of a tag that may repeat.
+function compiledTagsAt(entry: CompiledEntry, v3?: boolean): RuntimeTag[] | undefined {
   const compiledTags = entry._compiled!
   let list = compiledTagCache.get(compiledTags)
   if (list === undefined)
-    compiledTagCache.set(compiledTags, list = hasDynamicValues(compiledTags) ? 0 : [])
+    compiledTagCache.set(compiledTags, list = compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES) ? 0 : [])
   if (!list)
     return
-  let tags = list[entry._i]
+  let tags = v3 ? undefined : list[entry._i]
   if (!tags) {
     tags = compiledTags.map((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i)
-      tag._c = 1
+      if (!v3) {
+        tag._c = 1
+      }
+      else if (!(compiledTag[5]! & FLAG_IDENTITY)) {
+        tag._h = tag._d
+        tag._d = undefined
+      }
+      else if (tag.key && DupeableTags.has(tag.tag)) {
+        tag._h = tag.key
+      }
       return tag
     })
-    if (entry._i < MAX_CACHED_INDEX)
+    if (!v3 && entry._i < MAX_CACHED_INDEX)
       list[entry._i] = tags
   }
   return tags
@@ -156,29 +166,14 @@ function compiledTagsAt(entry: CompiledEntry): RuntimeTag[] | undefined {
 
 // v3 `resolveTags` takes these through its precomputed slot, which it already skips
 // for an entry hook, a weight override, and entry options. A head weight or a dynamic
-// resolver would change the tags, so then nothing is supplied. v3 hands them to hooks
-// and to `resolveTags` readers, so each head gets its own, in the shape v3 normalize
-// gives: no `_d` and a hash `_h` without an identity, and the key as `_h` of a tag
-// that may repeat.
+// resolver would change the tags, so then nothing is supplied.
 function supplyV3CompiledTags(head: CompiledHead) {
   const { _tagWeight, propResolvers } = head.resolvedOptions
   if (_tagWeight !== capoTagWeight || propResolvers?.some(resolver => !resolver._static))
     return
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    const compiledTags = entry._compiled
-    if (compiledTags && !entry._precomputedTags && !hasDynamicValues(compiledTags)) {
-      entry._precomputedTags = compiledTags.map((compiledTag, i) => {
-        const tag = revive(compiledTag, (entry._i << 10) + i)
-        if (!(compiledTag[5]! & FLAG_IDENTITY)) {
-          tag._h = tag._d
-          tag._d = undefined
-        }
-        else if (tag.key && DupeableTags.has(tag.tag)) {
-          tag._h = tag.key
-        }
-        return tag
-      }) as HeadTag[]
-    }
+    if (entry._compiled && !entry._precomputedTags)
+      entry._precomputedTags = compiledTagsAt(entry, true) as HeadTag[] | undefined
   }
 }
 
