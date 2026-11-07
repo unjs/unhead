@@ -153,6 +153,6 @@ describe('a v3 client head with compile on', () => {
     const app = vue.createApp({ setup: evaluate(compile(snippet('')), {}), render: () => null }).use(head)
     app.config.errorHandler = error => errors.push((error as Error).message)
     app.mount(dom.window.document.getElementById('app')!)
-    expect(errors).toEqual(['[unhead] Use createHead from @unhead/vue/compiled/server or createLazyHead from @unhead/vue/lazy, or turn off compile.'])
+    expect(errors).toEqual(['[unhead] Compiled head calls need @unhead/vue/compiled/server or @unhead/vue/lazy. Or turn off compile.'])
   })
 })

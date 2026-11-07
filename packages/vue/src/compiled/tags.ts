@@ -7,7 +7,7 @@ import { headSymbol } from '../install'
 
 export type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: unknown, blockLoad?: unknown }
 
-export const COMPILED_TAGS_HEAD_ERROR = '[unhead] Use createHead from @unhead/vue/compiled/server or createLazyHead from @unhead/vue/lazy, or turn off compile.'
+export const COMPILED_TAGS_HEAD_ERROR = '[unhead] Compiled head calls need @unhead/vue/compiled/server or @unhead/vue/lazy. Or turn off compile.'
 
 // v3 `injectHead`, which may return a head that cannot take compiled tags
 export function injectCompiledTagsHead(options: UseHeadOptions): CompiledTagsHead | undefined {
