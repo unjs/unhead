@@ -100,11 +100,17 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
       if (_f! & FLAG_DYNAMIC_VALUES) {
         for (const target of [tag.props, tag]) {
           for (const key in target) {
-            target[key] = target[key].replace?.(DYNAMIC_VALUE_RE, (_: string, index: number) => {
+            // v3 keeps a value that is a whole string, so a number stays a number and the content
+            // cleanup, which compares by identity, leaves its text
+            let whole: unknown
+            target[key] = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: number, _: number, text: string) => {
               const entryValue = options.values?.[index]
               plain &&= isRenderableValue(entryValue)
+              whole = match === text && entryValue
               return entryValue
             }) ?? target[key]
+            if (whole)
+              target[key] = whole
           }
         }
       }

@@ -297,6 +297,24 @@ describe('values', () => {
     expect(document.querySelector('script')!.textContent).toBe(attack.replaceAll('</script', '<\\/script'))
   })
 
+  it.each([
+    ['textContent', 'script'],
+    ['innerHTML', 'script'],
+    ['innerHTML', 'noscript'],
+  ])('leaves a number %s of a keyed %s that a patch drops, as v3 does', async (key, tag) => {
+    const pair = createPair([], 'none', undefined, input => input)
+    const v3 = pair.v3.push({ [tag]: [{ key: 'k', [key]: 5 }] })
+    const entry = pair.compiled.push(compile({ [tag]: [{ key: 'k', [key]: dynamicValue(0) }] }, 1), { values: [5] })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    v3.patch({ [tag]: [{ 'key': 'k', 'data-dropped': '' }] })
+    entry.patch(compile({ [tag]: [{ 'key': 'k', 'data-dropped': '' }] }), { values: [] })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    expect(pair.v3Dom.window.document.querySelector(`${tag}[data-dropped]`)!.innerHTML).toBe('5')
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
+  })
+
   it('keeps the v3 meaning of an explicit innerHTML slot', async () => {
     const markup = '<img src="x">'
     const pair = createPair([], 'none', undefined, input => input)
