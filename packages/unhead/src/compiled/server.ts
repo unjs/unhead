@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadEntryOptions, HeadPluginInput, HeadTag, RenderSSRHeadOptions, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import type { CompiledEntry, CompiledRenderer, CompiledTagsHead, RuntimeTag } from './core'
-import type { CompiledTag, CompiledTags } from './types'
+import type { CompiledTag, CompiledTagExtra, CompiledTags } from './types'
 import { serverPropResolver } from '../server/createHead'
 import { createServerRenderer as createV3Renderer } from '../server/renderSSRHead'
 import { capoTagWeight } from '../server/sort'
@@ -65,8 +65,8 @@ type CompiledHead = CompiledTagsHead & {
 
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
 const MAX_CACHED_INDEX = 256
-const compiledTagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][]>()
-const v3TagCache = /* @__PURE__ */ new WeakMap<CompiledTags, HeadTag[][] | 0>()
+const compiledTagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][] | 0>()
+const v3TagCache = /* @__PURE__ */ new WeakMap<CompiledTags, RuntimeTag[][] | 0>()
 // a key per route list stays far below this, and a key built from request data stops here
 const MAX_PREPARED_KEYS = 1024
 let prepared: WeakMap<object, CompiledTags | 0> | undefined
@@ -101,10 +101,7 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     head.plugins.set(plugin.key, resolved)
     head._tp = resolved.hooks
     // another plugin with this key has hooks this entry cannot run natively
-    let count = 0
-    for (const _ in resolved.hooks)
-      count++
-    head._v3 ||= count !== 2 || !resolved.hooks['tags:resolve'] || !resolved.hooks['tags:afterResolve']
+    head._v3 ||= Object.keys(resolved.hooks).join() !== 'tags:resolve,tags:afterResolve'
     // a listener that registered first runs first, as it does in v3
     if (head._v3 || hasListeners(head, false))
       hookStore(head)
@@ -132,50 +129,36 @@ function revive(compiledTag: CompiledTag, p: number, resolve?: (value: string, k
   return toV3Tag(reviveTag(compiledTag, p, resolve))
 }
 
-// Tags compiled tags with no dynamic values shares across renders. Compiled tags with dynamic values takes the loose
-// path through its rebuilt input, so v3 rules decide each value.
-function compiledTagsAt(entry: CompiledEntry): RuntimeTag[] | undefined {
+// The revived tags of compiled tags with no dynamic values at one entry index, shared across renders and heads.
+// 0 marks compiled tags with dynamic values. The v3 flavour matches v3 normalize, like the precomputed
+// init tags of v3: no `_d` and a hash `_h` without an identity, and the key as `_h`
+// of a tag that may repeat. The other flavour caches its HTML on the tag.
+function compiledTagsAt(entry: CompiledEntry, cache: WeakMap<CompiledTags, RuntimeTag[][] | 0>, v3?: boolean): RuntimeTag[] | undefined {
   const compiledTags = entry._compiled!
-  let list = compiledTagCache.get(compiledTags)
+  let list = cache.get(compiledTags)
+  if (list === undefined)
+    cache.set(compiledTags, list = compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES) ? 0 : [])
   if (!list)
-    compiledTagCache.set(compiledTags, list = [])
+    return
   let tags = list[entry._i]
   if (!tags) {
-    if (compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES))
-      return
     tags = compiledTags.map((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i)
-      tag._c = 1
+      const key = (compiledTag[4] as CompiledTagExtra | 0)?.key
+      if (!v3) {
+        tag._c = 1
+      }
+      else if (!(compiledTag[5]! & FLAG_IDENTITY)) {
+        tag._h = tag._d
+        tag._d = undefined
+      }
+      else if (key && DupeableTags.has(tag.tag)) {
+        tag._h = key
+      }
       return tag
     })
     if (entry._i < MAX_CACHED_INDEX)
       list[entry._i] = tags
-  }
-  return tags
-}
-
-// The tags v3 normalize makes for compiled tags with no dynamic values, at one entry index, shared
-// across heads like the v3 precomputed init tags. 0 marks compiled tags with dynamic values.
-function v3CompiledTags(compiledTags: CompiledTags, _i: number): HeadTag[] | undefined {
-  let list = v3TagCache.get(compiledTags)
-  if (list === undefined)
-    v3TagCache.set(compiledTags, list = compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES) ? 0 : [])
-  if (!list)
-    return
-  let tags = list[_i]
-  if (!tags) {
-    tags = compiledTags.map(([name, props, _w, identity, extra, flags], i) => {
-      const tag = toV3Tag({ tag: name, props: props || {}, ...(extra || undefined), _w, _p: (_i << 10) + i, _d: flags! & FLAG_IDENTITY ? identity : undefined }) as HeadTag
-      // v3 keeps the key of a tag that may repeat, and the hash of a tag with no identity
-      const key = extra && extra.key
-      if (key && DupeableTags.has(name))
-        tag._h = key as string
-      else if (!tag._d)
-        tag._h = identity
-      return tag
-    })
-    if (_i < MAX_CACHED_INDEX)
-      list[_i] = tags
   }
   return tags
 }
@@ -189,7 +172,7 @@ function supplyV3CompiledTags(head: CompiledHead) {
     return
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
     if (entry._compiled && !entry._precomputedTags)
-      entry._precomputedTags = v3CompiledTags(entry._compiled, entry._i)
+      entry._precomputedTags = compiledTagsAt(entry, v3TagCache, true) as HeadTag[] | undefined
   }
 }
 
@@ -269,7 +252,7 @@ const renderer: CompiledRenderer = {
         entry.input = entry._pending
         entry._pending = entry._tags = entry._precomputedTags = undefined
       }
-      const list = (entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)) || looseTags(entry, head)
+      const list = (entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry, compiledTagCache)) || looseTags(entry, head)
       for (let i = 0; i < list.length; i++)
         tags.push(list[i]!)
     }
@@ -428,7 +411,6 @@ export function createHead<T = ResolvableHead>(options: CompiledServerHeadOption
   head.push = (input: unknown, entryOptions?: HeadEntryOptions) => addEntry(head, input, entryOptions)
   head._v3 = tagWeight !== capoTagWeight || !!options.propResolvers?.some(resolver => !resolver._static)
   head._hookStore = options.hooks && createHooks<ServerHeadHooks>(options.hooks)
-  head._tp = head._tpActive = undefined
   if (!options.disableDefaults)
     head.push(DEFAULT_COMPILED_TAGS)
   options.init?.forEach(input => input && head.push(input))
