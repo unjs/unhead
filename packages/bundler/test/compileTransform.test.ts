@@ -8,6 +8,7 @@ import { Unhead } from '../src/unplugin/vite'
 import { passesTransformFilter, runTransform } from './utils'
 
 const server = { environment: { config: { consumer: 'server' } } }
+const OBJECT_SEO_KEYS = ['ogImage', 'ogImageUrl', 'ogVideo', 'ogVideoUrl', 'ogAudio', 'ogAudioUrl', 'twitterImage', 'themeColor', 'googleSiteVerification', 'author', 'ogLocaleAlternate', 'articleAuthor', 'articleTag', 'bookAuthor', 'bookTag', 'robots', 'refresh', 'contentSecurityPolicy', 'appleItunesApp']
 const IMPORTS = `import { useHead, useSeoMeta, useServerHead, useServerSeoMeta } from '@unhead/vue'\n`
 const IMPORT_RE = /^import\s*\{([^}]*)\}\s*from\s*['"][^'"]+['"];?$/gm
 const AS_RE = /\s+as\s+/
@@ -184,6 +185,17 @@ return (_ctx,_push,_parent,_attrs) => {
     expect(loose(['T2', 'D2'])).toEqual({ title: 'T2', _flatMeta: { description: 'D2', ogType: 'website' } })
   })
 
+  // Each key that `unpackMeta` also expands from an object or a list: the media keys and
+  // their url aliases, the keys v3 may repeat, and the packed keys. A string makes one tag.
+  it.each(OBJECT_SEO_KEYS)('compiles a dynamic %s value into one tag with a full runtime fallback', (key) => {
+    const result = calls(transform(`${IMPORTS}useSeoMeta({ ${key}: value, description: 'D' })`), { value: 'x' })
+    const [compiledTags, loose, values] = result[0]!.args
+    expect(result[0]!.fn).toBe('useCompiledSeoMeta')
+    expect(compiledTags.filter((tag: any) => tag[5] & 4)).toHaveLength(1)
+    expect(values).toEqual(['x'])
+    expect(loose([{ url: '/a.png' }])).toEqual({ _flatMeta: { [key]: { url: '/a.png' }, description: 'D' } })
+  })
+
   it('compiles a head call inside a value of another', () => {
     const result = calls(transform(`${IMPORTS}useHead({ title: (useHead({ title: 'inner' }), 'outer') })`))
     expect(result).toEqual([
@@ -295,10 +307,13 @@ return (_ctx,_push,_parent,_attrs) => {
       ['no argument', `useHead()`],
       ['third argument', `useHead({ title: 'x' }, { head }, extra)`],
       ['optional call', `useHead?.({ title: 'x' })`],
-      ['seo media value', `useSeoMeta({ ogImage: image })`],
+      // an object or a list is never plain text, so a value there would always fall back
       ['seo media object with a dynamic leaf', `useSeoMeta({ ogImage: { url: image } })`],
-      ['seo robots value', `useSeoMeta({ robots: r })`],
-      ['seo theme color list', `useSeoMeta({ themeColor: colors })`],
+      ['seo media list with a dynamic item', `useSeoMeta({ ogImage: [image] })`],
+      ['seo packed object with a dynamic leaf', `useSeoMeta({ robots: { index: flag } })`],
+      ['seo plain key object with a dynamic leaf', `useSeoMeta({ description: { text: d } })`],
+      // the value is the identity of the tag
+      ['seo charset value', `useSeoMeta({ charset: c })`],
       ['seo tag option', `useSeoMeta({ description: 'x', tagPriority: 'high' })`],
       ['seo empty value', `useSeoMeta({ description: '' })`],
       ['seo true value', `useSeoMeta({ description: 'true' })`],
