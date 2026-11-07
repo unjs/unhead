@@ -10,7 +10,7 @@ import { resolveTags, walkResolver } from '../../../src/utils'
 // The contract: no request can observe what another request did to its head.
 // Each test compiles its own compiled tags, as the bundler hoists one per call site.
 
-function pageInput() {
+function pageInput(): any {
   return {
     title: 'Home',
     htmlAttrs: { class: 'page', style: 'color:red' },
@@ -108,10 +108,11 @@ describe('nested template params', () => {
       if (loose)
         head.push({ meta: [{ name: 'loose', content: '%site.name' }] })
       const html = renderSSRHead(head).headTags
-      const state = structuredClone(head._templateParams)
+      const params = head._templateParams as any
+      const state = structuredClone(params)
       if (edit) {
-        head._templateParams!.site.name = 'Private'
-        head._templateParams!.site.tags.push('private')
+        params.site.name = 'Private'
+        params.site.tags.push('private')
       }
       return { html, state }
     }
