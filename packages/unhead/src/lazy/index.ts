@@ -12,6 +12,11 @@ export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
    */
   lazyPlugins?: () => Promise<HeadPluginInput[]>
   /**
+   * Framework adapters return true when the current `head.push` cannot be in the
+   * server rendered head. During hydration, such a push loads the runtime at once.
+   */
+  isClientOnlyPush?: () => boolean
+  /**
    * Called when the runtime fails to load. A later change or `load()` tries again.
    * The default logs with `console.error`.
    */
@@ -120,9 +125,20 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     return !ctx.shouldRender
   }
 
+  // During hydration a push is a page entry the server rendered, unless the adapter says
+  // otherwise. A patch or dispose means the client already differs from the server. Both
+  // need the runtime now. After hydration, every change loads unless a page pause blocks it.
+  let pushing = false
   const onChange = () => {
-    if (hydrated && !isPaused())
+    if (hydrated ? !isPaused() : !pushing)
       head.load()
+  }
+  const push = head.push
+  head.push = (input, entryOptions) => {
+    pushing = !options.isClientOnlyPush?.()
+    const active = push(input, entryOptions)
+    pushing = false
+    return active
   }
 
   head.load = () => loading ||= import('./runtime')

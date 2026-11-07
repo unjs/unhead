@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { renderToString } from '@vue/server-renderer'
-import { describe, expect, it, vi } from 'vitest'
-import { createSSRApp, defineComponent, h, ref } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createSSRApp, defineComponent, h, nextTick, onMounted, ref } from 'vue'
 import { injectHead, useHead } from '../src'
 import { createLazyHead } from '../src/lazy'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
@@ -101,5 +101,152 @@ describe('vue lazy head', () => {
     show.value = false
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
+  })
+
+  describe('calls the server could not have rendered', () => {
+    // Idle never fires here, so a load can only come from the call under test.
+    beforeEach(() => {
+      vi.stubGlobal('requestIdleCallback', () => 1)
+      vi.stubGlobal('cancelIdleCallback', () => {})
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('useHead in setup of a hydrating component does not load', async () => {
+      const App = defineComponent({
+        setup() {
+          useHead({ title: 'Covered' })
+          return () => h('div', 'x')
+        },
+      })
+      await serverRender(App)
+      const head = createLazyHead()
+      const load = vi.spyOn(head, 'load')
+      createSSRApp(App).use(head).mount('#app')
+      await nextTick()
+      await settle()
+      expect(load).not.toHaveBeenCalled()
+    })
+
+    it('useHead in onMounted loads at once', async () => {
+      const App = defineComponent({
+        setup() {
+          onMounted(() => {
+            useHead({ meta: [{ name: 'mounted', content: 'yes' }] })
+          })
+          return () => h('div', 'x')
+        },
+      })
+      await serverRender(App)
+      hydrate(App)
+      await vi.waitFor(() => expect(document.querySelector('meta[name="mounted"]')?.getAttribute('content')).toBe('yes'))
+    })
+
+    it('useHead in a child mounted after hydration loads at once', async () => {
+      const Child = defineComponent({
+        setup() {
+          useHead({ meta: [{ name: 'client-child', content: 'yes' }] })
+          return () => h('span', 'child')
+        },
+      })
+      const show = ref(false)
+      const App = defineComponent({
+        setup() {
+          onMounted(() => {
+            show.value = true
+          })
+          return () => h('div', show.value ? h(Child) : 'waiting')
+        },
+      })
+      await serverRender(App)
+      hydrate(App)
+      await vi.waitFor(() => expect(document.querySelector('meta[name="client-child"]')?.getAttribute('content')).toBe('yes'))
+    })
+
+    it('a ref change in onMounted loads at once', async () => {
+      const title = ref('Server')
+      const App = defineComponent({
+        setup() {
+          useHead({ title })
+          onMounted(() => {
+            title.value = 'Mounted'
+          })
+          return () => h('div', 'x')
+        },
+      })
+      await serverRender(App)
+      hydrate(App)
+      await vi.waitFor(() => expect(document.title).toBe('Mounted'))
+    })
+
+    it('a new page during a navigation pause does not load until the pause lifts', async () => {
+      const Page = defineComponent({
+        setup() {
+          useHead({ title: 'Next page' })
+          onMounted(() => {
+            useHead({ meta: [{ name: 'next-mounted', content: 'yes' }] })
+          })
+          return () => h('span', 'next')
+        },
+      })
+      const page = ref(false)
+      const App = defineComponent({
+        setup() {
+          useHead({ title: 'First page' })
+          return () => h('div', page.value ? h(Page) : 'first')
+        },
+      })
+      await serverRender(App)
+      let paused = false
+      const head = createLazyHead()
+      head.hooks.hook('dom:beforeRender', (ctx) => {
+        ctx.shouldRender = !paused
+      })
+      createSSRApp(App).use(head).mount('#app')
+      head.render()
+      head.cancelLoad()
+
+      paused = true
+      const load = vi.spyOn(head, 'load')
+      page.value = true
+      await nextTick()
+      await settle()
+      expect(load).not.toHaveBeenCalled()
+      expect(document.title).toBe('First page')
+
+      paused = false
+      head.render()
+      expect(load).toHaveBeenCalledTimes(1)
+      await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
+    })
+
+    it('a load during a hydration pause writes nothing until the pause lifts', async () => {
+      const App = defineComponent({
+        setup() {
+          onMounted(() => {
+            useHead({ meta: [{ name: 'paused', content: 'yes' }] })
+          })
+          return () => h('div', 'x')
+        },
+      })
+      await serverRender(App)
+      let paused = true
+      const head = createLazyHead()
+      head.hooks.hook('dom:beforeRender', (ctx) => {
+        ctx.shouldRender = !paused
+      })
+      const load = vi.spyOn(head, 'load')
+      createSSRApp(App).use(head).mount('#app')
+      await nextTick()
+      expect(load).toHaveBeenCalled()
+      await load.mock.results[0].value
+      await settle()
+      expect(document.querySelector('meta[name="paused"]')).toBeNull()
+
+      paused = false
+      head.render()
+      await vi.waitFor(() => expect(document.querySelector('meta[name="paused"]')).not.toBeNull())
+    })
   })
 })

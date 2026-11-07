@@ -107,6 +107,29 @@ describe('createLazyHead', () => {
     await vi.waitFor(() => expect(dom.window.document.title).toBe('After'))
   })
 
+  it('loads at once for a patch during hydration, even while paused', async () => {
+    const dom = ssrDom(titled)
+    const { head } = pausableHead(dom)
+    const load = vi.spyOn(head, 'load')
+    const entry = head.push(titled)
+    expect(load).not.toHaveBeenCalled()
+    entry.patch({ title: 'Patched' })
+    expect(load).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks a change after hydration while paused', async () => {
+    const dom = ssrDom(titled)
+    const { head, setPaused } = pausableHead(dom)
+    setPaused(false)
+    const entry = head.push(titled)
+    head.render()
+    head.cancelLoad()
+    setPaused(true)
+    const load = vi.spyOn(head, 'load')
+    entry.patch({ title: 'Patched' })
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('removes the server element of an entry disposed before load', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
