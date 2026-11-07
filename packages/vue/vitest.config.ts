@@ -20,6 +20,7 @@ export default defineProject({
       'unhead/stream/iife': resolve(__dirname, '../unhead/src/stream/iife.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
+      'unhead/lazy': resolve(__dirname, '../unhead/src/lazy/index.ts'),
       'unhead/minify': resolve(__dirname, '../unhead/src/minify/index.ts'),
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),
       'unhead/plugins': resolve(__dirname, '../unhead/src/plugins/index.ts'),

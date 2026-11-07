@@ -105,6 +105,17 @@ export default defineBuildConfig({
   hooks: {
     'rollup:options': (_, options) => {
       options.experimentalLogSideEffects = true
+      // Bundlers split by module, so one shared dist file cannot straddle an eager and a lazy
+      // chunk. The Vue composables need walkResolver eagerly, and a lazy head loads the
+      // resolve pipeline lazily, so walkResolver gets its own dist file.
+      for (const output of [options.output].flat()) {
+        if (output) {
+          output.manualChunks = (id) => {
+            if (id.endsWith('src/utils/walkResolver.ts') || id.endsWith('src/utils/unsafeKey.ts'))
+              return 'walkResolver'
+          }
+        }
+      }
       const onwarn = options.onwarn
       options.onwarn = (warning, warn) => {
         if (isFirstSideEffectWarning(warning))
@@ -128,6 +139,7 @@ export default defineBuildConfig({
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },
+    { input: 'src/lazy/index', name: 'lazy' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/stream/iife', name: 'stream/iife' },
