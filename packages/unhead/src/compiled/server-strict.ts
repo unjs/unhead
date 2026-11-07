@@ -225,7 +225,8 @@ export function createHead(options: StrictHeadOptions = {}): Unhead<CompiledTags
     push(input: CompiledTags, entryOptions?: any) {
       check(input, entryOptions)
       const _i: number = entryOptions?._index ?? head._entryCount++
-      const entry: CompiledEntry = { _i, input, options: {}, _compiled: input, _values: entryOptions?.values }
+      // no loose input exists, and handing out the compiled tags would let a reader edit them for every request
+      const entry: CompiledEntry = { _i, input: undefined, options: {}, _compiled: input, _values: entryOptions?.values }
       entries.set(_i, entry)
       return {
         _i,
