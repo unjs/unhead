@@ -98,7 +98,9 @@ function createHookStore(initial?: Record<string, any>) {
 export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOptions = {}): LazyUnhead<T> {
   const document = options.document || (typeof window !== 'undefined' ? window.document : undefined)
   const hooks = createHookStore(options.hooks)
-  // the entries that a default head would have rendered when hydration ended
+  // Keep server inputs separate from live entries throughout hydration.
+  const hydrationEntries = new Map<number, HeadEntry<T>>()
+  let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
   let cancelIdle: (() => void) | undefined
@@ -115,10 +117,8 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
 
   const markHydrated = () => {
     if (!hydrated) {
-      hydrated = []
-      for (const entry of head.entries.values())
-        hydrated.push({ ...entry, input: entry._pending ?? entry.input, _pending: undefined })
-      head.dirty = false
+      hydrated = [...hydrationEntries.values()]
+      head.dirty = hydrationChanged
     }
   }
 
@@ -134,21 +134,31 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   // need the runtime now. After hydration, every change loads unless a load block or pause stops it.
   let pushing = false
   const onChange = () => {
+    if (!hydrated && !pushing)
+      hydrationChanged = true
     if (hydrated ? !blocked && !isPaused() : !pushing)
       head.load()
   }
   const push = head.push
   head.push = (input, entryOptions) => {
-    pushing = !options.isClientOnlyPush?.()
+    const serverRendered = !options.isClientOnlyPush?.()
+    pushing = serverRendered
     const active = push(input, entryOptions)
     pushing = false
+    if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
+      const entry = head.entries.get(active._i)
+      if (entry)
+        hydrationEntries.set(active._i, { ...entry })
+    }
     return active
   }
 
   head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, hydrated))
+    .then(runtime => runtime.upgradeHead(head, options, () => hydrated || [...hydrationEntries.values()]))
     .then((renderer) => {
       render = renderer
+      hydrated ||= []
+      hydrationEntries.clear()
       hooks.removeHook('entries:updated', onChange)
       head._b = false
       head.dirty = true
