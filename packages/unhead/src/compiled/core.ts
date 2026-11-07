@@ -49,7 +49,9 @@ export interface TrieNode {
   m: Memo[]
 }
 
+// shared by the trie of each renderer, so both together stay bounded
 let nodeCount = 0
+let drops = 0
 
 /** The v3 `DEFAULT_INIT` input, compiled. */
 export const DEFAULT_COMPILED_TAGS: CompiledTags = [
@@ -147,12 +149,17 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
     const nodes: WeakMap<CompiledTags, TrieNode> = node!.n ||= new WeakMap()
     let next = nodes.get(compiledTags)
     if (!next) {
-      // compiled tags that are not at process scope must not grow the trie for ever
-      if (nodeCount >= 2048) {
+      // Compiled tags that are not at process scope must not grow the trie for ever, so the
+      // trie starts over at the cap. With more live compiled tags than the cap it would start
+      // over on every render, so the fourth start leaves an empty trie that never grows.
+      if (nodeCount++ >= 2048) {
+        if (++drops < 5)
+          renderer.n = { m: [] }
+        if (drops < 4)
+          nodeCount = 0
         node = undefined
         break
       }
-      nodeCount++
       next = { m: [] }
       nodes.set(compiledTags, next)
     }
