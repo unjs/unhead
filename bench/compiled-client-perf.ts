@@ -14,7 +14,7 @@ import { JSDOM } from 'jsdom'
 
 const dist = (pkg: string, name: string) => import(pathToFileURL(`${process.cwd()}/packages/${pkg}/dist/${name}`).href)
 const { createHead: createV3Head } = await dist('unhead', 'client.mjs')
-const { createLazyHead } = await dist('unhead', 'lazy.mjs')
+const { createLazyHead, acceptCompiledTags } = await dist('unhead', 'lazy.mjs')
 const { compileTags } = await dist('unhead', 'compiled/compile.mjs')
 const { createHead: createServerHead, renderSSRHead } = await dist('unhead', 'server.mjs')
 
@@ -82,7 +82,7 @@ const firstRender = {
     head.render()
   },
   async compiled(document: Document) {
-    const head = createLazyHead({ document })
+    const head = acceptCompiledTags(createLazyHead({ document }))
     compiledTagSets.forEach(p => head.push(p))
     head.render()
     await head.load()
@@ -97,7 +97,7 @@ async function rerenderPair(document: Document) {
   const v3Entries = inputs.map(input => v3.push(input))
   v3.render()
   v3._b = false
-  const head = createLazyHead({ document })
+  const head = acceptCompiledTags(createLazyHead({ document }))
   const compiledEntries = compiledTagSets.map(p => head.push(p))
   head.render()
   await head.load()
@@ -131,8 +131,15 @@ async function round(fn: () => unknown) {
   return count / (elapsed / 1000)
 }
 
-// both heads leave the same document behind, before timing anything
+// both heads leave the same document behind, and the compiled head never loads v3, before timing anything
 {
+  const probe = acceptCompiledTags(createLazyHead({ document: ssrDocument().window.document }))
+  compiledTagSets.forEach(p => probe.push(p))
+  probe.render()
+  await probe.load()
+  flush()
+  if (probe.resolvedOptions._tagWeight)
+    throw new Error('the compiled head loaded the v3 runtime')
   const a = ssrDocument()
   const b = ssrDocument()
   firstRender.v3(a.window.document)
