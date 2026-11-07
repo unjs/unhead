@@ -51,9 +51,13 @@ function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => Comp
       active = false
       apply()
     })
+    // Vue also runs this on the first mount, so only a deactivated entry applies, as loose
+    // `useHead` changes nothing then. A patch during hydration would load the runtime.
     onActivated(() => {
-      active = true
-      apply()
+      if (!active) {
+        active = true
+        apply()
+      }
     })
   }
   else if (scope) {

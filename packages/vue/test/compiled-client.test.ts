@@ -188,6 +188,25 @@ describe('useCompiledHead', () => {
     expect(document.title).toBe('Home')
   })
 
+  it('makes no load while a KeepAlive page hydrates, as loose useHead', async () => {
+    const Page = defineComponent({
+      name: 'Page',
+      setup() {
+        headOf(home)
+        return () => h('span', 'page')
+      },
+    })
+    const App = defineComponent({ setup: () => () => h('div', [h(KeepAlive, null, [h(Page)])]) })
+    await serverRender(App)
+    const head = createLazyHead()
+    const load = vi.spyOn(head, 'load')
+    createSSRApp(App).use(head).mount('#app')
+    await nextTick()
+    head.render()
+    await settle()
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('removes a server tag that a navigation drops before the first draw after a client-only push', async () => {
     const showTitle = ref(false)
     const showCanonical = ref(true)
