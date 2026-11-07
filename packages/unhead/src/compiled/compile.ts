@@ -5,7 +5,7 @@ import { INVALID_ATTR_NAME_RE } from '../utils/attrs'
 import { hasContent, ValidHeadTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
-import { copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
+import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
 
 export { dynamicValue } from './tags'
 export type { CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
@@ -45,6 +45,12 @@ const DYNAMIC_VALUE_BANNED: Record<string, Set<string>> = {
 // templateParams values reach many tags, titleTemplate decides the whole title,
 // and style content decides its weight through `@import`
 const DYNAMIC_VALUE_BANNED_TAGS = /* @__PURE__ */ new Set(['templateParams', 'titleTemplate', 'style'])
+
+// The fast tiers never run the hooks of the built-in plugins on compiled tags, so compiled tags hold
+// nothing they change: the props `DeprecationsPlugin` rewrites, and the priority
+// aliases `AliasSortingPlugin` moves. Promises are not plain JSON, and `_flatMeta` is
+// not a head tag.
+const PLUGIN_PROPS = ['children', 'hid', 'vmid', 'body', 'renderPriority']
 
 const WHOLE_DYNAMIC_VALUE_RE = /^\uE000\d+\uE001$/
 const COERCIBLE_TEXT_RE = /^[true]*$/
@@ -216,6 +222,12 @@ function compile(input: unknown, dynamicValues: number): CompileResult {
     const dynamicValueReason = findDynamicValueReason(tag, identity)
     if (dynamicValueReason)
       return bail(dynamicValueReason)
+    // before the inert check: a key from `hid` would give a dropped tag an identity
+    const pluginProp = PLUGIN_PROPS.find(key => key in tag.props)
+    if (pluginProp)
+      return bail(`${pluginProp} prop`)
+    if (ALIAS_PRIORITY_RE.test(tag.tagPriority as string))
+      return bail('tagPriority alias')
     if (isInert(tag))
       continue
     const compiled = compileTag(tag, identity)
