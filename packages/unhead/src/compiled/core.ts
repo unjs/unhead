@@ -24,6 +24,9 @@ export interface Memo {
   d?: boolean
   /** The head fields a render sets. Only the full entry keeps them. */
   s?: Record<string, any>
+  /** `s._title` and `s._templateParams.pageTitle` as pieces, when a value reaches them. */
+  t?: (string | number)[]
+  p?: (string | number)[]
 }
 
 /** What differs between the strict and the full entry. */
