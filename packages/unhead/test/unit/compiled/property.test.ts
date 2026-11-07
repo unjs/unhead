@@ -199,6 +199,14 @@ describe('dynamic values equal v3 with the value in place', () => {
       expect(attempt(() => renderCompiled(head))).toEqual(expected)
       expect(attempt(() => renderCompiled(head))).toEqual(expected)
 
+      // one loose entry moves the compiled tags to the mixed tier, where they revive with their values
+      const loose = { meta: [{ name: 'loose', content: 'x' }] }
+      v3.push(loose)
+      const mixed = createCompiledHead<any>({ disableDefaults: true, plugins: plugins(tp) })
+      mixed.push(compiledTags!, { values: [a, b] })
+      mixed.push(loose)
+      expect(attempt(() => renderCompiled(mixed))).toEqual(attempt(() => renderV3(v3)))
+
       const isText = (v: unknown) => typeof v === 'string' || Number.isFinite(v)
       if (strict && isText(a) && isText(b)) {
         const strictHead = createStrictHead({ disableDefaults: true, plugins: tp ? [templateParams] : [] })
