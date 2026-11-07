@@ -1,12 +1,14 @@
 import type { CompiledTagsHead, RuntimeTag } from './core'
 import { processTemplateParams } from '../utils/templateParams'
+import { copyValue } from './tags'
 
 /**
  * The `TemplateParamsPlugin` rules without hooks, for the strict head. Tags may
- * be shared with the compiled tags, so a tag is only copied when a value changes.
+ * be shared with the compiled tags, so a tag is only copied when a value changes, and the
+ * params that become `head._templateParams` are a deep copy.
  */
 export function applyTemplateParams(tags: RuntimeTag[], tagMap: Map<string, any>, head: CompiledTagsHead): void {
-  const params: Record<string, any> = { ...tagMap.get('templateParams')?.props }
+  const params: Record<string, any> = copyValue(tagMap.get('templateParams')?.props || {})
   const sep = params.separator || '|'
   delete params.separator
   params.pageTitle = processTemplateParams(params.pageTitle || head._title || '', params, sep)

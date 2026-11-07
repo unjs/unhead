@@ -5,7 +5,7 @@ import { INVALID_ATTR_NAME_RE } from '../utils/attrs'
 import { hasContent, ValidHeadTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
-import { DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
+import { copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
 
 export { dynamicValue } from './tags'
 export type { CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
@@ -156,7 +156,8 @@ function compileTag(tag: HeadTag, identity: string): CompiledTag | string {
       // v3 merges these two names as a Set and a Map, whatever the tag
       if (key === 'class' || key === 'style')
         return `${key} template param`
-      props[key] = value as CompiledTagValue
+      // the input may change after the call, for example a keyed `prepareHeadInput` input
+      props[key] = copyValue(value) as CompiledTagValue
     }
     else if (key.startsWith('on')) {
       return `${key} handler`
