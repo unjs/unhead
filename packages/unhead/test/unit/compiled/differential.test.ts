@@ -27,6 +27,15 @@ describe('corpus compiled tags coverage', () => {
   // A scenario that bails only proves the loose path, so keep this list honest.
   const expectedBails = new Set([
     'normalize: unknown tag dropped',
+    // the top-level `charset` and `viewport` keys of a built Nuxt app head
+    'nuxt: app head as built',
+    'nuxt: renderer pushes, main, payload 0',
+    'nuxt: renderer pushes, main, payload 1',
+    'nuxt: renderer pushes, main, payload 2',
+    'nuxt: renderer pushes, main, payload 3',
+    'nuxt: renderer pushes, 4.6.4, payload extraction',
+    // the value holds a private-use character, so only the template compiles
+    'nuxt: renderer compiled tags, payload value 2',
   ])
 
   it('compiles every scenario input it should', () => {
@@ -35,6 +44,10 @@ describe('corpus compiled tags coverage', () => {
       const inputs = [...scenario.entries.flatMap(e => e.patch === undefined ? [e.input] : [e.input, e.patch]), ...(scenario.head?.init || [])]
       for (const input of inputs) {
         if (input && compileTags(input)._tag === 'Bail')
+          bailed.add(scenario.name)
+      }
+      for (const { template, values } of scenario.entries) {
+        if (template && compileTags(template, { dynamicValues: values!.length })._tag === 'Bail')
           bailed.add(scenario.name)
       }
     }

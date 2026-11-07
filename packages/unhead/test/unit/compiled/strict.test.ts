@@ -41,7 +41,8 @@ describe('strict head equals v3', () => {
   })
 
   it('covers most of the corpus', () => {
-    expect(strictScenarios().length).toBeGreaterThan(corpus.length - 8)
+    // the Nuxt renderer scenarios push the payload with entry options, which a strict head refuses
+    expect(strictScenarios().length).toBeGreaterThan(corpus.length - 12)
   })
 })
 
