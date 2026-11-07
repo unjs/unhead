@@ -20,8 +20,6 @@ export interface Memo {
   b: Record<string, string | (string | number)[]>
   /** Every render of this sequence of compiled tags takes the slow path. */
   x?: boolean
-  /** A bucket has dynamic values. */
-  d?: boolean
   /** The head fields a render sets. Only the full entry keeps them. */
   s?: Record<string, any>
 }
@@ -49,9 +47,8 @@ export interface TrieNode {
   m: Memo[]
 }
 
-// shared by the trie of each renderer, so both together stay bounded
+// every node a trie ever added, shared by the trie of each renderer
 let nodeCount = 0
-let drops = 0
 
 /** The v3 `DEFAULT_INIT` input, compiled. */
 export const DEFAULT_COMPILED_TAGS: CompiledTags = [
@@ -59,11 +56,6 @@ export const DEFAULT_COMPILED_TAGS: CompiledTags = [
   ['meta', { charset: 'utf-8' }, -20, 'charset', 0, 1],
   ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1' }, -15, 'meta:viewport', 0, 1],
 ]
-
-/** @returns whether a tag of the compiled tags takes values */
-export function hasDynamicValues(compiledTags: CompiledTags): boolean {
-  return compiledTags.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES)
-}
 
 /** @returns whether an object has no enumerable keys */
 export function isEmpty(value: object | undefined): boolean {
@@ -82,11 +74,11 @@ export function reviveTag(compiledTag: CompiledTag, p: number, resolve?: (value:
   const [tag, source, _w, _d, extra, flags] = compiledTag
   const out: RuntimeTag = { tag, props: source || {}, _w, _p: p, _d, _m: flags! & FLAG_ARRAYABLE, ...(extra || undefined) }
   if (resolve && flags! & FLAG_DYNAMIC_VALUES) {
-    const props: Record<string, unknown> = out.props = { ...out.props }
+    const props: Record<string, any> = out.props = { ...out.props }
+    // a compiled tag value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in props) {
-      const value = props[key]
-      if (typeof value === 'string' && value.includes(DYNAMIC_VALUE_OPEN))
-        props[key] = resolve(value, key, tag)
+      if (props[key]?.includes?.(DYNAMIC_VALUE_OPEN))
+        props[key] = resolve(props[key], key, tag)
     }
     for (const key of ['textContent', 'innerHTML']) {
       if (out[key]?.includes?.(DYNAMIC_VALUE_OPEN))
@@ -125,7 +117,7 @@ export function renderTags(tags: RuntimeTag[], omitLineBreaks: boolean | undefin
 /** Builds the memo of a sequence of compiled tags with no values. A sequence with dynamic values always takes the slow path. */
 export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean | undefined, renderer: CompiledRenderer): Memo {
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    if (hasDynamicValues(entry._compiled!))
+    if (entry._compiled!.some(compiledTag => compiledTag[5]! & FLAG_DYNAMIC_VALUES))
       return { b: {}, x: true }
   }
   return { b: renderTags(renderer.r(renderer.c(head), head), omitLineBreaks, renderer) as any }
@@ -149,19 +141,17 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
     const nodes: WeakMap<CompiledTags, TrieNode> = node!.n ||= new WeakMap()
     let next = nodes.get(compiledTags)
     if (!next) {
-      // Compiled tags that are not at process scope must not grow the trie for ever, so the
-      // trie starts over at the cap. With more live compiled tags than the cap it would start
-      // over on every render, so the fourth start leaves an empty trie that never grows.
-      if (nodeCount++ >= 2048) {
-        if (++drops < 5)
-          renderer.n = { m: [] }
-        if (drops < 4)
-          nodeCount = 0
+      // Compiled tags that are not at process scope must not grow the trie for ever, so every
+      // 2048th new node drops the whole trie. With more live compiled tags than that, it would
+      // start over on every render, so past the fourth drop it stays empty for good.
+      if (!(++nodeCount % 2048))
+        renderer.n = { m: [] }
+      else if (nodeCount < 8192)
+        nodes.set(compiledTags, next = { m: [] })
+      if (!next) {
         node = undefined
         break
       }
-      next = { m: [] }
-      nodes.set(compiledTags, next)
     }
     node = next
     last = i
