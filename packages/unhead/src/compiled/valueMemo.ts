@@ -12,6 +12,7 @@ const LT_RE = /</g
 const JSON_TYPE_RE = /json$|^importmap$|^speculationrules$/
 const TOKEN_MARKED_RE = /\uE000(\d+)\.(\d+)\.(\d)\uE001/
 const TOKEN_ENTRY_RE = /\uE000(\d+)\.(\d+)\uE001/g
+const TOKEN_SPLIT_RE = /\uE000(\d+)\.(\d+)\uE001/
 // a static prefix of a closing tag or a template param next to a dynamic value
 const RAW_NEIGHBOUR_RE = /<\/?[a-z]*\uE000/i
 const PARAM_NEIGHBOUR_RE = /%[\w.]*\uE000/
@@ -21,6 +22,12 @@ const MODE_ATTR = 0
 const MODE_TITLE = 1
 const MODE_RAW = 2
 const MODE_JSON = 3
+
+// A head field with values, as `[text, entry, value, text, ...]`, so a render joins it
+function toPieces(value: unknown): (string | number)[] | undefined {
+  if (typeof value === 'string' && value.includes(DYNAMIC_VALUE_OPEN))
+    return value.split(TOKEN_SPLIT_RE).map((piece, i) => i % 3 ? +piece : piece)
+}
 
 function markMode(value: string, mode: number): string {
   return value.replace(TOKEN_ENTRY_RE, `${DYNAMIC_VALUE_OPEN}$1.$2.${mode}${DYNAMIC_VALUE_CLOSE}`)
@@ -80,7 +87,7 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     state._templateParams = head._templateParams
     state._separator = head._separator
   }
-  return { b: buckets, x: unsafe, d: dynamic, s: state }
+  return { b: buckets, x: unsafe, d: dynamic, s: state, t: toPieces(state._title), p: toPieces(state._templateParams?.pageTitle) }
 }
 
 // Returns undefined when the value could change a v3 decision. Escaping matches
@@ -103,10 +110,11 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | u
     : entryValue.includes('$') ? undefined : escapeHtml(entryValue)
 }
 
-function resolveState(value: any, values: EntryValues): any {
-  return value?.includes?.(DYNAMIC_VALUE_OPEN)
-    ? value.replace(TOKEN_ENTRY_RE, (_: string, entry: string, entryValue: string) => String(values[+entry]?.[+entryValue]))
-    : value
+function joinState(pieces: (string | number)[], values: EntryValues): string {
+  let out = pieces[0] as string
+  for (let i = 1; i < pieces.length; i += 3)
+    out += String(values[pieces[i] as number]?.[pieces[i + 1] as number]) + pieces[i + 2]
+  return out
 }
 
 /**
@@ -140,8 +148,9 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
     }
   }
   Object.assign(head, state)
-  head._title = resolveState(state._title, values)
+  if (memo.t)
+    head._title = joinState(memo.t, values)
   if (tp)
-    head._templateParams = { ...state._templateParams, pageTitle: resolveState(state._templateParams.pageTitle, values) }
+    head._templateParams = memo.p ? { ...state._templateParams, pageTitle: joinState(memo.p, values) } : { ...state._templateParams }
   return html as unknown as SSRHeadPayload
 }
