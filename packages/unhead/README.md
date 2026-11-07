@@ -29,6 +29,12 @@ yarn add unhead
 pnpm add unhead
 ```
 
+The `unhead/stream/unplugin` and `unhead/stream/vite` entries also require `unplugin` as a development dependency:
+
+```bash
+pnpm add -D unplugin
+```
+
 ## Usage
 
 ### Basic Usage
