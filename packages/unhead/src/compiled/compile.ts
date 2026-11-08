@@ -5,7 +5,7 @@ import { INVALID_ATTR_NAME_RE } from '../utils/attrs'
 import { hasContent, ValidHeadTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
-import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
+import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, FLAG_UNDEFINED_DROPS, resolveDynamicValues, toHeadInput } from './tags'
 
 export { dynamicValue, toHeadInput } from './tags'
 export type { CompiledEntryContent, CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
@@ -202,6 +202,8 @@ function compileTag(tag: HeadTag, identity: string): CompiledTag | string {
   const flags = (tag._d ? FLAG_IDENTITY : 0)
     | (tag.tag === 'meta' && isMetaArrayDupeKey(identity) ? FLAG_ARRAYABLE : 0)
     | (dynamicValues ? FLAG_DYNAMIC_VALUES : 0)
+    // `toHeadInput` turns this title back into `title: value`, and v3 makes no tag for `title: undefined`
+    | (tag.tag === 'title' && !Object.keys(props).length && Object.keys(extra).join() === 'textContent' && WHOLE_DYNAMIC_VALUE_RE.test(extra.textContent as string) ? FLAG_UNDEFINED_DROPS : 0)
   const compiledTag: CompiledTag = [tag.tag, Object.keys(props).length ? props : 0, capoTagWeight(tag), identity]
   return flags || hasExtra ? [...compiledTag, hasExtra ? extra as CompiledTagExtra : 0, flags] as unknown as CompiledTag : compiledTag
 }

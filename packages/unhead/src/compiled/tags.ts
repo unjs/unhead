@@ -6,6 +6,10 @@ export const FLAG_IDENTITY = 1
 export const FLAG_ARRAYABLE = 2
 /** A string value of this tag holds a dynamic value. */
 export const FLAG_DYNAMIC_VALUES = 4
+/** A whole dynamic value of `undefined` leaves no tag, as v3 makes no tag for a key whose value is undefined. */
+export const FLAG_UNDEFINED_DROPS = 8
+/** A number value of this tag renders by other v3 rules. The build sets it on flat meta, whose number values then take the v3 input. */
+export const FLAG_STRING_VALUES = 16
 
 export const DYNAMIC_VALUE_OPEN = '\uE000'
 export const DYNAMIC_VALUE_CLOSE = '\uE001'
@@ -64,6 +68,9 @@ export function toHeadInput(compiledTags: CompiledTags, values?: readonly unknow
         if (typeof value[key] === 'string')
           value[key] = resolveDynamicValues(value[key], values)
       }
+      // only a whole dynamic value resolves to undefined
+      if (flags! & FLAG_UNDEFINED_DROPS && Object.values(value).includes(undefined))
+        continue
     }
     // normalize adds this one last, so an attribute a value adds must land before it
     if (value['data-hid'] === value.key)
