@@ -7,8 +7,8 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, resolveDynamicValues, toHeadInput } from './tags'
 
-export { dynamicValue } from './tags'
-export type { CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
+export { dynamicValue, toHeadInput } from './tags'
+export type { CompiledEntryContent, CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
 
 /**
  * @experimental
