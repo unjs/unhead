@@ -66,6 +66,14 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    * @internal
    */
   _acceptsCompiled?: () => Promise<typeof import('../compiled/client')> | undefined
+  /**
+   * Set when the full runtime loads: the first entry without compiled tags, or
+   * `true` when a hook, a render option, or a value needed it. Read it to debug compiler mode.
+   * Only a build with `compile: { debug: true }` sets it.
+   *
+   * @experimental
+   */
+  _fullRuntimeReason?: unknown
 }
 
 // The id offset of a claim: a copy of a server entry as it was pushed. It also makes a claim

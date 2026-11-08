@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
+import { compileDebug, CompileDebugReplace } from './CompileDebugReplace'
 import { CompileTransform } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
@@ -46,6 +47,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   // Compile reads the minified inline content
   if (compile) {
     plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths }))
+    plugins.push(CompileDebugReplace.vite({ debug: compileDebug(options.compile) }))
   }
 
   // Register runtime plugins into the shared context

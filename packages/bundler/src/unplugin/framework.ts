@@ -2,6 +2,7 @@ import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPlugi
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
+import { compileDebug, CompileDebugReplace } from './CompileDebugReplace'
 import { CompileTransform } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
@@ -84,6 +85,7 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
   // Compile reads the minified inline content
   if (compile) {
     defs.push({ instance: CompileTransform, options: { ...common, importPaths: seoMetaOpts.importPaths } })
+    defs.push({ instance: CompileDebugReplace, options: { debug: compileDebug(options.compile) } })
   }
 
   return defs

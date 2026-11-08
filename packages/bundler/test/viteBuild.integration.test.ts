@@ -1,4 +1,7 @@
-import { fileURLToPath } from 'node:url'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { build } from 'vite'
 import { describe, expect, it, vi } from 'vitest'
 import { transformInlineScriptWithVite } from '../src/unplugin/MinifyTransform'
@@ -8,6 +11,7 @@ const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.ur
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
 const mtsEntry = fileURLToPath(new URL('./fixtures/vite-build/entry.mts', import.meta.url))
 const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.ts', import.meta.url))
+const fullRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/full-runtime.ts', import.meta.url))
 const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
 
 function outputCode(result: any): string {
@@ -18,6 +22,56 @@ function outputCode(result: any): string {
     .map((chunk: any) => chunk.code)
     .join('\n')
 }
+
+// Builds the full runtime of the lazy head as a minified library and loads it.
+async function buildFullRuntime(compile: boolean | { debug?: boolean }) {
+  const result = await build({
+    root: fixtureDir,
+    configFile: false,
+    logLevel: 'silent',
+    plugins: Unhead({ devtools: false, validate: false, compile, _framework: '@unhead/vue' }) as any,
+    build: {
+      write: false,
+      minify: true,
+      lib: { entry: fullRuntimeEntry, formats: ['es'], fileName: 'full-runtime' },
+    },
+  })
+  const code = outputCode(result)
+  const file = join(await mkdtemp(join(tmpdir(), 'unhead-full-runtime-')), 'full-runtime.mjs')
+  await writeFile(file, code)
+  const { upgradeHead } = await import(pathToFileURL(file).href)
+  return { code, upgradeHead }
+}
+
+describe('compile debug', () => {
+  // an entry without compiled tags loads the full runtime
+  const loose = { input: { title: 'Loose' } }
+  const lazyHead = () => ({ entries: new Map<number, { input: unknown }>([[1, { input: [] }], [2, loose]]), resolvedOptions: {}, plugins: new Map() }) as any
+
+  it('sets _fullRuntimeReason to the first entry without compiled tags', async () => {
+    const { upgradeHead } = await buildFullRuntime({ debug: true })
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toBe(loose)
+  })
+
+  it.each([true, { debug: false }])('drops the debug code with compile: %j', async (compile) => {
+    const { code, upgradeHead } = await buildFullRuntime(compile)
+    expect(code).not.toContain('_fullRuntimeReason')
+    expect(code).not.toContain('__UNHEAD_COMPILE_DEBUG__')
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toBeUndefined()
+  })
+
+  it('runs without the constant when compile is off', async () => {
+    const { code, upgradeHead } = await buildFullRuntime(false)
+    expect(code).toContain('__UNHEAD_COMPILE_DEBUG__')
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toBeUndefined()
+  })
+})
 
 describe('vite build integration', () => {
   it('client build drops server-only composables', async () => {

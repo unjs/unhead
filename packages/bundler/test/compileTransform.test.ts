@@ -490,7 +490,8 @@ describe('compile option', () => {
     expect(UnheadVue({ ...options, compile: true }).vite().map(plugin => plugin.name)).toContain('unhead:compile-transform')
     expect(UnheadVue(options).vite().map(plugin => plugin.name)).not.toContain('unhead:compile-transform')
     for (const bundler of ['webpack', 'rspack', 'rollup'] as const)
-      expect(UnheadVue({ ...options, compile: true })[bundler]()).toHaveLength(UnheadVue(options)[bundler]().length + 1)
+      // the compile transform and the debug constant replace
+      expect(UnheadVue({ ...options, compile: true })[bundler]()).toHaveLength(UnheadVue(options)[bundler]().length + 2)
     const UnheadReact = createFrameworkPlugin({ framework: '@unhead/react', streamingPlugin })
     expect(UnheadReact({ ...options, compile: true }).vite().map(plugin => plugin.name)).not.toContain('unhead:compile-transform')
   })

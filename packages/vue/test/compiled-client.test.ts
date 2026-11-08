@@ -289,6 +289,8 @@ describe('useCompiledHead', () => {
   })
 
   it('hands a page over to v3 when a <Head> component mounts mid-session', async () => {
+    // what a build with `compile: { debug: true }` defines
+    vi.stubGlobal('__UNHEAD_COMPILE_DEBUG__', true)
     const show = ref(false)
     const Titled = defineComponent({
       setup() {
@@ -308,11 +310,14 @@ describe('useCompiledHead', () => {
     await head.load()
     await settle()
     expect(v3Runtime.heads.has(head)).toBe(false)
+    expect((head as any)._fullRuntimeReason).toBeUndefined()
     const canonical = document.querySelector('link[rel="canonical"]')
     show.value = true
     await nextTick()
     await vi.waitFor(() => expect(document.title).toBe('Component title'))
     expect(v3Runtime.heads.has(head)).toBe(true)
+    // the debug signal names the first entry without compiled tags
+    expect(JSON.stringify((head as any)._fullRuntimeReason.input)).toContain('Component title')
     expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
     expect(document.querySelectorAll('meta[property="og:image"]')).toHaveLength(2)
     expect(document.querySelector('link[rel="canonical"]')).toBe(canonical)

@@ -31,9 +31,21 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    *
    * Applies to the `@unhead/vue` bundler plugin only. Off by default.
    *
+   * Pass `{ debug: true }` to compile and keep the debug signals. Then a lazy head sets
+   * `head._fullRuntimeReason` when it loads the full runtime. Without `debug`, the
+   * build drops that code.
+   *
    * @experimental
    */
-  compile?: boolean
+  compile?: boolean | CompileOptions
+}
+
+export interface CompileOptions {
+  /**
+   * Keep the debug signals of compiler mode in the build, such as
+   * `head._fullRuntimeReason`. Off by default, so they cost no bytes.
+   */
+  debug?: boolean
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
