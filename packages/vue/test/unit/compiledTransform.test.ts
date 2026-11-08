@@ -108,6 +108,13 @@ const POSITIONS: [string, (value: string) => string][] = [
   ['useSeoMeta title', value => `useSeoMeta({ title: ${value}, ogTitle: 'Static' })`],
   ['useSeoMeta og title', value => `useSeoMeta({ ogTitle: ${value}, twitterTitle: ${value} })`],
   ['useServerSeoMeta description', value => `useServerSeoMeta({ description: ${value} })`],
+  ['useHead getter input', value => `useHead(() => ({ title: ${value}, meta: [{ name: 'description', content: ${value} }] }))`],
+  ['useHead getter input with statements', value => `useHead(() => {
+    const read = ${value}
+    return { title: read, link: [{ rel: 'canonical', href: read }] }
+  })`],
+  ['useSeoMeta string list', value => `useSeoMeta({ articleTag: [${value}, 'static'], ogType: 'article' })`],
+  ['useSeoMeta image list', value => `useSeoMeta({ ogImage: [{ url: ${value}, width: 1200 }, '/static.png'] })`],
 ]
 
 function snippet(call: string, layout = true): string {
@@ -121,7 +128,9 @@ export default function setup() {
 
 describe('compiled head calls render like v3', () => {
   const cases = POSITIONS.flatMap(([position, call]) => WRAPPERS.flatMap(([wrapper, wrap]) =>
-    RUNTIME_VALUES.map(([name, value]) => [`${position}, ${wrapper} ${name}`, call(wrap(value)), wrapper !== 'plain' && !position.includes('script')] as const)))
+    // v3 throws while it renders `undefined` or `null` in a flat meta list
+    RUNTIME_VALUES.filter(([name]) => !position.includes('string list') || (name !== 'undefined' && name !== 'null'))
+      .map(([name, value]) => [`${position}, ${wrapper} ${name}`, call(wrap(value)), wrapper !== 'plain' && !position.includes('script')] as const)))
 
   it.each(cases)('%s', async (_, call, compiles) => {
     const source = snippet(call)
