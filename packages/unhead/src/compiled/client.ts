@@ -4,6 +4,10 @@ import type { CompiledTag } from './types'
 
 type RuntimeTag = Record<string, any>
 
+// Set by the `@unhead/bundler` plugin. Undefined outside it, so each guard reads `typeof` first.
+// Each guard stays inline, so the minifier drops the debug code with it.
+declare const __UNHEAD_COMPILE_DEBUG__: boolean | undefined
+
 // This chunk imports nothing, so it cannot pull v3 or `toHeadInput` along: a module it
 // shared with `lazy/runtime` would become a third chunk. The flags come from `./tags`.
 const FLAG_ARRAYABLE = 2
@@ -34,13 +38,13 @@ const hasContent = (value: unknown) => value === 0 || value
 const isScalar = (entryValue: unknown) => entryValue == null || typeof entryValue === 'string' || typeof entryValue === 'boolean' || Number.isFinite(entryValue)
 
 // Only the template params and infer seo meta plugins may listen to `tags:` hooks, and this
-// runtime calls those
-function hasForeignHooks(head: LazyUnhead<any>) {
+// runtime calls those. Returns the first hook with another listener.
+function foreignHook(head: LazyUnhead<any>): string | undefined {
   const hooks = (head.hooks as any)._hooks
   const native = ['template-params', 'infer-seo-meta'].map(key => head.plugins.get(key)?.hooks as any)
   for (const name in hooks) {
     if (hooks[name] && !NATIVE_HOOK_RE.test(name) && (!name.startsWith('tags:') || hooks[name].some((listener: unknown) => !native.some(plugin => plugin?.[name] === listener))))
-      return true
+      return name
   }
 }
 
@@ -105,8 +109,10 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
             // cleanup, which compares by identity, leaves its text
             let whole: unknown
             let entryValue: any
-            const text = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: number, _: number, text: string) => {
-              entryValue = options.values?.[index]
+            const text = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: string, _: number, text: string) => {
+              entryValue = options.values?.[index as any]
+              if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && !isScalar(entryValue))
+                head._fullRuntimeReason ||= { _tag: 'Value', entry, index: +index, value: entryValue }
               plain &&= isScalar(entryValue)
               whole = match === text
               return entryValue
@@ -362,8 +368,19 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
       // since hydration, so the live entries below remove the stale ones. It waits for the first
       // draw, so a change after the load still adopts. `dirty` means changed since hydration.
       const adopt = !head._dom && head.dirty && adoptionEntries()
-      if (options.render || ![...live, ...adopt || []].every(isCompiled) || hasForeignHooks(head))
+      const loose = [...live, ...adopt || []].find(entry => !isCompiled(entry))
+      const hook = !options.render && !loose && foreignHook(head)
+      if (options.render || loose || hook) {
+        if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__) {
+          const listeners = (head.hooks as any)._hooks[hook as string]
+          head._fullRuntimeReason ||= options.render
+            ? { _tag: 'RenderOption' }
+            : loose
+              ? { _tag: 'Entry', entry: loose }
+              : { _tag: 'Hook', hook: hook as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && key !== 'infer-seo-meta' && listeners.includes(plugin.hooks?.[hook as string]))?.[0] }
+        }
         return loadV3()
+      }
       if (!adopt || draw(adopt.filter(entry => entry._i < CLAIM), adopt.filter(entry => entry._i >= CLAIM)))
         draw(live)
     })

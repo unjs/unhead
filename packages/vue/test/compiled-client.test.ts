@@ -317,7 +317,7 @@ describe('useCompiledHead', () => {
     await vi.waitFor(() => expect(document.title).toBe('Component title'))
     expect(v3Runtime.heads.has(head)).toBe(true)
     // the debug signal names the first entry without compiled tags
-    expect(JSON.stringify((head as any)._fullRuntimeReason.input)).toContain('Component title')
+    expect(JSON.stringify((head as any)._fullRuntimeReason.entry.input)).toContain('Component title')
     expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
     expect(document.querySelectorAll('meta[property="og:image"]')).toHaveLength(2)
     expect(document.querySelector('link[rel="canonical"]')).toBe(canonical)

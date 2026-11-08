@@ -67,14 +67,29 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   _acceptsCompiled: 1
   /**
-   * Set when the full runtime loads: the first entry without compiled tags, or
-   * `true` when a hook, a render option, or a value needed it. Read it to debug compiler mode.
+   * Set when the full runtime loads, to the first cause. Read it to debug compiler mode.
    * Only a build with `compile: { debug: true }` sets it.
    *
    * @experimental
    */
-  _fullRuntimeReason?: unknown
+  _fullRuntimeReason?: FullRuntimeReason
 }
+
+/**
+ * Why a lazy head loaded the full runtime:
+ *
+ * - `Entry`: the entry holds loose input, not compiled tags.
+ * - `Hook`: a listener of this hook needs the full runtime. `plugin` is the key of the plugin that added it.
+ * - `Value`: a dynamic value of the entry is not text, such as a list or an object.
+ * - `RenderOption`: the head has a `render` option.
+ *
+ * @experimental
+ */
+export type FullRuntimeReason
+  = | { _tag: 'Entry', entry: HeadEntry<any> }
+    | { _tag: 'Hook', hook: string, plugin: string | undefined }
+    | { _tag: 'Value', entry: HeadEntry<any>, index: number, value: unknown }
+    | { _tag: 'RenderOption' }
 
 // The id offset of a claim: a copy of a server entry as it was pushed. It also makes a claim
 // win a v3 dedupe tie with its entry. The compiled runtime reads it in `compiled/client`.

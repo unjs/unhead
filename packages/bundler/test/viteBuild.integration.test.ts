@@ -12,6 +12,7 @@ const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.met
 const mtsEntry = fileURLToPath(new URL('./fixtures/vite-build/entry.mts', import.meta.url))
 const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.ts', import.meta.url))
 const fullRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/full-runtime.ts', import.meta.url))
+const compiledRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/compiled-runtime.ts', import.meta.url))
 const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
 
 function outputCode(result: any): string {
@@ -23,8 +24,8 @@ function outputCode(result: any): string {
     .join('\n')
 }
 
-// Builds the full runtime of the lazy head as a minified library and loads it.
-async function buildFullRuntime(compile: boolean | { debug?: boolean }) {
+// Builds a runtime chunk of the lazy head as a minified library, with the chunks it imports.
+async function buildRuntime(compile: boolean | { debug?: boolean }, runtimeEntry: string): Promise<string> {
   const result = await build({
     root: fixtureDir,
     configFile: false,
@@ -33,10 +34,15 @@ async function buildFullRuntime(compile: boolean | { debug?: boolean }) {
     build: {
       write: false,
       minify: true,
-      lib: { entry: fullRuntimeEntry, formats: ['es'], fileName: 'full-runtime' },
+      lib: { entry: runtimeEntry, formats: ['es'], fileName: 'runtime' },
     },
   })
-  const code = outputCode(result)
+  return outputCode(result)
+}
+
+// Builds the full runtime of the lazy head and loads it.
+async function buildFullRuntime(compile: boolean | { debug?: boolean }) {
+  const code = await buildRuntime(compile, fullRuntimeEntry)
   const file = join(await mkdtemp(join(tmpdir(), 'unhead-full-runtime-')), 'full-runtime.mjs')
   await writeFile(file, code)
   const { upgradeHead } = await import(pathToFileURL(file).href)
@@ -52,7 +58,7 @@ describe('compile debug', () => {
     const { upgradeHead } = await buildFullRuntime({ debug: true })
     const head = lazyHead()
     await upgradeHead(head, {}, () => [])
-    expect(head._fullRuntimeReason).toBe(loose)
+    expect(head._fullRuntimeReason).toEqual({ _tag: 'Entry', entry: loose })
   })
 
   it.each([true, { debug: false }])('drops the debug code with compile: %j', async (compile) => {
@@ -62,6 +68,12 @@ describe('compile debug', () => {
     const head = lazyHead()
     await upgradeHead(head, {}, () => [])
     expect(head._fullRuntimeReason).toBeUndefined()
+  })
+
+  it.each([[true, false], [{ debug: true }, true]])('keeps the compiled runtime debug code only with debug, compile: %j', async (compile, kept) => {
+    const code = await buildRuntime(compile, compiledRuntimeEntry)
+    expect(code.includes('_fullRuntimeReason')).toBe(kept)
+    expect(code).not.toContain('__UNHEAD_COMPILE_DEBUG__')
   })
 
   it('runs without the constant when compile is off', async () => {

@@ -52,11 +52,14 @@ function toLooseEntry(entry: HeadEntry<any>) {
 }
 
 export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyHeadOptions, adoptionEntries: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
-  // A debug signal: the first entry without compiled tags, or true when a hook,
-  // a render option, or a value needed this runtime. Only `compile: { debug: true }`
+  // A debug signal: the first entry without compiled tags. The compiled runtime records its
+  // own causes before it loads this one, so the first cause stays. Only `compile: { debug: true }`
   // keeps it: the bundler plugin sets the constant, and the minifier drops it otherwise.
-  if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__)
-    (head as LazyUnhead<T>)._fullRuntimeReason = [...head.entries.values()].find(entry => !Array.isArray(entry._pending ?? entry.input)) || true
+  if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__) {
+    const entry = [...head.entries.values()].find(entry => !Array.isArray(entry._pending ?? entry.input))
+    if (entry)
+      (head as LazyUnhead<T>)._fullRuntimeReason ||= { _tag: 'Entry', entry }
+  }
   const plugins = await options.lazyPlugins?.()
   head.resolvedOptions._tagWeight = tagWeight
   plugins?.forEach(p => head.use(p))

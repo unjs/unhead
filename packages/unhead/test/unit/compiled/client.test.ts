@@ -1,5 +1,5 @@
 import type { ResolvableHead } from '../../../src/types'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHead as createV3Head } from '../../../src/client'
 import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createLazyHead } from '../../../src/lazy'
@@ -796,4 +796,73 @@ it('registers the template params plugin from lazyPlugins natively', async () =>
   await settle(head)
   expect(dom.serialize()).toBe(pair.v3Dom.serialize())
   expect(v3Runtime.heads.has(head)).toBe(false)
+})
+
+describe('full runtime reason', () => {
+  // what a build with `compile: { debug: true }` defines
+  beforeEach(() => {
+    vi.stubGlobal('__UNHEAD_COMPILE_DEBUG__', true)
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  async function rendered(options: Parameters<typeof createLazyHead>[0] = {}) {
+    const dom = ssrDom([{ input: page }], 'none')
+    const head = compiledTagsHead({ document: dom.window.document, ...options })
+    const entry = head.push(toCompiledTags(page))
+    head.render()
+    await head.load()
+    await settle(head)
+    return { head, entry }
+  }
+
+  it('names the hook and the plugin that added it', async () => {
+    const { head } = await rendered()
+    expect(head._fullRuntimeReason).toBeUndefined()
+    head.use({ key: 'derived-tags', hooks: { 'tags:beforeResolve': () => {} } })
+    head.invalidate()
+    await settle(head)
+    expect(v3Runtime.heads.has(head)).toBe(true)
+    expect(head._fullRuntimeReason).toEqual({ _tag: 'Hook', hook: 'tags:beforeResolve', plugin: 'derived-tags' })
+  })
+
+  it('names a hook that no plugin added', async () => {
+    const { head } = await rendered()
+    head.hooks.hook('tags:resolve', () => {})
+    head.invalidate()
+    await settle(head)
+    expect(head._fullRuntimeReason).toEqual({ _tag: 'Hook', hook: 'tags:resolve', plugin: undefined })
+  })
+
+  it('names the entry, the index, and the value that is not text', async () => {
+    const { head } = await rendered()
+    const value = ['a', 'b']
+    const entry = head.push(compile({ meta: [{ name: 'keywords', content: dynamicValue(0) }] }, 1), { values: [value] })
+    await settle(head)
+    expect(v3Runtime.heads.has(head)).toBe(true)
+    expect(head._fullRuntimeReason).toMatchObject({ _tag: 'Value', index: 0, value })
+    expect((head._fullRuntimeReason as any).entry._i).toBe(entry._i)
+  })
+
+  it('names the entry with loose input', async () => {
+    const { head } = await rendered()
+    const entry = head.push({ meta: [{ name: 'loose', content: 'yes' }] })
+    await settle(head)
+    expect(head._fullRuntimeReason).toMatchObject({ _tag: 'Entry' })
+    expect((head._fullRuntimeReason as any).entry._i).toBe(entry._i)
+  })
+
+  it('names the render option', async () => {
+    const dom = ssrDom([{ input: page }], 'none')
+    const render = vi.fn(() => true)
+    const head = compiledTagsHead({ document: dom.window.document, render })
+    head.push(toCompiledTags(page))
+    head.render()
+    await head.load()
+    await settle()
+    head.invalidate()
+    await settle()
+    expect(head._fullRuntimeReason).toEqual({ _tag: 'RenderOption' })
+  })
 })
