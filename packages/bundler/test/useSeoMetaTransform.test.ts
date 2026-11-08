@@ -1,3 +1,5 @@
+import { useSeoMeta } from 'unhead'
+import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it, vi } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 import { runTransform } from './utils'
@@ -997,5 +999,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     expect(code).not.toContain('import { useHead }')
     // the user-supplied options object must not be mutated
     expect(opts.imports).toBe(false)
+  })
+})
+
+describe('useSeoMetaTransform tag order', () => {
+  // runtime `unpackMeta` puts the tags of list and media object values before the others
+  it.each([
+    ['a list value', `{ ogType: 'article', author: 'Harlan', articleAuthor: ['Harlan'], articleSection: 'Guides' }`],
+    ['a media object', `{ description: 'd', ogImage: { url: '/og.png', width: 800 }, ogTitle: 't' }`],
+    ['a media list', `{ description: 'd', twitterImage: [{ url: '/t.png', alt: 'hi' }], ogTitle: 't' }`],
+  ])('renders %s in the runtime order', async (_, input) => {
+    const code = await transform([`import { useSeoMeta } from 'unhead'`, `useSeoMeta(${input})`])
+    const { useHead } = runTransformed(code!)
+    const built = createHead({ disableDefaults: true })
+    built.push(useHead.mock.calls[0]![0])
+    const runtime = createHead({ disableDefaults: true })
+    // eslint-disable-next-line no-new-func
+    useSeoMeta(runtime, new Function(`return ${input}`)())
+    expect(renderSSRHead(built).headTags).toBe(renderSSRHead(runtime).headTags)
   })
 })
