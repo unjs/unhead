@@ -4,12 +4,12 @@ import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
-import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { isReferenceIdentifier, ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { compileTags, dynamicValue } from 'unhead/compiled/compile'
 import { normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 const HEAD_CALL_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b/
 const COMMONJS_RE = /\.c[jt]s$/
@@ -17,6 +17,12 @@ const TOKEN_RE = /[]/
 const DYNAMIC_VALUE_JSON_RE = /"(\d+)"/g
 
 const RUNTIME = '@unhead/vue/compiled'
+// a head call that takes a single name, such as `useHead(headData)`
+const IDENTIFIER_INPUT_RE = /\buse(?:Server)?(?:Head|SeoMeta)\(\s*[\w$]+\s*[,)]/
+// The runtime files of a Nuxt module, which call head composables as app code does
+const MODULE_RUNTIME_RE = /[\\/]dist[\\/]runtime[\\/]/
+// Nuxt's import paths of `useHead` and `injectHead`
+const NUXT_IMPORT_PATHS = ['#imports', 'nuxt/app']
 // `@unhead/vue` resolves the head itself. An auto import or another path may stand for a
 // wrapper that resolves it some other way, such as Nuxt, so the call passes the head
 // that the auto-imported `injectHead` finds when there is one.
@@ -43,6 +49,7 @@ function compilesFor(consumer: BuildConsumer | undefined): boolean {
 export interface CompileTransformOptions extends BaseTransformerTypes {
   /**
    * Extra import paths of `useHead` and `useSeoMeta`, as for `UseSeoMetaTransform`.
+   * `#imports` and `nuxt/app` always count.
    */
   importPaths?: string[]
 }
@@ -191,13 +198,28 @@ function isHeadOnly(node: any): boolean {
   return !!prop && prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method && staticKey(prop.key) === 'head'
 }
 
+// The member path of each leaf of an object literal, so a value reads the object at the call
+function leafPaths(node: any, path: string, out: Map<any, string>): Map<any, string> {
+  const inner = unwrap(node)
+  if (inner?.type === 'ObjectExpression') {
+    for (const prop of inner.properties) {
+      const key = prop.type === 'Property' && !prop.computed && staticKey(prop.key)
+      if (key !== undefined && key !== false)
+        leafPaths(prop.value, out.set(prop.value, `${path}[${JSON.stringify(key)}]`).get(prop.value)!, out)
+    }
+  }
+  else if (inner?.type === 'ArrayExpression') {
+    inner.elements.forEach((element: any, i: number) => element && leafPaths(element, out.set(element, `${path}[${i}]`).get(element)!, out))
+  }
+  return out
+}
+
 /**
  * Compiles one head call to compiled tags, or returns why it stays loose. Values are the
  * nodes of its dynamic leaves, in source order.
  */
-function compileHeadCall(node: any, kind: HeadKind): CompiledCall {
-  const [arg, options, ...rest] = node.arguments
-  const input = unwrap(arg)
+function compileHeadCall(node: any, kind: HeadKind, input = unwrap(node.arguments[0])): CompiledCall {
+  const [, options, ...rest] = node.arguments
   if (input?.type !== 'ObjectExpression')
     return bail('input is not an object literal')
   if (rest.length || (options && !isHeadOnly(options)))
@@ -249,30 +271,39 @@ function insertAfterImports(s: MagicString, body: any[], text: string): void {
  * Compiles `useHead` and `useSeoMeta` calls of `@unhead/vue` with static structure
  * to compiled tags that `useCompiledHead` pushes. A call that cannot compile stays as written.
  */
-export const CompileTransform = createUnplugin<CompileTransformOptions, false>((options: CompileTransformOptions = {}) => {
-  const importPaths = new Set(options.importPaths)
+export const CompileTransform = createUnplugin<CompileTransformOptions, false>((options: CompileTransformOptions = {}, meta) => {
+  const importPaths = new Set([...NUXT_IMPORT_PATHS, ...options.importPaths || []])
+  // Only these bundlers let `resolveId` resolve the runtime from the app
+  const resolvesFromApp = meta?.framework === 'vite' || meta?.framework === 'rollup' || meta?.framework === 'rolldown'
   // Fallback for bundlers without a per-transform environment, as in `TreeshakeServerComposables`.
   let fallbackConsumer: BuildConsumer | undefined
 
+  // A dependency compiles when `filter.include` names it, or when it is the runtime of a
+  // Nuxt module. Its calls compile only if they import a head composable.
   function shouldTransformId(id: string): boolean {
     const { pathname, query } = splitTransformId(id)
-    if (NODE_MODULES_RE.test(pathname) || COMMONJS_RE.test(pathname))
-      return false
-    if (options.filter?.exclude?.some(pattern => id.match(pattern)))
+    if (COMMONJS_RE.test(pathname) || options.filter?.exclude?.some(pattern => id.match(pattern)))
       return false
     if (options.filter?.include?.some(pattern => id.match(pattern)))
       return true
-    return isVueScriptRequest(pathname, query) || JS_EXT_RE.test(pathname)
+    return (!NODE_MODULES_RE.test(pathname) || (resolvesFromApp && MODULE_RUNTIME_RE.test(pathname)))
+      && (isVueScriptRequest(pathname, query) || JS_EXT_RE.test(pathname))
   }
 
   return {
     name: 'unhead:compile-transform',
     enforce: 'post',
 
+    // A module in node_modules may not resolve `@unhead/vue` itself, so the app resolves it
+    resolveId(id, importer) {
+      if (resolvesFromApp && id === RUNTIME && importer && NODE_MODULES_RE.test(importer))
+        return (this as unknown as { resolve: (id: string, importer?: string, options?: object) => Promise<unknown> }).resolve(id, undefined, { skipSelf: true }) as any
+    },
+
     transform: {
       filter: {
         code: HEAD_CALL_RE,
-        id: createJsVueTransformIdFilter(options.filter?.include),
+        id: { include: [JS_VUE_RE, ...options.filter?.include || []] },
       },
       handler(code, id) {
         if (!compilesFor(resolveBuildConsumer(this, fallbackConsumer)) || !shouldTransformId(id))
@@ -292,6 +323,29 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         if (ast.errors.length)
           return
         scopeTracker.freeze()
+
+        // How often each binding is read, so an input held in a const compiles only
+        // when the head call is its one reader
+        const reads = new Map<unknown, number>()
+        if (IDENTIFIER_INPUT_RE.test(code)) {
+          walk(ast.program, {
+            scopeTracker,
+            enter(node: any, parent: any) {
+              const decl = node.type === 'Identifier' && isReferenceIdentifier(node, parent) && scopeTracker.getDeclaration(node.name)
+              if (decl)
+                reads.set(decl, (reads.get(decl) || 0) + 1)
+            },
+          })
+        }
+
+        // The object literal of a const that only this input reads
+        function constInput(arg: any): any {
+          const decl: any = arg?.type === 'Identifier' && scopeTracker.getDeclaration(arg.name)
+          const declarator = decl?.type === 'Variable' && decl.variableNode.kind === 'const' && reads.get(decl) === 1
+            && decl.variableNode.declarations.find((d: any) => d.id === decl.node)
+          const init = declarator && unwrap(declarator.init)
+          return init?.type === 'ObjectExpression' ? init : undefined
+        }
 
         // no identifier of the module starts with this, so no local name can shadow ours
         let prefix = '__unhead_'
@@ -348,7 +402,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             const injectHead = autoHead ? bindingOf('injectHead') : undefined
             if ((callee.kind === 'seo' && parent?.type !== 'ExpressionStatement') || injectHead === false || (injectHead && injectHead.imported !== 'injectHead'))
               return
-            const result = compileHeadCall(node, callee.kind)
+            const held = constInput(arg)
+            const result = compileHeadCall(node, callee.kind, held || unwrap(arg))
             if (result._tag === 'Bail')
               return
 
@@ -359,6 +414,12 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
               head.push(hoist(result.loose))
             const tail = autoHead ? `, ${result.values.length ? '' : 'undefined, '}${AUTO_HEAD}` : options && !result.values.length ? ', undefined' : ''
             s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
+            // An input held in a const reads each value from the const at the call
+            if (held) {
+              const paths = leafPaths(held, arg.name, new Map())
+              s.overwrite(arg.start, arg.end, `${head.join(', ')}${result.values.length ? `, [${result.values.map(value => paths.get(value)).join(', ')}]` : ''}${tail}`)
+              return
+            }
             // Values keep their source text and position, so they evaluate once, in
             // order, and a head call nested in a value compiles on its own.
             let start = arg.start
