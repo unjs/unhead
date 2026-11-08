@@ -120,7 +120,6 @@ export function createFixtures(m) {
     },
   }))
   const nuxtPlugins = [m.TemplateParamsPlugin]
-  const nuxtPluginsStrict = [m.templateParams]
   const nuxtSeoInput = { ...nuxtSeo }
 
   const nuxtV3 = (input) => {
@@ -140,11 +139,6 @@ export function createFixtures(m) {
         pushMedium(head)
         return m.renderCompiled(head, renderOptions)
       },
-      strict() {
-        const head = m.createStrictHead({ disableDefaults: true })
-        pushMedium(head)
-        return m.renderStrict(head, renderOptions)
-      },
     },
     {
       name: 'medium',
@@ -154,11 +148,6 @@ export function createFixtures(m) {
         const head = m.createCompiledHead({ disableDefaults: true })
         pushMediumValue(head, t)
         return m.renderCompiled(head, renderOptions)
-      },
-      strict(t = tick++ % 3) {
-        const head = m.createStrictHead({ disableDefaults: true })
-        pushMediumValue(head, t)
-        return m.renderStrict(head, renderOptions)
       },
     },
     {
@@ -185,12 +174,6 @@ export function createFixtures(m) {
         head.push(nuxtSeoTags)
         return m.renderCompiled(head)
       },
-      strict() {
-        const head = m.createStrictHead({ plugins: nuxtPluginsStrict, init: [appHeadTags] })
-        head.push(pageTags)
-        head.push(nuxtSeoTags)
-        return m.renderStrict(head)
-      },
     },
     {
       name: 'nuxt',
@@ -201,12 +184,6 @@ export function createFixtures(m) {
         head.push(pageValueTags, { values: pageValues[t].array })
         head.push(nuxtSeoTags)
         return m.renderCompiled(head)
-      },
-      strict(t = tick++ % 3) {
-        const head = m.createStrictHead({ plugins: nuxtPluginsStrict, init: [appHeadTags] })
-        head.push(pageValueTags, { values: pageValues[t].array })
-        head.push(nuxtSeoTags)
-        return m.renderStrict(head)
       },
     },
     {

@@ -1,8 +1,7 @@
 import { fc, test } from '@fast-check/vitest'
 import { describe, expect } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createHead as createCompiledHead, renderSSRHead as renderCompiled } from '../../../src/compiled/server'
-import { createHead as createStrictHead, renderSSRHead as renderStrict, templateParams } from '../../../src/compiled/server-strict'
 import { toHeadInput } from '../../../src/compiled/tags'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
@@ -120,22 +119,6 @@ describe('compiled head equals v3 over generated input', () => {
     expect(attempt(() => ({ html: renderCompiled(head, { omitLineBreaks: s.omitLineBreaks }), state: headState(head) }))).toEqual(expected)
   })
 
-  test.prop([scenario], { numRuns: 600 })('strict compiled tags', (s) => {
-    const compiledTagSets = s.entries.map(e => compileTags(e.input))
-    fc.pre(compiledTagSets.every(p => p._tag === 'Ok'))
-    const noOptions = { ...s, entries: s.entries.map(e => ({ ...e, options: undefined })) }
-    const expected = attempt(() => renderV3Scenario(noOptions))
-    const head = createStrictHead({ disableDefaults: s.disableDefaults, plugins: s.tp ? [templateParams] : [] })
-    compiledTagSets.forEach((p: any, i) => {
-      const entry = head.push(p.tags)
-      if (s.entries[i]!.dispose)
-        entry.dispose()
-    })
-    const actual = attempt(() => ({ html: renderStrict(head, { omitLineBreaks: s.omitLineBreaks }) }))
-    const v3 = (expected as any).value
-    expect(actual).toEqual('threw' in v3 ? v3 : { value: { html: v3.value.html } })
-  })
-
   test.prop([input], { numRuns: 800 })('compiled tags rebuild the tags of their input', (raw) => {
     const result = compileTags(raw)
     if (result._tag !== 'Ok')
@@ -187,7 +170,7 @@ describe('dynamic values equal v3 with the value in place', () => {
     const compiled = compileTags(dynamicValueShapes[shape]!(dynamicValue(0), dynamicValue(1)), { dynamicValues: 2 })
     const compiledTags = compiled._tag === 'Ok' ? compiled.tags : undefined
 
-    test.prop([valueArbitrary, valueArbitrary, fc.boolean(), fc.constantFrom(false, true)], { numRuns: 150 })('values', (a, b, tp, strict) => {
+    test.prop([valueArbitrary, valueArbitrary, fc.boolean()], { numRuns: 150 })('values', (a, b, tp) => {
       expect(compiled._tag).toBe('Ok')
       const v3 = createV3Head({ disableDefaults: true, plugins: plugins(tp) })
       v3.push(dynamicValueShapes[shape]!(composite(a), composite(b)))
@@ -206,13 +189,6 @@ describe('dynamic values equal v3 with the value in place', () => {
       mixed.push(compiledTags!, { values: [a, b] })
       mixed.push(loose)
       expect(attempt(() => renderCompiled(mixed))).toEqual(attempt(() => renderV3(v3)))
-
-      const isText = (v: unknown) => typeof v === 'string' || Number.isFinite(v)
-      if (strict && isText(a) && isText(b)) {
-        const strictHead = createStrictHead({ disableDefaults: true, plugins: tp ? [templateParams] : [] })
-        strictHead.push(compiledTags!, { values: [a, b] } as any)
-        expect(attempt(() => renderStrict(strictHead))).toEqual(expected)
-      }
     })
   })
 })

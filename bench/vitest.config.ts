@@ -4,9 +4,8 @@ import { defineProject } from 'vitest/config'
 export default defineProject({
   resolve: {
     alias: {
-      'unhead/compiled/compile': resolve(__dirname, '../packages/unhead/src/compiled/compile'),
-      'unhead/compiled/server-strict': resolve(__dirname, '../packages/unhead/src/compiled/server-strict'),
       'unhead/compiled/server': resolve(__dirname, '../packages/unhead/src/compiled/server'),
+      'unhead/compiled': resolve(__dirname, '../packages/unhead/src/compiled/index'),
       'unhead/utils': resolve(__dirname, '../packages/unhead/src/utils'),
       'unhead/server': resolve(__dirname, '../packages/unhead/src/server'),
       'unhead/types': resolve(__dirname, '../packages/unhead/src/types'),

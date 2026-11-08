@@ -11,7 +11,7 @@ export interface CompiledEntry extends HeadEntry<any> {
 }
 
 export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
-  /** Set while template params run natively: the rules of a strict head, the hooks of a full head. */
+  /** Set while template params run natively: the hooks of `TemplateParamsPlugin`. */
   _tp?: unknown
 }
 
@@ -24,7 +24,7 @@ export interface Memo {
   s?: Record<string, any>
 }
 
-/** What differs between the strict and the full entry. */
+/** The renderer of the compiled server head. */
 export interface CompiledRenderer {
   /** The memo root. Each entry builds memos its own way, so they do not share one. */
   n: TrieNode

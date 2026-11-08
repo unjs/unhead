@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createHead, renderSSRHead } from '../../../src/compiled/server'
 
 // These tests share the process-wide memo trie in order: each one counts the sets of compiled tags

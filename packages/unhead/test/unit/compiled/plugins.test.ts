@@ -1,6 +1,6 @@
 import type { HeadPluginInput } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
-import { compileTags } from '../../../src/compiled/compile'
+import { compileTags } from '../../../src/compiled'
 import { createHead, renderSSRHead } from '../../../src/compiled/server'
 import { useSeoMeta } from '../../../src/composables'
 import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, TemplateParamsPlugin } from '../../../src/plugins'

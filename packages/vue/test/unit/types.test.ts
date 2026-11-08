@@ -1,11 +1,10 @@
-import type { CompiledTags } from 'unhead/compiled/server'
+import type { CompiledTags } from 'unhead/compiled'
 import type { SSRHeadPayload } from 'unhead/types'
 import type { RawInput, SerializableHead } from '../../src/'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createCompiledServerHead, prepareHeadInput } from '@unhead/vue/compiled/server'
-import { createHead as createStrictServerHead } from '@unhead/vue/compiled/server-strict'
 import { createHead as createServerHead } from '@unhead/vue/server'
-import { dynamicValue } from 'unhead/compiled/compile'
+import { dynamicValue } from 'unhead/compiled'
 import { expectTypeOf } from 'vitest'
 import { computed } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
@@ -149,16 +148,6 @@ describe('types', () => {
     // @ts-expect-error Vue installs its own prop resolver
     createStreamableHead({ propResolvers: [] })
   })
-  it('types compiled tag pushes on the strict server head', () => {
-    const head = createStrictServerHead()
-    const compiledTags = [] as unknown as CompiledTags
-    head.push(compiledTags)
-    head.push(compiledTags, { values: ['x'] })
-    // @ts-expect-error a strict head takes compiled tags only
-    expect(() => head.push({ title: 'loose' })).toThrow('compiled tags only')
-    expectTypeOf(head.push(compiledTags).dispose).toBeFunction()
-  })
-
   it('types compiled tag pushes on the compiled server head', () => {
     const head = createCompiledServerHead({ disableDefaults: true })
     const compiledTags: CompiledTags = [['title', 0, 10, 'title', { textContent: dynamicValue(0) }, 5]]

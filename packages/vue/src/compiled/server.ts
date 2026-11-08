@@ -5,8 +5,7 @@ import { createHead as _createServerHead } from 'unhead/compiled/server'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
-export { VueHeadMixin } from '../VueHeadMixin'
-export { type CompiledEntryOptions, type CompiledTags, type PreparedTemplate, prepareHeadInput, prepareTemplate, propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/compiled/server'
+export { type CompiledEntryOptions, type CompiledTags, prepareHeadInput, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/compiled/server'
 
 /**
  * A Vue server head that takes compiled tags, with their values, as well as loose input.
