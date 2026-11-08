@@ -42,8 +42,8 @@ const DYNAMIC_VALUE_BANNED: Record<string, Set<string>> = {
   link: /* @__PURE__ */ new Set(['rel', 'hreflang', 'as', 'type']),
   script: /* @__PURE__ */ new Set(['type', 'src', 'async', 'defer']),
 }
-// templateParams values reach many tags, titleTemplate decides the whole title,
-// and style content decides its weight through `@import`
+// templateParams values reach many tags, and titleTemplate decides the whole title. Style
+// content decides its weight through `@import`, so a runtime sends a value with `@import` to v3.
 const DYNAMIC_VALUE_BANNED_TAGS = /* @__PURE__ */ new Set(['templateParams', 'titleTemplate', 'style'])
 
 // The fast tiers never run the hooks of the built-in plugins on compiled tags, so compiled tags hold
@@ -145,7 +145,7 @@ function findDynamicValueReason(tag: HeadTag, identity: string): string | undefi
     }
   }
   for (const key of CONFIG_KEYS) {
-    if (hasDynamicValue(tag[key]) && (!CONTENT_KEYS.has(key) || DYNAMIC_VALUE_BANNED_TAGS.has(tag.tag)))
+    if (hasDynamicValue(tag[key]) && (!CONTENT_KEYS.has(key) || (tag.tag !== 'style' && DYNAMIC_VALUE_BANNED_TAGS.has(tag.tag))))
       return `dynamic value in ${tag.tag} ${key}`
   }
 }

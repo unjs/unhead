@@ -23,6 +23,23 @@ const page: any = {
   link: [{ rel: 'canonical', href: 'https://example.com/a' }],
 }
 
+describe('a dynamic value in style content', () => {
+  // `@import` raises the weight of a style, which the compiled tags fixed at build time
+  it.each(['a{color:red}', '@import url(a.css);', ''])('renders %j like v3', (value) => {
+    const template = compileTags({ link: [{ rel: 'stylesheet', href: '/a.css' }], style: [{ innerHTML: dynamicValue(0), id: 'colors' }] }, { dynamicValues: 1 })
+    if (template._tag !== 'Ok')
+      throw new Error(template.reason)
+    const input = { link: [{ rel: 'stylesheet', href: '/a.css' }], style: [{ innerHTML: value, id: 'colors' }] }
+    for (let i = 0; i < 2; i++) {
+      const head = createHead()
+      head.push(template.tags, { values: [value] })
+      const v3 = createV3Head()
+      v3.push(input as any)
+      expect(renderSSRHead(head)).toEqual(renderV3(v3))
+    }
+  })
+})
+
 describe('memo tier', () => {
   it('serves a sequence of compiled tags from the memo', () => {
     const a = compiledTags({ title: 'a' })

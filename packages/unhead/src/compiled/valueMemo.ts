@@ -83,7 +83,7 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // Returns undefined when the value could change a v3 decision. Escaping matches
 // v3: `escapeHtml` for title text, `encodeAttribute` for attributes, a `\u003C`
 // escape for each `<` of JSON script text, and other raw text holds no `<`, so no closing
-// tag rule applies. Template params never reach script text, because the build
+// tag rule applies. Raw text holds no `@import` either, which would change a style weight. Template params never reach script text, because the build
 // sends a tag that opts in to the slow path. So a large payload costs one
 // `includes` scan, and a regex only when it holds a `<`.
 function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | undefined {
@@ -92,7 +92,7 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | u
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
   if (mode >= MODE_RAW)
-    return !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
+    return entryValue.includes('@import') ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
   if (tp && PARAM_UNSAFE_RE.test(entryValue))
     return
   return mode === MODE_ATTR
