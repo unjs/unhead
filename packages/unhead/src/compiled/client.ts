@@ -32,13 +32,13 @@ const hasContent = (value: unknown) => value === 0 || value
 // `''`, `'true'` and `0` can change how v3 normalizes a value, so only v3 may decide them
 const isRenderableValue = (entryValue: unknown) => entryValue && (typeof entryValue === 'string' ? entryValue !== 'true' : Number.isFinite(entryValue))
 
-// Only the template params plugin may listen to `tags:` hooks, and this runtime calls those
+// Only the template params and infer seo meta plugins may listen to `tags:` hooks, and this
+// runtime calls those
 function hasForeignHooks(head: LazyUnhead<any>) {
   const hooks = (head.hooks as any)._hooks
-  const native: any = head.plugins.get('template-params')?.hooks
+  const native = ['template-params', 'infer-seo-meta'].map(key => head.plugins.get(key)?.hooks as any)
   for (const name in hooks) {
-    const listeners = hooks[name]
-    if (listeners && !NATIVE_HOOK_RE.test(name) && (listeners[1] || listeners[0] !== native?.[name] || !name.startsWith('tags:')))
+    if (hooks[name] && !NATIVE_HOOK_RE.test(name) && (!name.startsWith('tags:') || hooks[name].some((listener: unknown) => !native.some(plugin => plugin?.[name] === listener))))
       return true
   }
 }
@@ -162,8 +162,8 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
   const ctx = { tagMap, tags: [...tagMap.values()].flat() }
   if (hasFlatMeta)
     ctx.tags.sort(sortTags)
-  // the template params plugin, the only `tags:` listener a compiled head keeps, uses these two
-  for (const hook of ['tags:resolve', 'tags:afterResolve'])
+  // the template params and infer seo meta plugins, the only `tags:` listeners a compiled head keeps
+  for (const hook of ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'])
     head.hooks.callHook(hook as 'tags:resolve', ctx as any)
 
   return ctx.tags.filter((tag) => {
