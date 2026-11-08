@@ -144,7 +144,8 @@ describe('compileTags', () => {
     expectBail({ script: [{ id: h, src: '/a' }] }, 1)
     expectBail({ script: [{ src: h }] }, 1)
     expectBail({ script: [{ innerHTML: h }] }, 1)
-    expectBail({ style: [{ key: 'k', innerHTML: h }] }, 1)
+    expectBail({ style: [{ key: 'k', media: h, innerHTML: 'a{}' }] }, 1)
+    expectBail({ style: [{ innerHTML: h }] }, 1)
     expectBail({ link: [{ rel: 'x', href: '/a', key: h }] }, 1)
     expectBail({ link: [{ rel: 'x', href: '/a', id: h }] }, 1)
     expectBail({ title: { textContent: 'a', tagPriority: h } }, 1)
@@ -158,6 +159,12 @@ describe('compileTags', () => {
     expectBail({ htmlAttrs: { style: h } }, 1)
     expectBail({ titleTemplate: h }, 1)
     expectBail({ templateParams: { a: h } }, 1)
+  })
+
+  // Nuxt UI sets its color variables this way
+  it('compiles a dynamic value in the content of a style with a fixed identity', () => {
+    const result = compileTags({ style: [{ innerHTML: dynamicValue(0), tagPriority: 'critical', id: 'colors' }] }, { dynamicValues: 1 })
+    expect(result._tag).toBe('Ok')
   })
 
   it('refuses a dynamic value a non-string value would normalize differently', () => {

@@ -56,8 +56,9 @@ export function resolveDynamicValues(value: string, values?: readonly unknown[])
 export function toHeadInput(compiledTags: CompiledTags, values?: readonly unknown[]): Record<string, any> {
   const input: Record<string, any> = {}
   for (const [tag, props, , , extra, flags] of compiledTags) {
-    // a reader may edit the input in place, as the Nuxt island handler does
-    let value: any = Object.assign(copyValue(props || {}), extra)
+    // A reader may edit the input in place, as the Nuxt island handler does. Style content
+    // that is not a string becomes an attribute, which compile allows only before the others.
+    let value: any = Object.assign({}, tag === 'style' && extra, copyValue(props || {}), extra)
     if (flags! & FLAG_DYNAMIC_VALUES) {
       for (const key in value) {
         if (typeof value[key] === 'string')

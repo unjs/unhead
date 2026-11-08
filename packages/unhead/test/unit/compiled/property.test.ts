@@ -149,7 +149,7 @@ describe('compiled head equals v3 over generated input', () => {
 })
 
 const valueText = fc.oneof(
-  { weight: 3, arbitrary: fc.constantFrom('', 'a', 'true', 'false', '0', '"', '\'', '<', '>', '&', '/', '$&', '$1', '$$', '%s', '%x', '%', '100%', '%separator', ' x', 'x ', ' ', '</title>', '</script>', '</style>', '</noscript>', '"><script>alert(1)</script>', dynamicValue(0), dynamicValue(1), '\uE000', '\uE001', '{"a":1}') },
+  { weight: 3, arbitrary: fc.constantFrom('', 'a', 'true', 'false', '0', '"', '\'', '<', '>', '&', '/', '$&', '$1', '$$', '%s', '%x', '%', '100%', '%separator', ' x', 'x ', ' ', '</title>', '</script>', '</style>', '</noscript>', '"><script>alert(1)</script>', '@import url(a.css);', dynamicValue(0), dynamicValue(1), '\uE000', '\uE001', '{"a":1}') },
   { weight: 2, arbitrary: fc.string({ maxLength: 8 }) },
 )
 const valueArbitrary = fc.oneof(
