@@ -27,6 +27,7 @@
   acceptCompiledTags: function
   createLazyHead: function
   lazyTemplateParams: object
+  readCompiledEntry: function
 ./legacy:
   activeHead: object
   createHead: function

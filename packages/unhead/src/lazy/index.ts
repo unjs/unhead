@@ -1,10 +1,10 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { CompiledTags } from '../compiled/types'
+import type { CompiledEntryContent, CompiledTags } from '../compiled/types'
 import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
 
 export type { ClientUnhead } from '../client/adapter'
-export type { CompiledTags } from '../compiled/types'
+export type { CompiledEntryContent, CompiledTags } from '../compiled/types'
 
 export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
   /**
@@ -161,6 +161,18 @@ export function acceptCompiledTags<T>(head: LazyUnhead<T>): LazyUnhead<T> {
     ? import('../compiled/client')
     : undefined
   return head
+}
+
+/**
+ * Reads the compiled tags of a lazy head entry, a pending patch first. Returns nothing for an
+ * entry with loose input, and for every entry once the full runtime loads. Pass the result to
+ * `toHeadInput` from `unhead/compiled/compile` for head input.
+ *
+ * @experimental
+ */
+export function readCompiledEntry(entry: HeadEntry<any>): CompiledEntryContent | undefined {
+  const tags = entry._pending ?? entry.input
+  return Array.isArray(tags) ? { tags, values: (entry.options as LazyEntryOptions | undefined)?.values } : undefined
 }
 
 /**
