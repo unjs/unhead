@@ -18,6 +18,11 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
+    // a compile build without `debug`, so the debug code of compiler mode drops as in an app
+    replace: {
+      preventAssignment: true,
+      values: { __UNHEAD_COMPILE_DEBUG__: 'false' },
+    },
     alias: {
       entries: [
         { find: '@unhead/vue/compiled', replacement: path.join(packagesDir, 'vue/dist/compiled.mjs') },
