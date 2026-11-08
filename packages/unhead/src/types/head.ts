@@ -46,6 +46,12 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /**
+   * Marks compiled tags that a framework pushed for a `useSeoMeta` call. `readCompiledEntry` reports it.
+   *
+   * @internal
+   */
+  _seoMeta?: true
 }
 
 /**

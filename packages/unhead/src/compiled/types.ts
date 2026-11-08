@@ -50,4 +50,6 @@ export interface CompiledEntryContent {
   tags: CompiledTags
   /** Values for the dynamic values. Undefined when the entry has none, or before a value function runs. */
   values: readonly unknown[] | undefined
+  /** True when the entry came from a `useSeoMeta` call, so its title and description are page SEO meta. */
+  seoMeta?: true
 }
