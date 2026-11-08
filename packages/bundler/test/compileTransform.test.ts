@@ -188,6 +188,54 @@ useHead(headData)`)
     expect(transform(`${IMPORTS}${body}`)).toBeUndefined()
   })
 
+  it('compiles a getter input that returns an object literal, with one getter call for all values', () => {
+    let reads = 0
+    const read = () => `${++reads}`
+    const result = calls(transform(`${IMPORTS}useHead(() => ({ title: read(), meta: [{ name: 'description', content: read() }, { name: 'robots', content: 'index' }] }))`), { read })
+    expect(result[0]!.fn).toBe('useCompiledHead')
+    expect(result[0]!.args[0]).toEqual(compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }, { name: 'robots', content: 'index' }] }, 2))
+    expect(reads).toBe(0)
+    expect(result[0]!.args[1]()).toEqual(['1', '2'])
+  })
+
+  it('keeps the statements of a getter input that returns its object last', () => {
+    const result = calls(transform(`${IMPORTS}useHead(() => {
+  const title = page.title
+  return { title, link: [{ rel: 'canonical', href: \`/\${title}\` }] }
+}, { head })`), { page: { title: 'a' }, head: 'h' })
+    expect(result[0]!.args[0]).toEqual(compiledTagsOf({ title: dynamicValue(0), link: [{ rel: 'canonical', href: dynamicValue(1) }] }, 2))
+    expect(result[0]!.args[1]()).toEqual(['a', '/a'])
+    expect(result[0]!.args[2]).toEqual({ head: 'h' })
+  })
+
+  it('compiles a static getter input to compiled tags only', () => {
+    expect(calls(transform(`${IMPORTS}useHead(() => ({ title: 'T' }))`))[0]!.args).toEqual([compiledTagsOf({ title: 'T' })])
+  })
+
+  it.each([
+    ['a conditional shape', `useHead(() => canonical ? { link: [{ rel: 'canonical', href: canonical }] } : {})`],
+    ['an early return', `useHead(() => { if (!page) return {}; return { title: page.title } })`],
+    ['a returned variable', `useHead(() => { const input = { title: 'T' }; return input })`],
+    ['a parameter', `useHead(input => ({ title: input }))`],
+    ['an async getter', `useHead(async () => ({ title: 'T' }))`],
+    ['a spread', `useHead(() => ({ ...base, title: 'T' }))`],
+    // v3 useSeoMeta reads no keys of a function, so it renders nothing for one
+    ['a useSeoMeta getter', `useSeoMeta(() => ({ title: 'T' }))`],
+  ])('leaves a getter input with %s', (_, body) => {
+    expect(transform(`${IMPORTS}${body}`)).toBeUndefined()
+  })
+
+  it.each([
+    ['a media list', `ogImage: [{ url: value, width: 1200 }]`, { ogImage: [{ url: '/b.png', width: 1200 }] }],
+    ['a string list', `articleTag: [value, 'static']`, { articleTag: ['/b.png', 'static'] }],
+    ['a media object', `twitterImage: { url: value }`, { twitterImage: { url: '/b.png' } }],
+  ])('compiles %s with a value at a place of a static shape', (_, entry, flat) => {
+    const result = calls(transform(`${IMPORTS}useSeoMeta({ ${entry} })`), { value: '/a.png' })
+    expect(result[0]!.fn).toBe('useCompiledSeoMeta')
+    expect(result[0]!.args[1](['/b.png'])).toEqual({ _flatMeta: flat })
+    expect(result[0]!.args[2]).toEqual(['/a.png'])
+  })
+
   it('compiles head calls in the runtime files of a module in node_modules', () => {
     const source = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
     expect(transform(source, '/app/node_modules/.pnpm/@nuxt+ui@4.0.0/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js')).toContain('useCompiledHead')
@@ -242,7 +290,9 @@ useHead(headData)`)
     const result = calls(transform(`${IMPORTS}useSeoMeta({ title: t, description: d, ogType: 'website' })`), { t: 'T', d: 'D' })
     const [compiledTags, loose, values] = result[0]!.args
     expect(result[0]!.fn).toBe('useCompiledSeoMeta')
-    expect(compiledTags).toEqual(compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }, { property: 'og:type', content: 'website' }] }, 2))
+    // v3 makes no tag for an undefined title or flat meta key, so both tags drop then
+    expect(compiledTags).toEqual(compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }, { property: 'og:type', content: 'website' }] }, 2)
+      .map((tag, i) => i === 1 ? [...tag.slice(0, 5), tag[5]! | 8] : tag))
     expect(values).toEqual(['T', 'D'])
     expect(loose(['T2', 'D2'])).toEqual({ title: 'T2', _flatMeta: { description: 'D2', ogType: 'website' } })
   })
@@ -342,7 +392,6 @@ useHead(headData)`)
       ['spread in a tag', `useHead({ meta: [{ ...meta }] })`],
       ['computed key', `useHead({ [key]: 'x' })`],
       ['identifier input', `useHead(input)`],
-      ['getter input', `useHead(() => ({ title: 'x' }))`],
       ['computed input', `useHead(computed(() => ({ title: 'x' })))`],
       ['dynamic list', `useHead({ meta: metas })`],
       ['conditional list', `useHead({ meta: flag ? [a] : [] })`],
@@ -370,11 +419,6 @@ useHead(headData)`)
       ['no argument', `useHead()`],
       ['third argument', `useHead({ title: 'x' }, { head }, extra)`],
       ['optional call', `useHead?.({ title: 'x' })`],
-      // an object or a list is never plain text, so a value there would always fall back
-      ['seo media object with a dynamic leaf', `useSeoMeta({ ogImage: { url: image } })`],
-      ['seo media list with a dynamic item', `useSeoMeta({ ogImage: [image] })`],
-      ['seo packed object with a dynamic leaf', `useSeoMeta({ robots: { index: flag } })`],
-      ['seo plain key object with a dynamic leaf', `useSeoMeta({ description: { text: d } })`],
       // the value is the identity of the tag
       ['seo charset value', `useSeoMeta({ charset: c })`],
       ['seo tag option', `useSeoMeta({ description: 'x', tagPriority: 'high' })`],

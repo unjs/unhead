@@ -1,12 +1,13 @@
 import type { SourceMapInput } from 'rollup'
-import type { CompiledTags } from 'unhead/compiled/compile'
+import type { CompiledTag, CompiledTags } from 'unhead/compiled/compile'
+import type { HeadTag } from 'unhead/types'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { isReferenceIdentifier, ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
-import { compileTags, dynamicValue } from 'unhead/compiled/compile'
-import { normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
+import { compileTags, dynamicValue, toHeadInput } from 'unhead/compiled/compile'
+import { dedupeKey, normalizeEntryToTags, normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
 import { isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
@@ -17,6 +18,11 @@ const TOKEN_RE = /[]/
 const DYNAMIC_VALUE_JSON_RE = /"(\d+)"/g
 
 const RUNTIME = '@unhead/vue/compiled'
+const WHOLE_DYNAMIC_VALUE_RE = /^\uE000\d+\uE001$/
+// the compiled tag flags of `unhead/compiled`
+const FLAG_DYNAMIC_VALUES = 4
+const FLAG_UNDEFINED_DROPS = 8
+const FLAG_STRING_VALUES = 16
 // a head call that takes a single name, such as `useHead(headData)`
 const IDENTIFIER_INPUT_RE = /\buse(?:Server)?(?:Head|SeoMeta)\(\s*[\w$]+\s*[,)]/
 // The runtime files of a Nuxt module, which call head composables as app code does
@@ -166,16 +172,94 @@ function decodeHeadInput(node: any, values: any[]): unknown {
     : decodeTags(value, values))
 }
 
+// An object or a list of a flat meta value, with a value at each leaf
+function decodeShape(node: any, values: any[]): unknown {
+  const inner = unwrap(node)
+  return inner?.type === 'ArrayExpression'
+    ? decodeElements(inner, element => decodeShape(element, values))
+    : inner?.type === 'ObjectExpression'
+      ? decodeProperties(inner, (_, value) => decodeShape(value, values))
+      : decodeLeaf(node, values)
+}
+
 // Any flat meta key takes a value, including the keys `unpackMeta` also expands from an
 // object or a list: a string makes one tag, as v3 makes it, and `useCompiledSeoMeta` takes
 // the v3 input for any other value. A value written as an object or a list is never
-// text, so it must be static.
-function decodeSeoInput(node: any, values: any[]): unknown {
+// text. Its shape is static, and with `shapeValues` its leaves may be values.
+function decodeSeoInput(node: any, values: any[], shapeValues: boolean): unknown {
   return decodeProperties(node, (key, value) => ENTRY_SEO_KEYS.has(key)
     ? BAIL
     : SHAPE_NODES.has(unwrap(value)?.type)
-      ? decodeStatic(value)
+      ? shapeValues ? decodeShape(value, values) : decodeStatic(value)
       : decodeLeaf(value, values))
+}
+
+// Replaces each dynamic value of decoded input: a whole value keeps its type, as in v3
+function applyValues(value: unknown, values: readonly unknown[]): unknown {
+  if (typeof value === 'string')
+    return WHOLE_DYNAMIC_VALUE_RE.test(value) ? values[+value.slice(1, -1)] : value
+  if (Array.isArray(value))
+    return value.map(item => applyValues(item, values))
+  if (value && typeof value === 'object')
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, applyValues(item, values)]))
+  return value
+}
+
+// The tags as they render and dedupe: a tag that sanitize drops counts only when it can hide another
+function fingerprint(tags: HeadTag[]): string {
+  return JSON.stringify(tags.map(tag => [tag.tag, dedupeKey(tag), Object.entries(tag.props).map(([key, value]) => [key, value == null ? value : String(value)]), tag.textContent ?? null])
+    .filter(([name, key, props, content]) => key || content != null || (props as unknown[]).length || name === 'title'))
+}
+
+// The tags v3 `useSeoMeta` makes of decoded input with these values: `FlatMetaPlugin` adds
+// the meta of the flat keys after the title tags, with no second normalize
+function seoTags(decoded: Record<string, unknown>, values: readonly unknown[]): HeadTag[] {
+  const { title, titleTemplate, ...flat } = applyValues(decoded, values) as Record<string, unknown>
+  const tags = normalizeEntryToTags({ title, titleTemplate }, [])
+  for (const props of unpackMeta(normalizeProps({ tag: '_flatMeta', props: {} } as any, flat).props as any))
+    tags.push({ tag: 'meta', props } as unknown as HeadTag)
+  return tags
+}
+
+function holdsValue(tag: CompiledTag, index: number): boolean {
+  return !!(tag[5]! & FLAG_DYNAMIC_VALUES) && JSON.stringify(tag).includes(dynamicValue(index))
+}
+
+// String and number values a flat meta value may hold on the compiled tags
+const SEO_STRING_PROBES: unknown[] = ['x', 'a b']
+const SEO_NUMBER_PROBES: unknown[] = [0, 7]
+
+/**
+ * Proves the compiled tags of a `useSeoMeta` call against v3 for each value at each place.
+ * It marks the tags of a value that v3 renders by other rules when it is a number, and the
+ * tags of a value whose `undefined` makes no tag in v3, as for a flat meta key. Returns false
+ * when a string value would render other tags.
+ */
+function proveSeoTags(decoded: Record<string, unknown>, tags: CompiledTag[], count: number): boolean {
+  const vector = (index: number, probe: unknown) => Array.from({ length: count }, (_, i) => i === index ? probe : `v${i}`)
+  // v3 throws on some values, such as `undefined` in a list, and the v3 input throws there too
+  const v3 = (values: unknown[]) => {
+    try {
+      return fingerprint(seoTags(decoded, values))
+    }
+    catch {
+      return 'throws'
+    }
+  }
+  const same = (values: unknown[]) => v3(values) === fingerprint(normalizeEntryToTags(toHeadInput(tags, values), []))
+  for (let index = 0; index < count; index++) {
+    if (!SEO_STRING_PROBES.every(probe => same(vector(index, probe))))
+      return false
+    const held = tags.filter(tag => holdsValue(tag, index)) as unknown as number[][]
+    const numbers = SEO_NUMBER_PROBES.every(probe => same(vector(index, probe))) ? 0 : FLAG_STRING_VALUES
+    const flags = held.map(tag => tag[5]! | numbers)
+    held.forEach(tag => tag[5] = tag[5]! | FLAG_UNDEFINED_DROPS)
+    if (!same(vector(index, undefined)))
+      held.forEach((tag, i) => tag[5] = flags[i]!)
+    else
+      held.forEach((tag, i) => tag[5] = flags[i]! | FLAG_UNDEFINED_DROPS)
+  }
+  return true
 }
 
 // What v3 makes of `useSeoMeta` input: `useSeoMeta` moves every key but the title
@@ -201,6 +285,40 @@ function isHeadOnly(node: any): boolean {
 function isFunctionNode(node: any): boolean {
   const inner = unwrap(node)
   return inner?.type === 'ArrowFunctionExpression' || inner?.type === 'FunctionExpression'
+}
+
+const FUNCTION_NODES = new Set(['ArrowFunctionExpression', 'FunctionExpression', 'FunctionDeclaration'])
+
+/**
+ * The object literal that a getter input returns, so the getter can return its values
+ * instead. The getter takes no parameters and returns that object as its last statement,
+ * and only there, so every call returns the same shape.
+ */
+function getterObject(node: any): { object: any, block: boolean } | undefined {
+  const fn = unwrap(node)
+  if (!isFunctionNode(fn) || fn.async || fn.generator || fn.params.length)
+    return
+  if (fn.body.type !== 'BlockStatement') {
+    const object = unwrap(fn.body)
+    return object?.type === 'ObjectExpression' ? { object, block: false } : undefined
+  }
+  const statements = fn.body.body
+  const last = statements.at(-1)
+  const object = last?.type === 'ReturnStatement' && unwrap(last.argument)
+  if (object?.type !== 'ObjectExpression')
+    return
+  let returns = false
+  for (const statement of statements.slice(0, -1)) {
+    walk(statement, {
+      enter(child: any) {
+        if (FUNCTION_NODES.has(child.type))
+          this.skip()
+        else if (child.type === 'ReturnStatement')
+          returns = true
+      },
+    })
+  }
+  return returns ? undefined : { object, block: true }
 }
 
 // v3 calls a function `titleTemplate`, which compiled tags cannot hold
@@ -234,8 +352,17 @@ function compileHeadCall(node: any, kind: HeadKind, input = unwrap(node.argument
     return bail('input is not an object literal')
   if (rest.length || (options && !isHeadOnly(options)))
     return bail('options other than head')
+  if (kind === 'seo') {
+    // a list or object with values at its leaves, else as written before
+    const result = compileInput(input, kind, true)
+    return result._tag === 'Ok' ? result : compileInput(input, kind, false)
+  }
+  return compileInput(input, kind, false)
+}
+
+function compileInput(input: any, kind: HeadKind, shapeValues: boolean): CompiledCall {
   const values: any[] = []
-  const decoded = kind === 'seo' ? decodeSeoInput(input, values) : decodeHeadInput(input, values)
+  const decoded = kind === 'seo' ? decodeSeoInput(input, values, shapeValues) : decodeHeadInput(input, values)
   if (decoded === BAIL)
     return bail('input is not static where it must be')
   let headInput = decoded
@@ -254,10 +381,13 @@ function compileHeadCall(node: any, kind: HeadKind, input = unwrap(node.argument
   if (result._tag === 'Bail')
     return result
   if (kind === 'seo' && values.length) {
+    const tags = JSON.parse(JSON.stringify(result.tags)) as CompiledTag[]
+    if (!proveSeoTags(decoded as Record<string, unknown>, tags, values.length) && shapeValues)
+      return bail('a value in a list or an object that v3 renders by other rules')
     // the input v3 `useSeoMeta` pushes, rebuilt from the values
     const { title, titleTemplate, ...flat } = decoded as Record<string, unknown>
     const loose = JSON.stringify({ title, titleTemplate, _flatMeta: flat }).replace(DYNAMIC_VALUE_JSON_RE, 'f[$1]')
-    return { _tag: 'Ok', tags: result.tags, values, loose: `f => (${loose})` }
+    return { _tag: 'Ok', tags, values, loose: `f => (${loose})` }
   }
   return { _tag: 'Ok', tags: result.tags, values }
 }
@@ -414,9 +544,12 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             if ((callee.kind === 'seo' && parent?.type !== 'ExpressionStatement') || injectHead === false || (injectHead && injectHead.imported !== 'injectHead'))
               return
             const held = constInput(arg)
-            const result = compileHeadCall(node, callee.kind, held || unwrap(arg))
+            // v3 `useSeoMeta` reads no keys of a function, so only `useHead` takes a getter input
+            const getter = !held && callee.kind === 'head' ? getterObject(arg) : undefined
+            const input = held || getter?.object || unwrap(arg)
+            const result = compileHeadCall(node, callee.kind, input)
             if (result._tag === 'Bail') {
-              if (hasFunctionTitleTemplate(held || unwrap(arg)))
+              if (hasFunctionTitleTemplate(input))
                 warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input and the client loads the full runtime. Use a string, such as '%s %separator %siteName'.`)
               return
             }
@@ -426,8 +559,30 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             const head = [hoist(JSON.stringify(result.tags), compiledTagSets)]
             if (result.loose)
               head.push(hoist(result.loose))
-            const tail = autoHead ? `, ${result.values.length ? '' : 'undefined, '}${AUTO_HEAD}` : options && !result.values.length ? ', undefined' : ''
+            // a getter that runs statements keeps them, so it stays the values argument
+            const valuesGetter = getter && (getter.block || result.values.length)
+            const hasValues = result.values.length || valuesGetter
+            const tail = autoHead ? `, ${hasValues ? '' : 'undefined, '}${AUTO_HEAD}` : options && !hasValues ? ', undefined' : ''
             s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
+            // A getter input returns its values in place of its object, so it still runs once
+            // for each resolution and tracks as a whole, as v3 tracks it
+            if (valuesGetter) {
+              s.prependLeft(arg.start, `${head.join(', ')}, `)
+              let start = getter.object.start
+              let text = '['
+              for (const valueNode of result.values) {
+                s.overwrite(start, valueNode.start, text)
+                start = valueNode.end
+                text = ', '
+              }
+              s.overwrite(start, getter.object.end, result.values.length ? ']' : '[]')
+              s.appendLeft(arg.end, tail)
+              return
+            }
+            if (getter) {
+              s.overwrite(arg.start, arg.end, `${head.join(', ')}${tail}`)
+              return
+            }
             // An input held in a const reads each value from the const at the call
             if (held) {
               const paths = leafPaths(held, arg.name, new Map())

@@ -18,13 +18,27 @@ function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
   return head
 }
 
-function resolveValues(values: readonly unknown[]): unknown[] {
-  return values.map(entryValue => toValue(entryValue))
+/** The values of a call, or a getter that returns them, as the build makes of a getter input. */
+export type CompiledValues = readonly unknown[] | (() => readonly unknown[])
+
+// A getter input runs once for all its values
+function resolveValues(values: CompiledValues): unknown[] {
+  return (typeof values === 'function' ? values() : values).map(entryValue => toValue(entryValue))
 }
 
 // The flat meta values that `useSeoMeta` renders the same way compiled tags do.
 function isText(value: unknown): boolean {
   return typeof value === 'string' ? !!value && value !== 'true' : Number.isFinite(value)
+}
+
+// The `FLAG_UNDEFINED_DROPS` and `FLAG_STRING_VALUES` flags of `unhead/compiled`. The build marks
+// every tag of a flat meta value whose `undefined` makes no tag in v3, and of one whose number v3
+// renders by other rules.
+const FLAG_UNDEFINED_DROPS = 8
+const FLAG_STRING_VALUES = 16
+
+function isMarked(compiledTags: CompiledTags, index: number, flag: number): boolean {
+  return compiledTags.some(tag => tag[5]! & flag && JSON.stringify(tag).includes(`\uE000${index}\uE001`))
 }
 
 /**
@@ -34,7 +48,7 @@ function isText(value: unknown): boolean {
  *
  * @experimental
  */
-export function useCompiledHead(compiledTags: CompiledTags, values?: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
   return head.push(compiledTags as any, values ? { ...options, values: () => resolveValues(values) } as any : options)
 }
@@ -52,7 +66,9 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
     ...options,
     values: () => {
       const resolved = resolveValues(values)
-      if (!resolved.every(isText)) {
+      if (!resolved.every((value, index) => value === undefined
+        ? isMarked(compiledTags, index, FLAG_UNDEFINED_DROPS)
+        : isText(value) && (typeof value === 'string' || !isMarked(compiledTags, index, FLAG_STRING_VALUES)))) {
         head.use(FlatMetaPlugin)
         head.entries.get(active._i)!.input = loose(resolved)
       }
