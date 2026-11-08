@@ -192,6 +192,9 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (meta.length)
               output.push('  meta: [')
 
+            // Runtime `unpackMeta` puts the tags of list and media object values before the others
+            const extras: string[] = []
+            const primitives: string[] = []
             meta.forEach((property: any) => {
               if (property.type === 'SpreadElement') {
                 output = false
@@ -237,7 +240,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                     output = false
                     return
                   }
-                  output.push(expanded)
+                  extras.push(expanded)
                   return
                 }
                 if (property.value.type === 'ArrayExpression') {
@@ -256,7 +259,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                     }
                     parts.push(expanded)
                   }
-                  output.push(parts.join('\n'))
+                  extras.push(parts.join('\n'))
                   return
                 }
                 // Primitive literals (string/number/boolean) and template literals always resolve to a
@@ -289,7 +292,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                   }).join('\n')
                 })
 
-                output.push(metaTags.join('\n'))
+                extras.push(metaTags.join('\n'))
                 return
               }
               else if (property.value.type === 'ObjectExpression') {
@@ -307,10 +310,12 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 }
               }
               if (valueKey === 'charset')
-                output.push(`    { ${key}: ${value} },`)
+                primitives.push(`    { ${key}: ${value} },`)
               else
-                output.push(`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`)
+                primitives.push(`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`)
             })
+            if (output)
+              output.push(...extras, ...primitives)
             if (output) {
               if (meta.length)
                 output.push('  ]')
