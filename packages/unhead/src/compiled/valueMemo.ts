@@ -16,6 +16,7 @@ const TOKEN_ENTRY_RE = /\uE000(\d+)\.(\d+)\uE001/g
 const RAW_NEIGHBOUR_RE = /<\/?[a-z]*\uE000/i
 const PARAM_NEIGHBOUR_RE = /%[\w.]*\uE000/
 const PARAM_UNSAFE_RE = /%|^\s|\s$/
+const NOT_BLANK_RE = /\S/
 
 const MODE_ATTR = 0
 const MODE_TITLE = 1
@@ -86,14 +87,15 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // tag rule applies. Raw text holds no `@import` either, which would change a style weight. Template params never reach script text, because the build
 // sends a tag that opts in to the slow path. So a large payload costs one
 // `includes` scan, and a regex only when it holds a `<`.
-function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | undefined {
+// With `InferSeoMetaPlugin`, a blank image value changes the twitter card the memo holds, so it takes the slow path.
+function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
   if (mode >= MODE_RAW)
     return entryValue.includes('@import') ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
-  if (tp && PARAM_UNSAFE_RE.test(entryValue))
+  if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (infer && !NOT_BLANK_RE.test(entryValue)))
     return
   return mode === MODE_ATTR
     ? entryValue.includes('"') ? entryValue.replace(DOUBLE_QUOTE_RE, '&quot;') : entryValue
@@ -106,6 +108,11 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean): string | u
 export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayload | undefined {
   const state = memo.s!
   const tp = !!state._templateParams
+  const infer = !!head._infer
+  // `InferSeoMetaPlugin` reads a title template that an earlier render of this head left,
+  // which the memo, built without one, cannot know
+  if (infer && head._titleTemplate !== undefined && !('_titleTemplate' in state))
+    return
   const html: Record<string, unknown> = { ...memo.b }
   const values: EntryValues = []
   let safe = true
@@ -131,7 +138,7 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
       const pieces = bucket as (string | number)[]
       let out = pieces[0] as string
       for (let i = 1; i < pieces.length; i += 4) {
-        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp)
+        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, infer)
         if (text === undefined)
           return
         out += text + (pieces[i + 3] as string)

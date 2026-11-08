@@ -36,9 +36,11 @@ export interface InferSeoMetaPluginOptions {
 }
 
 // The `compileTags` output of the input below, for a head that takes compiled tags. Its
-// compiled runtimes run the hooks of this plugin themselves.
-function inferredMeta(name: string, content?: string): any {
-  return ['meta', { [name.startsWith('og') ? 'property' : 'name']: name, ...content ? { content } : { 'data-infer': '' } }, 102, `meta:${name}`, { tagPriority: 'low' }, 1]
+// compiled runtimes run the hooks of this plugin themselves. Every head pushes the same
+// arrays, so the server memo, keyed on the identity of compiled tags, serves them.
+const inferredMetaCache: Record<string, any> = {}
+function inferredMeta(names: string[], content?: string): any {
+  return inferredMetaCache[`${names}:${content}`] ||= names.map(name => ['meta', { [name.startsWith('og') ? 'property' : 'name']: name, ...content ? { content } : { 'data-infer': '' } }, 102, `meta:${name}`, { tagPriority: 'low' }, 1])
 }
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
@@ -49,16 +51,18 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
         ? { name: 'twitter:card', content: options.twitterCard, tagPriority: 'low' }
         // no content: the hook below infers it from the resolved image tags
         : { 'name': 'twitter:card', 'tagPriority': 'low', 'data-infer': '' }
-      head.push(compiled ? [inferredMeta('twitter:card', options.twitterCard)] : { meta: [card] } as any)
+      head.push(compiled ? inferredMeta(['twitter:card'], options.twitterCard) : { meta: [card] } as any)
     }
     // no content: the hook below infers it from the title and description
     const inferred = [
       { 'property': 'og:title', 'tagPriority': 'low', 'data-infer': '' },
       { 'property': 'og:description', 'tagPriority': 'low', 'data-infer': '' },
     ]
-    head.push(compiled ? [inferredMeta('og:title'), inferredMeta('og:description')] : { meta: inferred } as any)
+    head.push(compiled ? inferredMeta(['og:title', 'og:description']) : { meta: inferred } as any)
     return {
       key: 'infer-seo-meta',
+      // a transform may return something new on each call, so the server memo cannot hold its output
+      ...(options.ogTitle || options.ogDescription) && { _transforms: true },
       hooks: {
         'tags:beforeResolve': ({ tagMap }) => {
           let title = head._titleTemplate || head._title
