@@ -41,8 +41,9 @@ function isMarked(compiledTags: CompiledTags, index: number, flag: number): bool
 export function seoMetaInput(head: CompiledTagsHead, compiledTags: CompiledTags, loose: (values: unknown[]) => object, resolved: unknown[]): CompiledTags | object {
   if (resolved.every((value, index) => value === undefined
     ? isMarked(compiledTags, index, FLAG_UNDEFINED_DROPS)
-    : isText(value) && (typeof value === 'string' || !isMarked(compiledTags, index, FLAG_STRING_VALUES))))
+    : isText(value) && (typeof value === 'string' || !isMarked(compiledTags, index, FLAG_STRING_VALUES)))) {
     return compiledTags
+  }
   head.use(FlatMetaPlugin)
   return loose(resolved)
 }

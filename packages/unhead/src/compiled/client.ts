@@ -8,6 +8,7 @@ type RuntimeTag = Record<string, any>
 // shared with `lazy/runtime` would become a third chunk. The flags come from `./tags`.
 const FLAG_ARRAYABLE = 2
 const FLAG_DYNAMIC_VALUES = 4
+const FLAG_UNDEFINED_DROPS = 8
 const DYNAMIC_VALUE_RE = /(\d+)/g
 const ELEMENT_TAG_RE = /^(?:base|meta|link|style|script|noscript)$/
 const NATIVE_HOOK_RE = /^dom:(?:beforeRender|rendered)$/
@@ -29,8 +30,8 @@ const isCompiled = (entry: HeadEntry<any>) => Array.isArray(entry._pending === u
 // v3 `hasContent`. A compiled tag value is finite, and a value passes `isRenderableValue`.
 const hasContent = (value: unknown) => value === 0 || value
 
-// `''`, `'true'` and `0` can change how v3 normalizes a value, so only v3 may decide them
-const isRenderableValue = (entryValue: unknown) => entryValue && (typeof entryValue === 'string' ? entryValue !== 'true' : Number.isFinite(entryValue))
+// A list, an object, or a number that is not finite changes how v3 normalizes a value, so only v3 may decide them
+const isScalar = (entryValue: unknown) => entryValue == null || typeof entryValue === 'string' || typeof entryValue === 'boolean' || Number.isFinite(entryValue)
 
 // Only the template params and infer seo meta plugins may listen to `tags:` hooks, and this
 // runtime calls those
@@ -103,14 +104,32 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
             // v3 keeps a value that is a whole string, so a number stays a number and the content
             // cleanup, which compares by identity, leaves its text
             let whole: unknown
-            target[key] = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: number, _: number, text: string) => {
-              const entryValue = options.values?.[index]
-              plain &&= isRenderableValue(entryValue)
-              whole = match === text && entryValue
+            let entryValue: any
+            const text = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: number, _: number, text: string) => {
+              entryValue = options.values?.[index]
+              plain &&= isScalar(entryValue)
+              whole = match === text
               return entryValue
-            }) ?? target[key]
-            if (whole)
-              target[key] = whole
+            })
+            if (!whole) {
+              text === undefined || (target[key] = text)
+            }
+            // the v3 `normalizeProps` rules for a whole value
+            else if (entryValue === undefined || (entryValue === null && _f! & FLAG_UNDEFINED_DROPS)) {
+              if (entryValue === undefined && _f! & FLAG_UNDEFINED_DROPS)
+                return
+              delete target[key]
+            }
+            else if (target === tag || entryValue === null) {
+              target[key] = entryValue
+            }
+            else {
+              const str = String(entryValue)
+              const isData = key.startsWith('data-')
+              target[key] = str === 'true' || !str
+                ? isData || (name === 'meta' && key === 'content') ? str : true
+                : !entryValue && isData && str === 'false' ? str : entryValue
+            }
           }
         }
       }

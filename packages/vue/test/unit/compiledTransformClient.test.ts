@@ -6,7 +6,7 @@ import { createHead as createV3, renderSSRHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { JSDOM } from 'jsdom'
 import { TemplateParamsPlugin } from 'unhead/plugins'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import * as vue from 'vue'
 import { CompileTransform } from '../../../bundler/src/unplugin/CompileTransform'
 import { createLazyHead } from '../../src/lazy'
@@ -87,6 +87,8 @@ async function hydrateBoth(source: string, tp: boolean, initial: unknown) {
   return {
     v3Dom,
     compiledDom,
+    // the full runtime turns every compiled entry back into loose input when it loads
+    onCompiledRuntime: () => [...lazy.entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input)),
     async set(next: unknown) {
       v3Value.value = next
       compiledValue.value = next
@@ -118,28 +120,45 @@ const WRAPPERS: [string, string][] = [
   ['getter of a ref', '() => value'],
 ]
 
-const POSITIONS: [string, (value: string) => string][] = [
-  ['useHead title', value => `useHead({ title: ${value} })`],
-  ['useHead meta content', value => `useHead({ meta: [{ name: 'description', content: ${value} }] })`],
-  ['useHead link href', value => `useHead({ link: [{ rel: 'canonical', href: ${value} }] })`],
-  ['useHead html lang', value => `useHead({ htmlAttrs: { lang: ${value} } })`],
-  ['useHead mixed', value => `useHead({ title: 'Static', meta: [{ property: 'og:title', content: ${value} }, { name: 'robots', content: 'index' }] })`],
-  ['useSeoMeta description', value => `useSeoMeta({ description: ${value}, ogType: 'website' })`],
-  ['useSeoMeta og title', value => `useSeoMeta({ ogTitle: ${value}, twitterTitle: ${value} })`],
+// The runtime values that keep a head call on the compiled runtime
+const HEAD_COMPILED = new Set(['text', 'text with markup', 'template param', 'empty', 'true text', 'zero', 'number', 'null', 'undefined', 'false'])
+const SEO_COMPILED = new Set(['text', 'text with markup', 'template param', 'zero', 'number', 'undefined'])
+const SEO_STRING_COMPILED = new Set(['text', 'text with markup', 'template param'])
+const SEO_URL_COMPILED = new Set(['text', 'text with markup', 'template param', 'zero', 'number'])
+// v3 throws while it renders `undefined` or `null` in a flat meta list
+const THROWS_IN_LIST = new Set(['undefined', 'null'])
+
+const POSITIONS: [string, (value: string) => string, Set<string>, Set<string>?][] = [
+  ['useHead title', value => `useHead({ title: ${value} })`, HEAD_COMPILED],
+  ['useHead meta content', value => `useHead({ meta: [{ name: 'description', content: ${value} }] })`, HEAD_COMPILED],
+  ['useHead link href', value => `useHead({ link: [{ rel: 'canonical', href: ${value} }] })`, HEAD_COMPILED],
+  ['useHead html lang', value => `useHead({ htmlAttrs: { lang: ${value} } })`, HEAD_COMPILED],
+  ['useHead mixed', value => `useHead({ title: 'Static', meta: [{ property: 'og:title', content: ${value} }, { name: 'robots', content: 'index' }] })`, HEAD_COMPILED],
+  ['useHead getter input', value => `useHead(() => ({ title: ${value}, meta: [{ name: 'description', content: ${value} }, { name: 'robots', content: 'index' }] }))`, HEAD_COMPILED],
+  ['useHead getter input with statements', value => `useHead(() => {
+    const read = ${value}
+    return { title: read, link: [{ rel: 'canonical', href: read }] }
+  })`, HEAD_COMPILED],
+  ['useSeoMeta description', value => `useSeoMeta({ description: ${value}, ogType: 'website' })`, SEO_COMPILED],
+  ['useSeoMeta og title', value => `useSeoMeta({ ogTitle: ${value}, twitterTitle: ${value} })`, SEO_COMPILED],
+  ['useSeoMeta string list', value => `useSeoMeta({ articleTag: [${value}, 'static'], ogType: 'article' })`, SEO_STRING_COMPILED, THROWS_IN_LIST],
+  ['useSeoMeta image list', value => `useSeoMeta({ ogImage: [{ url: ${value}, width: 1200 }, '/static.png'] })`, SEO_URL_COMPILED],
 ]
 
 describe('client-compiled head calls hydrate and update like v3', () => {
-  const cases = POSITIONS.flatMap(([position, call]) => WRAPPERS.flatMap(([wrapper, expression]) =>
-    RUNTIME_VALUES.map(([name, value]) => [`${position}, ${wrapper} ${name}`, call(expression), value] as const)))
+  const cases = POSITIONS.flatMap(([position, call, compiled, skip]) => WRAPPERS.flatMap(([wrapper, expression]) =>
+    RUNTIME_VALUES.filter(([name]) => !skip?.has(name)).map(([name, value]) => [`${position}, ${wrapper} ${name}`, call(expression), value, compiled.has(name), !!skip] as const)))
 
-  it.each(cases)('%s', async (_, call, value) => {
+  it.each(cases)('%s', async (_, call, value, compiled, throwsOnNull) => {
     const source = snippet(call)
     // both layout calls and the call under test compile, with a value
     expect(compile(source).match(COMPILED_CALL_RE)!.length).toBe(3)
     for (const tp of [false, true]) {
       const pair = await hydrateBoth(source, tp, value)
       expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
-      for (const next of ['Changed', '', value, 7, null]) {
+      // the full runtime chunk may still download
+      await vi.waitFor(() => expect(pair.onCompiledRuntime()).toBe(compiled))
+      for (const next of ['Changed', '', value, 7, ...throwsOnNull ? [] : [null]]) {
         await pair.set(next)
         expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
       }

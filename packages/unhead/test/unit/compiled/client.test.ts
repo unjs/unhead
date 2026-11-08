@@ -258,8 +258,46 @@ describe('values', () => {
     ['zero', 0],
     ['null', null],
     ['undefined', undefined],
-    ['boolean', false],
+    ['false', false],
+    ['true', true],
+  ])('renders %s on the compiled runtime with the v3 normalize rules', async (_, entryValue) => {
+    const pair = createPair([{ input: { title: 'Server', meta: [{ name: 'description', content: 'server' }] } }], 'none', undefined, input => input)
+    const v3 = pair.v3.push({ title: 'Layout', meta: [{ name: 'description', content: 'layout' }] })
+    const compiled = pair.compiled.push(compile({ title: 'Layout', meta: [{ name: 'description', content: 'layout' }] }))
+    const attrs = compile({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(0) }], link: [{ 'rel': 'canonical', 'href': dynamicValue(0), 'data-x': dynamicValue(0) }], htmlAttrs: { lang: dynamicValue(0) }, script: [{ key: 'data', type: 'text/plain', textContent: dynamicValue(0) }] }, 1)
+    const input = (value: any) => ({ title: value, meta: [{ name: 'description', content: value }], link: [{ 'rel': 'canonical', 'href': value, 'data-x': value }], htmlAttrs: { lang: value }, script: [{ key: 'data', type: 'text/plain', textContent: value }] })
+    const v3Page = pair.v3.push(input(entryValue))
+    const page = pair.compiled.push(attrs, { values: [entryValue] })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    v3Page.patch(input('Next'))
+    page.patch(attrs, { values: ['Next'] })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    v3Page.patch(input(entryValue))
+    page.patch(attrs, { values: [entryValue] })
+    v3.dispose()
+    compiled.dispose()
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
+  })
+
+  it('drops a marked tag whose value is undefined, as v3 drops an undefined flat meta key', async () => {
+    const pair = createPair([], 'none', undefined, input => input)
+    pair.v3.push({ meta: [{ name: 'description', content: 'layout' }] })
+    pair.compiled.push(compile({ meta: [{ name: 'description', content: 'layout' }] }))
+    const tags = compile({ meta: [{ name: 'description', content: dynamicValue(0) }] }, 1).map((tag: any) => [...tag.slice(0, 5), tag[5] | 8])
+    pair.compiled.push(tags, { values: [undefined] })
+    await pair.render()
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+    expect(pair.compiledDom.window.document.querySelector('meta[name="description"]')!.getAttribute('content')).toBe('layout')
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
+  })
+
+  it.each([
     ['object', { a: 1 }],
+    ['list', ['a', 'b']],
     ['NaN', Number.NaN],
   ])('moves to v3 for %s, which decides it from rebuilt input', async (_, entryValue) => {
     const pair = createPair([], 'none', undefined, input => input)
@@ -532,8 +570,8 @@ describe('server entries changed before hydration ends', () => {
     const dom = ssrDom([{ input: { meta: [{ name: 'description', content: 'server' }] } }], 'none')
     const head = compiledTagsHead({ document: dom.window.document })
     const entry = head.push(compiledTags, { values: ['server'] })
-    // an empty value hands the head to v3, which drops a meta with no content
-    entry.patch(compiledTags, { values: [''] })
+    // a list value hands the head to v3, which makes no meta for an empty list
+    entry.patch(compiledTags, { values: [[]] })
     if (render)
       head.render()
     expect(await head.load()).toBe(true)
@@ -617,8 +655,8 @@ describe('adoption at the first draw', () => {
     v3Runtime.gate = gate.promise
     const head = compiledTagsHead({ document: dom.window.document })
     head.push(toCompiledTags({ title: 'Root' }))
-    // an empty value is one v3 must decide, so the first draw hands the head to v3
-    const old = head.push(compile({ meta: [{ name: 'robots', content: 'noindex' }, { name: 'description', content: dynamicValue(0) }] }, 1), { values: [''] })
+    // a list value is one v3 must decide, so the first draw hands the head to v3
+    const old = head.push(compile({ meta: [{ name: 'robots', content: 'noindex' }, { name: 'description', content: dynamicValue(0) }] }, 1), { values: [[]] })
     head.render()
     expect(await head.load()).toBe(true)
     await vi.waitFor(() => expect(v3Runtime.heads.has(head)).toBe(true))
