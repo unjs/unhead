@@ -122,8 +122,11 @@ export function createFixtures(m) {
   const nuxtPlugins = [m.TemplateParamsPlugin]
   const nuxtSeoInput = { ...nuxtSeo }
 
-  const nuxtV3 = (input) => {
-    const head = m.createV3Head({ plugins: nuxtPlugins, init: [appHead] })
+  // a default @nuxtjs/seo site also registers InferSeoMetaPlugin
+  const seoPlugins = () => [m.TemplateParamsPlugin, m.InferSeoMetaPlugin()]
+
+  const nuxtV3 = (input, plugins = nuxtPlugins) => {
+    const head = m.createV3Head({ plugins, init: [appHead] })
     head.push(input)
     useSeoMeta(head, nuxtSeoInput)
     return m.renderV3(head)
@@ -194,6 +197,28 @@ export function createFixtures(m) {
       compiled() {
         const head = m.createCompiledHead({ plugins: nuxtPlugins, init: [appHeadTags] })
         head.push(page)
+        head.push(nuxtSeoTags)
+        return m.renderCompiled(head)
+      },
+    },
+    {
+      name: 'nuxt seo',
+      tier: 'memo',
+      v3: () => nuxtV3(page, seoPlugins()),
+      compiled() {
+        const head = m.createCompiledHead({ plugins: seoPlugins(), init: [appHeadTags] })
+        head.push(pageTags)
+        head.push(nuxtSeoTags)
+        return m.renderCompiled(head)
+      },
+    },
+    {
+      name: 'nuxt seo',
+      tier: 'value',
+      v3: (t = tick++ % 3) => nuxtV3(pageValues[t].input, seoPlugins()),
+      compiled(t = tick++ % 3) {
+        const head = m.createCompiledHead({ plugins: seoPlugins(), init: [appHeadTags] })
+        head.push(pageValueTags, { values: pageValues[t].array })
         head.push(nuxtSeoTags)
         return m.renderCompiled(head)
       },

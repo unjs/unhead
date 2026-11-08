@@ -14,7 +14,7 @@ const { useSeoMeta } = await dist('unhead', 'index.mjs')
 const { createHead: createV3Head, renderSSRHead: renderV3 } = await dist('unhead', 'server.mjs')
 const { compileTags, dynamicValue } = await dist('unhead', 'compiled.mjs')
 const { createHead: createCompiledHead, renderSSRHead: renderCompiled } = await dist('unhead', 'compiled/server.mjs')
-const { TemplateParamsPlugin } = await dist('unhead', 'plugins.mjs')
+const { InferSeoMetaPlugin, TemplateParamsPlugin } = await dist('unhead', 'plugins.mjs')
 const { unpackMeta } = await dist('unhead', 'utils.mjs')
 
 const ROUNDS = Number(process.env.ROUNDS || 15)
@@ -42,7 +42,7 @@ function round(fn) {
   return count / (elapsed / 1000)
 }
 
-const groups = createFixtures({ compileTags, dynamicValue, unpackMeta, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, TemplateParamsPlugin })
+const groups = createFixtures({ compileTags, dynamicValue, unpackMeta, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, TemplateParamsPlugin, InferSeoMetaPlugin })
 
 const rows = []
 for (const group of groups) {

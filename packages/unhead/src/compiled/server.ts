@@ -128,8 +128,10 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   if (resolved && BUILT_IN[key] === Object.keys(resolved.hooks || {}).join()) {
     for (const name in resolved.hooks)
       (head._known ||= new Set()).add(resolved.hooks[name as keyof typeof resolved.hooks])
-    if (key === 'infer-seo-meta')
+    if (key === 'infer-seo-meta') {
       head._infer = resolved.hooks
+      head._inferTransforms = (resolved as { _transforms?: true })._transforms
+    }
   }
 }
 

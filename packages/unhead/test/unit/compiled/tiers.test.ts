@@ -498,3 +498,85 @@ describe('entry points', () => {
     expect(renderSSRHead(head).headTags).toBe('<title>b</title>')
   })
 })
+
+describe('memo with InferSeoMetaPlugin', () => {
+  const inferPlugins = () => [TemplateParamsPlugin, InferSeoMetaPlugin()]
+
+  it('serves a sequence of compiled tags from the memo', () => {
+    const result = compileTags({ ...page, title: dynamicValue(0), meta: [...page.meta, { property: 'og:image', content: '/a.png' }] }, { dynamicValues: 1 })
+    const a: any[] = result._tag === 'Ok' ? [...result.tags] : []
+    const render = () => {
+      const head = createHead({ plugins: inferPlugins() })
+      head.push(a, { values: ['Page'] })
+      return renderSSRHead(head)
+    }
+    const v3 = createV3Head({ plugins: inferPlugins() })
+    v3.push({ ...page, meta: [...page.meta, { property: 'og:image', content: '/a.png' }] })
+    const expected = renderV3(v3)
+    expect(render()).toEqual(expected)
+    // only a memo can still return the old value after the compiled tags changed
+    const image = a.findIndex(tag => tag[1]?.property === 'og:image')
+    a[image] = ['meta', { property: 'og:image', content: '/changed.png' }, ...a[image].slice(2)]
+    expect(render()).toEqual(expected)
+  })
+
+  it.each([
+    ['a title and an image', ['Page', 'About %siteName', '/a.png']],
+    ['another title', ['Other "quoted" page', 'Second', '/b.png']],
+    ['an empty image', ['Page', 'About', '']],
+    ['a blank image', ['Page', 'About', ' ']],
+    ['an empty description', ['Page', '', '/a.png']],
+    ['a number title', [42, 'About', '/a.png']],
+    ['a missing title', [undefined, 'About', '/a.png']],
+  ])('renders values like v3: %s', (_, values) => {
+    const template = compileTags({
+      title: dynamicValue(0),
+      titleTemplate: '%s %separator %siteName',
+      templateParams: { siteName: 'Site' },
+      meta: [{ name: 'description', content: dynamicValue(1) }, { property: 'og:image', content: dynamicValue(2) }],
+    }, { dynamicValues: 3 })
+    if (template._tag !== 'Ok')
+      throw new Error(template.reason)
+    const input = {
+      title: values[0],
+      titleTemplate: '%s %separator %siteName',
+      templateParams: { siteName: 'Site' },
+      meta: [{ name: 'description', content: values[1] }, { property: 'og:image', content: values[2] }],
+    }
+    // warm the memo with other values first, with and without template params
+    const runs: unknown[][] = [['Warm', 'Warm', '/w.png'], values, values]
+    for (const [run, tp] of runs.flatMap(run => [[run, true], [run, false]] as const)) {
+      const plugins = () => tp ? inferPlugins() : [InferSeoMetaPlugin()]
+      const head = createHead({ plugins: plugins() })
+      head.push(template.tags, { values: run })
+      const v3 = createV3Head({ plugins: plugins() })
+      v3.push({ ...input, title: run[0], meta: [{ name: 'description', content: run[1] }, { property: 'og:image', content: run[2] }] } as any)
+      expect(renderSSRHead(head)).toEqual(renderV3(v3))
+    }
+  })
+
+  it('calls a title transform on every render', () => {
+    const a = compiledTags({ title: 'Page' })
+    const render = (create: any, render: any, input: any = a) => {
+      let count = 0
+      const head = create({ plugins: [InferSeoMetaPlugin({ ogTitle: title => `${title} ${++count}` })] })
+      head.push(input)
+      render(head)
+      return render(head).headTags
+    }
+    expect(render(createHead, renderSSRHead)).toBe(render(createV3Head, renderV3, { title: 'Page' }))
+    expect(render(createHead, renderSSRHead)).toContain('Page 2')
+  })
+
+  it('keeps a stale title template of an earlier render, as v3 does', () => {
+    const run = (create: any, render: any, input: any) => {
+      const head = create({ plugins: [InferSeoMetaPlugin()] })
+      const entry = head.push(input({ title: 'Page', titleTemplate: '%s - Site' }))
+      render(head)
+      entry.patch(input({ title: 'Page' }))
+      return render(head).headTags
+    }
+    run(createHead, renderSSRHead, compiledTags)
+    expect(run(createHead, renderSSRHead, compiledTags)).toBe(run(createV3Head, renderV3, (i: any) => i))
+  })
+})
