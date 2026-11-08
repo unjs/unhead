@@ -217,6 +217,13 @@ useHead(headData)`)
     expect(await plugin.resolveId.call(ctx, '@unhead/vue/compiled', '/app/src/page.js')).toBeUndefined()
   })
 
+  it('warns at build time about a function titleTemplate', () => {
+    const warnings: string[] = []
+    const result = transformResult(`${IMPORTS}useHead({ titleTemplate: t => t ? \`\${t} - Site\` : 'Site' })`, '/src/app.vue', { ...server, warn: (message: string) => warnings.push(message) })
+    expect(result).toBeUndefined()
+    expect(warnings).toEqual([expect.stringContaining(`'%s %separator %siteName'`)])
+  })
+
   it('compiles useServerHead and useServerSeoMeta', () => {
     const result = calls(transform(`${IMPORTS}useServerHead({ title: 'A' })\nuseServerSeoMeta({ description: 'B' })`))
     expect(result).toEqual([
