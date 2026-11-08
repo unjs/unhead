@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createHead, prepareHeadInput, renderSSRHead } from '../../../src/compiled/server'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue, toHeadInput } from '../../../src/compiled/compile'
-import { createHead, readCompiledEntry, renderSSRHead } from '../../../src/compiled/server'
+import { compileTags, dynamicValue, readCompiledEntry, toHeadInput } from '../../../src/compiled'
+import { createHead } from '../../../src/compiled/server'
 
 function compiled(input: any, dynamicValues?: number) {
   const result = compileTags(input, { dynamicValues })

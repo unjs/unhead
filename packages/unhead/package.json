@@ -98,17 +98,13 @@
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
     },
-    "./compiled/compile": {
-      "types": "./dist/compiled/compile.d.ts",
-      "default": "./dist/compiled/compile.mjs"
+    "./compiled": {
+      "types": "./dist/compiled.d.ts",
+      "default": "./dist/compiled.mjs"
     },
     "./compiled/server": {
       "types": "./dist/compiled/server.d.ts",
       "default": "./dist/compiled/server.mjs"
-    },
-    "./compiled/server-strict": {
-      "types": "./dist/compiled/server-strict.d.ts",
-      "default": "./dist/compiled/server-strict.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -167,14 +163,11 @@
       "stream/iife": [
         "dist/stream/iife.d.ts"
       ],
-      "compiled/compile": [
-        "dist/compiled/compile.d.ts"
+      "compiled": [
+        "dist/compiled.d.ts"
       ],
       "compiled/server": [
         "dist/compiled/server.d.ts"
-      ],
-      "compiled/server-strict": [
-        "dist/compiled/server-strict.d.ts"
       ]
     }
   },

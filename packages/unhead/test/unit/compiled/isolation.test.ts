@@ -1,8 +1,7 @@
 import type { HeadTag } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags } from '../../../src/compiled'
 import { createHead, renderSSRHead } from '../../../src/compiled/server'
-import { createHead as createStrictHead, renderSSRHead as renderStrict, templateParams } from '../../../src/compiled/server-strict'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 import { resolveTags, walkResolver } from '../../../src/utils'
@@ -120,24 +119,6 @@ describe('nested template params', () => {
     expect(request(false)).toEqual(first)
     expect(request(false)).toEqual(first)
     expect(first.state.site).toEqual({ name: 'Acme', tags: ['a'] })
-  })
-
-  it('stay per head on a strict head', () => {
-    const compiledTags = compile(pageInput())
-    // a dynamic value keeps the sequence off the memo, so every render resolves the tags
-    const dynamicValueTags = compile({ meta: [{ name: 'value', content: dynamicValue(0) }] }, 1)
-    const request = (edit: boolean) => {
-      const head = createStrictHead({ disableDefaults: true, plugins: [templateParams] })
-      head.push(compiledTags)
-      head.push(dynamicValueTags, { values: ['%x'] } as any)
-      const html = renderStrict(head).headTags
-      if (edit)
-        (head as any)._templateParams.site.name = 'Private'
-      return html
-    }
-    const first = request(true)
-    expect(first).toContain('Welcome to Acme')
-    expect(request(false)).toBe(first)
   })
 
   it.each([

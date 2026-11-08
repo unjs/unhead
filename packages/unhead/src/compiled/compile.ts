@@ -7,9 +7,6 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, DYNAMIC_VALUE_RE, dynamicValue, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, FLAG_UNDEFINED_DROPS, resolveDynamicValues, toHeadInput } from './tags'
 
-export { dynamicValue, toHeadInput } from './tags'
-export type { CompiledEntryContent, CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
-
 /**
  * @experimental
  */
@@ -151,7 +148,7 @@ function findDynamicValueReason(tag: HeadTag, identity: string): string | undefi
 }
 
 function compileTag(tag: HeadTag, identity: string): CompiledTag | string {
-  // v3 only applies `%s` to a string, and the strict head has no such branch
+  // v3 only applies `%s` to a string
   if (tag.tag === 'titleTemplate' && tag.textContent && typeof tag.textContent !== 'string')
     return 'titleTemplate is not a string'
   const props: Record<string, CompiledTagValue | object> = {}

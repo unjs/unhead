@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags } from '../../../src/compiled/compile'
+import { compileTags } from '../../../src/compiled'
 import { corpus } from './corpus'
 import { MODES, renderScenarioCompiled, renderScenarioV3, resolveScenarioCompiled, resolveScenarioV3 } from './util'
 

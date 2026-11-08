@@ -1,6 +1,6 @@
 import type { HeadTag } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createHead, createServerRenderer, prepareHeadInput, renderSSRHead, transformHtmlTemplate } from '../../../src/compiled/server'
 import { CanonicalPlugin, InferSeoMetaPlugin, MinifyPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3, transformHtmlTemplate as transformV3 } from '../../../src/server'

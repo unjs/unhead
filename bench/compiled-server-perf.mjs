@@ -12,9 +12,8 @@ import { createFixtures } from './compiled-server-fixtures.mjs'
 const dist = (pkg, name) => import(pathToFileURL(`${process.cwd()}/packages/${pkg}/dist/${name}`).href)
 const { useSeoMeta } = await dist('unhead', 'index.mjs')
 const { createHead: createV3Head, renderSSRHead: renderV3 } = await dist('unhead', 'server.mjs')
-const { compileTags, dynamicValue } = await dist('unhead', 'compiled/compile.mjs')
+const { compileTags, dynamicValue } = await dist('unhead', 'compiled.mjs')
 const { createHead: createCompiledHead, renderSSRHead: renderCompiled } = await dist('unhead', 'compiled/server.mjs')
-const { createHead: createStrictHead, renderSSRHead: renderStrict, templateParams } = await dist('unhead', 'compiled/server-strict.mjs')
 const { TemplateParamsPlugin } = await dist('unhead', 'plugins.mjs')
 const { unpackMeta } = await dist('unhead', 'utils.mjs')
 
@@ -43,11 +42,11 @@ function round(fn) {
   return count / (elapsed / 1000)
 }
 
-const groups = createFixtures({ compileTags, dynamicValue, unpackMeta, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, createStrictHead, renderStrict, TemplateParamsPlugin, templateParams })
+const groups = createFixtures({ compileTags, dynamicValue, unpackMeta, useSeoMeta, createV3Head, renderV3, createCompiledHead, renderCompiled, TemplateParamsPlugin })
 
 const rows = []
 for (const group of groups) {
-  const variants = Object.entries({ v3: group.v3, compiled: group.compiled, strict: group.strict }).filter(([, fn]) => fn)
+  const variants = Object.entries({ v3: group.v3, compiled: group.compiled }).filter(([, fn]) => fn)
   for (const t of [0, 1, 2]) {
     const expected = JSON.stringify(group.v3(t))
     for (const [name, fn] of variants) {

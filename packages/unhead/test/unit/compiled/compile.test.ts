@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
+import { compileTags, dynamicValue } from '../../../src/compiled'
 import { DEFAULT_COMPILED_TAGS } from '../../../src/compiled/core'
 import { toHeadInput } from '../../../src/compiled/tags'
 

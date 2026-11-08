@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
-import type { CreateServerHeadOptions, HeadEntry, HeadEntryOptions, HeadPluginInput, HeadTag, RenderSSRHeadOptions, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, HeadEntryOptions, HeadPluginInput, HeadTag, RenderSSRHeadOptions, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import type { CompiledEntry, CompiledRenderer, CompiledTagsHead, RuntimeTag } from './core'
-import type { CompiledEntryContent, CompiledTag, CompiledTags } from './types'
+import type { CompiledTag, CompiledTags } from './types'
 import { serverPropResolver } from '../server/createHead'
 import { createServerRenderer as createV3Renderer } from '../server/renderSSRHead'
 import { capoTagWeight } from '../server/sort'
@@ -18,14 +18,10 @@ import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag } from '.
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
-export { prepareTemplate } from '../parser'
-export type { PreparedTemplate } from '../parser'
 export type { ServerUnhead } from '../server/createHead'
-export { capoTagWeight } from '../server/sort'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from '../server/transformHtmlTemplate'
-export { escapeHtml, propsToString, ssrRenderTags, tagToString } from '../server/util'
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
-export type { CompiledEntryContent, CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, CompiledTagValue } from './types'
+export type { CompiledTags } from './types'
 
 /**
  * @experimental
@@ -395,17 +391,6 @@ export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions)
  */
 export function createServerRenderer(options: RenderSSRHeadOptions = {}): (head: Unhead<any>) => SSRHeadPayload {
   return head => renderSSRHead(head, options)
-}
-
-/**
- * Reads the compiled tags of a server head entry, with no copy and no render. Returns nothing
- * for an entry with loose input. Pass the result to `toHeadInput` for head input.
- *
- * @experimental
- */
-export function readCompiledEntry(entry: HeadEntry<any>): CompiledEntryContent | undefined {
-  const { _compiled, _values } = entry as CompiledEntry
-  return _compiled && { tags: _compiled, values: Array.isArray(_values) ? _values : undefined }
 }
 
 /**

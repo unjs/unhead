@@ -23,7 +23,7 @@ const dist = (pkg, name) => import(pathToFileURL(`${process.cwd()}/packages/${pk
 const { useHead, useSeoMeta } = await dist('vue', 'index.mjs')
 const { createHead: createV3Head, renderSSRHead: renderV3 } = await dist('vue', 'server.mjs')
 const { createHead: createCompiledHead, prepareHeadInput, renderSSRHead: renderCompiled } = await dist('vue', 'compiled/server.mjs')
-const { compileTags, dynamicValue } = await dist('unhead', 'compiled/compile.mjs')
+const { compileTags, dynamicValue } = await dist('unhead', 'compiled.mjs')
 const { TemplateParamsPlugin } = await dist('unhead', 'plugins.mjs')
 const { legacyPlugins } = await dist('unhead', 'legacy.mjs')
 const { unpackMeta } = await dist('unhead', 'utils.mjs')

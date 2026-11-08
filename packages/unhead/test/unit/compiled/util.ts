@@ -1,6 +1,6 @@
 import type { CreateServerHeadOptions, HeadPluginInput, HeadTag, RenderSSRHeadOptions } from '../../../src/types'
 import type { Scenario, ScenarioEntry } from './corpus'
-import { compileTags } from '../../../src/compiled/compile'
+import { compileTags } from '../../../src/compiled'
 import { createHead as createCompiledHead, renderSSRHead as renderCompiled } from '../../../src/compiled/server'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'

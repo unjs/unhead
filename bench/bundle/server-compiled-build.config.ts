@@ -20,7 +20,6 @@ export default defineBuildConfig({
     },
     alias: {
       entries: [
-        { find: 'unhead/compiled/server-strict', replacement: path.join(packagesDir, 'unhead/dist/compiled/server-strict.mjs') },
         { find: 'unhead/compiled/server', replacement: path.join(packagesDir, 'unhead/dist/compiled/server.mjs') },
         { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
         { find: 'unhead', replacement: path.join(packagesDir, 'unhead/dist/index.mjs') },
