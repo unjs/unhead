@@ -219,17 +219,11 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
   // silent render that adopts the server head. A claim is a copy of a server entry as it was
   // pushed: it tracks the cleanup of the server elements it finds, and writes nothing.
   function draw(entries: HeadEntry<any>[], claimed?: HeadEntry<any>[]): true | undefined {
-    const params: any = head.plugins.get('template-params')
     // claims resolve first, so the title state comes from the rendered entries
     const claims = claimed ? resolveCompiledTags(head, claimed) : []
     const tags = claims && resolveCompiledTags(head, entries)
     if (!tags) {
       loadV3()
-      return
-    }
-    // a head with no `%` renders the same with or without the plugin
-    if (params?._load && JSON.stringify([tags, claims]).includes('%')) {
-      params._load(head).then(() => head.render(), loadV3)
       return
     }
     let state: any = head._dom

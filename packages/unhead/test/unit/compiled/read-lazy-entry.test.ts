@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
-import { readCompiledEntry } from '../../../src/lazy'
+import { compileTags, dynamicValue, readCompiledEntry } from '../../../src/compiled'
 import { compiledTagsHead, settle, ssrDom } from './client-util'
 
 function compile(input: unknown, dynamicValues?: number): any {

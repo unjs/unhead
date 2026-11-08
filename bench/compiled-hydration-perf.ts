@@ -37,9 +37,9 @@ const { renderToString } = await import('vue/server-renderer')
 const { useHead } = await dist('vue', 'index.mjs')
 const { createHead: createClientHead } = await dist('vue', 'client.mjs')
 const { createHead: createServerHead, renderSSRHead } = await dist('vue', 'server.mjs')
-const { createLazyHead, acceptCompiledTags } = await dist('vue', 'lazy.mjs')
+const { createLazyHead } = await dist('vue', 'lazy.mjs')
 const { useCompiledHead } = await dist('vue', 'compiled.mjs')
-const { compileTags, dynamicValue } = await dist('unhead', 'compiled/compile.mjs')
+const { compileTags, dynamicValue } = await dist('unhead', 'compiled.mjs')
 
 const COMPONENTS = 20
 const input = (i: number, content: unknown) => ({ meta: [{ name: `component-${i}`, content }], link: [{ rel: 'prefetch', href: `/chunk-${i}.js` }] })
@@ -122,7 +122,7 @@ for (const [callName, head] of [['useHead', 'v3'], ['useHead ref', 'v3'], ['useH
         timed(() => h.render(), 'render')
         return () => a.unmount()
       }
-      const h = timed(() => callName.startsWith('useCompiledHead') ? acceptCompiledTags(createLazyHead({ document })) : createLazyHead({ document }))
+      const h = timed(() => createLazyHead({ document }))
       const a = vue.createSSRApp(component)
       timed(() => a.use(h))
       a.mount('#app')

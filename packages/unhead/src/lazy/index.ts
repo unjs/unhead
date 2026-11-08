@@ -1,10 +1,10 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { CompiledEntryContent, CompiledTags } from '../compiled/types'
-import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from '../types'
+import type { CompiledTags } from '../compiled/types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
 import { registerPlugin } from '../unhead'
 
 export type { ClientUnhead } from '../client/adapter'
-export type { CompiledEntryContent, CompiledTags } from '../compiled/types'
+export type { CompiledTags } from '../compiled/types'
 
 export interface CreateLazyHeadOptions extends CreateClientHeadOptions {
   /**
@@ -61,11 +61,11 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   blockLoad: () => void
   /**
-   * Set by `acceptCompiledTags`: the compiled runtime when every entry holds compiled tags.
+   * Marks a head that takes compiled tags, for `useCompiledHead` and `InferSeoMetaPlugin`.
    *
    * @internal
    */
-  _acceptsCompiled?: () => Promise<typeof import('../compiled/client')> | undefined
+  _acceptsCompiled: 1
   /**
    * Set when the full runtime loads: the first entry without compiled tags, or
    * `true` when a hook, a render option, or a value needed it. Read it to debug compiler mode.
@@ -128,54 +128,6 @@ function createHookStore(initial?: Record<string, any>) {
 }
 
 /**
- * `TemplateParamsPlugin`, loaded only once a value holds `%`. A head with no `%`
- * renders the same with or without the plugin.
- *
- * @experimental
- */
-export const lazyTemplateParams: HeadPlugin & { _load: (head: Unhead<any>) => Promise<void> } = {
-  key: 'template-params',
-  _load: head => import('../plugins/templateParams').then(({ TemplateParamsPlugin }) => {
-    // a render that waits on this load may call it again
-    if (head.plugins.get('template-params') === lazyTemplateParams) {
-      head.plugins.delete('template-params')
-      head.use(TemplateParamsPlugin)
-    }
-  }),
-}
-
-/**
- * Lets a lazy head render compiled tags on the compiled runtime, which loads instead of the
- * full runtime when every entry holds compiled tags. A head without it still takes compiled tags, through
- * the full runtime.
- *
- * Call it where the head is created when the bundler compiles head calls. The first
- * compiled call also calls it, but an idle load can start before that call, for
- * example while the router loads a page, and then picks the full runtime. Its code
- * stays out of a bundle that never calls it.
- *
- * @experimental
- */
-export function acceptCompiledTags<T>(head: LazyUnhead<T>): LazyUnhead<T> {
-  head._acceptsCompiled ||= () => [...head.entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
-    ? import('../compiled/client')
-    : undefined
-  return head
-}
-
-/**
- * Reads the compiled tags of a lazy head entry, a pending patch first. Returns nothing for an
- * entry with loose input, and for every entry once the full runtime loads. Pass the result to
- * `toHeadInput` from `unhead/compiled/compile` for head input.
- *
- * @experimental
- */
-export function readCompiledEntry(entry: HeadEntry<any>): CompiledEntryContent | undefined {
-  const tags = entry._pending ?? entry.input
-  return Array.isArray(tags) ? { tags, values: (entry.options as LazyEntryOptions | undefined)?.values } : undefined
-}
-
-/**
  * Creates a client head for a server rendered page. It keeps entries without
  * touching the document, then loads the DOM runtime when the browser is idle or
  * when a change must reach the document.
@@ -216,6 +168,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     hooks,
     dirty: false,
     render: () => render(head),
+    _acceptsCompiled: 1,
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     invalidate() {
       for (const entry of entries.values())
@@ -335,7 +288,10 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       return false
     })
 
-  head.load = () => loading ||= upgrade(head._acceptsCompiled?.() || import('./runtime'))
+  // The compiled runtime loads when every entry holds compiled tags. It passes anything else to the full runtime.
+  head.load = () => loading ||= upgrade([...entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
+    ? import('../compiled/client')
+    : import('./runtime'))
 
   const armIdle = () => {
     if (loading || cancelIdle || !document)

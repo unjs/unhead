@@ -1,11 +1,11 @@
-import type { CompiledTags } from 'unhead/compiled/server'
+import type { CompiledTags } from 'unhead/compiled'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions, VueHeadClient } from '../types'
 import { FlatMetaPlugin } from 'unhead/plugins'
 import { toValue, unref } from 'vue'
 import { injectHead } from '../install'
 
-export type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: unknown, blockLoad?: unknown }
+export type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: unknown }
 
 export const COMPILED_TAGS_HEAD_ERROR = '[unhead] This head cannot take compiled tags. Create it with createHead() from @unhead/vue/compiled/server or createLazyHead() from @unhead/vue/lazy. Or set compile: false in the Unhead plugin.'
 

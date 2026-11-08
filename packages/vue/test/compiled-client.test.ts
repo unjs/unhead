@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { renderToString } from '@vue/server-renderer'
-import { compileTags, dynamicValue } from 'unhead/compiled/compile'
+import { compileTags, dynamicValue } from 'unhead/compiled'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent, effectScope, getCurrentScope, h, KeepAlive, nextTick, onMounted, ref } from 'vue'
 import { useHead } from '../src'

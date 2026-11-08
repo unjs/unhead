@@ -1,4 +1,4 @@
-import type { CompiledTags } from 'unhead/compiled/server'
+import type { CompiledTags } from 'unhead/compiled'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
 import type { CompiledTagsHead } from './tags'

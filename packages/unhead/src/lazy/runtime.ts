@@ -60,7 +60,6 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: CreateLazyH
   const plugins = await options.lazyPlugins?.()
   head.resolvedOptions._tagWeight = tagWeight
   plugins?.forEach(p => head.use(p))
-  await (head.plugins.get('template-params') as any)?._load?.(head)
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
   // the compiled runtime rendered already, so its state holds what the hydrated entries would adopt
   if (head._dom)

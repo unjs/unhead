@@ -25,8 +25,6 @@ export function createLazyHead(options: CreateLazyHeadOptions = {}): VueLazyHead
   return head
 }
 
-export { acceptCompiledTags, lazyTemplateParams } from 'unhead/lazy'
-
 export type {
   CompiledTags,
   CreateLazyHeadOptions,

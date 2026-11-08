@@ -3,21 +3,16 @@ import type { LazyHeadEntry, LazyUnhead } from 'unhead/lazy'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
 import type { CompiledTagsHead, CompiledValues } from './tags'
-import { acceptCompiledTags } from 'unhead/lazy'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated, onScopeDispose, watchEffect } from 'vue'
 import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, resolveValues, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
 
-// A full runtime head would push the compiled tags as loose input and render nothing for them. A lazy
-// client head takes compiled tags once `acceptCompiledTags` ran, so the first call enables it.
+// A full runtime head would push the compiled tags as loose input and render nothing for them
 function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
   const head = injectCompiledTagsHead(options)
-  if (!head?._acceptsCompiled) {
-    if (!head?.blockLoad)
-      throw new Error(COMPILED_TAGS_HEAD_ERROR)
-    acceptCompiledTags(head as unknown as LazyUnhead<any>)
-  }
+  if (!head?._acceptsCompiled)
+    throw new Error(COMPILED_TAGS_HEAD_ERROR)
   return head
 }
 

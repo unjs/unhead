@@ -1,8 +1,8 @@
 import type { ResolvableHead } from '../../../src/types'
 import { describe, expect, it, vi } from 'vitest'
 import { createHead as createV3Head } from '../../../src/client'
-import { compileTags, dynamicValue } from '../../../src/compiled/compile'
-import { createLazyHead, lazyTemplateParams } from '../../../src/lazy'
+import { compileTags, dynamicValue } from '../../../src/compiled'
+import { createLazyHead } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { compiledTagsHead, createPair, settle, ssrDom, toCompiledTags } from './client-util'
 
@@ -67,22 +67,36 @@ describe('compiled entries in the eager shell', () => {
   })
 })
 
-describe('a head without acceptCompiledTags', () => {
-  it('renders compiled tags through the full runtime', async () => {
+describe('a lazy head with no setup', () => {
+  it('renders compiled tags on the compiled runtime', async () => {
+    const dom = ssrDom([{ input: page }], 'none')
+    const before = dom.serialize()
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(toCompiledTags(page))
+    head.render()
+    await head.load()
+    await settle(head)
+    expect(v3Runtime.heads.has(head)).toBe(false)
+    expect(dom.serialize()).toBe(before)
+    entry.patch(toCompiledTags({ title: 'Next' }), { values: [] })
+    await settle(head)
+    expect(dom.window.document.title).toBe('Next')
+  })
+
+  it('loads the full runtime when an entry holds loose input', async () => {
     const pair = createPair([{ input: page }], 'none')
     const dom = ssrDom([{ input: page }], 'none')
     const head = createLazyHead({ document: dom.window.document })
-    const entry = head.push(toCompiledTags(page))
+    head.push(toCompiledTags(page))
+    head.push({ meta: [{ name: 'loose', content: 'yes' }] })
     pair.push(page)
+    pair.v3.push({ meta: [{ name: 'loose', content: 'yes' }] })
     head.render()
     await head.load()
     await pair.render()
     await settle(head)
     expect(v3Runtime.heads.has(head)).toBe(true)
     expect(dom.serialize()).toBe(pair.v3Dom.serialize())
-    entry.patch(toCompiledTags({ title: 'Next' }), { values: [] })
-    await settle(head)
-    expect(dom.window.document.title).toBe('Next')
   })
 })
 
@@ -377,18 +391,17 @@ describe('template params', () => {
     expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
   })
 
-  it('loads the lazy plugin only once a value holds %', async () => {
+  it('registers TemplateParamsPlugin from lazyPlugins when the compiled runtime loads', async () => {
     const dom = ssrDom([], 'none')
-    const head = compiledTagsHead({ document: dom.window.document, plugins: [lazyTemplateParams] })
-    head.push(toCompiledTags({ title: 'Plain', meta: [{ name: 'a', content: 'b' }] }))
+    const head = compiledTagsHead({ document: dom.window.document, lazyPlugins: async () => [TemplateParamsPlugin] })
+    head.push(toCompiledTags({ templateParams: { x: 'y' }, meta: [{ name: 'a', content: '%x' }] }))
+    expect(head.plugins.has('template-params')).toBe(false)
     head.render()
     await head.load()
     await settle()
-    expect(head.plugins.get('template-params')).toBe(lazyTemplateParams)
-    head.push(toCompiledTags({ templateParams: { x: 'y' }, meta: [{ name: 'a', content: '%x' }] }))
-    await settle()
-    expect(head.plugins.get('template-params')!.hooks).toBeDefined()
+    expect(head.plugins.has('template-params')).toBe(true)
     expect(dom.window.document.querySelector('meta[name="a"]')!.getAttribute('content')).toBe('y')
+    expect(v3Runtime.heads.has(head)).toBe(false)
   })
 
   it('applies params to a value', async () => {

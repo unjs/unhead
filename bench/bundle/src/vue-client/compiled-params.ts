@@ -1,7 +1,7 @@
 import { useCompiledHead } from '@unhead/vue/compiled'
-import { createLazyHead, lazyTemplateParams } from '@unhead/vue/lazy'
+import { createLazyHead } from '@unhead/vue/lazy'
 
-// compiled.ts with template params, which load only once a value holds `%`
+// compiled.ts with template params, whose plugin loads with the runtime
 const compiledTags = [
   ['title', 0, 10, 'title', { textContent: 'Test' }, 1],
   ['titleTemplate', 0, 100, 'titleTemplate', { textContent: '%s %separator %siteName' }, 1],
@@ -11,6 +11,6 @@ const compiledTags = [
   ['script', { src: '/test.js', defer: true }, 80, 'script:defer:true,src:/test.js'],
 ] as const
 
-const head = createLazyHead({ plugins: [lazyTemplateParams] })
+const head = createLazyHead({ lazyPlugins: () => import('unhead/plugins').then(m => [m.TemplateParamsPlugin]) })
 
 useCompiledHead(compiledTags as any, undefined, { head })

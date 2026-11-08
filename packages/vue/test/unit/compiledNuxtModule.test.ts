@@ -12,7 +12,7 @@ import { InferSeoMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, expect, it } from 'vitest'
 import * as vue from 'vue'
 import { CompileTransform } from '../../../bundler/src/unplugin/CompileTransform'
-import { acceptCompiledTags, createLazyHead } from '../../src/lazy'
+import { createLazyHead } from '../../src/lazy'
 
 // The Nuxt UI 4.11.3 plugin that sets its color variables, as published
 const COLORS_ID = '/app/node_modules/.pnpm/@nuxt+ui@4.11.3/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js'
@@ -108,7 +108,7 @@ describe('the Nuxt UI colors plugin', () => {
     compiledApp.mount(compiledDom.window.document.getElementById('app')!)
     lazy.render()
     // every entry holds compiled tags, so the compiled runtime loads
-    expect(lazy._acceptsCompiled?.()).toBeDefined()
+    expect([...lazy.entries.values()].every(entry => Array.isArray(entry.input))).toBe(true)
     await lazy.load()
     await tick(20)
     expect(compiledDom.serialize()).toBe(v3Dom.serialize())
@@ -183,7 +183,6 @@ export default function setup() {
 
     const compiledDom = page()
     const lazy = createLazyHead({ document: compiledDom.window.document })
-    acceptCompiledTags(lazy)
     usePlugins(lazy)
     vue.createSSRApp({ setup: run(compilePage(), states[1]!), render: () => vue.h('div') }).use(lazy).mount(compiledDom.window.document.getElementById('app')!)
     lazy.render()

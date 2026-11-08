@@ -3,11 +3,12 @@ import type { HeadEntryOptions } from '../../../src/types'
 import type { Scenario } from './corpus'
 import { JSDOM } from 'jsdom'
 import { createHead as createV3Head } from '../../../src/client'
-import { compileTags } from '../../../src/compiled/compile'
-import { acceptCompiledTags, createLazyHead, lazyTemplateParams } from '../../../src/lazy'
+import { compileTags } from '../../../src/compiled'
+import { createLazyHead } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
+/** `lazy` passes `TemplateParamsPlugin` through `lazyPlugins`, so it arrives with the runtime. */
 export type Params = 'none' | 'plugin' | 'lazy'
 
 export function toCompiledTags(input: any): any {
@@ -32,9 +33,9 @@ export function ssrDom(inputs: { input: any, options?: HeadEntryOptions, dispose
   return new JSDOM(`<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}<div>app</div>${bodyTags}</body></html>`)
 }
 
-/** A lazy head with compiled tag support, as `useCompiledHead` sets it up. */
+/** A lazy head, which takes compiled tags with no setup. */
 export function compiledTagsHead(options: Parameters<typeof createLazyHead>[0] = {}) {
-  return acceptCompiledTags(createLazyHead(options))
+  return createLazyHead(options)
 }
 
 export const tick = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms))
@@ -69,7 +70,8 @@ export function createPair(server: { input: any, options?: HeadEntryOptions, dis
   v3._b = true
   const compiledTags = compiledTagsHead({
     document: compiledDom.window.document,
-    plugins: params === 'none' ? [] : [params === 'lazy' ? lazyTemplateParams : TemplateParamsPlugin],
+    plugins: params === 'plugin' ? [TemplateParamsPlugin] : [],
+    lazyPlugins: params === 'lazy' ? async () => [TemplateParamsPlugin] : undefined,
   })
   return {
     v3,
