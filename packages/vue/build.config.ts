@@ -35,6 +35,12 @@ export default defineBuildConfig({
   hooks: {
     'rollup:options': (_, options) => {
       options.experimentalLogSideEffects = true
+      // An entry file imports only what it uses: a hoisted import puts a file in the initial
+      // chunks of an app, though only a lazy chunk uses it.
+      for (const output of [options.output].flat()) {
+        if (output)
+          output.hoistTransitiveImports = false
+      }
     },
   },
 })

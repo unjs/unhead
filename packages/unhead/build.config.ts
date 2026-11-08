@@ -107,12 +107,22 @@ export default defineBuildConfig({
       options.experimentalLogSideEffects = true
       // Bundlers split by module, so one shared dist file cannot straddle an eager and a lazy
       // chunk. The Vue composables need walkResolver eagerly, and a lazy head loads the
-      // resolve pipeline lazily, so walkResolver gets its own dist file.
+      // resolve pipeline lazily, so walkResolver gets its own dist file. A lazy head loads
+      // TemplateParamsPlugin alone, so its file holds no other plugin, whose definition a
+      // bundler keeps when a minify step drops the pure annotation.
+      // An entry file imports only what it uses: a hoisted import of a shared file puts that
+      // file in the initial chunks of an app, though only a lazy chunk uses it.
       for (const output of [options.output].flat()) {
         if (output) {
+          output.hoistTransitiveImports = false
           output.manualChunks = (id) => {
             if (id.endsWith('src/utils/walkResolver.ts') || id.endsWith('src/utils/unsafeKey.ts'))
               return 'walkResolver'
+            if (id.endsWith('src/plugins/templateParams.ts') || id.endsWith('src/utils/templateParams.ts'))
+              return 'templateParams'
+            // every plugin file imports it, so it must not pull another plugin along
+            if (id.endsWith('src/plugins/defineHeadPlugin.ts'))
+              return 'defineHeadPlugin'
           }
         }
       }
