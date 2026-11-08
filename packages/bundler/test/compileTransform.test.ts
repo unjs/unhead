@@ -155,11 +155,66 @@ return (_ctx,_push,_parent,_attrs) => {
   })
 
   it('compiles imports from importPaths', () => {
-    const code = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
+    const code = `import { useHead } from '~/head'\nuseHead({ title: 'A' })`
     expect(transform(code)).toBeUndefined()
     const head = {}
-    expect(calls(transform(code, undefined, server, { importPaths: ['#imports'] }), { injectHead: () => head })[0]!.args)
+    expect(calls(transform(code, undefined, server, { importPaths: ['~/head'] }), { injectHead: () => head })[0]!.args)
       .toEqual([compiledTagsOf({ title: 'A' }), undefined, { head }])
+  })
+
+  it.each(['#imports', 'nuxt/app'])('compiles imports from %s by default', (source) => {
+    const code = transform(`import { injectHead, useHead } from '${source}'\nuseHead({ title: 'A' })`)
+    // the recorder stands in for injectHead, so the head is what it returns
+    expect(calls(code).map(call => call.fn)).toEqual(['injectHead', 'useCompiledHead'])
+    expect(calls(code)[1]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head: undefined }])
+  })
+
+  // Nuxt UI keeps its head input in a const before the call
+  it('compiles a const object input that only the call reads', () => {
+    const code = transform(`${IMPORTS}const root = { value: 'a' }
+const headData = { style: [{ innerHTML: root, id: 'colors' }], title: 'T' }
+useHead(headData)`)
+    expect(code).not.toContain('useHead(headData)')
+    const result = calls(code)
+    expect(result[0]!.args).toEqual([compiledTagsOf({ style: [{ innerHTML: dynamicValue(0), id: 'colors' }], title: 'T' }, 1), [{ value: 'a' }]])
+  })
+
+  it.each([
+    ['a second reference', `const headData = { title: 'T' }\nuseHead(headData)\nheadData.title = 'U'`],
+    ['let', `let headData = { title: 'T' }\nuseHead(headData)`],
+    ['a non-literal init', `const headData = make()\nuseHead(headData)`],
+    ['a parameter', `function f(headData) { useHead(headData) }`],
+  ])('leaves an identifier input with %s', (_, body) => {
+    expect(transform(`${IMPORTS}${body}`)).toBeUndefined()
+  })
+
+  it('compiles head calls in the runtime files of a module in node_modules', () => {
+    const source = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
+    expect(transform(source, '/app/node_modules/.pnpm/@nuxt+ui@4.0.0/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js')).toContain('useCompiledHead')
+    expect(transform(source, '/app/node_modules/pkg/dist/index.mjs')).toBeUndefined()
+  })
+
+  // webpack has no resolveId that can resolve the runtime from the app
+  it('leaves module runtime files as written under webpack', () => {
+    const source = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
+    const plugin = (CompileTransform as any).raw({}, { framework: 'webpack' })
+    expect(runTransform(plugin, source, '/app/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js', server)).toBeUndefined()
+    expect(runTransform(plugin, source, '/app/src/page.js', server)?.code).toContain('useCompiledHead')
+  })
+
+  it('compiles a dependency that filter.include names', () => {
+    const source = `${IMPORTS}useHead({ title: 'A' })`
+    const id = '/app/node_modules/docus/app/app.config.ts'
+    expect(transform(source, id)).toBeUndefined()
+    expect(transform(source, id, server, { filter: { include: [/[\\/]node_modules[\\/]docus[\\/]/] } })).toContain('useCompiledHead')
+  })
+
+  it('resolves the compiled runtime from the app for a module in node_modules', async () => {
+    const plugin = CompileTransform.vite({}) as any
+    const resolved = { id: '/app/node_modules/@unhead/vue/dist/compiled.mjs' }
+    const ctx = { resolve: async (id: string, importer?: string) => importer ? null : id === '@unhead/vue/compiled' ? resolved : null }
+    expect(await plugin.resolveId.call(ctx, '@unhead/vue/compiled', '/app/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js')).toBe(resolved)
+    expect(await plugin.resolveId.call(ctx, '@unhead/vue/compiled', '/app/src/page.js')).toBeUndefined()
   })
 
   it('compiles useServerHead and useServerSeoMeta', () => {
@@ -265,6 +320,7 @@ return (_ctx,_push,_parent,_attrs) => {
     ['a CommonJS module', '/src/page.cjs'],
     ['a style block', '/src/App.vue?vue&type=style&index=0&lang.css'],
     ['a dependency', '/node_modules/pkg/index.js'],
+    ['a dependency runtime file in CommonJS', '/node_modules/pkg/dist/runtime/a.cjs'],
   ])('skips %s', (_, id) => {
     expect(transform(`${IMPORTS}useHead({ title: 'A' })`, id)).toBeUndefined()
   })
