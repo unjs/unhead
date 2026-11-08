@@ -2,7 +2,6 @@ import * as unheadVue from '@unhead/vue'
 import { createHead as createClientHead } from '@unhead/vue/client'
 import * as compiledRuntime from '@unhead/vue/compiled'
 import { createHead as createCompiled, renderSSRHead as renderCompiled } from '@unhead/vue/compiled/server'
-import { createHead as createStrict, renderSSRHead as renderStrict } from '@unhead/vue/compiled/server-strict'
 import { createHead as createV3, renderSSRHead as renderV3 } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { TemplateParamsPlugin } from 'unhead/plugins'
@@ -324,17 +323,17 @@ describe('compiled values keep v3 evaluation', () => {
 describe('useCompiledHead', () => {
   const compiledTags: any = [['title', 0, 10, 'title', { textContent: 'A' }, 1]]
 
-  it('renders on a strict head', async () => {
+  it('renders a compiled useHead beside loose calls', async () => {
     const source = snippet(`const title = ref('a')
       useHead({ title, meta: [{ name: 'description', content: () => 'D' }] })
       useSeoMeta({ ogTitle: 'O' })
       title.value = 'b'`, false)
     const v3 = createV3({ disableDefaults: true })
     await ssr(v3, evaluate(source))
-    const head = createStrict({ disableDefaults: true })
+    const head = createCompiled({ disableDefaults: true })
     expect(await ssr(head, evaluate(compile(source)))).toBeUndefined()
-    expect(renderStrict(head)).toEqual(renderV3(v3))
-    expect(renderStrict(head).headTags).toContain('<title>b</title>')
+    expect(renderCompiled(head)).toEqual(renderV3(v3))
+    expect(renderCompiled(head).headTags).toContain('<title>b</title>')
   })
 
   it.each([
