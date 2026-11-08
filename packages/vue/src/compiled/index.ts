@@ -1,4 +1,4 @@
-import type { CompiledTags } from 'unhead/compiled/server'
+import type { CompiledTags } from 'unhead/compiled'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions, VueHeadClient } from '../types'
 import { FlatMetaPlugin } from 'unhead/plugins'
@@ -46,7 +46,7 @@ function isMarked(compiledTags: CompiledTags, index: number, flag: number): bool
  * call site evaluates each value. A ref or getter value resolves once, on the first
  * render, as v3 resolves it.
  *
- * @experimental
+ * @internal
  */
 export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
@@ -58,7 +58,7 @@ export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledVal
  * When a value resolves to one that v3 renders by flat meta rules, such as an
  * empty string, the entry takes the input that `loose` rebuilds.
  *
- * @experimental
+ * @internal
  */
 export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: unknown[]) => object, values: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)

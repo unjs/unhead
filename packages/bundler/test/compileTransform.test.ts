@@ -1,5 +1,5 @@
 import { SourceMap, stripTypeScriptTypes } from 'node:module'
-import { compileTags, dynamicValue } from 'unhead/compiled/compile'
+import { compileTags, dynamicValue } from 'unhead/compiled'
 import { unpackMeta } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 import { CompileTransform } from '../src/unplugin/CompileTransform'
