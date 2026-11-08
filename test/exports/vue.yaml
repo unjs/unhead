@@ -23,6 +23,7 @@
 ./compiled:
   useCompiledHead: function
   useCompiledSeoMeta: function
+  useStaticCompiledSeoMeta: function
 ./compiled/server:
   createHead: function
   prepareHeadInput: function

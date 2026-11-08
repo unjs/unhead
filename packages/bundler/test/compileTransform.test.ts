@@ -332,14 +332,20 @@ useHead(headData)`)
     const result = calls(transform(`${IMPORTS}useServerHead({ title: 'A' })\nuseServerSeoMeta({ description: 'B' })`))
     expect(result).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' })] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
+      { fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
     ])
   })
 
   it('expands a static useSeoMeta call at build time', () => {
     const flat = { description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] }
     const result = calls(transform(`${IMPORTS}useSeoMeta({ title: 'T', description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] })`))
-    expect(result[0]).toEqual({ fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) })] })
+    expect(result[0]).toEqual({ fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) })] })
+  })
+
+  it('passes the head option of a static useSeoMeta call with no values slot', () => {
+    const head = {}
+    const result = calls(transform(`${IMPORTS}useSeoMeta({ description: 'D' }, { head })`), { head })
+    expect(result[0]).toEqual({ fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'D' }] }), { head }] })
   })
 
   it('compiles a dynamic useSeoMeta call with a full runtime fallback for its values', () => {

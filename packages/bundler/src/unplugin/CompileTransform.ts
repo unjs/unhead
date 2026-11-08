@@ -701,7 +701,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
               return
             }
 
-            const fn = result.loose ? 'useCompiledSeoMeta' : 'useCompiledHead'
+            // a `useSeoMeta` call with no values takes no fallback and no values, and keeps its marker
+            const fn = callee.kind === 'seo' ? result.loose ? 'useCompiledSeoMeta' : 'useStaticCompiledSeoMeta' : 'useCompiledHead'
             runtime.add(fn)
             const head = [hoist(JSON.stringify(result.tags), compiledTagSets)]
             if (result.loose)
@@ -709,7 +710,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             // a getter that runs statements keeps them, so it stays the values argument
             const valuesGetter = getter && (getter.block || result.values.length)
             const hasValues = result.values.length || valuesGetter
-            const tail = autoHead ? `, ${hasValues ? '' : 'undefined, '}${AUTO_HEAD}` : options && !hasValues ? ', undefined' : ''
+            const valuesSlot = hasValues || fn === 'useStaticCompiledSeoMeta' ? '' : 'undefined'
+            const tail = autoHead ? `, ${valuesSlot && `${valuesSlot}, `}${AUTO_HEAD}` : options && valuesSlot ? `, ${valuesSlot}` : ''
             s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
             // A getter input returns its values in place of its object, so it still runs once
             // for each resolution and tracks as a whole, as v3 tracks it

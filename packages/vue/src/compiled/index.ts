@@ -89,3 +89,13 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
     ? serverCompiledSeoMeta(head, compiledTags, loose, values, options)
     : markSeoMeta(head, clientPush(head, resolved => [seoMetaInput(head, compiledTags, loose, resolved), resolved], values, options))
 }
+
+/**
+ * Pushes compiled tags that the bundler `compile` option made from a `useSeoMeta` call with
+ * no values. No value can need the flat meta rules of v3, so it carries no fallback.
+ *
+ * @internal
+ */
+export function useStaticCompiledSeoMeta(compiledTags: CompiledTags, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  return markSeoMeta(compiledTagsHead(options), useCompiledHead(compiledTags, undefined, options))
+}

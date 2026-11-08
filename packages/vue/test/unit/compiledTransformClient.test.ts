@@ -13,7 +13,7 @@ import { createLazyHead } from '../../src/lazy'
 
 const IMPORT_RE = /^import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"];?$/gm
 const AS_RE = /\s+as\s+/
-const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta)\(/g
+const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta|useStaticCompiledSeoMeta)\(/g
 
 const modules = {
   '@unhead/vue': unheadVue,
