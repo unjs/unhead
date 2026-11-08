@@ -14,6 +14,7 @@
 ./compiled/compile:
   compileTags: function
   dynamicValue: function
+  toHeadInput: function
 ./compiled/server:
   capoTagWeight: function
   createHead: function
@@ -22,6 +23,7 @@
   prepareHeadInput: function
   prepareTemplate: function
   propsToString: function
+  readCompiledEntry: function
   renderSSRHead: function
   ssrRenderTags: function
   tagToString: function
