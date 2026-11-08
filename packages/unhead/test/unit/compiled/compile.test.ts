@@ -215,4 +215,14 @@ describe('toHeadInput', () => {
     const result = compileTags({ title: `x ${dynamicValue(0)}`, meta: [{ name: 'a', content: dynamicValue(1) }] }, { dynamicValues: 2 })
     expect(result._tag === 'Ok' && toHeadInput(result.tags, ['t', null])).toEqual({ title: 'x t', meta: [{ name: 'a', content: null }] })
   })
+
+  it('leaves out a tag that its undefined value drops, and keeps one that it empties', () => {
+    const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'a', content: dynamicValue(1) }] }, { dynamicValues: 2 })
+    const tags = result._tag === 'Ok' ? result.tags : []
+    expect(toHeadInput(tags, [undefined, undefined])).toEqual({ meta: [{ name: 'a', content: undefined }] })
+    // the build marks a flat meta tag, which v3 makes no tag for
+    const marked = tags.map(tag => tag[0] === 'meta' ? [...tag.slice(0, 5), tag[5]! | 8] as unknown as typeof tag : tag)
+    expect(toHeadInput(marked, [undefined, undefined])).toEqual({})
+    expect(toHeadInput(marked, ['t', 'd'])).toEqual({ title: 't', meta: [{ name: 'a', content: 'd' }] })
+  })
 })
