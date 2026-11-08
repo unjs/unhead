@@ -520,3 +520,58 @@ describe('compile option', () => {
     ])
   })
 })
+
+describe('a head that cannot take compiled tags', () => {
+  function context(warnings: string[]) {
+    return { ...server, warn: (message: string) => warnings.push(message) }
+  }
+
+  it.each([
+    ['@unhead/vue/server', `import { createHead } from '@unhead/vue/server'\nexport const head = createHead()`],
+    ['@unhead/vue/client', `import { createHead as create } from '@unhead/vue/client'\nexport const head = create()`],
+    ['unhead/server', `import { createHead } from 'unhead/server'\nexport const head = createHead()`],
+    ['unhead/client', `import { createHead } from 'unhead/client'\nexport const head = createHead()`],
+    ['vite-ssg', `import { ViteSSG } from 'vite-ssg'\nexport const createApp = ViteSSG()`],
+  ])('turns compile off after a module imports from %s, and warns once', (source, code) => {
+    const plugin = CompileTransform.vite({})
+    const warnings: string[] = []
+    expect(runTransform(plugin, code, '/src/main.ts', context(warnings))).toBeUndefined()
+    expect(runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context(warnings))).toBeUndefined()
+    expect(runTransform(plugin, code, '/src/other.ts', context(warnings))).toBeUndefined()
+    expect(warnings).toEqual([expect.stringContaining(`/src/main.ts imports from ${source}`)])
+    expect(warnings[0]).toContain('Compiler mode is off for this build')
+  })
+
+  it.each([
+    ['the compiled server head', `import { createHead } from '@unhead/vue/compiled/server'\nexport const head = createHead()`],
+    ['the lazy head', `import { createLazyHead } from '@unhead/vue/lazy'\nexport const head = createLazyHead()`],
+    ['another export of the server entry', `import { renderSSRHead } from '@unhead/vue/server'\nexport { renderSSRHead }`],
+    ['a type import', `import type { createHead } from '@unhead/vue/client'\nexport type Create = typeof createHead`],
+  ])('keeps compile on with %s', (_, code) => {
+    const plugin = CompileTransform.vite({})
+    const warnings: string[] = []
+    runTransform(plugin, code, '/src/main.ts', context(warnings))
+    expect(calls(runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context(warnings)).code).map(call => call.fn)).toEqual(['useCompiledHead'])
+    expect(warnings).toEqual([])
+  })
+
+  it('keeps compile on for an import in a dependency', () => {
+    const plugin = CompileTransform.vite({})
+    runTransform(plugin, `import { createHead } from '@unhead/vue/client'\nexport const head = createHead()`, '/node_modules/nuxt/dist/head/runtime/plugins/unhead.js', context([]))
+    expect(transform(`${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', server)).toBeDefined()
+  })
+
+  it('fails the build when a module compiled before the import was found', () => {
+    const plugin = CompileTransform.vite({})
+    expect(runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context([]))).toBeDefined()
+    expect(() => runTransform(plugin, `import { createHead } from '@unhead/vue/client'\nexport const head = createHead()`, '/src/head.ts', context([])))
+      .toThrow('/src/head.ts imports from @unhead/vue/client')
+  })
+
+  it('names the fix in the build error', () => {
+    const plugin = CompileTransform.vite({})
+    runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context([]))
+    expect(() => runTransform(plugin, `import { createHead } from '@unhead/vue/client'\nexport const head = createHead()`, '/src/head.ts', context([])))
+      .toThrow('set compile: false')
+  })
+})

@@ -299,3 +299,31 @@ describe('vite inline script transform backend', () => {
     })
   })
 })
+
+describe('compile with a head that vite-ssg creates', () => {
+  it('turns compile off for the build and warns once, naming the file', async () => {
+    const root = fileURLToPath(new URL('./fixtures/vite-ssg', import.meta.url))
+    const warnings: string[] = []
+    const result = await build({
+      root,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false, validate: false, compile: true, _framework: '@unhead/vue' }) as any,
+      build: {
+        write: false,
+        minify: false,
+        lib: { entry: `${root}/page.ts`, formats: ['es'], fileName: 'page' },
+        rollupOptions: {
+          external: [/^@unhead\/vue/],
+          onwarn: warning => warnings.push(warning.message),
+        },
+      },
+    })
+    const code = outputCode(result)
+    expect(code).toContain('PAGE_MARKER')
+    expect(code).not.toContain('useCompiledHead')
+    const compileWarnings = warnings.filter(message => message.includes('Compiler mode is off'))
+    expect(compileWarnings).toEqual([expect.stringContaining(`${root}/package.json`)])
+    expect(compileWarnings[0]).toContain('vite-ssg')
+  })
+})

@@ -3,6 +3,8 @@ import type { CompiledTag, CompiledTags } from 'unhead/compiled'
 import type { HeadTag } from 'unhead/types'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import MagicString from 'magic-string'
 import { isReferenceIdentifier, ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { compileTags, dynamicValue, toHeadInput } from 'unhead/compiled'
@@ -12,6 +14,12 @@ import { isMissingParserError, parseAndWalkSource } from './parser'
 import { isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, splitTransformId } from './utils'
 
 const HEAD_CALL_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b/
+// A head call, or an import that may create a head that cannot take compiled tags
+const TRANSFORM_CODE_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b|['"](?:@unhead\/vue\/|unhead\/)(?:server|client)['"]|['"]vite-ssg\b/
+// The full runtime entries, whose `createHead` makes a head that cannot take compiled tags
+const V3_HEAD_SOURCES = new Set(['@unhead/vue/server', '@unhead/vue/client', 'unhead/server', 'unhead/client'])
+// Frameworks that create such a head themselves
+const V3_HEAD_FRAMEWORKS = ['vite-ssg']
 const COMMONJS_RE = /\.c[jt]s$/
 const TOKEN_RE = /[]/
 const DYNAMIC_VALUE_JSON_RE = /"(\d+)"/g
@@ -412,6 +420,38 @@ function insertAfterImports(s: MagicString, body: any[], text: string): void {
     s.appendLeft(body[0].start, `${text}\n`)
 }
 
+const V3_HEAD_FIX = 'create the head with @unhead/vue/compiled/server and @unhead/vue/lazy'
+
+function isV3HeadFramework(source: string): boolean {
+  return V3_HEAD_FRAMEWORKS.some(name => source === name || source.startsWith(`${name}/`))
+}
+
+// The import through which a module creates a head that cannot take compiled tags
+function v3HeadImport(body: any[]): string | undefined {
+  for (const statement of body) {
+    if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type')
+      continue
+    const source = statement.source.value
+    if (isV3HeadFramework(source))
+      return source
+    if (V3_HEAD_SOURCES.has(source) && statement.specifiers.some((spec: any) => spec.type === 'ImportSpecifier' && spec.importKind !== 'type' && spec.imported.type === 'Identifier' && spec.imported.name === 'createHead'))
+      return source
+  }
+}
+
+// The framework in the app's package.json that creates such a head
+function v3HeadDependency(root: string): string | undefined {
+  let pkg: { dependencies?: object, devDependencies?: object }
+  try {
+    pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+  }
+  catch {
+    // no readable package.json: the import scan still finds the framework
+    return
+  }
+  return V3_HEAD_FRAMEWORKS.find(name => (pkg.dependencies && name in pkg.dependencies) || (pkg.devDependencies && name in pkg.devDependencies))
+}
+
 /**
  * Compiles `useHead` and `useSeoMeta` calls of `@unhead/vue` with static structure
  * to compiled tags that `useCompiledHead` pushes. A call that cannot compile stays as written.
@@ -420,6 +460,16 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
   const importPaths = new Set([...NUXT_IMPORT_PATHS, ...options.importPaths || []])
   // Only these bundlers let `resolveId` resolve the runtime from the app
   const resolvesFromApp = meta?.framework === 'vite' || meta?.framework === 'rollup' || meta?.framework === 'rolldown'
+  // Set once the app creates a head that cannot take compiled tags. A compiled call on
+  // that head throws, so the build compiles nothing more.
+  let off: string | undefined
+  let warned = false
+  // modules compiled in each build environment, to find a head after they compiled
+  const compiledIn = new Map<string, number>()
+
+  function turnOff(cause: string): void {
+    off ||= `[unhead] ${cause}, which creates a head that cannot take compiled tags. Compiler mode is off for this build. To use compiler mode, ${V3_HEAD_FIX}.`
+  }
 
   // A dependency compiles when `filter.include` names it, or when it is the runtime of a
   // Nuxt module. Its calls compile only if they import a head composable.
@@ -445,13 +495,13 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
 
     transform: {
       filter: {
-        code: HEAD_CALL_RE,
+        code: TRANSFORM_CODE_RE,
         id: { include: [JS_VUE_RE, ...options.filter?.include || []] },
       },
       handler(code, id) {
         // Server and client builds both compile: the compiled server head and the lazy
         // client head take the same compiled tags.
-        if (!shouldTransformId(id))
+        if (off || !shouldTransformId(id))
           return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
@@ -466,6 +516,24 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
           return
         }
         if (ast.errors.length)
+          return
+
+        // only app code: a dependency that creates such a head, as Nuxt does, is the
+        // integration's to replace
+        const v3Head = !NODE_MODULES_RE.test(splitTransformId(id).pathname) && v3HeadImport(ast.program.body)
+        if (v3Head) {
+          const environment = (this as any)?.environment?.name ?? ''
+          const compiled = compiledIn.get(environment)
+          const cause = `${id} imports from ${v3Head}`
+          if (compiled) {
+            throw new Error(`[unhead] ${cause}, which creates a head that cannot take compiled tags. ${compiled} modules compiled before the build found it, and their head calls would throw. To fix the build, set compile: false, or ${V3_HEAD_FIX}.`)
+          }
+          turnOff(cause)
+          warned = true
+          ;(this as any)?.warn?.(off)
+          return
+        }
+        if (!HEAD_CALL_RE.test(code))
           return
         scopeTracker.freeze()
 
@@ -612,6 +680,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
 
         if (!runtime.size)
           return
+        const environment = (this as any)?.environment?.name ?? ''
+        compiledIn.set(environment, (compiledIn.get(environment) || 0) + 1)
         const specifiers = [...runtime].map(fn => `${fn} as ${prefix}${fn}`).join(', ')
         insertAfterImports(s, ast.program.body, `import { ${specifiers} } from '${RUNTIME}';\n${hoisted.join('\n')}`)
         return {
@@ -622,6 +692,18 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
     },
     vite: {
       sharedDuringBuild: true,
+      // vite-ssg creates its head itself, so no app module imports the head entries
+      configResolved(config) {
+        const framework = v3HeadDependency(config.root)
+        if (framework)
+          turnOff(`${join(config.root, 'package.json')} depends on ${framework}`)
+      },
+      buildStart() {
+        if (off && !warned) {
+          warned = true
+          this.warn(off)
+        }
+      },
       // The dev server keeps its loose head calls, so it needs no compiled head.
       apply: (_config: UserConfig, env: ConfigEnv) => env.command !== 'serve',
     },
