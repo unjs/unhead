@@ -2,9 +2,9 @@ import type { CompiledTags } from 'unhead/compiled'
 import type { LazyHeadEntry, LazyUnhead } from 'unhead/lazy'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
-import type { CompiledTagsHead, CompiledValues } from './tags'
+import type { CompiledBranches, CompiledTagsHead, CompiledValues } from './tags'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated, onScopeDispose, watchEffect } from 'vue'
-import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, markSeoMeta, resolveValues, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
+import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, markSeoMeta, resolveValues, selectBranch, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
 
@@ -18,7 +18,7 @@ function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
 
 // `clientUseHead` for compiled tags: one effect reads the values and patches the entry, and
 // with no values there is no effect.
-function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => CompiledTags | object, values: CompiledValues | undefined, options: UseHeadOptions): LazyHeadEntry<any> {
+function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => [CompiledTags | object, unknown[]], values: CompiledValues | undefined, options: UseHeadOptions): LazyHeadEntry<any> {
   const scope = getCurrentScope()
   // a stopped scope cannot run an effect, so the component is gone
   if (scope && !scope.active)
@@ -32,11 +32,11 @@ function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => Comp
   let entry: LazyHeadEntry<any>
   const apply = () => {
     const resolved = values && resolveValues(values)
-    const next = active ? input(resolved!) : []
+    const [next, nextValues] = active ? input(resolved!) : [[], resolved]
     if (entry)
-      entry.patch(next, { values: resolved })
+      entry.patch(next, { values: nextValues })
     else
-      entry = (head as unknown as LazyUnhead<any>).push(next, { ...options, values: resolved } as any)
+      entry = (head as unknown as LazyUnhead<any>).push(next, { ...options, values: nextValues } as any)
   }
   values ? watchEffect(apply) : apply()
 
@@ -69,11 +69,11 @@ function clientPush(head: CompiledTagsHead, input: (resolved: unknown[]) => Comp
  *
  * @internal
  */
-export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useCompiledHead(compiledTags: CompiledTags | CompiledBranches, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
   return head.ssr
     ? serverCompiledHead(head, compiledTags, values, options)
-    : clientPush(head, () => compiledTags, values, options)
+    : clientPush(head, resolved => selectBranch(compiledTags, resolved), values, options)
 }
 
 /**
@@ -87,5 +87,5 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
   const head = compiledTagsHead(options)
   return head.ssr
     ? serverCompiledSeoMeta(head, compiledTags, loose, values, options)
-    : markSeoMeta(head, clientPush(head, resolved => seoMetaInput(head, compiledTags, loose, resolved), values, options))
+    : markSeoMeta(head, clientPush(head, resolved => [seoMetaInput(head, compiledTags, loose, resolved), resolved], values, options))
 }

@@ -116,6 +116,12 @@ const POSITIONS: [string, (value: string) => string][] = [
   })`],
   ['useSeoMeta string list', value => `useSeoMeta({ articleTag: [${value}, 'static'], ogType: 'article' })`],
   ['useSeoMeta image list', value => `useSeoMeta({ ogImage: [{ url: ${value}, width: 1200 }, '/static.png'] })`],
+  ['useHead getter conditional', value => `useHead(() => {
+    const read = ${value}
+    return read ? { link: [{ rel: 'canonical', href: read }] } : {}
+  })`],
+  ['useHead getter conditional key', value => `useHead(() => ({ link: (${value}) ? [{ rel: 'canonical', href: '/a' }] : [], title: 'T' }))`],
+  ['useHead conditional key', value => `useHead({ link: (${value}) ? [{ rel: 'canonical', href: '/a' }] : [] })`],
 ]
 
 function snippet(call: string, layout = true): string {

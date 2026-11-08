@@ -17,6 +17,21 @@ export function injectCompiledTagsHead(options: UseHeadOptions): CompiledTagsHea
 /** The values of a call, or a getter that returns them, as the build makes of a getter input. */
 export type CompiledValues = readonly unknown[] | (() => readonly unknown[])
 
+/**
+ * Compiled tags for each branch of an input that holds one conditional. The values of the call
+ * start with the index of the branch, so a change may pick the other branch.
+ */
+export interface CompiledBranches {
+  branches: readonly CompiledTags[]
+}
+
+// The compiled tags and values of a call: the first value of a conditional input picks the branch
+export function selectBranch(compiledTags: CompiledTags | CompiledBranches, resolved: unknown[]): [CompiledTags, unknown[]] {
+  return 'branches' in compiledTags
+    ? [compiledTags.branches[resolved[0] as number]!, resolved.slice(1)]
+    : [compiledTags, resolved]
+}
+
 // v3 unwraps a ref that a getter returns. A getter input runs once for all its values.
 export function resolveValues(values: CompiledValues): unknown[] {
   return (typeof values === 'function' ? values() : values).map(value => unref(toValue(value)))
@@ -48,8 +63,21 @@ export function seoMetaInput(head: CompiledTagsHead, compiledTags: CompiledTags,
   return loose(resolved)
 }
 
-// On the server, a ref or getter value resolves once, on the first render, as v3 resolves it
-export function serverCompiledHead(head: CompiledTagsHead, compiledTags: CompiledTags, values: CompiledValues | undefined, options: UseHeadOptions): ActiveHeadEntry<any> {
+// On the server, a ref or getter value resolves once, on the first render, as v3 resolves it.
+// A conditional input picks its branch then too.
+export function serverCompiledHead(head: CompiledTagsHead, compiledTags: CompiledTags | CompiledBranches, values: CompiledValues | undefined, options: UseHeadOptions): ActiveHeadEntry<any> {
+  if ('branches' in compiledTags) {
+    const active: ActiveHeadEntry<any> = head.push(compiledTags.branches[0] as any, {
+      ...options,
+      values: () => {
+        const [tags, resolved] = selectBranch(compiledTags, resolveValues(values!))
+        // the compiled server head takes the values of a patch
+        ;(active.patch as (input: unknown, options: object) => void)(tags, { values: resolved })
+        return resolved
+      },
+    } as any)
+    return active
+  }
   return head.push(compiledTags as any, values ? { ...options, values: () => resolveValues(values) } as any : options)
 }
 

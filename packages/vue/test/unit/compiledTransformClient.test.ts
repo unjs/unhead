@@ -166,6 +166,35 @@ describe('client-compiled head calls hydrate and update like v3', () => {
   }, 30_000)
 })
 
+// A conditional whose branches each have a static shape, as a docs page returns its canonical link
+const BRANCH_POSITIONS: [string, string, (name: string) => boolean][] = [
+  ['a getter that returns a conditional', `useHead(() => {
+    const read = value.value
+    return read ? { link: [{ rel: 'canonical', href: read }] } : {}
+  })`, name => HEAD_COMPILED.has(name)],
+  // the value only picks the branch, so every value stays on the compiled runtime
+  ['a conditional key of a getter', `useHead(() => ({ link: value.value ? [{ rel: 'canonical', href: '/a' }] : [], title: 'T' }))`, () => true],
+]
+
+describe('client-compiled conditional head calls hydrate and update like v3', () => {
+  const cases = BRANCH_POSITIONS.flatMap(([position, call, compiled]) => RUNTIME_VALUES.map(([name, value]) => [`${position}, ${name}`, call, value, compiled(name)] as const))
+
+  it.each(cases)('%s', async (_, call, value, compiled) => {
+    const source = snippet(call)
+    expect(compile(source).match(COMPILED_CALL_RE)!.length).toBe(3)
+    for (const tp of [false, true]) {
+      const pair = await hydrateBoth(source, tp, value)
+      expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+      await vi.waitFor(() => expect(pair.onCompiledRuntime()).toBe(compiled))
+      // each change may pick the other branch
+      for (const next of ['Changed', '', value, 7, null, 'Last']) {
+        await pair.set(next)
+        expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+      }
+    }
+  }, 30_000)
+})
+
 describe('a v3 client head with compile on', () => {
   it('throws at the first compiled call and names the fix', () => {
     const dom = new JSDOM('<!DOCTYPE html><html><head></head><body><div id="app"></div></body></html>')

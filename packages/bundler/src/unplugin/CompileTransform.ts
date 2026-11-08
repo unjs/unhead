@@ -64,6 +64,9 @@ type CompiledCall
   = | { _tag: 'Ok', tags: CompiledTags, values: any[], loose?: string }
     | { _tag: 'Bail', reason: string }
 
+/** A head call whose input holds one conditional: compiled tags for each branch, which the test selects. */
+interface CompiledBranches { test: any, branches: [{ tags: CompiledTags, values: any[] }, { tags: CompiledTags, values: any[] }] }
+
 function bail(reason: string): CompiledCall {
   return { _tag: 'Bail', reason }
 }
@@ -289,6 +292,29 @@ function isFunctionNode(node: any): boolean {
 
 const FUNCTION_NODES = new Set(['ArrowFunctionExpression', 'FunctionExpression', 'FunctionDeclaration'])
 
+// An object literal, or a conditional that picks one of two
+function isObjectShape(node: any): boolean {
+  return node?.type === 'ObjectExpression'
+    || (node?.type === 'ConditionalExpression' && unwrap(node.consequent)?.type === 'ObjectExpression' && unwrap(node.alternate)?.type === 'ObjectExpression')
+}
+
+/**
+ * The one conditional of a `useHead` input whose branches have a static shape: the whole input,
+ * or the value of a key. Each branch replaces it in a copy of the input. Values before it would
+ * run before its test in v3, so they keep the input loose.
+ */
+function inputBranches(input: any): { test: any, branches: [any, any] } | undefined {
+  if (input.type === 'ConditionalExpression')
+    return { test: input.test, branches: [unwrap(input.consequent), unwrap(input.alternate)] }
+  const prop = input.properties.find((prop: any) => prop.type === 'Property' && !prop.computed && unwrap(prop.value)?.type === 'ConditionalExpression'
+    && staticKey(prop.key) !== 'title' && staticKey(prop.key) !== 'titleTemplate')
+  if (!prop)
+    return
+  const conditional = unwrap(prop.value)
+  const branch = (value: any) => ({ ...input, properties: input.properties.map((p: any) => p === prop ? { ...p, value } : p) })
+  return { test: conditional.test, branches: [branch(conditional.consequent), branch(conditional.alternate)] }
+}
+
 /**
  * The object literal that a getter input returns, so the getter can return its values
  * instead. The getter takes no parameters and returns that object as its last statement,
@@ -300,12 +326,12 @@ function getterObject(node: any): { object: any, block: boolean } | undefined {
     return
   if (fn.body.type !== 'BlockStatement') {
     const object = unwrap(fn.body)
-    return object?.type === 'ObjectExpression' ? { object, block: false } : undefined
+    return isObjectShape(object) ? { object, block: false } : undefined
   }
   const statements = fn.body.body
   const last = statements.at(-1)
   const object = last?.type === 'ReturnStatement' && unwrap(last.argument)
-  if (object?.type !== 'ObjectExpression')
+  if (!isObjectShape(object))
     return
   let returns = false
   for (const statement of statements.slice(0, -1)) {
@@ -371,6 +397,29 @@ function compileHeadCall(node: any, kind: HeadKind, input = unwrap(node.argument
     return result._tag === 'Ok' ? result : compileInput(input, kind, false)
   }
   return compileInput(input, kind, false)
+}
+
+/**
+ * Compiles a `useHead` input that holds one conditional, at most one level deep, to compiled
+ * tags for each branch. Returns why it stays loose when a branch does not compile.
+ */
+function compileBranches(node: any, input: any): CompiledBranches | { _tag: 'Bail', reason: string } {
+  const [, options, ...rest] = node.arguments
+  const found = (input?.type === 'ObjectExpression' || input?.type === 'ConditionalExpression') && inputBranches(input)
+  if (!found)
+    return bail('input is not an object literal') as { _tag: 'Bail', reason: string }
+  if (rest.length || (options && !isHeadOnly(options)))
+    return bail('options other than head') as { _tag: 'Bail', reason: string }
+  const branches: any[] = []
+  for (const branch of found.branches) {
+    const result = branch.type === 'ObjectExpression' ? compileInput(branch, 'head', false) : bail('a branch is not an object literal')
+    if (result._tag === 'Bail')
+      return result
+    if (result.values.some(value => value.start < found.test.start))
+      return bail('a value runs before the conditional') as { _tag: 'Bail', reason: string }
+    branches.push({ tags: result.tags, values: result.values })
+  }
+  return { test: found.test, branches: branches as CompiledBranches['branches'] }
 }
 
 function compileInput(input: any, kind: HeadKind, shapeValues: boolean): CompiledCall {
@@ -621,6 +670,28 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             const getter = !held && callee.kind === 'head' ? getterObject(arg) : undefined
             const input = held || getter?.object || unwrap(arg)
             const result = compileHeadCall(node, callee.kind, input)
+            const branched = result._tag === 'Bail' && callee.kind === 'head' && !held ? compileBranches(node, input) : undefined
+            if (branched && 'test' in branched) {
+              // the branch index and values replace the input, so its test and values run once, in order
+              const valueText = (branch: { values: any[] }, index: number) => `[${[index, ...branch.values.map(value => code.slice(value.start, value.end))].join(', ')}]`
+              const text = `(${code.slice(branched.test.start, branched.test.end)}) ? ${valueText(branched.branches[0], 0)} : ${valueText(branched.branches[1], 1)}`
+              // the replaced source must hold no other head call, which compiles on its own
+              if (!HEAD_CALL_RE.test(text)) {
+                runtime.add('useCompiledHead')
+                const branches = hoist(JSON.stringify({ branches: branched.branches.map(branch => branch.tags) }), compiledTagSets)
+                const tail = autoHead ? `, ${AUTO_HEAD}` : ''
+                s.overwrite(node.callee.start, node.callee.end, `${prefix}useCompiledHead`)
+                if (getter) {
+                  s.prependLeft(arg.start, `${branches}, `)
+                  s.overwrite(getter.object.start, getter.object.end, text)
+                  s.appendLeft(arg.end, tail)
+                }
+                else {
+                  s.overwrite(arg.start, arg.end, `${branches}, ${text}${tail}`)
+                }
+                return
+              }
+            }
             if (result._tag === 'Bail') {
               if (hasFunctionTitleTemplate(input))
                 warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input and the client loads the full runtime. Use a string, such as '%s %separator %siteName'.`)

@@ -1,7 +1,7 @@
 import type { CompiledTags } from 'unhead/compiled'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
-import type { CompiledTagsHead } from './tags'
+import type { CompiledBranches, CompiledTagsHead, CompiledValues } from './tags'
 import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
@@ -20,7 +20,7 @@ function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
  *
  * @experimental
  */
-export function useCompiledHead(compiledTags: CompiledTags, values?: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useCompiledHead(compiledTags: CompiledTags | CompiledBranches, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   return serverCompiledHead(compiledTagsHead(options), compiledTags, values, options)
 }
 

@@ -212,8 +212,52 @@ useHead(headData)`)
     expect(calls(transform(`${IMPORTS}useHead(() => ({ title: 'T' }))`))[0]!.args).toEqual([compiledTagsOf({ title: 'T' })])
   })
 
+  it('compiles a getter that returns a conditional to compiled tags per branch, selected by a branch index', () => {
+    const result = calls(transform(`${IMPORTS}useHead(() => {
+  const canonical = canonicals[path]
+  return canonical ? { link: [{ rel: 'canonical', href: \`https://example.com\${canonical}\` }] } : {}
+})`), { canonicals: { '/a': '/guide' }, path: '/a' })
+    expect(result[0]!.fn).toBe('useCompiledHead')
+    expect(result[0]!.args[0]).toEqual({ branches: [compiledTagsOf({ link: [{ rel: 'canonical', href: dynamicValue(0) }] }, 1), compiledTagsOf({})] })
+    expect(result[0]!.args[1]()).toEqual([0, 'https://example.com/guide'])
+    const other = calls(transform(`${IMPORTS}useHead(() => {
+  const canonical = canonicals[path]
+  return canonical ? { link: [{ rel: 'canonical', href: canonical }] } : {}
+})`), { canonicals: {}, path: '/b' })
+    expect(other[0]!.args[1]()).toEqual([1])
+  })
+
+  it('compiles a conditional value of a key to one branch per side, with the values after it in each', () => {
+    let reads = 0
+    const title = (page: { title: string }) => {
+      reads++
+      return page.title
+    }
+    const result = calls(transform(`${IMPORTS}useHead(() => ({ link: page.canonical ? [{ rel: 'canonical', href: page.canonical }] : [], title: title(page) }))`), { page: { canonical: '/c', title: 'T' }, title })
+    expect(result[0]!.args[0]).toEqual({ branches: [
+      compiledTagsOf({ link: [{ rel: 'canonical', href: dynamicValue(0) }], title: dynamicValue(1) }, 2),
+      compiledTagsOf({ link: [], title: dynamicValue(0) }, 1),
+    ] })
+    expect(reads).toBe(0)
+    expect(result[0]!.args[1]()).toEqual([0, '/c', 'T'])
+    expect(reads).toBe(1)
+  })
+
+  it('leaves a conditional getter whose branch value holds a head call', () => {
+    expect(transform(`${IMPORTS}useHead(() => canonical ? { title: useHead({ title: 'x' }) } : {})`)).toContain('useHead(() => canonical ?')
+  })
+
+  it('compiles a conditional value of a plain input, evaluated once at the call', () => {
+    const result = calls(transform(`${IMPORTS}useHead({ link: canonical ? [{ rel: 'canonical', href: canonical }] : [] })`), { canonical: '' })
+    expect(result[0]!.args[0]).toEqual({ branches: [compiledTagsOf({ link: [{ rel: 'canonical', href: dynamicValue(0) }] }, 1), compiledTagsOf({ link: [] })] })
+    expect(result[0]!.args[1]).toEqual([1])
+  })
+
   it.each([
-    ['a conditional shape', `useHead(() => canonical ? { link: [{ rel: 'canonical', href: canonical }] } : {})`],
+    ['a nested conditional', `useHead(() => a ? { title: 'A' } : b ? { title: 'B' } : {})`],
+    ['a value before the conditional', `useHead(() => ({ title: page.title, link: page.canonical ? [{ rel: 'canonical', href: '/c' }] : [] }))`],
+    ['two conditionals', `useHead(() => ({ link: a ? [{ rel: 'canonical', href: '/a' }] : [], meta: b ? [{ name: 'robots', content: 'noindex' }] : [] }))`],
+    ['a branch that is not an object literal', `useHead(() => canonical ? { link: [{ rel: 'canonical', href: canonical }] } : base)`],
     ['an early return', `useHead(() => { if (!page) return {}; return { title: page.title } })`],
     ['a returned variable', `useHead(() => { const input = { title: 'T' }; return input })`],
     ['a parameter', `useHead(input => ({ title: input }))`],
