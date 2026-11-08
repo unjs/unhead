@@ -35,33 +35,28 @@ export interface InferSeoMetaPluginOptions {
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 
+// The `compileTags` output of the input below, for a head that takes compiled tags. Its
+// compiled runtimes run the hooks of this plugin themselves.
+function inferredMeta(name: string, content?: string): any {
+  return ['meta', { [name.startsWith('og') ? 'property' : 'name']: name, ...content ? { content } : { 'data-infer': '' } }, 102, `meta:${name}`, { tagPriority: 'low' }, 1]
+}
+
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin((head) => {
+    const compiled = (head as { _acceptsCompiled?: unknown })._acceptsCompiled
     if (options.twitterCard !== false) {
-      head.push({
-        meta: [
-          options.twitterCard
-            ? { name: 'twitter:card', content: options.twitterCard, tagPriority: 'low' }
-            // content is intentionally omitted - inferred from the resolved image tags by the hook below
-            : { 'name': 'twitter:card', 'tagPriority': 'low', 'data-infer': '' } as any,
-        ],
-      })
+      const card = options.twitterCard
+        ? { name: 'twitter:card', content: options.twitterCard, tagPriority: 'low' }
+        // no content: the hook below infers it from the resolved image tags
+        : { 'name': 'twitter:card', 'tagPriority': 'low', 'data-infer': '' }
+      head.push(compiled ? [inferredMeta('twitter:card', options.twitterCard)] : { meta: [card] } as any)
     }
-    head.push({
-      meta: [
-        // content is intentionally omitted - inferred from title/description by the hook below
-        {
-          'property': 'og:title',
-          'tagPriority': 'low',
-          'data-infer': '',
-        } as any,
-        {
-          'property': 'og:description',
-          'tagPriority': 'low',
-          'data-infer': '',
-        } as any,
-      ],
-    })
+    // no content: the hook below infers it from the title and description
+    const inferred = [
+      { 'property': 'og:title', 'tagPriority': 'low', 'data-infer': '' },
+      { 'property': 'og:description', 'tagPriority': 'low', 'data-infer': '' },
+    ]
+    head.push(compiled ? [inferredMeta('og:title'), inferredMeta('og:description')] : { meta: inferred } as any)
     return {
       key: 'infer-seo-meta',
       hooks: {

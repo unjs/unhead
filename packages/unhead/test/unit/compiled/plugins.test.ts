@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { compileTags } from '../../../src/compiled'
 import { createHead, renderSSRHead } from '../../../src/compiled/server'
 import { useSeoMeta } from '../../../src/composables'
-import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, TemplateParamsPlugin } from '../../../src/plugins'
+import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, InferSeoMetaPlugin, PromisesPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 import { corpus } from './corpus'
 import { headState, MODES, renderScenarioCompiled, renderScenarioV3, toCompiledTags, usesCompiledTags } from './util'
@@ -19,6 +19,9 @@ const PLUGIN_SETS: [string, HeadPluginInput[]][] = [
   ['AliasSortingPlugin', [AliasSortingPlugin]],
   ['every one of them', [FlatMetaPlugin, DeprecationsPlugin, PromisesPlugin, AliasSortingPlugin, TemplateParamsPlugin]],
   ['the Nuxt 4 defaults', NUXT_4],
+  // what nuxt-seo-utils registers
+  ['InferSeoMetaPlugin with TemplateParamsPlugin', [TemplateParamsPlugin, InferSeoMetaPlugin()]],
+  ['InferSeoMetaPlugin with a fixed twitter card', [InferSeoMetaPlugin({ twitterCard: 'summary', ogTitle: title => `OG ${title}` })]],
 ]
 
 interface Step {
