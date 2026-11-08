@@ -70,6 +70,7 @@ const BUILT_IN: Record<string, string> = {
   'deprecations': 'entries:normalize',
   'promises': 'entries:resolve',
   'aliasSorting': 'tags:resolve',
+  'infer-seo-meta': 'tags:beforeResolve,tags:afterResolve',
 }
 
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
@@ -127,6 +128,8 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   if (resolved && BUILT_IN[key] === Object.keys(resolved.hooks || {}).join()) {
     for (const name in resolved.hooks)
       (head._known ||= new Set()).add(resolved.hooks[name as keyof typeof resolved.hooks])
+    if (key === 'infer-seo-meta')
+      head._infer = resolved.hooks
   }
 }
 
@@ -297,8 +300,19 @@ const renderer: CompiledRenderer = {
     const hasFlatMeta = dedupeTags(ctx)
     resolveTitleTemplate(ctx, head)
     valuesToTags(ctx, hasFlatMeta)
+    const infer = head._infer as Record<string, (ctx: any) => void> | undefined
+    if (infer) {
+      // the hook writes to these tags, and compiled tags share theirs across renders
+      for (const key of ['meta:og:title', 'meta:og:description']) {
+        const tag = ctx.tagMap.get(key)
+        if (tag)
+          ctx.tagMap.set(key, ctx.tags[ctx.tags.indexOf(tag)] = { ...tag, props: { ...tag.props } })
+      }
+      infer['tags:beforeResolve']!(ctx)
+    }
     if ((head as CompiledHead)._tp)
       applyNativeTemplateParams(ctx.tags, ctx.tagMap, (head as CompiledHead)._tp!)
+    infer?.['tags:afterResolve']!(ctx)
     return ctx.tags
   },
   b: (head, omitLineBreaks, self) => buildValueMemo(head, omitLineBreaks, self, revive),

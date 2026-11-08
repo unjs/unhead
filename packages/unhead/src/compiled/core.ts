@@ -15,6 +15,8 @@ export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   _tp?: unknown
   /** Marks a head that renders compiled tags, for `useCompiledHead`. */
   _acceptsCompiled?: 1
+  /** The hooks of `InferSeoMetaPlugin`, which the fast tiers run themselves. Its output reads the title, so no memo holds it. */
+  _infer?: unknown
 }
 
 export interface Memo {
@@ -169,7 +171,7 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
     node = next
     last = i
   }
-  if (node) {
+  if (node && !head._infer) {
     const memo = node.m[(omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0)] ||= renderer.b(head, omitLineBreaks, renderer)
     if (!memo.x) {
       const payload = renderer.f ? renderer.f(memo, head) : { ...memo.b } as unknown as SSRHeadPayload
