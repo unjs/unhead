@@ -198,6 +198,16 @@ function isHeadOnly(node: any): boolean {
   return !!prop && prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method && staticKey(prop.key) === 'head'
 }
 
+function isFunctionNode(node: any): boolean {
+  const inner = unwrap(node)
+  return inner?.type === 'ArrowFunctionExpression' || inner?.type === 'FunctionExpression'
+}
+
+// v3 calls a function `titleTemplate`, which compiled tags cannot hold
+function hasFunctionTitleTemplate(input: any): boolean {
+  return input?.type === 'ObjectExpression' && input.properties.some((prop: any) => prop.type === 'Property' && !prop.computed && staticKey(prop.key) === 'titleTemplate' && isFunctionNode(prop.value))
+}
+
 // The member path of each leaf of an object literal, so a value reads the object at the call
 function leafPaths(node: any, path: string, out: Map<any, string>): Map<any, string> {
   const inner = unwrap(node)
@@ -346,6 +356,7 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
           const init = declarator && unwrap(declarator.init)
           return init?.type === 'ObjectExpression' ? init : undefined
         }
+        const warn = (message: string) => (this as any)?.warn?.(message)
 
         // no identifier of the module starts with this, so no local name can shadow ours
         let prefix = '__unhead_'
@@ -404,8 +415,11 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
               return
             const held = constInput(arg)
             const result = compileHeadCall(node, callee.kind, held || unwrap(arg))
-            if (result._tag === 'Bail')
+            if (result._tag === 'Bail') {
+              if (hasFunctionTitleTemplate(held || unwrap(arg)))
+                warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input and the client loads the full runtime. Use a string, such as '%s %separator %siteName'.`)
               return
+            }
 
             const fn = result.loose ? 'useCompiledSeoMeta' : 'useCompiledHead'
             runtime.add(fn)
