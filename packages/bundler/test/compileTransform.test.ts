@@ -272,6 +272,18 @@ useHead(headData)`)
     expect(warnings).toEqual([expect.stringContaining(`'%s %separator %siteName'`)])
   })
 
+  // `app/pages/learn-lighthouse/[...slug].vue` of unlighthouse.dev
+  it('warns at build time about a link whose identity holds a dynamic value', () => {
+    const warnings: string[] = []
+    const ctx = { ...server, warn: (message: string) => warnings.push(message) }
+    const result = transformResult(`${IMPORTS}useHead({ link: [{ rel: 'prev', href: previousLink.href }] })`, '/app/pages/learn.vue', ctx)
+    expect(result).toBeUndefined()
+    expect(warnings).toEqual([expect.stringContaining(`add a key, such as key: 'prev'`)])
+    // with a key the href is no longer identity, so the call compiles
+    expect(transform(`${IMPORTS}useHead({ link: [{ key: 'prev', rel: 'prev', href: previousLink.href }] })`, '/app/pages/learn.vue', ctx)).toContain('useCompiledHead(')
+    expect(warnings).toHaveLength(1)
+  })
+
   it('compiles useServerHead and useServerSeoMeta', () => {
     const result = calls(transform(`${IMPORTS}useServerHead({ title: 'A' })\nuseServerSeoMeta({ description: 'B' })`))
     expect(result).toEqual([
