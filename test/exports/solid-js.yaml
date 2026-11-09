@@ -23,6 +23,7 @@
   MinifyPlugin: function
   PromisesPlugin: function
   SafeInputPlugin: object
+  ServerOnlyCrawlerTagsPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
 ./server:
