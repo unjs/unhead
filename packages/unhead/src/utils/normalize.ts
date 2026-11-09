@@ -150,3 +150,6 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
   }
   return tags
 }
+
+// The compiled server head shares it. An export clause, not `export function`, keeps the v3 bundles byte for byte.
+export { normalizeStyleClassProps }

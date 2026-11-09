@@ -1,7 +1,7 @@
 export { AliasSortingPlugin } from './aliasSorting'
 export { CanonicalPlugin } from './canonical'
 export type { CanonicalPluginOptions } from './canonical'
-export { defineHeadPlugin } from './defineHeadPlugin'
+export { defineHeadPlugin, withTagTransform } from './defineHeadPlugin'
 // Nuxt may bundle the v2 legacy plugin list while resolving this subpath from
 // a hoisted v3 install. Keep the deprecated plugin available during migration.
 export { DeprecationsPlugin } from './deprecations'

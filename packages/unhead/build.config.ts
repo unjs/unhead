@@ -158,6 +158,7 @@ export default defineBuildConfig([{
     'rollup:options': failOnSideEffects,
   },
   entries: [
+    { input: 'src/compiled/server', name: 'compiled/server' },
     { input: 'src/compiled/client', name: 'compiled/client' },
   ],
 }])

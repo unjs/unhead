@@ -13,6 +13,13 @@
   renderDOMHead: function
 ./compiled/client:
   createHead: function
+./compiled/server:
+  compileTags: function
+  createHead: function
+  dynamicValue: function
+  renderSSRHead: function
+  toHeadInput: function
+  transformHtmlTemplate: function
 ./legacy:
   activeHead: object
   createHead: function
@@ -44,6 +51,7 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+  withTagTransform: function
 ./scripts:
   createSpyProxy: function
   useScript: function
