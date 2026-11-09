@@ -16,7 +16,10 @@ async function transform(code: string, consumer: 'client' | 'server' = 'client',
 }
 
 /** Evaluates `code` with recording `useHead` and `useSeoMeta` stubs and returns the inputs they received. */
-function calls(code: string): { name: string, input: unknown }[] {
+function calls(code: string | undefined): { name: string, input: unknown }[] {
+  // `new Function(undefined)` runs nothing, which would pass for a transform that changed nothing.
+  if (code === undefined)
+    throw new Error('the transform left the code unchanged')
   const out: { name: string, input: unknown }[] = []
   const record = (name: string) => (input: unknown) => {
     out.push({ name, input: typeof input === 'function' ? input() : input })
@@ -48,12 +51,12 @@ describe('serverOnlyCrawlerTags', () => {
       themeColor: '#fff',
       colorScheme: 'dark',
     })`)
-    expect(calls(code!)).toEqual([{ name: 'useSeoMeta', input: { title: 'Home', titleTemplate: '%s | Site', themeColor: '#fff', colorScheme: 'dark' } }])
+    expect(calls(code)).toEqual([{ name: 'useSeoMeta', input: { title: 'Home', titleTemplate: '%s | Site', themeColor: '#fff', colorScheme: 'dark' } }])
   })
 
   it('removes a useSeoMeta call left with no keys', async () => {
     const code = await transform(`useSeoMeta({ description: 'Desc', ogTitle: computed(() => 'x'), twitterTitle: \`T \${1}\` })`)
-    expect(calls(code!)).toEqual([])
+    expect(calls(code)).toEqual([])
   })
 
   it('removes crawler tags from useHead and keeps the rest', async () => {
@@ -79,7 +82,7 @@ describe('serverOnlyCrawlerTags', () => {
         { src: '/app.js' },
       ],
     })`)
-    expect(calls(code!)).toEqual([{
+    expect(calls(code)).toEqual([{
       name: 'useHead',
       input: {
         title: 'Home',
@@ -93,7 +96,7 @@ describe('serverOnlyCrawlerTags', () => {
 
   it('drops a tag type whose tags are all crawler tags', async () => {
     const code = await transform(`useHead({ title: 'Home', meta: [{ name: 'description', content: 'Desc' }], link: [{ rel: 'canonical', href: '/' },] })`)
-    expect(calls(code!)).toEqual([{ name: 'useHead', input: { title: 'Home' } }])
+    expect(calls(code)).toEqual([{ name: 'useHead', input: { title: 'Home' } }])
   })
 
   it('removes a useHead call left empty, including a getter input', async () => {
@@ -101,12 +104,12 @@ describe('serverOnlyCrawlerTags', () => {
 useHeadSafe(() => ({ link: [{ rel: 'canonical', href: '/' }] }))
 useHead({ script: [{ type: 'application/ld+json', innerHTML: '{}' }] }, { tagPriority: 'low' })
 useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@type': 'WebSite' }) }] })`)
-    expect(calls(code!)).toEqual([])
+    expect(calls(code)).toEqual([])
   })
 
   it('keeps a call whose result is used, with the crawler tags removed', async () => {
     const code = await transform(`globalThis.__entry = useSeoMeta({ ogTitle: 'x' })`)
-    expect(calls(code!)).toEqual([{ name: 'useSeoMeta', input: {} }])
+    expect(calls(code)).toEqual([{ name: 'useSeoMeta', input: {} }])
   })
 
   it.each([
