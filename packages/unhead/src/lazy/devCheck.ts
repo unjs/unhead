@@ -8,6 +8,42 @@ import { tagWeight } from './runtime'
 // Only dev builds load this module. It compares the tags the client would render with the
 // server head in the document, and names each one that waits for the first head change.
 
+// warned tags by source, kept for the browser tab, so each warns once and not on every page load
+const WARNED = 'unhead:lazy-warned'
+
+// The crawler tag list of `serverOnlyCrawlerTags`. Crawlers read the server head, so the
+// lazy head never applies these on its own, and a difference is no reason to warn.
+const CRAWLER_META_RE = /^(?:(?:og|twitter|article):|(?:description|robots|keywords)$)/i
+function isCrawlerTag(tag: HeadTag): boolean {
+  const p = tag.props as Record<string, any>
+  if (tag.tag === 'meta')
+    return CRAWLER_META_RE.test(p.name || p.property || '')
+  if (tag.tag === 'link') {
+    const rel = String(p.rel).toLowerCase()
+    return rel === 'canonical' || (rel === 'alternate' && p.hreflang != null)
+  }
+  return tag.tag === 'script' && String(p.type).toLowerCase() === 'application/ld+json'
+}
+
+function readWarned(view: Window | null): Set<string> {
+  try {
+    return new Set(JSON.parse(view?.sessionStorage.getItem(WARNED) || '[]'))
+  }
+  catch {
+    // ignorable: storage is off or holds something else, so warnings repeat per page load
+    return new Set()
+  }
+}
+
+function saveWarned(view: Window | null, warned: Set<string>) {
+  try {
+    view?.sessionStorage.setItem(WARNED, JSON.stringify([...warned]))
+  }
+  catch {
+    // ignorable: storage is off or full, so warnings repeat per page load
+  }
+}
+
 const FIX = `It applies on the first head change. Push the same input on the server and the client, set load: 'idle', or call head.load().`
 
 function attr(value: unknown): string | undefined {
@@ -100,8 +136,10 @@ export async function checkHydratedHead(
   const tags = resolveTags(head)
   const index = indexDocument(document)
   const counter: Record<string, number> = {}
-  const warned = new Set<string>()
+  const warned = readWarned(document.defaultView)
   for (const tag of tags) {
+    if (isCrawlerTag(tag))
+      continue
     let problem: string | undefined
     if (tag.tag === 'title') {
       if (String(tag.textContent ?? '') !== document.title)
@@ -126,12 +164,13 @@ export async function checkHydratedHead(
     }
     if (!problem)
       continue
-    const message = `${label(tag)} ${problem}`
-    if (warned.has(message))
-      continue
-    warned.add(message)
     const entry = tag._p === undefined ? undefined : tag._p >> 10
     const source = entry === undefined ? '' : ` Pushed by ${sources[entry] || `entry ${entry}`}.`
-    console.warn(`[unhead] ${message}.${source} ${FIX}`)
+    const key = label(tag) + source
+    if (warned.has(key))
+      continue
+    warned.add(key)
+    console.warn(`[unhead] ${label(tag)} ${problem}.${source} ${FIX}`)
   }
+  saveWarned(document.defaultView, warned)
 }

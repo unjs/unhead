@@ -108,6 +108,34 @@ describe('dev warning', () => {
     expect(messages).toEqual([expect.stringContaining('<title> differs from the server head: "Client" on the client, "Page" in the document. Pushed by entry 1.')])
   })
 
+  it('is silent for crawler tags, which crawlers read from the server head', async () => {
+    const { messages } = await warningsAfterHydration([page, { meta: [{ name: 'twitter:card', content: 'summary_large_image' }], link: [{ rel: 'canonical', href: '/a' }] }], [{
+      ...page,
+      meta: [{ name: 'description', content: 'Client' }, { name: 'theme-color', content: '#fff' }, { name: 'twitter:card', content: 'summary' }, { property: 'og:title', content: 'Client' }],
+      link: [{ rel: 'icon', href: '/favicon.svg' }, { rel: 'canonical', href: '/b' }, { rel: 'alternate', hreflang: 'de', href: '/de' }],
+      script: [{ type: 'application/ld+json', innerHTML: { a: 1 } }],
+    }])
+    expect(messages).toEqual([])
+  })
+
+  it('warns once per tag and source across page loads', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const dom = new JSDOM('', { url: 'https://site.test/' })
+    // each page load hydrates a fresh head on a new server document, in the same browser tab
+    for (const [title, color] of [['A', '#111'], ['B', '#222'], ['C', '#111']]) {
+      const server = ssrDom({ title, meta: [{ name: 'theme-color', content: '#fff' }] })
+      dom.window.document.documentElement.innerHTML = server.window.document.documentElement.innerHTML
+      const head = createHead({ document: dom.window.document, ...{ _entrySource: () => 'app.vue' } as object })
+      head.push({ title: `${title} client`, meta: [{ name: 'theme-color', content: color }] })
+      head.render()
+      await settle()
+    }
+    const messages = warn.mock.calls.map(call => String(call[0]))
+    expect(messages).toHaveLength(2)
+    expect(messages[0]).toContain('<title> differs from the server head: "A client" on the client')
+    expect(messages[1]).toContain('<meta name="theme-color"> differs from the server head in content')
+  })
+
   it('is silent when the client pushes the server input', async () => {
     const { messages } = await warningsAfterHydration([page], [page])
     expect(messages).toEqual([])
