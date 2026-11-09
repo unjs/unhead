@@ -118,7 +118,7 @@ describe('lazy head createHead', () => {
     expect(dom.window.document.title).toBe('Server')
 
     head.render()
-    expect(load).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Next'))
   })
 
@@ -162,14 +162,14 @@ describe('lazy head createHead', () => {
     await vi.waitFor(() => expect(dom.window.document.querySelector('meta[name="after"]')).not.toBeNull())
   })
 
-  it('loads at once for a change after hydration', async () => {
+  it('loads at once for a visible change after hydration', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
     head.push(titled)
     head.render()
     const load = vi.spyOn(head, 'load')
-    head.push({ title: 'After' })
-    expect(load).toHaveBeenCalledTimes(1)
+    head.push({ title: 'After', link: [{ rel: 'stylesheet', href: '/after.css' }] })
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
     await vi.waitFor(() => expect(dom.window.document.title).toBe('After'))
   })
 
@@ -198,8 +198,8 @@ describe('lazy head createHead', () => {
     expect(load).not.toHaveBeenCalled()
     expect(dom.serialize()).toBe(before)
 
-    entry.patch({ title: 'Changed', meta: [{ name: 'description', content: 'desc' }] })
-    expect(load).toHaveBeenCalledTimes(1)
+    entry.patch({ title: 'Changed', meta: [{ name: 'description', content: 'desc' }, { name: 'theme-color', content: '#000' }] })
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Changed'))
   })
 

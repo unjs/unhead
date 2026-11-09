@@ -38,7 +38,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[], serverTitle: () => string | undefined): Promise<HeadRenderer<any>> {
   await useLazyPlugins()
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
@@ -46,8 +46,13 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOpt
   // Adoption waits for the first render that creates the DOM state, so a change after the
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    if (!head._dom && head.dirty)
+    if (!head._dom && head.dirty) {
+      // the renderer keeps the first document title to restore when no title is left
+      const title = serverTitle()
+      if (title !== undefined)
+        head.resolvedOptions.document!.title = title
       adoptHydratedEntries(head, renderDom, adoptionEntries())
+    }
     renderDom(head)
   }, fn => setTimeout(fn, 0))
 }
