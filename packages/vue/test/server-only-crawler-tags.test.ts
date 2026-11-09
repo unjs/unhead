@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { renderToString } from '@vue/server-renderer'
+import * as unheadPlugins from 'unhead/plugins'
 import { describe, expect, it } from 'vitest'
 import { createSSRApp, defineComponent, h, nextTick, ref } from 'vue'
 import { useHead, useSeoMeta } from '../src'
@@ -30,6 +31,26 @@ async function build(consumer: 'client' | 'server', serverOnlyCrawlerTags: boole
     out[page] = res?.code ?? PAGES[page]
   }
   return out
+}
+
+const CLIENT_ENTRY = `import { createHead } from 'unhead/client'
+setHead(createHead({ document }))`
+
+/** Imports as `const` bindings, so `new Function()` can run a transformed module. */
+function bindImports(code: string) {
+  return code.replace(/import \{([^}]+)\} from '([^']+)';?/g, (_, names: string, source: string) =>
+    `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
+}
+
+/** The client head as a build creates it: the option wraps `createHead()` from `unhead/client`. */
+async function createBuiltClientHead(serverOnlyCrawlerTags: boolean): Promise<HeadInstance> {
+  const plugin = Unhead({ serverOnlyCrawlerTags, devtools: false, validate: false }).vite().find(p => p.name === 'unhead:server-only-crawler-tags-runtime') as any
+  const res = plugin && await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, CLIENT_ENTRY, 'main.ts')
+  const modules = { 'unhead/client': { createHead: createClientHead }, 'unhead/plugins': unheadPlugins }
+  let head: HeadInstance | undefined
+  // eslint-disable-next-line no-new-func
+  new Function('modules', 'document', 'setHead', bindImports(res?.code ?? CLIENT_ENTRY))(modules, document, (h: HeadInstance) => head = h)
+  return head!
 }
 
 function createApp(sources: Record<Page, string>, current: ReturnType<typeof ref<Page>>) {
@@ -64,8 +85,6 @@ function pushRuntimeEntry(head: HeadInstance, page: Page) {
 }
 
 async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
-  // The bundler option defines this constant for the whole build.
-  ;(globalThis as any).__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ = serverOnlyCrawlerTags
   // SSR page A with the server build
   const serverHead = createServerHead({ disableDefaults: true })
   if (runtimeEntry)
@@ -88,7 +107,7 @@ async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
   // hydrate with the client build, then navigate to page B
   const current = ref<Page>('a')
   const clientApp = createApp(await build('client', serverOnlyCrawlerTags), current)
-  const clientHead = createClientHead({ document })
+  const clientHead = await createBuiltClientHead(serverOnlyCrawlerTags)
   const runtime = runtimeEntry ? pushRuntimeEntry(clientHead, 'a') : undefined
   clientApp.use(clientHead)
   clientApp.mount('#app')
@@ -101,7 +120,6 @@ async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
   await settle()
   const navigated = snapshot()
   clientApp.unmount()
-  delete (globalThis as any).__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__
   return { server, hydrated, navigated }
 }
 

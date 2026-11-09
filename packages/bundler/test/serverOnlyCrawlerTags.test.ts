@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createFrameworkPlugin } from '../src/unplugin/framework'
-import { ServerOnlyCrawlerTags } from '../src/unplugin/ServerOnlyCrawlerTags'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from '../src/unplugin/ServerOnlyCrawlerTags'
 import { Unhead } from '../src/unplugin/vite'
 import { runTransform } from './utils'
 
@@ -168,17 +168,34 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     const factory = createFrameworkPlugin({ framework: '@unhead/vue', streamingPlugin: { vite: () => [] } as any })
     expect(names(factory({ devtools: false }).vite())).not.toContain(PLUGIN_NAME)
     expect(names(factory({ devtools: false, serverOnlyCrawlerTags: true }).vite())).toContain(PLUGIN_NAME)
-    // webpack plugin instances carry no name: one more plugin when enabled
-    expect(factory({ serverOnlyCrawlerTags: true }).webpack().length).toBe(factory().webpack().length + 1)
+    // webpack plugin instances carry no name: the transform and the runtime plugin when enabled
+    expect(factory({ serverOnlyCrawlerTags: true }).webpack().length).toBe(factory().webpack().length + 2)
   })
 
-  it('defines the renderer constant as true only in builds with the option on', () => {
-    const define = (options: { serverOnlyCrawlerTags?: boolean }, command: 'build' | 'serve') => {
-      const plugin = Unhead({ devtools: false, ...options }).find(p => p.name === 'unhead:server-only-crawler-tags-define') as any
-      return plugin.config({}, { command, mode: 'production' }).define.__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__
+  it('adds the crawler tag plugin to every client createHead() from unhead/client', async () => {
+    const run = async (code: string, consumer: 'client' | 'server' = 'client') => {
+      const res = await runTransform(ServerOnlyCrawlerTagsRuntime.vite({}) as any, code, 'node_modules/@unhead/vue/dist/client.mjs', env(consumer))
+      const out = (res?.code ?? code)
+        .replace(/import \{([^}]+)\} from '([^']+)';?/g, (_: string, names: string, source: string) => `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
+      const received: any[] = []
+      // eslint-disable-next-line no-new-func
+      new Function('modules', out)({
+        'unhead/client': { createHead: (o: any) => received.push(o) },
+        'unhead/plugins': { ServerOnlyCrawlerTagsPlugin: 'crawler' },
+        'other': { createHead: (o: any) => received.push(o) },
+      })
+      return received
     }
-    expect(define({ serverOnlyCrawlerTags: true }, 'build')).toBe('true')
-    expect(define({ serverOnlyCrawlerTags: true }, 'serve')).toBe('false')
-    expect(define({}, 'build')).toBe('false')
+    expect(await run(`import { createHead } from 'unhead/client'\ncreateHead()`)).toEqual([{ plugins: ['crawler'] }])
+    expect(await run(`import { createHead as _c } from 'unhead/client'\nconst options = { plugins: ['own'] }\n_c({ render: 1, ...options })`))
+      .toEqual([{ render: 1, plugins: ['own', 'crawler'] }])
+    expect(await run(`import { createHead } from 'unhead/client'\ncreateHead({ document: 1 })`, 'server')).toEqual([{ document: 1 }])
+    expect(await run(`import { createHead } from 'other'\ncreateHead({ document: 1 })`)).toEqual([{ document: 1 }])
+  })
+
+  it('registers the runtime plugin only with the option on', () => {
+    const names = (plugins: any[]) => plugins.map(p => p.name)
+    expect(names(Unhead({ devtools: false }))).not.toContain('unhead:server-only-crawler-tags-runtime')
+    expect(names(Unhead({ devtools: false, serverOnlyCrawlerTags: true }))).toContain('unhead:server-only-crawler-tags-runtime')
   })
 })

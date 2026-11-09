@@ -7,7 +7,7 @@ import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { isCrawlerMetaKey, resolveMetaKeyValue } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 const HEAD_CALL_RE = /\buse(?:Head|HeadSafe|SeoMeta)\b/
 
@@ -326,26 +326,84 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
   }
 })
 
-/** The constant the client DOM renderer reads to leave crawler tags as the server rendered them. */
-const CRAWLER_TAGS_CONSTANT = '__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__'
+const CREATE_HEAD_RE = /\bcreateHead\b/
+const CLIENT_SOURCE = 'unhead/client'
+const PLUGIN_LOCAL = '__unheadServerOnlyCrawlerTags'
 
 /**
- * Defines the renderer constant: `true` with the option on, so the client
- * never writes, changes, or removes a crawler tag, including tags from
- * runtime sources the transform cannot read. `false` with the option off, so
- * a minifier removes the check. Like the transform, it is on in builds only.
+ * Registers `ServerOnlyCrawlerTagsPlugin` on every client head: it wraps the
+ * options of each `createHead()` call imported from `unhead/client`. The
+ * plugin covers tags the transform cannot read, such as `head.push()` input
+ * and modules that add tags at runtime.
+ *
+ * Framework packages call `createHead()` from `unhead/client`, so this reads
+ * `node_modules` too. Builds without the option never import the plugin, so
+ * the runtime costs them nothing.
+ *
+ * createHead({ document })
+ * -> (client)
+ * createHead(((o) => ({ ...o, plugins: [...(o?.plugins || []), P] }))({ document }))
  */
-export const ServerOnlyCrawlerTagsDefine = createUnplugin<{ enabled: boolean }, false>(({ enabled }) => ({
-  name: 'unhead:server-only-crawler-tags-define',
-  vite: {
-    config(_config: UserConfig, env: ConfigEnv) {
-      return { define: { [CRAWLER_TAGS_CONSTANT]: String(enabled && env.command === 'build') } }
+export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, false>(() => {
+  let fallbackConsumer: BuildConsumer | undefined
+  return {
+    name: 'unhead:server-only-crawler-tags-runtime',
+    enforce: 'post',
+    transform: {
+      filter: {
+        code: { include: [CREATE_HEAD_RE], exclude: [new RegExp(PLUGIN_LOCAL)] },
+        id: { include: [JS_VUE_RE] },
+      },
+      handler(code, id) {
+        if (resolveBuildConsumer(this, fallbackConsumer) !== 'client' || !code.includes(CLIENT_SOURCE))
+          return
+        const s = new MagicString(code)
+        const locals = new Set<string>()
+        parseAndWalkSource(code, id, {
+          enter(node: any) {
+            if (node.type === 'ImportDeclaration') {
+              if (node.source.value !== CLIENT_SOURCE)
+                return
+              for (const spec of node.specifiers) {
+                if (spec.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === 'createHead')
+                  locals.add(spec.local.name)
+              }
+              return
+            }
+            if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier' || !locals.has(node.callee.name))
+              return
+            const [arg] = node.arguments
+            if (!arg) {
+              s.appendLeft(node.end - 1, `{ plugins: [${PLUGIN_LOCAL}] }`)
+              return
+            }
+            if (arg.type === 'SpreadElement')
+              return
+            s.prependRight(arg.start, `((o) => ({ ...o, plugins: [...(o?.plugins || []), ${PLUGIN_LOCAL}] }))(`)
+            s.appendLeft(arg.end, ')')
+          },
+        })
+        if (!s.hasChanged())
+          return
+        s.prepend(`import { ServerOnlyCrawlerTagsPlugin as ${PLUGIN_LOCAL} } from 'unhead/plugins';\n`)
+        return {
+          code: s.toString(),
+          map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
+        }
+      },
     },
-  },
-  webpack(compiler) {
-    new compiler.webpack.DefinePlugin({ [CRAWLER_TAGS_CONSTANT]: String(enabled) }).apply(compiler)
-  },
-  rspack(compiler) {
-    new compiler.rspack.DefinePlugin({ [CRAWLER_TAGS_CONSTANT]: String(enabled) }).apply(compiler)
-  },
-}))
+    webpack(ctx) {
+      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
+    },
+    vite: {
+      sharedDuringBuild: true,
+      apply(_config: UserConfig, env: ConfigEnv) {
+        // Build only, like the transform: the dev server shares one module graph.
+        if (env.command === 'serve')
+          return false
+        fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
+        return true
+      },
+    },
+  }
+})
