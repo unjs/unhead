@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 const root = fileURLToPath(new URL('./fixtures/lazy-chunks', import.meta.url))
 const dist = (file: string) => fileURLToPath(new URL(`../dist/${file}`, import.meta.url))
 
-async function eagerCode(): Promise<string> {
+async function eagerCode(minify = false): Promise<string> {
   const result: any = await build({
     root,
     configFile: false,
@@ -19,7 +19,7 @@ async function eagerCode(): Promise<string> {
     },
     build: {
       write: false,
-      minify: false,
+      minify,
       rollupOptions: {
         input: `${root}/entry.ts`,
         external: ['vue'],
@@ -38,5 +38,14 @@ describe('lazy head chunks', () => {
     expect(eager).toContain('function createLazyHead')
     expect(eager).not.toContain('function normalizeEntryToTags')
     expect(eager).not.toContain('function normalizeProps')
+  })
+
+  // Vite fills one dependency list into each preload call after the minifier runs. A minifier
+  // that merges both runtime imports into one call makes the full runtime load preload the
+  // compiled runtime chunk, as on skilld.dev.
+  it('keeps each runtime import in its own preload call after minify', async () => {
+    const eager = await eagerCode(true)
+    expect(eager).toMatch(/import\(["'`]\.\/client-/)
+    expect(eager).not.toMatch(/\?\s*\(\)\s*=>\s*import\([^)]*\)\s*:\s*\(\)\s*=>\s*import\(/)
   })
 })

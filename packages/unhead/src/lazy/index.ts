@@ -3,6 +3,11 @@ import type { CompiledTags } from '../compiled/types'
 import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
 import { registerPlugin } from '../unhead'
 
+const NATIVE_HOOK_RE = /^dom:(?:beforeRender|rendered)$/
+
+// Set by the `@unhead/bundler` plugin. Undefined outside it, so each guard reads `typeof` first.
+declare const __UNHEAD_COMPILE_DEBUG__: boolean | undefined
+
 export type { ClientUnhead } from '../client/adapter'
 export type { CompiledTags } from '../compiled/types'
 
@@ -303,10 +308,36 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       return false
     })
 
-  // The compiled runtime loads when every entry holds compiled tags. It passes anything else to the full runtime.
-  head.load = () => loading ||= upgrade([...entries.values()].every(entry => Array.isArray(entry._pending ?? entry.input))
-    ? import('../compiled/client')
-    : import('./runtime'))
+  // The compiled runtime hands over to the full runtime at its first render when it meets a
+  // render option, an entry with loose input, or a hook listener other than the dom hooks and
+  // the template params and infer seo meta plugins. When one holds already, the full runtime
+  // loads alone, so the page loads one runtime. This mirrors `foreignHook` of `../compiled/client`.
+  // Returns the hook, or true.
+  const needsFullRuntime = (): string | boolean | undefined => {
+    const native = ['template-params', 'infer-seo-meta'].map(key => head.plugins.get(key)?.hooks)
+    const listeners = (hooks as any)._hooks
+    for (const hook in listeners) {
+      if (!NATIVE_HOOK_RE.test(hook) && listeners[hook]?.some((listener: unknown) => listener !== onChange && (!hook.startsWith('tags:') || !native.some(plugin => plugin?.[hook] === listener))))
+        return hook
+    }
+    return !!options.render || [...entries.values()].some(entry => !Array.isArray(entry._pending ?? entry.input))
+  }
+  // Each runtime import stays its own call. A minifier merges two imports of a conditional into
+  // one preload call, and Vite fills that call with the chunks of one import only, so the full
+  // runtime would preload the compiled runtime chunk.
+  const runtimes = [() => import('../compiled/client'), () => import('./runtime')]
+  head.load = () => {
+    const full = !loading && needsFullRuntime()
+    if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && full) {
+      const entry = [...entries.values()].find(entry => !Array.isArray(entry._pending ?? entry.input))
+      head._fullRuntimeReason ||= options.render
+        ? { _tag: 'RenderOption' }
+        : entry
+          ? { _tag: 'Entry', entry }
+          : { _tag: 'Hook', hook: full as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && key !== 'infer-seo-meta' && (hooks as any)._hooks[full as string].includes(plugin.hooks?.[full as string]))?.[0] }
+    }
+    return loading ||= upgrade(runtimes[+!!full]!())
+  }
 
   const armIdle = () => {
     if (loading || cancelIdle || !document)

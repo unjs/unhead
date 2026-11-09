@@ -23,6 +23,18 @@ vi.mock('../../../src/lazy/runtime', async (importOriginal) => {
   }
 })
 
+const compiledRuntime = vi.hoisted(() => ({ heads: new Set<unknown>() }))
+vi.mock('../../../src/compiled/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/compiled/client')>()
+  return {
+    ...actual,
+    upgradeHead: (...args: Parameters<typeof actual.upgradeHead>) => {
+      compiledRuntime.heads.add(args[0])
+      return actual.upgradeHead(...args)
+    },
+  }
+})
+
 function compile(input: unknown, dynamicValues?: number): any {
   const result = compileTags(input, { dynamicValues })
   if (result._tag !== 'Ok')
@@ -97,6 +109,37 @@ describe('a lazy head with no setup', () => {
     await settle(head)
     expect(v3Runtime.heads.has(head)).toBe(true)
     expect(dom.serialize()).toBe(pair.v3Dom.serialize())
+  })
+})
+
+// The compiled runtime would hand over at its first render, so the page loads one runtime
+describe('a lazy head that needs the full runtime when it loads', () => {
+  it.each([
+    ['a loose entry', (head: any) => head.push({ meta: [{ name: 'loose', content: 'yes' }] })],
+    ['a plugin with a tags hook', (head: any) => head.use({ key: 'derived-tags', hooks: { 'tags:beforeResolve': () => {} } })],
+    ['a hook listener', (head: any) => head.hooks.hook('script:updated', () => {})],
+  ])('loads only the full runtime with %s', async (_, add) => {
+    const dom = ssrDom([{ input: page }], 'none')
+    const head = createLazyHead({ document: dom.window.document })
+    head.push(toCompiledTags(page))
+    add(head)
+    head.render()
+    await head.load()
+    await settle(head)
+    expect(v3Runtime.heads.has(head)).toBe(true)
+    expect(compiledRuntime.heads.has(head)).toBe(false)
+  })
+
+  it('loads the compiled runtime with template params and dom hooks', async () => {
+    const dom = ssrDom([{ input: page }], 'plugin')
+    const head = createLazyHead({ document: dom.window.document, plugins: [TemplateParamsPlugin] })
+    head.push(toCompiledTags(page))
+    head.hooks.hook('dom:beforeRender', () => {})
+    head.render()
+    await head.load()
+    await settle(head)
+    expect(compiledRuntime.heads.has(head)).toBe(true)
+    expect(v3Runtime.heads.has(head)).toBe(false)
   })
 })
 
