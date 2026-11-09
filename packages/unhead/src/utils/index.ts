@@ -11,6 +11,7 @@ export {
   UsesMergeStrategy,
   ValidHeadTags,
 } from './const'
+export { isCrawlerMetaKey, isCrawlerTag } from './crawler'
 export { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 export { hasOwn } from './hasOwn'
 export { resolveMetaKeyType, resolveMetaKeyValue, resolvePackedMetaObjectValue, unpackMeta } from './meta'

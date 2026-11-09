@@ -4,7 +4,7 @@ import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
-import { ServerOnlyCrawlerTags } from './ServerOnlyCrawlerTags'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsDefine } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -67,6 +67,8 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
   }
+  // Defined with the option off too, so the renderer check leaves the bundle.
+  defs.push({ instance: ServerOnlyCrawlerTagsDefine, options: { enabled: !!options.serverOnlyCrawlerTags } })
   if (options.serverOnlyCrawlerTags) {
     const crawlerTagsOpts = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
     defs.push({ instance: ServerOnlyCrawlerTags, options: { ...common, ...crawlerTagsOpts } })

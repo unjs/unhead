@@ -168,4 +168,14 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     // webpack plugin instances carry no name: one more plugin when enabled
     expect(factory({ serverOnlyCrawlerTags: true }).webpack().length).toBe(factory().webpack().length + 1)
   })
+
+  it('defines the renderer constant as true only in builds with the option on', () => {
+    const define = (options: { serverOnlyCrawlerTags?: boolean }, command: 'build' | 'serve') => {
+      const plugin = Unhead({ devtools: false, ...options }).find(p => p.name === 'unhead:server-only-crawler-tags-define') as any
+      return plugin.config({}, { command, mode: 'production' }).define.__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__
+    }
+    expect(define({ serverOnlyCrawlerTags: true }, 'build')).toBe('true')
+    expect(define({ serverOnlyCrawlerTags: true }, 'serve')).toBe('false')
+    expect(define({}, 'build')).toBe('false')
+  })
 })

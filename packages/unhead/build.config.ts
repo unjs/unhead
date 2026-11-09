@@ -9,6 +9,8 @@ const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
 const WHITESPACE_RE = /\s+/g
 const IIFE_GLOBAL_NAME = '__unhead_iife__'
 const IIFE_INIT_CALL = `${IIFE_GLOBAL_NAME}.init();`
+// The renderer guard on the `serverOnlyCrawlerTags` constant, with its call.
+const CRAWLER_TAGS_CHECK_RE = /typeof __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ !== "undefined" && __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ && isCrawlerTag\(tag\)/g
 const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
 // Rollup transform plugins use text prefilters and replacements before parsing.
 // Escape their trigger text in the module source so the IIFE remains opaque data.
@@ -58,7 +60,11 @@ function writeIifeArtifacts(rootDir: string, code: string) {
 async function buildIifeFromDist(rootDir: string) {
   const bundle = await rollup({
     input: resolve(rootDir, 'dist/stream/iife.mjs'),
-    plugins: [nodeResolve()],
+    plugins: [nodeResolve(), {
+      // The streaming bootstrap renders server tags only, so it never skips crawler tags.
+      name: 'unhead:iife-crawler-tags-off',
+      transform: code => code.replace(CRAWLER_TAGS_CHECK_RE, 'false'),
+    }],
   })
   try {
     const { output } = await bundle.generate({ format: 'iife', name: IIFE_GLOBAL_NAME })
@@ -85,6 +91,7 @@ async function buildIifeFromSource(rootDir: string) {
       write: false,
     },
     configFile: false,
+    define: { __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__: 'false' },
     logLevel: 'silent',
     root: rootDir,
   })

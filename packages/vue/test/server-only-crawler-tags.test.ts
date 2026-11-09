@@ -55,9 +55,21 @@ function snapshot() {
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 20))
 
-async function run(serverOnlyCrawlerTags: boolean) {
+type HeadInstance = ReturnType<typeof createClientHead>
+
+/** Tags a module pushes at runtime, on the server and the client, like a site-wide default. */
+function pushRuntimeEntry(head: HeadInstance, page: Page) {
+  head.push({ meta: [{ name: 'description', content: 'Module default' }, { name: 'twitter:card', content: 'summary_large_image' }] }, { tagPriority: 'low' })
+  return head.push({ style: [{ key: 'runtime', textContent: `.runtime{content:"${page}"}` }] })
+}
+
+async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
+  // The bundler option defines this constant for the whole build.
+  ;(globalThis as any).__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ = serverOnlyCrawlerTags
   // SSR page A with the server build
   const serverHead = createServerHead({ disableDefaults: true })
+  if (runtimeEntry)
+    pushRuntimeEntry(serverHead as unknown as HeadInstance, 'a')
   const serverApp = createApp(await build('server', serverOnlyCrawlerTags), ref<Page>('a'))
   serverApp.use(serverHead)
   const appHtml = await renderToString(serverApp)
@@ -76,16 +88,20 @@ async function run(serverOnlyCrawlerTags: boolean) {
   // hydrate with the client build, then navigate to page B
   const current = ref<Page>('a')
   const clientApp = createApp(await build('client', serverOnlyCrawlerTags), current)
-  clientApp.use(createClientHead({ document }))
+  const clientHead = createClientHead({ document })
+  const runtime = runtimeEntry ? pushRuntimeEntry(clientHead, 'a') : undefined
+  clientApp.use(clientHead)
   clientApp.mount('#app')
   await settle()
   const hydrated = snapshot()
 
   current.value = 'b'
+  runtime?.patch({ style: [{ key: 'runtime', textContent: '.runtime{content:"b"}' }] })
   await nextTick()
   await settle()
   const navigated = snapshot()
   clientApp.unmount()
+  delete (globalThis as any).__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__
   return { server, hydrated, navigated }
 }
 
@@ -121,5 +137,28 @@ describe('serverOnlyCrawlerTags with Vue SSR and hydration', () => {
     expect(off.navigated.head).toContain('<link rel="canonical" href="/b">')
     expect(on.navigated.head).toContain('<link rel="canonical" href="/a">')
     expect(on.navigated.head).toContain('<meta property="og:title" content="A og">')
+  })
+
+  it('keeps server crawler tags when a runtime entry pushes its own', async () => {
+    const on = await run(true, true)
+    const crawler = (head: string[]) => head.filter(t => /name="(?:description|twitter:card)"/.test(t))
+    expect(crawler(on.server.head)).toEqual([
+      '<meta name="description" content="A desc">',
+      '<meta name="twitter:card" content="summary">',
+    ])
+    // the client build has only the module default; it must not reach the DOM
+    expect(crawler(on.hydrated.head)).toEqual(crawler(on.server.head))
+    expect(on.hydrated).toEqual(on.server)
+    expect(crawler(on.navigated.head)).toEqual(crawler(on.server.head))
+
+    // user-visible tags still update
+    expect(on.navigated.title).toBe('Page B')
+    expect(on.navigated.head).toContain('<style data-hid="runtime">.runtime{content:"b"}</style>')
+    expect(on.navigated.head).not.toContain('<style data-hid="runtime">.runtime{content:"a"}</style>')
+  })
+
+  it('lets a runtime entry take over crawler tags with the option off', async () => {
+    const off = await run(false, true)
+    expect(off.navigated.head).toContain('<meta name="description" content="B desc">')
   })
 })

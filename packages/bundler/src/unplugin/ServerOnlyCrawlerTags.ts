@@ -4,7 +4,7 @@ import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
-import { resolveMetaKeyValue } from 'unhead/utils'
+import { isCrawlerMetaKey, resolveMetaKeyValue } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
@@ -16,10 +16,6 @@ const NUXT_IMPORT_SOURCES = new Set(['#app/composables/head', '#imports'])
 
 const HEAD_NAMES = new Set(['useHead', 'useHeadSafe'])
 const SEO_META_NAMES = new Set(['useSeoMeta'])
-
-/** `meta` names and properties that only crawlers read. A prefix ends with `:`. */
-const CRAWLER_META_PREFIXES = ['og:', 'twitter:', 'article:'] as const
-const CRAWLER_META_NAMES = new Set(['description', 'robots', 'keywords'])
 
 /**
  * Calls a crawler tag value may make and still be dropped: they read or wrap
@@ -40,12 +36,6 @@ export interface ServerOnlyCrawlerTagsOptions extends BaseTransformerTypes {
    * Extra import paths to consider where `useHead()` and `useSeoMeta()` may be imported from.
    */
   importPaths?: string[]
-}
-
-/** Whether a resolved `meta` name or property is on the crawler tag list. */
-export function isCrawlerMetaKey(key: string): boolean {
-  const lower = key.toLowerCase()
-  return CRAWLER_META_NAMES.has(lower) || CRAWLER_META_PREFIXES.some(prefix => lower.startsWith(prefix))
 }
 
 function staticKey(prop: any): string | undefined {
@@ -335,3 +325,27 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
     },
   }
 })
+
+/** The constant the client DOM renderer reads to leave crawler tags as the server rendered them. */
+const CRAWLER_TAGS_CONSTANT = '__UNHEAD_SERVER_ONLY_CRAWLER_TAGS__'
+
+/**
+ * Defines the renderer constant: `true` with the option on, so the client
+ * never writes, changes, or removes a crawler tag, including tags from
+ * runtime sources the transform cannot read. `false` with the option off, so
+ * a minifier removes the check. Like the transform, it is on in builds only.
+ */
+export const ServerOnlyCrawlerTagsDefine = createUnplugin<{ enabled: boolean }, false>(({ enabled }) => ({
+  name: 'unhead:server-only-crawler-tags-define',
+  vite: {
+    config(_config: UserConfig, env: ConfigEnv) {
+      return { define: { [CRAWLER_TAGS_CONSTANT]: String(enabled && env.command === 'build') } }
+    },
+  },
+  webpack(compiler) {
+    new compiler.webpack.DefinePlugin({ [CRAWLER_TAGS_CONSTANT]: String(enabled) }).apply(compiler)
+  },
+  rspack(compiler) {
+    new compiler.rspack.DefinePlugin({ [CRAWLER_TAGS_CONSTANT]: String(enabled) }).apply(compiler)
+  },
+}))

@@ -1,11 +1,18 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
+import { isCrawlerTag } from '../utils/crawler'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
 const WHITESPACE_RE = /\s+/
+
+/**
+ * Defined by the `serverOnlyCrawlerTags` bundler option: `true` when on, `false`
+ * when off, so a minifier removes the check. Undefined without the bundler.
+ */
+declare const __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__: boolean | undefined
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -202,6 +209,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       // meta guard matches dedupeTags: link keys like `link:author:x` must not hit the counter
       if (tag.tag === 'meta' && tag._d && isMetaArrayDupeKey(tag._d))
         dupeKeyCounter[tag._d] = count + 1
+      // Crawler tags stay as the server rendered them. The client never tracks
+      // them, so it never writes, changes, or removes their elements.
+      if (typeof __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ !== 'undefined' && __UNHEAD_SERVER_ONLY_CRAWLER_TAGS__ && isCrawlerTag(tag))
+        continue
       tags.push(ctx)
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
