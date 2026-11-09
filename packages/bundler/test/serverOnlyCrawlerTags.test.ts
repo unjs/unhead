@@ -134,7 +134,7 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
   })
 
   it('changes nothing for an unknown build target', async () => {
-    const res = await runTransform(ServerOnlyCrawlerTags.vite() as any, `useSeoMeta({ ogTitle: 'x' })`, 'page.ts', {})
+    const res = await runTransform(ServerOnlyCrawlerTags.vite({}) as any, `useSeoMeta({ ogTitle: 'x' })`, 'page.ts', {})
     expect(res).toBeUndefined()
   })
 
