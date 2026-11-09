@@ -97,6 +97,8 @@
   HasElementTags: object
   hashTag: function
   hasOwn: function
+  isCrawlerMetaKey: function
+  isCrawlerTag: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function
