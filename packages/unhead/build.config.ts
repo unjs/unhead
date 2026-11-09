@@ -1,3 +1,4 @@
+import type { RollupOptions } from 'rollup'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
@@ -99,21 +100,25 @@ async function buildIifeFromSource(rootDir: string) {
   return chunk.code
 }
 
-export default defineBuildConfig({
+function failOnSideEffects(_: unknown, options: RollupOptions) {
+  options.experimentalLogSideEffects = true
+  const onwarn = options.onwarn
+  options.onwarn = (warning, warn) => {
+    if (isFirstSideEffectWarning(warning))
+      throw new Error(warning.message)
+    if (onwarn)
+      return onwarn(warning, warn)
+    warn(warning)
+  }
+}
+
+export default defineBuildConfig([{
   clean: true,
   declaration: true,
+  // The compiler mode files come from the next build, which checks the package exports
+  failOnWarn: false,
   hooks: {
-    'rollup:options': (_, options) => {
-      options.experimentalLogSideEffects = true
-      const onwarn = options.onwarn
-      options.onwarn = (warning, warn) => {
-        if (isFirstSideEffectWarning(warning))
-          throw new Error(warning.message)
-        if (onwarn)
-          return onwarn(warning, warn)
-        warn(warning)
-      }
-    },
+    'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {
       const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
@@ -143,4 +148,16 @@ export default defineBuildConfig({
     { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
-})
+}, {
+  // Compiler mode builds alone. Its entries then share no dist file with the others, so they
+  // leave the dist of every other entry as it was, and its client runtime chunk holds the
+  // resolve pipeline that the eager Vue composables never load.
+  clean: false,
+  declaration: true,
+  hooks: {
+    'rollup:options': failOnSideEffects,
+  },
+  entries: [
+    { input: 'src/compiled/client', name: 'compiled/client' },
+  ],
+}])

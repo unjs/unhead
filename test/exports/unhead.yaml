@@ -11,6 +11,8 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./compiled/client:
+  createHead: function
 ./legacy:
   activeHead: object
   createHead: function
