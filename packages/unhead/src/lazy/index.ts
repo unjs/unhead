@@ -317,15 +317,15 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     })
 
   // The compiled runtime hands over to the full runtime at its first render when it meets a
-  // render option, an entry with loose input, or a hook listener other than the dom hooks and
-  // the template params and infer seo meta plugins. When one holds already, the full runtime
+  // render option, an entry with loose input, or a hook listener other than the dom hooks,
+  // the template params plugin, and tag transforms. When one holds already, the full runtime
   // loads alone, so the page loads one runtime. This mirrors `foreignHook` of `../compiled/client`.
   // Returns the hook, or true.
   const needsFullRuntime = (): string | boolean | undefined => {
-    const native = ['template-params', 'infer-seo-meta'].map(key => head.plugins.get(key)?.hooks)
+    const native = head.plugins.get('template-params')?.hooks
     const listeners = (hooks as any)._hooks
     for (const hook in listeners) {
-      if (!NATIVE_HOOK_RE.test(hook) && listeners[hook]?.some((listener: unknown) => listener !== onChange && (!hook.startsWith('tags:') || !native.some(plugin => plugin?.[hook] === listener))))
+      if (!NATIVE_HOOK_RE.test(hook) && listeners[hook]?.some((listener: any) => listener !== onChange && (!hook.startsWith('tags:') || (!listener._t && native?.[hook] !== listener))))
         return hook
     }
     return !!options.render || [...entries.values()].some(isLoose)
@@ -342,7 +342,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
         ? { _tag: 'RenderOption' }
         : entry
           ? { _tag: 'Entry', entry }
-          : { _tag: 'Hook', hook: full as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && key !== 'infer-seo-meta' && (hooks as any)._hooks[full as string].includes(plugin.hooks?.[full as string]))?.[0] }
+          : { _tag: 'Hook', hook: full as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && !plugin.transform && (hooks as any)._hooks[full as string].includes(plugin.hooks?.[full as string]))?.[0] }
     }
     return loading ||= upgrade(runtimes[+!!full]!())
   }

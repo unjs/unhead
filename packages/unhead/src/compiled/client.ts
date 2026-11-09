@@ -62,13 +62,13 @@ const hasContent = (value: unknown) => value === 0 || value
 // A list, an object, or a number that is not finite changes how v3 normalizes a value, so only v3 may decide them
 const isScalar = (entryValue: unknown) => entryValue == null || typeof entryValue === 'string' || typeof entryValue === 'boolean' || Number.isFinite(entryValue)
 
-// Only the template params and infer seo meta plugins may listen to `tags:` hooks, and this
+// Only the template params plugin and tag transforms may listen to `tags:` hooks, and this
 // runtime calls those. Returns the first hook with another listener.
 function foreignHook(head: LazyUnhead<any>): string | undefined {
   const hooks = (head.hooks as any)._hooks
-  const native = ['template-params', 'infer-seo-meta'].map(key => head.plugins.get(key)?.hooks as any)
+  const native = head.plugins.get('template-params')?.hooks as any
   for (const name in hooks) {
-    if (hooks[name] && !NATIVE_HOOK_RE.test(name) && (!name.startsWith('tags:') || hooks[name].some((listener: unknown) => !native.some(plugin => plugin?.[name] === listener))))
+    if (hooks[name] && !NATIVE_HOOK_RE.test(name) && (!name.startsWith('tags:') || hooks[name].some((listener: any) => !listener._t && native?.[name] !== listener)))
       return name
   }
 }
@@ -212,7 +212,7 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
   const ctx = { tagMap, tags: [...tagMap.values()].flat() }
   if (hasFlatMeta)
     ctx.tags.sort(sortTags)
-  // the template params and infer seo meta plugins, the only `tags:` listeners a compiled head keeps
+  // template params and tag transforms, the only `tags:` listeners a compiled head keeps
   for (const hook of ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve'])
     head.hooks.callHook(hook as 'tags:resolve', ctx as any)
 
@@ -407,7 +407,7 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
             ? { _tag: 'RenderOption' }
             : loose
               ? { _tag: 'Entry', entry: loose }
-              : { _tag: 'Hook', hook: hook as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && key !== 'infer-seo-meta' && listeners.includes(plugin.hooks?.[hook as string]))?.[0] }
+              : { _tag: 'Hook', hook: hook as string, plugin: [...head.plugins].find(([key, plugin]) => key !== 'template-params' && !plugin.transform && listeners.includes(plugin.hooks?.[hook as string]))?.[0] }
         }
         return loadV3()
       }

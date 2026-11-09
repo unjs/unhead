@@ -4,6 +4,7 @@ import { createHead as createV3Head } from '../../../src/client'
 import { compileTags, dynamicValue } from '../../../src/compiled'
 import { createLazyHead } from '../../../src/lazy'
 import { TemplateParamsPlugin } from '../../../src/plugins'
+import { withTagTransform } from '../../../src/plugins/defineHeadPlugin'
 import { compiledTagsHead, createPair, settle, ssrDom, toCompiledTags } from './client-util'
 
 const v3Runtime = vi.hoisted(() => ({ heads: new Set<unknown>(), fail: 0, gate: undefined as Promise<void> | undefined }))
@@ -137,6 +138,24 @@ describe('compiled tags with a tagPriority option', () => {
     await pair.render()
     await settle(pair.compiled)
     expect(v3Runtime.heads.has(pair.compiled)).toBe(loose)
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+  })
+})
+
+describe('a tag transform', () => {
+  it('runs on the compiled runtime, as the full runtime runs it', async () => {
+    const absolute = (head: any) => withTagTransform(head, {
+      key: 'absolute-images',
+      transform: tags => tags.map(tag => tag.tag === 'meta' && tag.props.property === 'og:image' ? { ...tag, props: { ...tag.props, content: `https://a.com${tag.props.content}` } } : tag),
+    })
+    const pair = createPair([{ input: page }], 'none')
+    pair.v3.use(absolute)
+    pair.compiled.use(absolute)
+    pair.push(page)
+    await pair.render()
+    expect(compiledRuntime.heads.has(pair.compiled)).toBe(true)
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
+    expect(pair.compiledDom.serialize()).toContain('https://a.com/1.png')
     expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
   })
 })

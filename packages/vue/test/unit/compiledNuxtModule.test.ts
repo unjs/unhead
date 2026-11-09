@@ -162,9 +162,8 @@ export default function setup() {
     await render(compiled, compilePage())
     expect(renderCompiled(compiled)).toEqual(renderV3(v3))
     expect(renderV3(v3).headTags).toContain('<meta property="og:title" data-infer="" content="Page - Site">')
-    // a listener the fast tiers do not know would take v3, which reads the hooks
-    expect((compiled as any)._hookStore?._hooks['tags:beforeResolve']?.length).toBe(1)
-    expect((compiled as any)._infer).toBeDefined()
+    // a listener the fast tiers do not know would take v3; the infer seo meta transform hook is known
+    expect((compiled as any)._hookStore?._hooks['tags:afterResolve']?.some((listener: any) => listener._t)).toBe(true)
   })
 
   it('hydrates on the compiled runtime and updates like v3', async () => {
