@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createSSRApp, defineComponent, h, nextTick, onMounted, ref } from 'vue'
+import { createSSRApp, defineComponent, h, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { injectHead, useHead } from '../src'
 import { createHead as createLazyHead } from '../src/lazy'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
@@ -132,6 +132,54 @@ describe('vue lazy head', () => {
     head.render()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
+  })
+
+  // Nuxt's `<Link>` components share one reactive input. Each one edits its item in its render
+  // and patches with the same object, so a deep read inside that render made the renders loop.
+  it('components that edit one shared input in their render hydrate without a loop, and their links go on unmount', async () => {
+    let renders = 0
+    const shared = new WeakMap<object, { input: any, entry: any }>()
+    const Link = defineComponent({
+      props: { rel: String, href: String },
+      setup(props) {
+        const head = injectHead()
+        let state = shared.get(head)
+        if (!state) {
+          const input = reactive<{ link: any[] }>({ link: [] })
+          shared.set(head, state = { input, entry: head.push(input) })
+        }
+        const { input, entry } = state
+        const index = input.link.push(null) - 1
+        onBeforeUnmount(() => {
+          input.link[index] = null
+          entry.patch(input)
+        })
+        return () => {
+          renders++
+          input.link[index] = { rel: props.rel, href: props.href, key: props.rel }
+          entry.patch(input)
+          return null
+        }
+      },
+    })
+    const show = ref(true)
+    const App = defineComponent({
+      setup() {
+        useHead({ title: 'Guide' })
+        return () => h('div', show.value ? [h(Link, { rel: 'prev', href: '/a' }), h(Link, { rel: 'next', href: '/b' })] : 'home')
+      },
+    })
+    await serverRender(App)
+    const { head } = hydrate(App)
+    head.render()
+    await settle()
+    expect(renders).toBeLessThan(10)
+    expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(2)
+    head.blockLoad()
+    show.value = false
+    await nextTick()
+    head.render()
+    await vi.waitFor(() => expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0))
   })
 
   describe('calls the server could not have rendered', () => {

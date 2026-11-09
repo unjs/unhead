@@ -1,5 +1,5 @@
 import type { HeadEntry } from '../types'
-import { sameInput } from './same'
+import { copyInput, sameInput } from './same'
 
 // The crawler tag list of `serverOnlyCrawlerTags`: crawler `meta`, `link rel=canonical`,
 // `link rel=alternate` with `hreflang`, and JSON-LD scripts. Crawlers read the server HTML,
@@ -42,9 +42,9 @@ export function visibleState(entries: Iterable<HeadEntry<any>>): VisibleState {
       else if (key === '_flatMeta' && value)
         value = Object.fromEntries(Object.entries(value).filter(([k, x]) => x !== undefined && !CRAWLER_RE.test(k)))
       if (key === 'title')
-        value !== undefined && state.t.push([e._i, e.options, value])
+        value !== undefined && state.t.push([e._i, e.options, copyInput(value)])
       else if (value !== undefined && !isEmpty(value))
-        v[key] = value
+        v[key] = copyInput(value)
     }
     if (!isEmpty(v))
       state.r.push([e._i, e.options, v])

@@ -231,8 +231,8 @@ describe('lazy head change detection', () => {
   it.each([
     ['on the first navigation', [] as string[]],
     ['after a title only navigation', ['Other']],
-  ])('removes keyless prev and next links of a disposed page %s', async (_, before) => {
-    const guide: ResolvableHead = { title: 'Guide', link: [{ rel: 'prev', href: '/a' }, { rel: 'next', href: '/b' }] }
+  ])('removes the prev and next links of a disposed page %s', async (_, before) => {
+    const guide: ResolvableHead = { title: 'Guide', link: [{ rel: 'prev', href: '/a', key: 'prev' }, { rel: 'next', href: '/b', key: 'next' }] }
     const steps: Step[] = [
       ...before.map(name => (head: any, entries: any[]) => {
         head.blockLoad?.()
@@ -251,6 +251,42 @@ describe('lazy head change detection', () => {
     expect(load).toHaveBeenCalled()
     await vi.waitFor(() => expect(lazyDom.window.document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0))
     expect(lazy).toEqual(off)
+  })
+
+  // Nuxt pauses DOM updates from the first page:start. A hydrating page can push or patch its
+  // entries after the head marked the end of hydration, while the pause still holds. The
+  // Nuxt `<Head>` component pushes an empty entry and patches it once it renders.
+  it.each(['push', 'patch', 'mutation'])('removes server links of an entry that a %s adds during the pause after hydration, once it is disposed', async (how) => {
+    const links: ResolvableHead = { link: [{ rel: 'prev', href: '/a', key: 'prev' }, { rel: 'next', href: '/b', key: 'next' }] }
+    const dom = ssrDom([], { title: 'Guide' }, links)
+    const doc = dom.window.document
+    let paused = false
+    const head = createLazyHead({ document: doc })
+    head.hooks.hook('dom:beforeRender', (ctx) => {
+      ctx.shouldRender = !paused
+    })
+    const page = head.push({ title: 'Guide' })
+    // the mutation case edits one input object in place and patches with it, as a reactive object does
+    const input: any = {}
+    const early = how === 'push' ? undefined : head.push(input)
+    head.render()
+    paused = true
+    const late = early || head.push(links)
+    if (how === 'mutation')
+      early!.patch(Object.assign(input, links))
+    else
+      early?.patch(links)
+    await settle()
+    head.blockLoad()
+    if (how === 'mutation')
+      input.link = input.link.map(() => null)
+    late.dispose()
+    page.dispose()
+    head.push({ title: 'Home', link: [{ rel: 'stylesheet', href: '/home.css' }] })
+    paused = false
+    head.render()
+    await vi.waitFor(() => expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull())
+    expect(doc.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0)
   })
 
   it('restores the server title as the base of a later runtime render', async () => {

@@ -4,7 +4,7 @@ import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInp
 import type { Shown } from './visible'
 import { createClientHeadAdapter } from '../client/adapter'
 import { createUnhead } from '../unhead'
-import { sameInput } from './same'
+import { copyInput, sameInput } from './same'
 
 /**
  * @experimental
@@ -65,6 +65,9 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
 }
 
 type HookFn = (...args: any[]) => any
+
+// the id offset of a late entry copy: far above any entry id, within the 21 bits a tag position leaves
+const LATE_ID = 1 << 20
 
 function runHooks(hooks: HookFn[], args: any[], start: number): any {
   for (let i = start; i < hooks.length; i++) {
@@ -128,6 +131,10 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   const hooks = createHookStore(options.hooks)
   // Keep server inputs separate from live entries throughout hydration.
   const hydrationEntries = new Map<number, HeadEntry<T>>()
+  // Each entry pushed or patched after hydration and before the load, as it stood then. A hydrating
+  // page can push or patch while a pause holds, so the server may have rendered those tags too.
+  // The runtime adopts these as well, under ids of their own, so the hydrated entries stay.
+  const late = new Map<number, HeadEntry<T>>()
   let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
@@ -196,7 +203,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
         head.load()
       }
     }
-    else if (ready()) {
+    else {
+      if (!ready())
+        return
       if (loading || !document || options.render || h['dom:rendered'] || h['dom:renderTag']) {
         head.load()
       }
@@ -230,21 +239,59 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
       const entry = head.entries.get(active._i)
       if (entry)
-        hydrationEntries.set(active._i, { ...entry })
+        hydrationEntries.set(active._i, { ...entry, input: copyInput(entry.input) })
     }
     // A reactive input resolves again on any dependency change, such as the route that the router
     // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
+    // The check compares with a copy, because an app can edit the input object in place and patch with it.
     const patch = active.patch
-    active.patch = (next) => {
+    let last = copyInput(input)
+    const keepLate = () => {
       const entry = head.entries.get(active._i)
-      if (loading || !entry || !sameInput(entry._pending ?? entry.input, next))
+      if (entry && hydrated && !loading)
+        late.set(active._i, { ...entry, _i: active._i + LATE_ID, input: last, _pending: undefined, _tags: undefined })
+    }
+    keepLate()
+    let lastRef = input
+    let queued = false
+    active.patch = (next) => {
+      if (loading || !head.entries.has(active._i)) {
         patch(next)
+      }
+      else if (next !== lastRef) {
+        lastRef = next
+        if (!sameInput(last, next)) {
+          last = copyInput(next)
+          keepLate()
+          patch(next)
+        }
+      }
+      // The same object, edited in place, as Nuxt's `<Link>` does in its render. Reading it now
+      // would make that render depend on it, so the check waits for a microtask.
+      else if (!queued) {
+        queued = true
+        queueMicrotask(() => {
+          queued = false
+          if (!head.entries.has(active._i) || sameInput(last, next))
+            return
+          last = copyInput(next)
+          const entry = hydrationEntries.get(active._i)
+          // During hydration, a component that builds its input in place renders what the server rendered
+          if (!hydrated && !loading && entry) {
+            entry.input = last
+          }
+          else {
+            keepLate()
+            patch(next)
+          }
+        })
+      }
     }
     return active
   }
 
   head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => hydrated || [...hydrationEntries.values()], () => shown.t))
+    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => [...(hydrated || hydrationEntries.values()), ...late.values()], () => shown.t))
     .then((renderer) => {
       // the runtime adopts these at its first render
       hydrated ||= [...hydrationEntries.values()]
