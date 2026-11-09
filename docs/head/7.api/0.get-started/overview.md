@@ -16,6 +16,10 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ::
 
+## Lazy Head
+
+The [Lazy Head](/docs/head/api/lazy-head) is an experimental client head for server rendered pages. It loads its DOM runtime only when a change needs it.
+
 ## Plugins
 
 See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `defineHeadPlugin`.
