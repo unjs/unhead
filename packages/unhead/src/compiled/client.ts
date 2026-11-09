@@ -130,11 +130,13 @@ function resolveCompiledTags(head: LazyUnhead<any>, entries: HeadEntry<any>[]): 
       if (_f! & FLAG_DYNAMIC_VALUES) {
         for (const target of [tag.props, tag]) {
           for (const key in target) {
+            if (typeof target[key] !== 'string')
+              continue
             // v3 keeps a value that is a whole string, so a number stays a number and the content
             // cleanup, which compares by identity, leaves its text
             let whole: unknown
             let entryValue: any
-            const text = target[key].replace?.(DYNAMIC_VALUE_RE, (match: string, index: string, _: number, text: string) => {
+            const text = target[key].replace(DYNAMIC_VALUE_RE, (match: string, index: string, _: number, text: string) => {
               entryValue = options.values?.[index as any]
               if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && !isScalar(entryValue))
                 head._fullRuntimeReason ||= { _tag: 'Value', entry, index: +index, value: entryValue }
