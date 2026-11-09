@@ -26,6 +26,7 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+  withTagTransform: function
 ./server:
   createHead: function
   prepareTemplate: function

@@ -1,6 +1,6 @@
 import type { HeadTag } from '../types'
 import { hasContent } from '../utils/const'
-import { defineHeadPlugin } from './defineHeadPlugin'
+import { defineHeadPlugin, withTagTransform } from './defineHeadPlugin'
 
 const IMAGE_META_KEYS = /* @__PURE__ */ new Set(['og:image', 'og:image:url', 'og:image:secure_url', 'twitter:image', 'twitter:image:src'])
 
@@ -43,68 +43,63 @@ function inferredMeta(names: string[], content?: string): any {
   return inferredMetaCache[`${names}:${content}`] ||= names.map(name => ['meta', { [name.startsWith('og') ? 'property' : 'name']: name, ...content ? { content } : { 'data-infer': '' } }, 102, `meta:${name}`, { tagPriority: 'low' }, 1])
 }
 
+// The content an inferred tag takes, or nothing to keep the tag as it is
+function inferContent(tag: HeadTag, title: unknown, description: unknown, hasImage: boolean, options: InferSeoMetaPluginOptions): string | undefined {
+  const key = tag.props.property || tag.props.name
+  if (key === 'og:title')
+    return options.ogTitle ? options.ogTitle(title as string | undefined) : (title as string) || ''
+  if (key === 'og:description')
+    return options.ogDescription ? options.ogDescription(description as string | undefined) : (description as string) || ''
+  if (key === 'twitter:card')
+    return hasImage ? 'summary_large_image' : 'summary'
+}
+
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin((head) => {
     const compiled = (head as { _acceptsCompiled?: unknown })._acceptsCompiled
     if (options.twitterCard !== false) {
       const card = options.twitterCard
         ? { name: 'twitter:card', content: options.twitterCard, tagPriority: 'low' }
-        // no content: the hook below infers it from the resolved image tags
+        // no content: the transform infers it from the resolved image tags
         : { 'name': 'twitter:card', 'tagPriority': 'low', 'data-infer': '' }
       head.push(compiled ? inferredMeta(['twitter:card'], options.twitterCard) : { meta: [card] } as any)
     }
-    // no content: the hook below infers it from the title and description
+    // no content: the transform infers it from the title and description
     const inferred = [
       { 'property': 'og:title', 'tagPriority': 'low', 'data-infer': '' },
       { 'property': 'og:description', 'tagPriority': 'low', 'data-infer': '' },
     ]
     head.push(compiled ? inferredMeta(['og:title', 'og:description']) : { meta: inferred } as any)
-    return {
+    return withTagTransform(head, {
       key: 'infer-seo-meta',
-      // a transform may return something new on each call, so the server memo cannot hold its output
-      ...(options.ogTitle || options.ogDescription) && { _transforms: true },
-      hooks: {
-        'tags:beforeResolve': ({ tagMap }) => {
-          let title = head._titleTemplate || head._title
-          // check if the current title is %infer
-          const ogTitle = tagMap.get('meta:og:title')
-          if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            if (typeof title === 'function') {
-              // @ts-expect-error untyped
-              title = title(head._title)
-            }
-            title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
-            ogTitle.processTemplateParams = true
-          }
-
-          const descriptionValue = tagMap.get('meta:description')?.props?.content
-          const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
-          const ogDescription = tagMap.get('meta:og:description')
-          if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
-            ogDescription.processTemplateParams = true
-          }
-        },
-        // after resolve so an image added or dropped by any other hook still counts
-        'tags:afterResolve': (ctx) => {
-          let cardIndex = -1
-          let hasImage = false
-          for (let i = 0; i < ctx.tags.length; i++) {
-            const tag = ctx.tags[i]!
-            if (tag.tag === 'meta' && tag.props.name === 'twitter:card' && typeof tag.props['data-infer'] !== 'undefined')
-              cardIndex = i
-            else if (!hasImage && isImageMeta(tag))
-              hasImage = true
-          }
-          if (cardIndex === -1)
-            return
-          const card = ctx.tags[cardIndex]!
-          const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
-          delete props['data-infer']
-          ctx.tags[cardIndex] = { ...card, props }
-        },
+      // a custom transform may test the text, which the server memo holds as a token
+      ...(options.ogTitle || options.ogDescription) && { cacheKey: () => null },
+      // after every other step, so a title template, template params, and an image added or dropped all count
+      transform(tags) {
+        let title: unknown
+        let description: unknown
+        let hasImage = false
+        for (const tag of tags) {
+          if (tag.tag === 'title')
+            title = tag.textContent
+          else if (tag.tag === 'meta' && tag.props.name === 'description')
+            description = tag.props.content
+          else
+            hasImage ||= isImageMeta(tag)
+        }
+        title = hasContent(title) ? String(title) : undefined
+        description = hasContent(description) ? String(description) : undefined
+        return tags.map((tag) => {
+          const content = tag.tag === 'meta' && typeof tag.props['data-infer'] !== 'undefined' && inferContent(tag, title, description, hasImage, options)
+          if (content === undefined || content === false)
+            return tag
+          const props: Record<string, any> = { ...tag.props, content }
+          // the twitter card renders without the marker, and the og tags keep it, as before transforms
+          if (tag.props.name === 'twitter:card')
+            delete props['data-infer']
+          return { ...tag, props }
+        })
       },
-    }
+    })
   }, 'infer-seo-meta')
 }
