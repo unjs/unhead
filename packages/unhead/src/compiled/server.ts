@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache, valuesToTags } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, settleValues } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, runTransforms, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -70,7 +70,6 @@ const BUILT_IN: Record<string, string> = {
   'deprecations': 'entries:normalize',
   'promises': 'entries:resolve',
   'aliasSorting': 'tags:resolve',
-  'infer-seo-meta': 'tags:beforeResolve,tags:afterResolve',
 }
 
 // compiled tags rarely sit this deep in a head, so their revived tags are not worth keeping per index
@@ -97,7 +96,8 @@ const RENDER_HOOK_RE = /^(?:entries:[nr]|tags:|ssr:[br])/
 function hasListeners(head: CompiledHead): boolean {
   const hooks = (head._hookStore as any)?._hooks
   for (const name in hooks) {
-    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: unknown) => !head._known?.has(listener)))
+    // a tag transform listener carries `_t`, and the fast tiers run its transform themselves
+    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: any) => !listener._t && !head._known?.has(listener)))
       return true
   }
   return false
@@ -128,10 +128,6 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   if (resolved && BUILT_IN[key] === Object.keys(resolved.hooks || {}).join()) {
     for (const name in resolved.hooks)
       (head._known ||= new Set()).add(resolved.hooks[name as keyof typeof resolved.hooks])
-    if (key === 'infer-seo-meta') {
-      head._infer = resolved.hooks
-      head._inferTransforms = (resolved as { _transforms?: true })._transforms
-    }
   }
 }
 
@@ -245,7 +241,7 @@ function applyNativeTemplateParams(tags: RuntimeTag[], tagMap: Map<string, any>,
 }
 
 const renderer: CompiledRenderer = {
-  n: { m: [] },
+  n: { m: {} },
   t(tag) {
     // a spread copy keeps `_src`, and a copy may hold new values
     if (tag._src === tag)
@@ -302,20 +298,9 @@ const renderer: CompiledRenderer = {
     const hasFlatMeta = dedupeTags(ctx)
     resolveTitleTemplate(ctx, head)
     valuesToTags(ctx, hasFlatMeta)
-    const infer = head._infer as Record<string, (ctx: any) => void> | undefined
-    if (infer) {
-      // the hook writes to these tags, and compiled tags share theirs across renders
-      for (const key of ['meta:og:title', 'meta:og:description']) {
-        const tag = ctx.tagMap.get(key)
-        if (tag)
-          ctx.tagMap.set(key, ctx.tags[ctx.tags.indexOf(tag)] = { ...tag, props: { ...tag.props } })
-      }
-      infer['tags:beforeResolve']!(ctx)
-    }
     if ((head as CompiledHead)._tp)
       applyNativeTemplateParams(ctx.tags, ctx.tagMap, (head as CompiledHead)._tp!)
-    infer?.['tags:afterResolve']!(ctx)
-    return ctx.tags
+    return runTransforms(head, ctx.tags)
   },
   b: (head, omitLineBreaks, self) => buildValueMemo(head, omitLineBreaks, self, revive),
   f: renderValueMemo,

@@ -1,4 +1,4 @@
-import type { HeadEntry, SSRHeadPayload, Unhead } from '../types'
+import type { HeadEntry, HeadPlugin, SSRHeadPayload, Unhead } from '../types'
 import type { CompiledTag, CompiledTags } from './types'
 import { DYNAMIC_VALUE_OPEN, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES } from './tags'
 
@@ -15,10 +15,6 @@ export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   _tp?: unknown
   /** Marks a head that renders compiled tags, for `useCompiledHead`. */
   _acceptsCompiled?: 1
-  /** The hooks of `InferSeoMetaPlugin`, which the fast tiers run themselves. */
-  _infer?: unknown
-  /** Set when `InferSeoMetaPlugin` has an `ogTitle` or `ogDescription` transform, whose output no memo may hold. */
-  _inferTransforms?: true
 }
 
 export interface Memo {
@@ -50,7 +46,8 @@ export interface CompiledRenderer {
 
 export interface TrieNode {
   n?: WeakMap<CompiledTags, TrieNode>
-  m: Memo[]
+  /** Memos by render options and the cache key of each tag transform */
+  m: Record<string | number, Memo>
 }
 
 // every node a trie ever added, shared by the trie of each renderer
@@ -140,6 +137,46 @@ export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean 
   return { b: renderTags(renderer.r(renderer.c(head), head), omitLineBreaks, renderer) as any }
 }
 
+// Set by the `@unhead/bundler` plugin. Undefined outside it, so each guard reads `typeof` first.
+declare const __UNHEAD_COMPILE_DEBUG__: boolean | undefined
+
+/** The plugins of a head with a tag transform, in the order v3 runs their hooks. */
+export function transformPlugins(head: { plugins: Map<string, HeadPlugin> }): HeadPlugin[] {
+  const plugins: HeadPlugin[] = []
+  head.plugins.forEach(plugin => plugin.transform && plugins.push(plugin))
+  return plugins
+}
+
+// internal fields, such as the source of a compiled tag, may be circular
+const tagsJson = (tags: unknown[]) => JSON.stringify(tags, (key, value) => key[0] === '_' ? undefined : value)
+
+/**
+ * Runs the tag transforms of a head. A build with `compile: { debug: true }` runs each one
+ * twice and warns when the outputs differ: the server memo would hold a stale output.
+ */
+export function runTransforms(head: Unhead<any>, tags: RuntimeTag[]): RuntimeTag[] {
+  for (const plugin of transformPlugins(head)) {
+    const out = plugin.transform!(tags as any, head)
+    if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && tagsJson(plugin.transform!(tags as any, head)) !== tagsJson(out))
+      console.warn(`[unhead] tag transform ${plugin.key} is not pure`)
+    tags = out
+  }
+  return tags
+}
+
+// The memo key of a render: its options and the cache key of each transform. `null` when a
+// cache key keeps the memo from holding the output.
+function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): string | number | null {
+  let key: string | number | null = (omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0)
+  head.plugins.forEach((plugin) => {
+    if (plugin.transform && key !== null) {
+      const part = plugin.cacheKey ? plugin.cacheKey(head) : ''
+      key = part === null ? null : `${key}|${plugin.key}:${part}`
+    }
+  })
+  return key
+}
+
 /**
  * Renders a head with no foreign hook listeners: the memo when every entry is a
  * compiled tags with no options, otherwise `renderer.c` plus the v3 rules.
@@ -162,9 +199,9 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
       // 2048th new node drops the whole trie. With more live compiled tags than that, it would
       // start over on every render, so past the fourth drop it stays empty for good.
       if (!(++nodeCount % 2048))
-        renderer.n = { m: [] }
+        renderer.n = { m: {} }
       else if (nodeCount < 8192)
-        nodes.set(compiledTags, next = { m: [] })
+        nodes.set(compiledTags, next = { m: {} })
       if (!next) {
         node = undefined
         break
@@ -173,8 +210,9 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
     node = next
     last = i
   }
-  if (node && !head._inferTransforms) {
-    const memo = node.m[(omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0) | (head._infer ? 4 : 0)] ||= renderer.b(head, omitLineBreaks, renderer)
+  const key = node && memoKey(head, omitLineBreaks)
+  if (key != null) {
+    const memo = node!.m[key] ||= renderer.b(head, omitLineBreaks, renderer)
     if (!memo.x) {
       const payload = renderer.f ? renderer.f(memo, head) : { ...memo.b } as unknown as SSRHeadPayload
       if (payload)
