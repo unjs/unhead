@@ -31,7 +31,7 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   load: () => Promise<boolean>
   /**
-   * Blocks the load while the user changes page, including any pending idle load.
+   * Blocks the load while the user changes page.
    * The next `head.render()` releases it, and loads at once if entries changed.
    * So call `head.render()` when the navigation ends, even if it aborted.
    * A direct `load()` still runs. A load already in flight finishes, and its first render
@@ -89,8 +89,8 @@ function createHookStore(initial?: Record<string, any>) {
 
 /**
  * Creates a client head for a server rendered page. It keeps entries without
- * touching the document, then loads the DOM runtime when the browser is idle or
- * when a change must reach the document.
+ * touching the document. It loads the DOM runtime only when a change must reach
+ * the document, or when `load()` runs.
  *
  * Use `createHead` from `unhead/client` for a page with no server rendered head.
  *
@@ -105,7 +105,6 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
-  let cancelIdle: (() => void) | undefined
   let blocked = false
   // blockLoad ran while a load was in flight, so its first render waits for the release
   let held = false
@@ -193,50 +192,25 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       return false
     })
 
-  const armIdle = () => {
-    if (loading || cancelIdle || !document)
-      return
-    const fire = () => {
-      cancelIdle = undefined
-      if (!isPaused()) {
-        markHydrated()
-        head.load()
-      }
-    }
-    if (typeof requestIdleCallback === 'function') {
-      const id = requestIdleCallback(fire, { timeout: 2000 })
-      cancelIdle = () => cancelIdleCallback(id)
-    }
-    else {
-      const id = setTimeout(fire, 100)
-      cancelIdle = () => clearTimeout(id)
-    }
-  }
-
   head.blockLoad = () => {
     markHydrated()
     blocked = true
     held = !!loading && !!head._b
-    cancelIdle?.()
-    cancelIdle = undefined
   }
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
+  // After hydration the server head is correct, so only a change loads the runtime.
   render = () => {
     blocked = held = false
-    if (hydrated && head.dirty) {
+    if (hydrated && head.dirty)
       onChange()
-    }
-    else {
+    else
       markHydrated()
-      armIdle()
-    }
     return false
   }
 
   hooks.hook('entries:updated', onChange)
   options.plugins?.forEach(p => head.use(p))
   options.init?.forEach(e => e && head.push(e as T))
-  armIdle()
   return head
 }

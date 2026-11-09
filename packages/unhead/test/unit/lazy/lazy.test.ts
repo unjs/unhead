@@ -41,12 +41,25 @@ describe('createLazyHead', () => {
     expect([...head.entries.values()].map(e => e.input)).toEqual([{ title: 'Client only' }])
   })
 
-  it('loads on idle and reconciles entries with the server document', async () => {
+  it('loads nothing when hydration ends with no change', async () => {
+    const dom = ssrDom(titled)
+    const before = dom.serialize()
+    const head = createLazyHead({ document: dom.window.document })
+    const load = vi.spyOn(head, 'load')
+    head.push(titled)
+    head.render()
+    await settle(300)
+    expect(load).not.toHaveBeenCalled()
+    expect(dom.serialize()).toBe(before)
+  })
+
+  it('reconciles entries with the server document on load', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
     head.push(titled)
     head.push({ meta: [{ name: 'client', content: 'yes' }] })
     const doc = dom.window.document
+    await head.load()
     await vi.waitFor(() => expect(doc.querySelector('meta[name="client"]')?.getAttribute('content')).toBe('yes'))
     expect(doc.title).toBe('Server')
     expect(doc.querySelectorAll('meta[name="description"]')).toHaveLength(1)
@@ -70,7 +83,7 @@ describe('createLazyHead', () => {
     await vi.waitFor(() => expect(actual.serialize()).toBe(expected.serialize()))
   })
 
-  it('blocks idle and change loads while dom:beforeRender pauses rendering', async () => {
+  it('blocks change loads while dom:beforeRender pauses rendering', async () => {
     const dom = ssrDom(titled)
     const { head, setPaused } = pausableHead(dom)
     head.push(titled)
@@ -103,13 +116,15 @@ describe('createLazyHead', () => {
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Next'))
   })
 
-  it('a render after blockLoad with no change arms the idle load again', async () => {
+  it('a render after blockLoad with no change loads nothing', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
-    head.push({ title: 'Client' })
+    const load = vi.spyOn(head, 'load')
+    head.push(titled)
     head.blockLoad()
     head.render()
-    await vi.waitFor(() => expect(dom.window.document.title).toBe('Client'))
+    await settle()
+    expect(load).not.toHaveBeenCalled()
   })
 
   it('load runs during a load block when called directly', async () => {
@@ -119,18 +134,6 @@ describe('createLazyHead', () => {
     head.push({ title: 'Direct' })
     expect(await head.load()).toBe(true)
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Direct'))
-  })
-
-  it('blockLoad stops the pending idle load until the next render', async () => {
-    const dom = ssrDom(titled)
-    const head = createLazyHead({ document: dom.window.document })
-    head.push({ title: 'Client' })
-    head.blockLoad()
-    await settle()
-    expect(dom.window.document.title).toBe('Server')
-
-    head.render()
-    await vi.waitFor(() => expect(dom.window.document.title).toBe('Client'))
   })
 
   it('blockLoad during a load keeps its first render until the next render', async () => {

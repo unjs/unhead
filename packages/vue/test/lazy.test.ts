@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { renderToString } from '@vue/server-renderer'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent, h, nextTick, onMounted, ref } from 'vue'
 import { injectHead, useHead } from '../src'
 import { createLazyHead } from '../src/lazy'
@@ -105,15 +105,6 @@ describe('vue lazy head', () => {
   })
 
   describe('calls the server could not have rendered', () => {
-    // Idle never fires here, so a load can only come from the call under test.
-    beforeEach(() => {
-      vi.stubGlobal('requestIdleCallback', () => 1)
-      vi.stubGlobal('cancelIdleCallback', () => {})
-    })
-    afterEach(() => {
-      vi.unstubAllGlobals()
-    })
-
     it('useHead in setup of a hydrating component does not load', async () => {
       const App = defineComponent({
         setup() {
