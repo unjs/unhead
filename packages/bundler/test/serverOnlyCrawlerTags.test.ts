@@ -99,7 +99,8 @@ describe('serverOnlyCrawlerTags', () => {
   it('removes a useHead call left empty, including a getter input', async () => {
     const code = await transform(`useHead({ meta: [{ property: 'og:title', content: 'x' }] })
 useHeadSafe(() => ({ link: [{ rel: 'canonical', href: '/' }] }))
-useHead({ script: [{ type: 'application/ld+json', innerHTML: '{}' }] }, { tagPriority: 'low' })`)
+useHead({ script: [{ type: 'application/ld+json', innerHTML: '{}' }] }, { tagPriority: 'low' })
+useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@type': 'WebSite' }) }] })`)
     expect(calls(code!)).toEqual([])
   })
 

@@ -23,7 +23,14 @@ const CRAWLER_META_NAMES = new Set(['description', 'robots', 'keywords'])
  * a value and have no other effect. Any other call keeps the tag, because
  * removing it could remove a side effect.
  */
-const DROPPABLE_CALLS = new Set(['computed', 'ref', 'shallowRef', 'toRef', 'toValue', 'unref', 't', '$t'])
+const DROPPABLE_CALLS = new Set(['computed', 'ref', 'shallowRef', 'toRef', 'toValue', 'unref', 't', '$t', 'JSON.stringify'])
+
+function calleeName(callee: any): string | undefined {
+  if (callee.type === 'Identifier')
+    return callee.name
+  if (callee.type === 'MemberExpression' && !callee.computed && callee.object.type === 'Identifier' && callee.property.type === 'Identifier')
+    return `${callee.object.name}.${callee.property.name}`
+}
 
 export interface ServerOnlyCrawlerTagsOptions extends BaseTransformerTypes {
   /**
@@ -99,8 +106,7 @@ function isDroppable(input: any): boolean {
         ? isDroppable(p.argument)
         : !p.computed && p.kind === 'init' && isDroppable(p.value))
     case 'CallExpression':
-      return node.callee.type === 'Identifier'
-        && DROPPABLE_CALLS.has(node.callee.name)
+      return DROPPABLE_CALLS.has(calleeName(node.callee)!)
         && node.arguments.every(isDroppable)
     default:
       return false
