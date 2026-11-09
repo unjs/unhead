@@ -58,7 +58,7 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    */
   load: () => Promise<boolean>
   /**
-   * Blocks the load while the user changes page, including any pending idle load.
+   * Blocks the load while the user changes page.
    * The next `head.render()` releases it, and loads at once if entries changed.
    * So call `head.render()` when the navigation ends, even if it aborted.
    * A direct `load()` still runs. A load already in flight finishes, and its first render
@@ -109,6 +109,16 @@ function isLoose(entry: HeadEntry<any>): boolean {
   return !Array.isArray(input) && !(entry.options?.tagPriority === 'high' && input?.link)
 }
 
+// Deep equality of resolved head input: plain objects, lists, and primitives.
+function sameInput(a: any, b: any): boolean {
+  if (a === b)
+    return true
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b))
+    return false
+  const keys = Object.keys(a)
+  return keys.length === Object.keys(b).length && keys.every(key => sameInput(a[key], b[key]))
+}
+
 function runHooks(hooks: HookFn[], args: any[], start: number): any {
   for (let i = start; i < hooks.length; i++) {
     let result
@@ -156,8 +166,8 @@ function createHookStore(initial?: Record<string, any>) {
 
 /**
  * Creates a client head for a server rendered page. It keeps entries without
- * touching the document, then loads the DOM runtime when the browser is idle or
- * when a change must reach the document.
+ * touching the document. It loads the DOM runtime only when a change must reach
+ * the document, or when `load()` runs.
  *
  * Use `createHead` from `unhead/client` for a page with no server rendered head.
  *
@@ -173,7 +183,6 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   // the claims and entries that the first runtime render adopts
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
-  let cancelIdle: (() => void) | undefined
   let blocked = false
   // blockLoad ran while a load was in flight, so its first render waits for the release
   let held = false
@@ -233,6 +242,11 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
         // when it loads, so a patch reads them through the entry. A patch replaces them
         // too, so a claim keeps the values that the server rendered.
         patch(next: T, patchOptions?: LazyEntryOptions) {
+          // Equal reactive input needs no runtime before load. Compiled values can change independently.
+          if (!loading && entries.has(_i) && sameInput(entry._pending ?? entry.input, next)
+            && sameInput(entry.options, { ...entry.options, ...patchOptions })) {
+            return
+          }
           entry.options = { ...entry.options, ...patchOptions }
           entry._pending = next
           entries.set(_i, entry)
@@ -347,45 +361,25 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
     return loading ||= upgrade(runtimes[+!!full]!())
   }
 
-  const armIdle = () => {
-    if (loading || cancelIdle || !document)
-      return
-    const fire = () => {
-      cancelIdle = undefined
-      if (!isPaused()) {
-        markHydrated()
-        head.load()
-      }
-    }
-    const idle = typeof requestIdleCallback === 'function'
-    const id = idle ? requestIdleCallback(fire, { timeout: 2000 }) : setTimeout(fire, 100)
-    cancelIdle = () => (idle ? cancelIdleCallback : clearTimeout)(id as any)
-  }
-
   head.blockLoad = () => {
     markHydrated()
     blocked = true
     held = !!loading && !!head._b
-    cancelIdle?.()
-    cancelIdle = undefined
   }
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
+  // After hydration the server head is correct, so only a change loads the runtime.
   render = () => {
     blocked = held = false
-    if (hydrated && head.dirty) {
+    if (hydrated && head.dirty)
       onChange()
-    }
-    else {
+    else
       markHydrated()
-      armIdle()
-    }
     return false
   }
 
   hooks.hook('entries:updated', onChange)
   options.plugins?.forEach(p => head.use(p))
   options.init?.forEach(e => e && head.push(e as T))
-  armIdle()
   return head
 }

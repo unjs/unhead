@@ -1,6 +1,5 @@
 import type { MinifyFn } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { it } from 'vitest'
-import { CompileTransform } from '../packages/bundler/src/unplugin/CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from '../packages/bundler/src/unplugin/CreateHeadTransform'
 import { MinifyTransform } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { SSRStaticReplace } from '../packages/bundler/src/unplugin/SSRStaticReplace'
@@ -45,6 +44,11 @@ const pageCode = [
 ].join('\n')
 
 const serverContext = { environment: { config: { consumer: 'server' } } }
+
+// The CI baseline can predate compiler mode. Discover it through the shared
+// plugin entry so both refs still run the same supported transform fixtures.
+const compileTransform = Unhead({ devtools: false, validate: false, transformInlineScripts: false, compile: true }, { framework: '@unhead/vue' })
+  .find(plugin => plugin.name === 'unhead:compile-transform')
 
 async function runPipeline(plugins: any[], code: string, id: string, context: any) {
   for (const plugin of plugins) {
@@ -189,23 +193,27 @@ it('unplugin transform CPU', async ({ bench }) => {
       )
       assertTransformResult(result, plugin.name)
     }),
-    bench('compileTransform page calls', async () => {
-      const plugin = CompileTransform.vite({}) as any
-      const result = await runPluginTransform(plugin, pageCode, '/project/src/page.ts', serverContext)
-      assertTransformResult(result, plugin.name)
-    }),
-    bench('compileTransform skip unrelated code', async () => {
-      const plugin = CompileTransform.vite({}) as any
-      await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts', serverContext)
-    }),
+    ...compileTransform
+      ? [
+          bench('compileTransform page calls', async () => {
+            const result = await runPluginTransform(compileTransform, pageCode, '/project/src/page.ts', serverContext)
+            assertTransformResult(result, compileTransform.name)
+          }),
+          bench('compileTransform skip unrelated code', async () => {
+            await runPluginTransform(compileTransform, unrelatedCode, '/project/src/page.ts', serverContext)
+          }),
+        ]
+      : [],
     bench('core transforms, server page, compile off', async () => {
       await runPipeline(Unhead({ devtools: false, validate: false, transformInlineScripts: false }, { framework: '@unhead/vue' }), pageCode, '/project/src/page.ts', serverContext)
     }),
-    bench('core transforms, server page, compile on', async () => {
-      const code = await runPipeline(Unhead({ devtools: false, validate: false, transformInlineScripts: false, compile: true }, { framework: '@unhead/vue' }), pageCode, '/project/src/page.ts', serverContext)
-      if (!code.includes('useCompiledHead'))
-        throw new TypeError('compile on benchmark did not compile its fixture')
-    }),
+    ...compileTransform
+      ? [bench('core transforms, server page, compile on', async () => {
+          const code = await runPipeline(Unhead({ devtools: false, validate: false, transformInlineScripts: false, compile: true }, { framework: '@unhead/vue' }), pageCode, '/project/src/page.ts', serverContext)
+          if (!code.includes('useCompiledHead'))
+            throw new TypeError('compile on benchmark did not compile its fixture')
+        })]
+      : [],
     bench('treeshakeServerComposables skip unrelated code', async () => {
       const plugin = TreeshakeServerComposables.vite({}) as any
       await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts')
