@@ -35,8 +35,8 @@ export interface InferSeoMetaPluginOptions {
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 
-// The `compileTags` output of the input below, for a head that takes compiled tags. Its
-// compiled runtimes run the hooks of this plugin themselves. Every head pushes the same
+// The `compileTags` output of the input below, for the compiled server head, which runs
+// the transform of this plugin itself. Every head pushes the same
 // arrays, so the server memo, keyed on the identity of compiled tags, serves them.
 const inferredMetaCache: Record<string, any> = {}
 function inferredMeta(names: string[], content?: string): any {

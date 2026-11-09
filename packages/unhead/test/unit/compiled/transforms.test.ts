@@ -1,5 +1,5 @@
 import type { HeadPlugin, Unhead } from '../../../src/types'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { compileTags } from '../../../src/compiled'
 import { createHead, renderSSRHead } from '../../../src/compiled/server'
 import { withTagTransform } from '../../../src/plugins/defineHeadPlugin'
@@ -20,8 +20,6 @@ function absoluteImages(site: string, calls: { n: number }, cacheKey?: (ctx: any
 }
 
 describe('tag transforms', () => {
-  afterEach(() => vi.unstubAllGlobals())
-
   it('render the same on the compiled server head as on v3', () => {
     const v3 = createV3Head({ disableDefaults: true, plugins: [absoluteImages('https://a.com', { n: 0 })] })
     v3.push({ title: 'Home', meta: [{ property: 'og:image', content: '/og.png' }] })
@@ -55,16 +53,5 @@ describe('tag transforms', () => {
       renderSSRHead(head)
     }
     expect(calls.n).toBe(2)
-  })
-
-  it('warn about a transform that is not pure in a debug build', () => {
-    vi.stubGlobal('__UNHEAD_COMPILE_DEBUG__', true)
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    let n = 0
-    const head = createHead({ disableDefaults: true, plugins: [(h: Unhead<any>) => withTagTransform(h, { key: 'counter', transform: list => [...list, { tag: 'meta', props: { name: 'n', content: String(n++) } } as any], cacheKey: () => null })] })
-    head.push(tags)
-    renderSSRHead(head)
-    expect(warn).toHaveBeenCalledWith('[unhead] tag transform counter is not pure')
-    warn.mockRestore()
   })
 })

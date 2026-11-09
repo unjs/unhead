@@ -137,9 +137,6 @@ export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean 
   return { b: renderTags(renderer.r(renderer.c(head), head), omitLineBreaks, renderer) as any }
 }
 
-// Set by the `@unhead/bundler` plugin. Undefined outside it, so each guard reads `typeof` first.
-declare const __UNHEAD_COMPILE_DEBUG__: boolean | undefined
-
 /** The plugins of a head with a tag transform, in the order v3 runs their hooks. */
 export function transformPlugins(head: { plugins: Map<string, HeadPlugin> }): HeadPlugin[] {
   const plugins: HeadPlugin[] = []
@@ -147,20 +144,10 @@ export function transformPlugins(head: { plugins: Map<string, HeadPlugin> }): He
   return plugins
 }
 
-// internal fields, such as the source of a compiled tag, may be circular
-const tagsJson = (tags: unknown[]) => JSON.stringify(tags, (key, value) => key[0] === '_' ? undefined : value)
-
-/**
- * Runs the tag transforms of a head. A build with `compile: { debug: true }` runs each one
- * twice and warns when the outputs differ: the server memo would hold a stale output.
- */
+/** Runs the tag transforms of a head. */
 export function runTransforms(head: Unhead<any>, tags: RuntimeTag[]): RuntimeTag[] {
-  for (const plugin of transformPlugins(head)) {
-    const out = plugin.transform!(tags as any, head)
-    if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && tagsJson(plugin.transform!(tags as any, head)) !== tagsJson(out))
-      console.warn(`[unhead] tag transform ${plugin.key} is not pure`)
-    tags = out
-  }
+  for (const plugin of transformPlugins(head))
+    tags = plugin.transform!(tags as any, head)
   return tags
 }
 
