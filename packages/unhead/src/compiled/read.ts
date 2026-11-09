@@ -8,7 +8,7 @@ import type { CompiledEntryContent } from './types'
  * and for every lazy head entry once the full runtime loads.
  *
  * On the server, a value function has not run before the first render, so `values` is
- * undefined until then. On a lazy head, a pending patch comes first. `seoMeta` is true for an
+ * undefined until then. An entry with no values reads an empty `values`. On a lazy head, a pending patch comes first. `seoMeta` is true for an
  * entry from a `useSeoMeta` call. Pass the result to `toHeadInput` for head input.
  *
  * @experimental
@@ -18,11 +18,12 @@ export function readCompiledEntry(entry: HeadEntry<any>): CompiledEntryContent |
   // a compiled server entry rebuilds `input` when read, so its own fields come first
   if ('_compiled' in entry) {
     const { _compiled, _values } = entry as CompiledEntry
-    content = _compiled && { tags: _compiled, values: Array.isArray(_values) ? _values : undefined }
+    // a value function has not run yet, and an entry with no values has none to wait for
+    content = _compiled && { tags: _compiled, values: typeof _values === 'function' ? undefined : _values || [] }
   }
   else {
     const tags = entry._pending ?? entry.input
-    content = Array.isArray(tags) ? { tags, values: (entry.options as { values?: readonly unknown[] } | undefined)?.values } : undefined
+    content = Array.isArray(tags) ? { tags, values: (entry.options as { values?: readonly unknown[] } | undefined)?.values || [] } : undefined
   }
   if (content && entry._seoMeta)
     content.seoMeta = true

@@ -39,6 +39,8 @@ describe('readCompiledEntry on a compiled useSeoMeta entry', () => {
     render(head)
     const read = readCompiledEntry(head.entries.get(seo._i)!)!
     expect(read.seoMeta).toBe(true)
+    // a reader takes `values` as the sign that the values are known, as og-image does
+    expect(read.values).toEqual([])
     expect(toHeadInput(read.tags, read.values)).toEqual({ title: 'Title', meta: [{ name: 'description', content: 'Description' }] })
   })
 })
