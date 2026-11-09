@@ -16,6 +16,14 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ::
 
+## Compiler Mode
+
+Experimental APIs for [compiler mode](/docs/vue/head/guides/core-concepts/compiler-mode). Compiler mode has a server half and a client half:
+
+- [Compiled Server Head](/docs/head/api/compiler-mode/compiled-server-head): The server head that renders compiled tags faster, with the same HTML
+- [Compiled Client Head](/docs/head/api/compiler-mode/compiled-client-head): The client head that loads its DOM runtime on the first head change, or at idle
+- [compileTags()](/docs/head/api/compiler-mode/compile-tags): Compiles static head input to compiled tags for the compiled server head
+
 ## Plugins
 
 See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `defineHeadPlugin`.
