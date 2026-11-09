@@ -42,11 +42,18 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<
 // The full runtime reads loose input, so a compiled entry turns back into the input it came from.
 // Its values stay in the entry options until then. A hydrated copy shares those options, so
 // they are replaced, never changed.
+// Template params hold no config keys, so their priority comes back as the entry option. Only
+// the `tagPriority` option of `compileTags` puts one there, and it puts the same one on each tag.
 function toLooseEntry(entry: HeadEntry<any>) {
   const { values, ...options } = entry.options as Record<string, any>
   for (const key of ['input', '_pending', '_o'] as const) {
-    if (Array.isArray(entry[key]))
-      entry[key] = toHeadInput(entry[key], values)
+    const tags = entry[key]
+    if (Array.isArray(tags)) {
+      const tagPriority = tags.find(tag => tag[0] === 'templateParams')?.[4]?.tagPriority
+      if (key !== '_o' && tagPriority !== undefined)
+        options.tagPriority = tagPriority
+      entry[key] = toHeadInput(tags, values)
+    }
   }
   entry.options = options
 }

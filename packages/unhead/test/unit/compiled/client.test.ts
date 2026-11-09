@@ -112,6 +112,35 @@ describe('a lazy head with no setup', () => {
   })
 })
 
+// `compileTags(input, { tagPriority })` holds the entry priority in each tag, and template params
+// cannot hold it in input
+describe('compiled tags with a tagPriority option', () => {
+  it.each([
+    ['compiled runtime', false, false],
+    ['compiled runtime', false, true],
+    ['full runtime', true, false],
+    ['full runtime', true, true],
+  ] as const)('render on the %s as the entry option does on v3 (loose entry: %s, page first: %s)', async (_, loose, pageFirst) => {
+    const site = { templateParams: { site: 'Site' }, title: 'Home' }
+    const page = { templateParams: { site: 'Page' }, titleTemplate: '%s | %site' }
+    const result = compileTags(site, { tagPriority: 'low' })
+    expect(result._tag).toBe('Ok')
+    const pair = createPair([{ input: page }], 'plugin')
+    pageFirst && pair.push(page)
+    pair.v3.push(site, { tagPriority: 'low' })
+    pair.compiled.push((result as any).tags)
+    pageFirst || pair.push(page)
+    if (loose) {
+      pair.v3.push({ meta: [{ name: 'loose', content: 'yes' }] })
+      pair.compiled.push({ meta: [{ name: 'loose', content: 'yes' }] })
+    }
+    await pair.render()
+    await settle(pair.compiled)
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(loose)
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+  })
+})
+
 // The `useScript` warmup link: loose input of a fixed shape, so a head without compiler mode carries no code for it
 describe('a warmup link', () => {
   it.each(['preload', 'preconnect', 'dns-prefetch'])('%s: renders on the compiled runtime as v3 does', async (rel) => {
