@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { compileTags, dynamicValue } from '../../../src/compiled'
 import { DEFAULT_COMPILED_TAGS } from '../../../src/compiled/core'
+import { createHead, renderSSRHead } from '../../../src/compiled/server'
 import { toHeadInput } from '../../../src/compiled/tags'
+import { TemplateParamsPlugin } from '../../../src/plugins'
+import { createHead as createV3ServerHead, renderSSRHead as renderV3 } from '../../../src/server'
 
 function expectBail(input: unknown, dynamicValues?: number) {
   const result = compileTags(input, { dynamicValues })
@@ -224,5 +227,35 @@ describe('toHeadInput', () => {
     const marked = tags.map(tag => tag[0] === 'meta' ? [...tag.slice(0, 5), tag[5]! | 8] as unknown as typeof tag : tag)
     expect(toHeadInput(marked, [undefined, undefined])).toEqual({})
     expect(toHeadInput(marked, ['t', 'd'])).toEqual({ title: 't', meta: [{ name: 'a', content: 'd' }] })
+  })
+})
+
+// v3 assigns the entry options onto each tag, so a priority option needs no entry option on compiled tags
+describe('compileTags with a tagPriority option', () => {
+  const siteParams = { templateParams: { site: { name: 'Site' }, separator: '|' }, meta: [{ name: 'description', content: '%site.name' }] }
+  const page = { templateParams: { site: { name: 'Page' } }, title: '%site.name %separator x', meta: [{ name: 'description', content: 'Page desc', tagPriority: 'high' as const }] }
+
+  it.each([['low'], ['high'], ['critical'], [5]] as const)('%s: renders as the entry option does on v3', (tagPriority) => {
+    const result = compileTags(siteParams, { tagPriority })
+    expect(result._tag).toBe('Ok')
+    const tags = (result as any).tags
+    for (const tp of [false, true]) {
+      const v3 = createV3ServerHead({ disableDefaults: true, plugins: tp ? [TemplateParamsPlugin] : [] })
+      v3.push(siteParams, { tagPriority })
+      v3.push(page)
+      const compiled = createHead({ disableDefaults: true, plugins: tp ? [TemplateParamsPlugin] : [] })
+      compiled.push(tags)
+      compiled.push(page)
+      expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
+    }
+  })
+
+  it('keeps the priority out of the template params', () => {
+    const result = compileTags(siteParams, { tagPriority: 'low' })
+    expect(toHeadInput((result as any).tags).templateParams).toEqual(siteParams.templateParams)
+  })
+
+  it('bails on a priority alias', () => {
+    expect(compileTags(siteParams, { tagPriority: 'before:title' as any })._tag).toBe('Bail')
   })
 })

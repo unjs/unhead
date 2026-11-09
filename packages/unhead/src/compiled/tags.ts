@@ -62,7 +62,8 @@ export function toHeadInput(compiledTags: CompiledTags, values?: readonly unknow
   for (const [tag, props, , , extra, flags] of compiledTags) {
     // A reader may edit the input in place, as the Nuxt island handler does. Style content
     // that is not a string becomes an attribute, which compile allows only before the others.
-    let value: any = Object.assign({}, tag === 'style' && extra, copyValue(props || {}), extra)
+    // Template params hold no config keys, so a `tagPriority` from the compile option stays out of them
+    let value: any = Object.assign({}, tag === 'style' && extra, copyValue(props || {}), tag !== 'templateParams' && extra)
     if (flags! & FLAG_DYNAMIC_VALUES) {
       for (const key in value) {
         if (typeof value[key] === 'string')

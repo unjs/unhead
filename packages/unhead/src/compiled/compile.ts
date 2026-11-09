@@ -23,6 +23,11 @@ export interface CompileOptions {
    * Any other private-use token in the input bails.
    */
   dynamicValues?: number
+  /**
+   * The `tagPriority` entry option. Each tag takes it, as v3 assigns entry options onto each
+   * tag, so the entry needs no options. A `before:` or `after:` alias bails.
+   */
+  tagPriority?: number | 'critical' | 'high' | 'low'
 }
 
 const MAX_DEPTH = 32
@@ -205,13 +210,20 @@ function compileTag(tag: HeadTag, identity: string): CompiledTag | string {
   return flags || hasExtra ? [...compiledTag, hasExtra ? extra as CompiledTagExtra : 0, flags] as unknown as CompiledTag : compiledTag
 }
 
-function compile(input: unknown, dynamicValues: number): CompileResult {
+function compile(input: unknown, dynamicValues: number, tagPriority: CompileOptions['tagPriority']): CompileResult {
   if (!input || typeof input !== 'object' || Array.isArray(input))
     return bail('input is not an object')
   const reason = findUnprovable(input, dynamicValues, 0)
   if (reason)
     return bail(reason)
-  const tags = normalizeEntryToTags(input, [])
+  // v3 assigns the entry options onto each normalized tag
+  const normalize = (input: unknown): HeadTag[] => {
+    const tags = normalizeEntryToTags(input, [])
+    if (tagPriority !== undefined)
+      tags.forEach(tag => tag.tagPriority = tagPriority)
+    return tags
+  }
+  const tags = normalize(input)
   const compiledTags: CompiledTag[] = []
   for (const tag of tags) {
     if (!ValidHeadTags.has(tag.tag) && tag.tag !== 'titleTemplate' && tag.tag !== 'templateParams')
@@ -236,12 +248,12 @@ function compile(input: unknown, dynamicValues: number): CompileResult {
   }
   if (compiledTags.length >= MAX_ENTRY_TAGS)
     return bail('too many tags in one entry')
-  if (fingerprint(normalizeEntryToTags(toHeadInput(compiledTags, Array.from({ length: dynamicValues }, (_, i) => dynamicValue(i))), [])) !== fingerprint(tags))
+  if (fingerprint(normalize(toHeadInput(compiledTags, Array.from({ length: dynamicValues }, (_, i) => dynamicValue(i))))) !== fingerprint(tags))
     return bail('compiled tags do not rebuild the input')
   if (dynamicValues) {
     for (const probe of VALUE_PROBES) {
       const values = Array.from({ length: dynamicValues }).fill(probe)
-      if (fingerprint(normalizeEntryToTags(toHeadInput(compiledTags, values), [])) !== fingerprint(normalizeEntryToTags(applyValues(input, values), [])))
+      if (fingerprint(normalize(toHeadInput(compiledTags, values))) !== fingerprint(normalize(applyValues(input, values))))
         return bail('a value would change how the input normalizes')
     }
   }
@@ -257,7 +269,7 @@ function compile(input: unknown, dynamicValues: number): CompileResult {
  */
 export function compileTags(input: unknown, options: CompileOptions = {}): CompileResult {
   try {
-    return compile(input, options.dynamicValues || 0)
+    return compile(input, options.dynamicValues || 0, options.tagPriority)
   }
   catch (error) {
     return bail(`input could not be normalized: ${(error as Error).message}`)
