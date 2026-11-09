@@ -1,7 +1,7 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { HeadEntry, HeadRenderer, HeadTag } from '../types'
 import type { LazyHeadOptions } from './index'
-import { createDomRenderer } from '../client/renderDOMHead'
+import { adoptDOMHead, createDomRenderer } from '../client/renderDOMHead'
 import { createDebouncedFn } from '../client/util'
 import { TagPriorityAliases } from '../utils/const'
 
@@ -9,17 +9,12 @@ import { TagPriorityAliases } from '../utils/const'
 export const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
-// element unknown to the renderer. Rendering the hydrated entries first adopts those
-// elements, so the next render removes the stale ones. The pause and render hooks stay
-// silent, because this render is internal and must not wait. The render reads a separate
-// map, so an entry that a hook pushes or disposes during it changes the live map through
+// element unknown to the renderer. Adopt only existing elements without replaying
+// historical writes, so the next render removes stale ones. Respect rendering pauses.
+// Adoption reads a separate map, so an entry a hook pushes or disposes changes the live map through
 // the entry, and the restore keeps that change.
-function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<boolean>, hydrated: HeadEntry<T>[]) {
-  const hooks = (head.hooks as any)._hooks
-  const pause = hooks['dom:beforeRender']
-  const rendered = hooks['dom:rendered']
+function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[], title: string | undefined) {
   const live = head.entries
-  hooks['dom:beforeRender'] = hooks['dom:rendered'] = undefined
   // A lookup by id falls back to the live map, so a hook that disposes or pushes an entry
   // outside the adoption, such as a client only entry, still finds it.
   const adoption = new Map(hydrated.map(entry => [entry._i, entry]))
@@ -28,11 +23,9 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, renderDom: HeadRenderer<
   adoption.has = id => has.call(adoption, id) || live.has(id)
   head.entries = adoption
   try {
-    renderDom(head)
+    return adoptDOMHead(head, title)
   }
   finally {
-    hooks['dom:beforeRender'] = pause
-    hooks['dom:rendered'] = rendered
     head.entries = live
     head.dirty = true
   }
@@ -47,11 +40,8 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOpt
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
     if (!head._dom && head.dirty) {
-      // the renderer keeps the first document title to restore when no title is left
-      const title = serverTitle()
-      if (title !== undefined)
-        head.resolvedOptions.document!.title = title
-      adoptHydratedEntries(head, renderDom, adoptionEntries())
+      if (!adoptHydratedEntries(head, adoptionEntries(), serverTitle()))
+        return
     }
     renderDom(head)
   }, fn => setTimeout(fn, 0))

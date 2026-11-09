@@ -27,6 +27,11 @@ export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDom
   return _renderDOMHead(head, options)
 }
 
+// Internal lazy-runtime adoption. Record cleanup without replaying historical DOM writes.
+export function adoptDOMHead(head: Unhead<any>, title?: string): boolean {
+  return _renderDOMHead(head, {}, { title })
+}
+
 function hasPendingEntries<T extends Unhead<any>>(head: T) {
   for (const entry of head.entries.values()) {
     if (entry._pending !== undefined)
@@ -57,7 +62,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adoption?: { title?: string }): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
@@ -83,6 +88,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     if (!state) {
       state = createDomState(head, dom)
+      if (adoption?.title !== undefined)
+        state._t = adoption.title
     }
     else {
       // hand the previous render's side effects to _p (cleanup pool) by reference; track()
@@ -134,7 +141,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         // clear what we set, never SSR-adopted or externally mutated content.
         const text = tag.textContent
         if (text != null && text !== '') {
-          if (text !== $el.textContent)
+          if (!adoption && text !== $el.textContent)
             $el.textContent = text as string
           track(`${id}:text`, () => {
             if ($el.textContent === text)
@@ -143,7 +150,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         const html = tag.innerHTML
         if (html != null && html !== '') {
-          if (html !== $el.innerHTML)
+          if (!adoption && html !== $el.innerHTML)
             $el.innerHTML = html as string
           track(`${id}:html`, () => {
             if ($el.innerHTML === html)
@@ -159,6 +166,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       for (const k in tag.props) {
         const v = tag.props[k]
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
+          if (adoption)
+            continue
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
             (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
@@ -170,7 +179,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
-            if (!$el.classList.contains(c))
+            if (!adoption && !$el.classList.contains(c))
               $el.classList.add(c)
           }
         }
@@ -178,11 +187,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
             track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+            if (!adoption)
+              ($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         else if (v !== false as any && v !== null) {
-          if ($el.getAttribute(k) !== v as any)
+          if (!adoption && $el.getAttribute(k) !== v as any)
             $el.setAttribute(k, v === true as any ? '' : String(v))
           track(ck, previous[ck] || (() => $el.removeAttribute(k)))
         }
@@ -204,7 +214,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         dupeKeyCounter[tag._d] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {
-        dom.title = tag.textContent as string
+        if (!adoption)
+          dom.title = tag.textContent as string
         track('title:', () => dom.title = renderState._t)
         continue
       }
@@ -236,6 +247,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     for (const ctx of pending) {
       const found = renderState._e.get(ctx.id)
+      if (adoption && !found)
+        continue
       ctx.$el = found || dom.createElement(ctx.tag.tag)
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
       if (!found)
@@ -247,11 +260,17 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    for (const k in previous)
-      previous[k]()
+    if (adoption) {
+      Object.assign(renderState._s, previous)
+    }
+    else {
+      for (const k in previous)
+        previous[k]()
+    }
     head._dom = renderState
     didRender = true
-    callHook(head, 'dom:rendered', { renders: tags })
+    if (!adoption)
+      callHook(head, 'dom:rendered', { renders: tags })
   }
   catch (e) {
     head.dirty = true
@@ -260,7 +279,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   finally {
     head._du = false
   }
-  if (didRender && (head.dirty || hasPendingEntries(head)))
+  if (!adoption && didRender && (head.dirty || hasPendingEntries(head)))
     _renderDOMHead(head, options)
   return didRender
 }

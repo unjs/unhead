@@ -543,6 +543,48 @@ describe('lazy head createHead', () => {
 })
 
 describe('adoption at the first render', () => {
+  it.each(['head', 'bodyOpen', 'bodyClose'] as const)('never inserts or executes a disposed buffered script: %s', async (tagPosition) => {
+    const dom = new JSDOM('<!DOCTYPE html><title>Server</title>', { runScripts: 'dangerously' })
+    const doc = dom.window.document
+    Reflect.set(dom.window, 'executionCount', 0)
+    const inserted: Node[] = []
+    const observer = new dom.window.MutationObserver(records => records.forEach(record => inserted.push(...record.addedNodes)))
+    observer.observe(doc.documentElement, { childList: true, subtree: true })
+    const head = createLazyHead({ document: doc })
+    head.push({ title: 'Server' })
+    head.render()
+    head.blockLoad()
+    head.push({ script: [{ innerHTML: 'window.executionCount++', tagPosition }] }).dispose()
+    head.push({ meta: [{ name: 'theme-color', content: 'blue' }] })
+    head.render()
+    await vi.waitFor(() => expect(doc.querySelector('meta[name="theme-color"]')).not.toBeNull())
+    expect(Reflect.get(dom.window, 'executionCount')).toBe(0)
+    expect(inserted.filter(node => node.nodeName === 'SCRIPT')).toEqual([])
+    expect(doc.querySelector('script')).toBeNull()
+    observer.disconnect()
+    dom.window.close()
+  })
+
+  it('preserves a rendering pause when loading after a buffered change', async () => {
+    const dom = ssrDom(titled)
+    const { head, setPaused } = pausableHead(dom)
+    setPaused(false)
+    const entry = head.push(titled)
+    head.render()
+    head.blockLoad()
+    entry.patch({ title: 'Historical', htmlAttrs: { lang: 'fr' } })
+    entry.patch({ title: 'Live', htmlAttrs: { lang: 'en' } })
+    setPaused(true)
+    const before = dom.serialize()
+    expect(await head.load()).toBe(true)
+    await settle(30)
+    expect(dom.serialize()).toBe(before)
+    setPaused(false)
+    head.render()
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Live'))
+    expect(dom.window.document.documentElement.lang).toBe('en')
+  })
+
   const root = { title: 'Root', meta: [{ name: 'description', content: 'root' }] }
   const page: ResolvableHead = { link: [{ rel: 'canonical', href: '/old' }], meta: [{ name: 'robots', content: 'noindex' }] }
   const next: ResolvableHead = { link: [{ rel: 'icon', href: '/new.ico' }] }
