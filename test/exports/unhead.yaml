@@ -11,6 +11,12 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./compiled/server:
+  compileTags: function
+  createHead: function
+  dynamicValue: function
+  getRenderTier: function
+  renderSSRHead: function
 ./legacy:
   activeHead: object
   createHead: function

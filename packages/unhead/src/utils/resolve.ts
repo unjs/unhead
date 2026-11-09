@@ -253,3 +253,6 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   callHook(head, 'tags:afterResolve', ctx)
   return sanitizeTagsInPlace(ctx.tags)
 }
+
+// The compiled server head shares it; `unhead/utils` does not export it. An export clause keeps the v3 bundles byte for byte.
+export { syncEntryHookCache }

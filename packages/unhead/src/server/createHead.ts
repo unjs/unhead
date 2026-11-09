@@ -126,3 +126,6 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
 
   return core as ServerUnhead<T>
 }
+
+// The compiled server head shares it. An export clause, not `export function`, keeps the v3 bundles byte for byte.
+export { serverPropResolver }

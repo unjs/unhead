@@ -21,6 +21,7 @@ export default defineProject({
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),
       'unhead/plugins': resolve(__dirname, '../unhead/src/plugins/index.ts'),
       'unhead/utils': resolve(__dirname, '../unhead/src/utils/index.ts'),
+      'unhead/compiled/server': resolve(__dirname, '../unhead/src/compiled/server.ts'),
       'unhead/scripts': resolve(__dirname, '../unhead/src/scripts/index.ts'),
       'unhead/parser': resolve(__dirname, '../unhead/src/parser/index.ts'),
       'unhead/legacy': resolve(__dirname, '../unhead/src/legacy.ts'),
