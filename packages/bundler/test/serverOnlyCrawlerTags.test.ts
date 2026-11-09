@@ -143,6 +143,8 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     expect(aliased).not.toContain('ogTitle')
     expect(await transform(`function useSeoMeta(i) {}\nuseSeoMeta({ ogTitle: 'x' })`)).toBeUndefined()
     expect(await transform(`import { useSeoMeta } from 'other-lib'\nuseSeoMeta({ ogTitle: 'x' })`)).toBeUndefined()
+    const nuxt = await transform(`import { useSeoMeta } from '#app/composables/head'\nuseSeoMeta({ ogTitle: 'x' })`)
+    expect(nuxt).not.toContain('ogTitle')
     const custom = await transform(`import { useSeoMeta } from '#app'\nuseSeoMeta({ ogTitle: 'x' })`, 'client', 'page.ts', { importPaths: ['#app'] })
     expect(custom).not.toContain('ogTitle')
   })

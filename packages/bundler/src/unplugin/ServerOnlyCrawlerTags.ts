@@ -11,6 +11,9 @@ import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODUL
 
 const HEAD_CALL_RE = /\buse(?:Head|HeadSafe|SeoMeta)\b/
 
+// Nuxt auto-imports the head composables from these re-exports of `@unhead/vue`.
+const NUXT_IMPORT_SOURCES = new Set(['#app/composables/head', '#imports'])
+
 const HEAD_NAMES = new Set(['useHead', 'useHeadSafe'])
 const SEO_META_NAMES = new Set(['useSeoMeta'])
 
@@ -231,7 +234,7 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
 
   function isValidPackage(source: unknown): boolean {
     return typeof source === 'string'
-      && (source === 'unhead' || source.startsWith('unhead/') || source.startsWith('@unhead/') || importPaths?.has(source) === true)
+      && (source === 'unhead' || source.startsWith('unhead/') || source.startsWith('@unhead/') || NUXT_IMPORT_SOURCES.has(source) || importPaths?.has(source) === true)
   }
 
   function shouldTransformId(id: string): boolean {
