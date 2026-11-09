@@ -31,7 +31,9 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
   const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts })
   const compile = options.compile && framework === '@unhead/vue'
-  if (seoMeta && !compile)
+  // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
+  // without compile renders, in its tag order. Compile takes the calls it leaves.
+  if (seoMeta)
     plugins.push(seoMeta)
   const minifyTransformOptions = resolveMinifyTransformOptions(options)
   if (minifyTransformOptions) {
@@ -41,12 +43,9 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       ...minifyTransformOptions,
     }))
   }
-  // Compile reads the minified inline content and leaves `UseSeoMetaTransform` only
-  // the calls it could not compile.
+  // Compile reads the minified inline content
   if (compile) {
     plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths }))
-    if (seoMeta)
-      plugins.push(seoMeta)
   }
 
   // Register runtime plugins into the shared context
