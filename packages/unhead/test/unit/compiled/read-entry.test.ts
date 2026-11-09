@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, dynamicValue, readCompiledEntry, toHeadInput } from '../../../src/compiled'
+import { compileTags, dynamicValue, toHeadInput } from '../../../src/compiled'
 import { createHead } from '../../../src/compiled/server'
 
 function compiled(input: any, dynamicValues?: number) {
@@ -9,23 +9,20 @@ function compiled(input: any, dynamicValues?: number) {
   return result.tags
 }
 
-describe('readCompiledEntry on a compiled server head', () => {
-  it('returns the compiled tags and values of an entry', () => {
-    const tags = compiled({ title: dynamicValue(0) }, 1)
+describe('the input of a compiled server entry', () => {
+  it('reads as the head input it came from, with its values', () => {
     const head = createHead({ disableDefaults: true })
-    head.push(tags, { values: ['Page'] })
+    head.push(compiled({ title: dynamicValue(0), meta: [{ name: 'description', content: 'About' }] }, 1), { values: ['Page'] })
     const [entry] = head.entries.values()
-    expect(readCompiledEntry(entry!)).toEqual({ tags, values: ['Page'] })
+    expect(entry!.input).toEqual({ title: 'Page', meta: [{ name: 'description', content: 'About' }] })
   })
 
-  it('returns nothing for loose input, also after a patch to it', () => {
+  it('reads loose input after a patch to it', () => {
     const head = createHead({ disableDefaults: true })
-    head.push({ title: 'Loose' })
-    const patched = head.push(compiled({ title: 'Compiled' }))
-    patched.patch({ title: 'Now loose' })
-    const [loose, entry] = head.entries.values()
-    expect(readCompiledEntry(loose!)).toBeUndefined()
-    expect(readCompiledEntry(entry!)).toBeUndefined()
+    const active = head.push(compiled({ title: 'Compiled' }))
+    active.patch({ title: 'Now loose' })
+    const [entry] = head.entries.values()
+    expect(entry!.input).toEqual({ title: 'Now loose' })
   })
 })
 

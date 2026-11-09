@@ -14,7 +14,6 @@
 ./compiled:
   compileTags: function
   dynamicValue: function
-  readCompiledEntry: function
   toHeadInput: function
 ./compiled/server:
   createHead: function

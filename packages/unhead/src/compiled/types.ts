@@ -40,14 +40,3 @@ export type CompiledTag = readonly [
  * @experimental The compiled tag format may change in a future minor release.
  */
 export type CompiledTags = readonly CompiledTag[]
-
-/**
- * The compiled tags of a head entry, from `readCompiledEntry`.
- *
- * @experimental
- */
-export interface CompiledEntryContent {
-  tags: CompiledTags
-  /** Values for the dynamic values. Undefined when the entry has none. */
-  values: readonly unknown[] | undefined
-}
