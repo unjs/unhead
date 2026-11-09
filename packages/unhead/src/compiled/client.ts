@@ -1,5 +1,5 @@
 import type { CreateLazyHeadOptions, LazyUnhead } from '../lazy'
-import type { HeadEntry, HeadRenderer } from '../types'
+import type { HeadEntry, HeadEntryOptions, HeadRenderer } from '../types'
 import type { CompiledTag } from './types'
 
 type RuntimeTag = Record<string, any>
@@ -25,6 +25,31 @@ const PRIORITY_ALIASES: Record<string, number> = { critical: -8, high: -1, low: 
 
 // The id offset of a claim, from `../lazy`
 const CLAIM = 1e6
+
+// The capo weights of the warmup rels, with the `high` priority offset of -1
+const WARMUP_WEIGHTS: Record<string, number> = { 'preload': 69, 'preconnect': 19, 'dns-prefetch': 89 }
+// The attributes `useScript` sets on a warmup link. None of them changes a weight or a dedupe key.
+const WARMUP_ATTR_RE = /^(?:rel|href|as|crossorigin|referrerpolicy|fetchpriority|integrity)$/
+
+// `compileWarmup` of `./warmup`, copied so this chunk imports nothing
+function compileWarmup(input: any, options?: HeadEntryOptions): any {
+  const link = options?.tagPriority === 'high' && input?.link
+  if (!link || link.length !== 1 || Object.keys(input).length !== 1)
+    return input
+  const props: Record<string, string> = {}
+  for (const key in link[0]) {
+    const value = link[0][key]
+    if (value !== undefined) {
+      if (typeof value !== 'string' || !WARMUP_ATTR_RE.test(key))
+        return input
+      props[key] = value
+    }
+  }
+  const weight = WARMUP_WEIGHTS[props.rel!]
+  return weight && props.href
+    ? [['link', props, weight, `link:${props.rel}:${props.href}`, { tagPriority: 'high' }, 1]]
+    : input
+}
 
 const sortTags = (a: RuntimeTag, b: RuntimeTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
@@ -368,7 +393,12 @@ export async function upgradeHead(head: LazyUnhead<any>, options: CreateLazyHead
       // since hydration, so the live entries below remove the stale ones. It waits for the first
       // draw, so a change after the load still adopts. `dirty` means changed since hydration.
       const adopt = !head._dom && head.dirty && adoptionEntries()
-      const loose = [...live, ...adopt || []].find(entry => !isCompiled(entry))
+      const all = [...live, ...adopt || []]
+      for (const entry of all) {
+        if (entry._pending === undefined)
+          entry.input = compileWarmup(entry.input, entry.options)
+      }
+      const loose = all.find(entry => !isCompiled(entry))
       const hook = !options.render && !loose && foreignHook(head)
       if (options.render || loose || hook) {
         if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__) {

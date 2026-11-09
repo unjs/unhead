@@ -17,6 +17,7 @@ import { compileTags } from './compile'
 import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, runTransforms, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
+import { compileWarmup } from './warmup'
 
 export type { ServerUnhead } from '../server/createHead'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from '../server/transformHtmlTemplate'
@@ -350,6 +351,7 @@ function setInput(entry: CompiledEntry & { _in?: unknown }, input: unknown, valu
 }
 
 function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntryOptions): any {
+  input = compileWarmup(input, options)
   const _i = options?._index ?? head._entryCount++
   const entryOptions: Record<string, unknown> = {}
   for (const key in options) {

@@ -102,6 +102,13 @@ const CLAIM = 1e6
 
 type HookFn = (...args: any[]) => any
 
+// Loose input that the compiled runtime cannot render. A high priority link may be the `useScript`
+// warmup link, which the compiled runtime compiles, so a head without compiler mode carries no code for it.
+function isLoose(entry: HeadEntry<any>): boolean {
+  const input = entry._pending ?? entry.input as any
+  return !Array.isArray(input) && !(entry.options?.tagPriority === 'high' && input?.link)
+}
+
 function runHooks(hooks: HookFn[], args: any[], start: number): any {
   for (let i = start; i < hooks.length; i++) {
     let result
@@ -320,7 +327,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       if (!NATIVE_HOOK_RE.test(hook) && listeners[hook]?.some((listener: unknown) => listener !== onChange && (!hook.startsWith('tags:') || !native.some(plugin => plugin?.[hook] === listener))))
         return hook
     }
-    return !!options.render || [...entries.values()].some(entry => !Array.isArray(entry._pending ?? entry.input))
+    return !!options.render || [...entries.values()].some(isLoose)
   }
   // Each runtime import stays its own call. A minifier merges two imports of a conditional into
   // one preload call, and Vite fills that call with the chunks of one import only, so the full
@@ -329,7 +336,7 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
   head.load = () => {
     const full = !loading && needsFullRuntime()
     if (typeof __UNHEAD_COMPILE_DEBUG__ !== 'undefined' && __UNHEAD_COMPILE_DEBUG__ && full) {
-      const entry = [...entries.values()].find(entry => !Array.isArray(entry._pending ?? entry.input))
+      const entry = [...entries.values()].find(isLoose)
       head._fullRuntimeReason ||= options.render
         ? { _tag: 'RenderOption' }
         : entry

@@ -112,6 +112,33 @@ describe('a lazy head with no setup', () => {
   })
 })
 
+// The `useScript` warmup link: loose input of a fixed shape, so a head without compiler mode carries no code for it
+describe('a warmup link', () => {
+  it.each(['preload', 'preconnect', 'dns-prefetch'])('%s: renders on the compiled runtime as v3 does', async (rel) => {
+    const pair = createPair([{ input: page }], 'none')
+    pair.push(page)
+    const link = { rel, href: 'https://example.com/a.js', crossorigin: 'anonymous' }
+    pair.v3.push({ link: [link] }, { tagPriority: 'high' })
+    pair.compiled.push({ link: [link] }, { tagPriority: 'high' })
+    await pair.render()
+    expect(compiledRuntime.heads.has(pair.compiled)).toBe(true)
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(false)
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+  })
+
+  it('loads the full runtime for a high priority link it cannot compile', async () => {
+    const pair = createPair([{ input: page }], 'none')
+    pair.push(page)
+    const link = { rel: 'preload', href: 'https://example.com/a.js', media: 'print' }
+    pair.v3.push({ link: [link] }, { tagPriority: 'high' })
+    pair.compiled.push({ link: [link] }, { tagPriority: 'high' })
+    await pair.render()
+    await settle(pair.compiled)
+    expect(v3Runtime.heads.has(pair.compiled)).toBe(true)
+    expect(pair.compiledDom.serialize()).toBe(pair.v3Dom.serialize())
+  })
+})
+
 // The compiled runtime would hand over at its first render, so the page loads one runtime
 describe('a lazy head that needs the full runtime when it loads', () => {
   it.each([
