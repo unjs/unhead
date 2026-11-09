@@ -1,31 +1,77 @@
-import type { HeadEntry } from '../types'
+import type { HeadEntry, HeadTag, PropResolver, ResolvableHead, Unhead } from '../types'
 import type { CompiledEntry } from './core'
-import type { CompiledEntryContent } from './types'
+import type { CompiledTags } from './types'
+import { walkResolver } from '../utils/walkResolver'
+import { toHeadInput } from './tags'
 
 /**
- * Reads the compiled tags of a head entry, with no copy and no render. It reads an entry of
- * the compiled server head and of the lazy head. Returns nothing for an entry with loose input,
- * and for every lazy head entry once the full runtime loads.
- *
- * On the server, a value function has not run before the first render, so `values` is
- * undefined until then. An entry with no values reads an empty `values`. On a lazy head, a pending patch comes first. `seoMeta` is true for an
- * entry from a `useSeoMeta` call. Pass the result to `toHeadInput` for head input.
+ * What `readEntry` reads of a head entry.
  *
  * @experimental
  */
-export function readCompiledEntry(entry: HeadEntry<any>): CompiledEntryContent | undefined {
-  let content: CompiledEntryContent | undefined
-  // a compiled server entry rebuilds `input` when read, so its own fields come first
+export interface EntryReading {
+  /** The entry as head input, with values settled. A `useSeoMeta` call reads as meta tags. */
+  input: ResolvableHead
+  /** True for the entry of a `useSeoMeta` call, so its title and description are page SEO meta. */
+  seoMeta: boolean
+  /** True when the entry holds compiled tags. */
+  compiled: boolean
+}
+
+/**
+ * Reads an entry of `head` as head input: compiled tags, loose input, or a pending patch. It
+ * reads every head, with or without compiler mode, and renders nothing.
+ *
+ * - A pending patch comes first.
+ * - Values settle. The value function of a compiled server entry runs now, once, as the first
+ *   render would run it. Loose input resolves through the prop resolvers of the head, so a
+ *   Vue ref reads as its value, and a getter runs.
+ * - The flat meta of a `useSeoMeta` call unpacks to meta tags through the `FlatMetaPlugin` of
+ *   the head, which every `useSeoMeta` call registers. So this reader carries no unpack code.
+ *
+ * The input is new on each read, so a reader may change it.
+ *
+ * @experimental
+ */
+export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryReading {
+  let input: any
+  let tags: CompiledTags | undefined
+  let values: unknown
+  // A compiled server entry rebuilds `input` when read, so its own fields come first. Its value
+  // function runs once, and may turn the entry into loose input.
   if ('_compiled' in entry) {
-    const { _compiled, _values } = entry as CompiledEntry
-    // a value function has not run yet, and an entry with no values has none to wait for
-    content = _compiled && { tags: _compiled, values: typeof _values === 'function' ? undefined : _values || [] }
+    const compiledEntry = entry as CompiledEntry
+    if (typeof compiledEntry._values === 'function')
+      compiledEntry._values = (compiledEntry._values as () => unknown[])()
+    tags = compiledEntry._compiled
+    values = compiledEntry._values
+    input = tags || entry.input
   }
   else {
-    const tags = entry._pending ?? entry.input
-    content = Array.isArray(tags) ? { tags, values: (entry.options as { values?: readonly unknown[] } | undefined)?.values || [] } : undefined
+    // a `null` patch is empty input, so only `undefined` falls back to the input
+    input = entry._pending === undefined ? entry.input : entry._pending
+    tags = Array.isArray(input) ? input : undefined
+    values = (entry.options as { values?: unknown } | undefined)?.values
   }
-  if (content && entry._seoMeta)
-    content.seoMeta = true
-  return content
+  let seoMeta = !!(entry._seoMeta || entry.options?.seoMeta)
+  if (tags) {
+    input = toHeadInput(tags, values as unknown[] || [])
+  }
+  else {
+    // v3 `resolveHeadInput`, which shares a module with normalize, so it stays out of an eager chunk
+    const resolvers = head.resolvedOptions.propResolvers || []
+    const resolve: PropResolver | undefined = resolvers[0] && ((key, value) => resolvers.reduce((value, resolver) => resolver(key, value), value))
+    input = walkResolver(resolve ? resolve(undefined, input) : input, resolve) || {}
+    const { _flatMeta, ...rest } = input
+    const unpack = head.plugins.get('flatMeta')?.hooks?.['entries:normalize']
+    if (_flatMeta) {
+      seoMeta = true
+      // the hook replaces the `_flatMeta` tag with its meta tags, as at a render
+      const ctx = { tags: [{ tag: '_flatMeta', props: _flatMeta }] as HeadTag[] }
+      unpack?.(ctx)
+      if (unpack)
+        input = { ...rest, meta: [...rest.meta || [], ...ctx.tags.map(tag => tag.props)] }
+    }
+  }
+  return { input, seoMeta, compiled: !!tags }
 }

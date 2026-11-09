@@ -81,17 +81,10 @@ export function serverCompiledHead(head: CompiledTagsHead, compiledTags: Compile
   return head.push(compiledTags as any, values ? { ...options, values: () => resolveValues(values) } as any : options)
 }
 
-// `readCompiledEntry` reports the entry of a `useSeoMeta` call, so a module can read its title and description
-export function markSeoMeta<T extends ActiveHeadEntry<any>>(head: CompiledTagsHead, active: T): T {
-  const entry = head.entries.get(active._i)
-  if (entry)
-    entry._seoMeta = true
-  return active
-}
-
 export function serverCompiledSeoMeta(head: CompiledTagsHead, compiledTags: CompiledTags, loose: (values: unknown[]) => object, values: CompiledValues, options: UseHeadOptions): ActiveHeadEntry<any> {
   const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
     ...options,
+    seoMeta: true,
     values: () => {
       const resolved = resolveValues(values)
       const input = seoMetaInput(head, compiledTags, loose, resolved)
@@ -100,5 +93,5 @@ export function serverCompiledSeoMeta(head: CompiledTagsHead, compiledTags: Comp
       return resolved
     },
   } as any)
-  return markSeoMeta(head, active)
+  return active
 }

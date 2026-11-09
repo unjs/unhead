@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import MagicString from 'magic-string'
 import { isReferenceIdentifier, ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
-import { compileTags, dynamicValue, toHeadInput } from 'unhead/compiled'
+import { compileTags, dynamicValue, readEntry } from 'unhead/compiled'
 import { dedupeKey, normalizeEntryToTags, normalizeProps, TagConfigKeys, unpackMeta } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
@@ -233,6 +233,9 @@ function holdsValue(tag: CompiledTag, index: number): boolean {
   return !!(tag[5]! & FLAG_DYNAMIC_VALUES) && JSON.stringify(tag).includes(dynamicValue(index))
 }
 
+// `readEntry` reads compiled tags without its head, so any head will do
+const READ_HEAD = { resolvedOptions: {}, plugins: new Map() } as any
+
 // String and number values a flat meta value may hold on the compiled tags
 const SEO_STRING_PROBES: unknown[] = ['x', 'a b']
 const SEO_NUMBER_PROBES: unknown[] = [0, 7]
@@ -254,7 +257,8 @@ function proveSeoTags(decoded: Record<string, unknown>, tags: CompiledTag[], cou
       return 'throws'
     }
   }
-  const same = (values: unknown[]) => v3(values) === fingerprint(normalizeEntryToTags(toHeadInput(tags, values), []))
+  // an entry of compiled tags reads as the input v3 would normalize, with no head state
+  const same = (values: unknown[]) => v3(values) === fingerprint(normalizeEntryToTags(readEntry({ input: tags, options: { values } } as any, READ_HEAD).input, []))
   for (let index = 0; index < count; index++) {
     if (!SEO_STRING_PROBES.every(probe => same(vector(index, probe))))
       return false

@@ -2,7 +2,7 @@ import type { CompiledTags } from 'unhead/compiled'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
 import type { CompiledBranches, CompiledTagsHead, CompiledValues } from './tags'
-import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, markSeoMeta, serverCompiledHead, serverCompiledSeoMeta } from './tags'
+import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
 
@@ -40,5 +40,5 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
  */
 export function useStaticCompiledSeoMeta(compiledTags: CompiledTags, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
-  return markSeoMeta(head, serverCompiledHead(head, compiledTags, undefined, options))
+  return serverCompiledHead(head, compiledTags, undefined, { ...options, seoMeta: true })
 }

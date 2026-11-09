@@ -210,7 +210,8 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       delete entryOpts.head
       delete entryOpts.onRendered
       delete entryOpts._index
-      const entry: HeadEntry<T> = { _i, input, options: entryOpts, _o: input }
+      delete entryOpts.seoMeta
+      const entry: HeadEntry<T> = { _i, input, options: entryOpts, _o: input, _seoMeta: entryOptions?.seoMeta || undefined }
       entries.set(_i, entry)
       head.dirty = true
       // During hydration a push is a page entry the server rendered, unless the adapter says

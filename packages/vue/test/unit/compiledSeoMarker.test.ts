@@ -1,6 +1,6 @@
 import { useCompiledHead, useCompiledSeoMeta, useStaticCompiledSeoMeta } from '@unhead/vue/compiled'
 import { createHead, renderSSRHead } from '@unhead/vue/compiled/server'
-import { compileTags, dynamicValue, readCompiledEntry, toHeadInput } from 'unhead/compiled'
+import { compileTags, dynamicValue, readEntry } from 'unhead/compiled'
 import { describe, expect, it } from 'vitest'
 import { createLazyHead } from '../../src/lazy'
 
@@ -14,7 +14,7 @@ function compile(input: unknown, dynamicValues: number): any {
 const tags = compile({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }] }, 2)
 const loose = (values: unknown[]) => ({ title: values[0], _flatMeta: { description: values[1] } })
 
-describe('readCompiledEntry on a compiled useSeoMeta entry', () => {
+describe('readEntry on a compiled useSeoMeta entry', () => {
   it.each([
     ['the compiled server head', () => createHead({ disableDefaults: true }), (head: any) => renderSSRHead(head)],
     ['a lazy head', () => createLazyHead(), () => {}],
@@ -23,10 +23,8 @@ describe('readCompiledEntry on a compiled useSeoMeta entry', () => {
     const seo = useCompiledSeoMeta(tags, loose, ['Title', 'Description'], { head })
     const plain = useCompiledHead(tags, ['Title', 'Description'], { head })
     render(head)
-    const read = readCompiledEntry(head.entries.get(seo._i)!)!
-    expect(read.seoMeta).toBe(true)
-    expect(toHeadInput(read.tags, read.values)).toEqual({ title: 'Title', meta: [{ name: 'description', content: 'Description' }] })
-    expect(readCompiledEntry(head.entries.get(plain._i)!)!.seoMeta).toBeUndefined()
+    expect(readEntry(head.entries.get(seo._i)!, head)).toEqual({ input: { title: 'Title', meta: [{ name: 'description', content: 'Description' }] }, seoMeta: true, compiled: true })
+    expect(readEntry(head.entries.get(plain._i)!, head).seoMeta).toBe(false)
   })
 
   it.each([
@@ -37,10 +35,6 @@ describe('readCompiledEntry on a compiled useSeoMeta entry', () => {
     const staticTags = compile({ title: 'Title', meta: [{ name: 'description', content: 'Description' }] }, 0)
     const seo = useStaticCompiledSeoMeta(staticTags, { head })
     render(head)
-    const read = readCompiledEntry(head.entries.get(seo._i)!)!
-    expect(read.seoMeta).toBe(true)
-    // a reader takes `values` as the sign that the values are known, as og-image does
-    expect(read.values).toEqual([])
-    expect(toHeadInput(read.tags, read.values)).toEqual({ title: 'Title', meta: [{ name: 'description', content: 'Description' }] })
+    expect(readEntry(head.entries.get(seo._i)!, head)).toEqual({ input: { title: 'Title', meta: [{ name: 'description', content: 'Description' }] }, seoMeta: true, compiled: true })
   })
 })

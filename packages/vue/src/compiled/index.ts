@@ -4,7 +4,7 @@ import type { ActiveHeadEntry } from 'unhead/types'
 import type { UseHeadOptions } from '../types'
 import type { CompiledBranches, CompiledTagsHead, CompiledValues } from './tags'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated, onScopeDispose, watchEffect } from 'vue'
-import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, markSeoMeta, resolveValues, selectBranch, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
+import { COMPILED_TAGS_HEAD_ERROR, injectCompiledTagsHead, resolveValues, selectBranch, seoMetaInput, serverCompiledHead, serverCompiledSeoMeta } from './tags'
 
 export type { CompiledTags }
 
@@ -87,7 +87,7 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
   const head = compiledTagsHead(options)
   return head.ssr
     ? serverCompiledSeoMeta(head, compiledTags, loose, values, options)
-    : markSeoMeta(head, clientPush(head, resolved => [seoMetaInput(head, compiledTags, loose, resolved), resolved], values, options))
+    : clientPush(head, resolved => [seoMetaInput(head, compiledTags, loose, resolved), resolved], values, { ...options, seoMeta: true })
 }
 
 /**
@@ -97,5 +97,5 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
  * @internal
  */
 export function useStaticCompiledSeoMeta(compiledTags: CompiledTags, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
-  return markSeoMeta(compiledTagsHead(options), useCompiledHead(compiledTags, undefined, options))
+  return useCompiledHead(compiledTags, undefined, { ...options, seoMeta: true })
 }
