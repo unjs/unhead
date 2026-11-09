@@ -491,11 +491,12 @@ describe('compile option', () => {
     expect(calls(output).map(call => call.fn)).toEqual(['useHead', 'useHead'])
   })
 
-  it('runs after minify and before the useSeoMeta transform', async () => {
+  // a build without compile renders the `useHead` call that the transform writes
+  it('runs after the useSeoMeta transform and minify', async () => {
     const minify = async (code: string) => code.replace(/\s+/g, '')
     const plugins = Unhead({ ...base, compile: true, minify: { js: minify } }, vue)
     expect(plugins.map(plugin => plugin.name).slice(0, 4))
-      .toEqual(['unhead:remove-server-composables', 'unhead:minify-transform', 'unhead:compile-transform', 'unhead:use-seo-meta-transform'])
+      .toEqual(['unhead:remove-server-composables', 'unhead:use-seo-meta-transform', 'unhead:minify-transform', 'unhead:compile-transform'])
     const code = await pipeline(plugins, `${IMPORTS}useHead({ script: [{ innerHTML: 'var value = 1 ; var other = 2 ;' }] })\nuseSeoMeta({ description: 'x' }, { nuxt })\nuseSeoMeta({ title: 'T' })`, '/src/page.js', server)
     expect(calls(code, { nuxt: 'nuxt' })).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ script: [{ innerHTML: 'varvalue=1;varother=2;' }] })] },
