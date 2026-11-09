@@ -326,6 +326,19 @@ function hasFunctionTitleTemplate(input: any): boolean {
   return input?.type === 'ObjectExpression' && input.properties.some((prop: any) => prop.type === 'Property' && !prop.computed && staticKey(prop.key) === 'titleTemplate' && isFunctionNode(prop.value))
 }
 
+// The static rel of the first link with no key and a dynamic href, which a key would compile
+function keylessLinkRel(input: any): string | undefined {
+  const prop = input?.type === 'ObjectExpression' && input.properties.find((p: any) => p.type === 'Property' && !p.computed && staticKey(p.key) === 'link')
+  const links = prop && unwrap(prop.value)
+  for (const link of links?.type === 'ArrayExpression' ? links.elements : [links]) {
+    const props = unwrap(link)?.type === 'ObjectExpression' ? unwrap(link).properties : []
+    const value = (name: string) => props.find((p: any) => p.type === 'Property' && !p.computed && staticKey(p.key) === name)?.value
+    const rel = decodeStatic(value('rel'))
+    if (typeof rel === 'string' && !value('key') && value('href') && decodeStatic(value('href')) === BAIL)
+      return rel
+  }
+}
+
 // The member path of each leaf of an object literal, so a value reads the object at the call
 function leafPaths(node: any, path: string, out: Map<any, string>): Map<any, string> {
   const inner = unwrap(node)
@@ -551,6 +564,9 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             if (result._tag === 'Bail') {
               if (hasFunctionTitleTemplate(input))
                 warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input and the client loads the full runtime. Use a string, such as '%s %separator %siteName'.`)
+              const rel = !NODE_MODULES_RE.test(id) && result.reason === 'dynamic value in the identity of a link tag' && keylessLinkRel(input)
+              if (rel)
+                warn(`[unhead] ${id}: a link with no key takes its rel and href as its identity, and this href is a dynamic value. So this head call stays normal input and the client loads the full runtime. To compile it, add a key, such as key: '${rel}'.`)
               return
             }
 
