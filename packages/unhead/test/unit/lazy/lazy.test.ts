@@ -177,6 +177,26 @@ describe('createLazyHead', () => {
     expect(load).toHaveBeenCalledTimes(1)
   })
 
+  it('loads nothing for a patch with the same input, during or after hydration', async () => {
+    const dom = ssrDom(titled)
+    const before = dom.serialize()
+    const head = createLazyHead({ document: dom.window.document })
+    const load = vi.spyOn(head, 'load')
+    const entry = head.push({ ...titled, meta: [{ name: 'description', content: 'desc' }] })
+    // a reactive input that resolves again, as a route change during hydration does
+    entry.patch({ title: 'Server', meta: [{ name: 'description', content: 'desc' }] })
+    head.render()
+    entry.patch({ title: 'Server', meta: [{ name: 'description', content: 'desc' }] })
+    head.render()
+    await settle()
+    expect(load).not.toHaveBeenCalled()
+    expect(dom.serialize()).toBe(before)
+
+    entry.patch({ title: 'Changed', meta: [{ name: 'description', content: 'desc' }] })
+    expect(load).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Changed'))
+  })
+
   it('treats a push from an entries:updated hook during hydration as server rendered', async () => {
     const dom = ssrDom(titled, { meta: [{ name: 'nested', content: 'yes' }] })
     let nested = false

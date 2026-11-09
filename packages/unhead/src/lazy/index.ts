@@ -42,6 +42,16 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
 
 type HookFn = (...args: any[]) => any
 
+// Deep equality of resolved head input: plain objects, lists, and primitives.
+function sameInput(a: any, b: any): boolean {
+  if (a === b)
+    return true
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b))
+    return false
+  const keys = Object.keys(a)
+  return keys.length === Object.keys(b).length && keys.every(key => sameInput(a[key], b[key]))
+}
+
 function runHooks(hooks: HookFn[], args: any[], start: number): any {
   for (let i = start; i < hooks.length; i++) {
     let result
@@ -159,6 +169,14 @@ export function createLazyHead<T = ResolvableHead>(options: CreateLazyHeadOption
       const entry = head.entries.get(active._i)
       if (entry)
         hydrationEntries.set(active._i, { ...entry })
+    }
+    // A reactive input resolves again on any dependency change, such as the route that the router
+    // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
+    const patch = active.patch
+    active.patch = (next) => {
+      const entry = head.entries.get(active._i)
+      if (loading || !entry || !sameInput(entry._pending ?? entry.input, next))
+        patch(next)
     }
     return active
   }
