@@ -14,6 +14,7 @@ const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.t
 const fullRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/full-runtime.ts', import.meta.url))
 const compiledRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/compiled-runtime.ts', import.meta.url))
 const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
+const streamingPageEntry = fileURLToPath(new URL('./fixtures/vite-build/streaming-page.ts', import.meta.url))
 
 function outputCode(result: any): string {
   const outputs = Array.isArray(result) ? result : [result]
@@ -86,6 +87,31 @@ describe('compile debug', () => {
 })
 
 describe('vite build integration', () => {
+  // the plugin Nuxt adds for `experimental.ssrStreaming`, for the client environment only
+  it.each([[false, 'useCompiledHead'], [true, 'useHead']])('streaming %s: the client build calls %s', async (streaming, call) => {
+    const warnings: string[] = []
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      customLogger: { warn: (message: string) => warnings.push(message), warnOnce: (message: string) => warnings.push(message), info() {}, error() {}, clearScreen() {}, hasErrorLogged: () => false, hasWarned: false } as any,
+      plugins: [
+        ...(streaming ? [{ name: 'nuxt:streaming-iife-chunk', applyToEnvironment: (env: any) => env.name === 'client' }] : []),
+        ...Unhead({ devtools: false, validate: false, compile: true, _framework: '@unhead/vue' }) as any,
+      ],
+      build: {
+        write: false,
+        minify: false,
+        rollupOptions: { external: [/^@unhead\//, /^unhead/] },
+        lib: { entry: streamingPageEntry, formats: ['es'], fileName: 'page' },
+      },
+    })
+    const code = outputCode(result)
+    expect(code).toContain('STREAMING_PAGE')
+    expect(code).toContain(`${call}(`)
+    expect(warnings.filter(w => w.includes('Compiler mode is off'))).toHaveLength(streaming ? 1 : 0)
+  })
+
   it('client build drops server-only composables', async () => {
     const result = await build({
       root: fixtureDir,

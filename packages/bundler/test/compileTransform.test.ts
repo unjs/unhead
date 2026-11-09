@@ -624,4 +624,24 @@ describe('a head that cannot take compiled tags', () => {
     expect(() => runTransform(plugin, `import { createHead } from '@unhead/vue/client'\nexport const head = createHead()`, '/src/head.ts', context([])))
       .toThrow('set compile: false')
   })
+
+  // Nuxt `experimental.ssrStreaming` adds `nuxt:streaming-iife-chunk`, and the streaming option
+  // of the Unhead plugin adds `@unhead/vue:streaming`. Both create a streamable head.
+  it.each(['nuxt:streaming-iife-chunk', '@unhead/vue:streaming'])('turns compile off with the %s plugin, and warns once', (name) => {
+    const plugin = CompileTransform.vite({}) as any
+    const warnings: string[] = []
+    plugin.configResolved({ root: '/app', plugins: [{ name }, plugin] })
+    plugin.buildStart.call({ warn: (message: string) => warnings.push(message) })
+    expect(runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context(warnings))).toBeUndefined()
+    expect(warnings).toEqual([expect.stringContaining('streams the head')])
+    expect(warnings[0]).toContain('Compiler mode is off for this build')
+  })
+
+  it('turns compile off when app code creates a streamable head', () => {
+    const plugin = CompileTransform.vite({})
+    const warnings: string[] = []
+    runTransform(plugin, `import { createStreamableHead } from '@unhead/vue/stream/client'\nexport const head = createStreamableHead()`, '/src/main.ts', context(warnings))
+    expect(runTransform(plugin, `${IMPORTS}useHead({ title: 'A' })`, '/src/page.js', context(warnings))).toBeUndefined()
+    expect(warnings).toEqual([expect.stringContaining('/src/main.ts imports from @unhead/vue/stream/client')])
+  })
 })

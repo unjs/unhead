@@ -15,9 +15,14 @@ import { isVueScriptRequest, JS_EXT_RE, JS_VUE_RE, NODE_MODULES_RE, splitTransfo
 
 const HEAD_CALL_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b/
 // A head call, or an import that may create a head that cannot take compiled tags
-const TRANSFORM_CODE_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b|['"](?:@unhead\/vue\/|unhead\/)(?:server|client)['"]|['"]vite-ssg\b/
+const TRANSFORM_CODE_RE = /\buse(?:Server)?(?:Head|SeoMeta)\b|['"](?:@unhead\/vue\/|unhead\/)(?:stream\/)?(?:server|client)['"]|['"]vite-ssg\b/
 // The full runtime entries, whose `createHead` makes a head that cannot take compiled tags
 const V3_HEAD_SOURCES = new Set(['@unhead/vue/server', '@unhead/vue/client', 'unhead/server', 'unhead/client'])
+// The streaming entries, whose `createStreamableHead` makes such a head too
+const STREAM_HEAD_SOURCES = new Set(['@unhead/vue/stream/server', '@unhead/vue/stream/client', 'unhead/stream/server', 'unhead/stream/client'])
+// The plugins of a build that streams the head: Nuxt `experimental.ssrStreaming`, and the
+// `streaming` option of the Unhead plugin
+const STREAMING_PLUGIN_RE = /^(?:nuxt:streaming-iife-chunk|(?:@unhead\/[\w-]+|unhead):streaming)$/
 // Frameworks that create such a head themselves
 const V3_HEAD_FRAMEWORKS = ['vite-ssg']
 const COMMONJS_RE = /\.c[jt]s$/
@@ -483,7 +488,8 @@ function v3HeadImport(body: any[]): string | undefined {
     const source = statement.source.value
     if (isV3HeadFramework(source))
       return source
-    if (V3_HEAD_SOURCES.has(source) && statement.specifiers.some((spec: any) => spec.type === 'ImportSpecifier' && spec.importKind !== 'type' && spec.imported.type === 'Identifier' && spec.imported.name === 'createHead'))
+    const creator = V3_HEAD_SOURCES.has(source) ? 'createHead' : STREAM_HEAD_SOURCES.has(source) ? 'createStreamableHead' : undefined
+    if (creator && statement.specifiers.some((spec: any) => spec.type === 'ImportSpecifier' && spec.importKind !== 'type' && spec.imported.type === 'Identifier' && spec.imported.name === creator))
       return source
   }
 }
@@ -765,11 +771,15 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
     },
     vite: {
       sharedDuringBuild: true,
-      // vite-ssg creates its head itself, so no app module imports the head entries
+      // vite-ssg creates its head itself, so no app module imports the head entries. A build
+      // that streams the head creates a streamable head, in a dependency such as Nuxt.
       configResolved(config) {
         const framework = v3HeadDependency(config.root)
+        const streaming = config.plugins.find(plugin => STREAMING_PLUGIN_RE.test(plugin.name))
         if (framework)
           turnOff(`${join(config.root, 'package.json')} depends on ${framework}`)
+        else if (streaming)
+          turnOff(`the ${streaming.name} plugin streams the head`)
       },
       buildStart() {
         if (off && !warned) {
