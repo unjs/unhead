@@ -319,13 +319,22 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (output) {
               if (meta.length)
                 output.push('  ]')
-              // Preserve the second argument (options like { head }) if present
+              // Preserve the second argument (options like { head }) if present. The `seoMeta`
+              // option marks the entry, so `readEntry` reads it as the useSeoMeta call it was.
+              const seoMeta = originalName === 'useSeoMeta' || originalName === 'useServerSeoMeta'
               if (node.arguments.length >= 2) {
-                const optionsArg = code.substring(node.arguments[1].start, node.arguments[1].end)
-                output.push(`}, ${optionsArg})`)
+                const optionsNode = node.arguments[1]
+                const optionsArg = code.substring(optionsNode.start, optionsNode.end)
+                // an object literal takes the option in place, so the compile transform still reads its `head`
+                const marked = optionsNode.type !== 'ObjectExpression'
+                  ? `{ ...${optionsArg}, seoMeta: true }`
+                  : optionsNode.properties.length
+                    ? `${code.substring(optionsNode.start, optionsNode.properties.at(-1).end)}, seoMeta: true }`
+                    : '{ seoMeta: true }'
+                output.push(seoMeta ? `}, ${marked})` : `}, ${optionsArg})`)
               }
               else {
-                output.push('})')
+                output.push(seoMeta ? '}, { seoMeta: true })' : '})')
               }
               s.overwrite(node.start, node.end, output.join('\n'))
 

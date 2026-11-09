@@ -288,10 +288,11 @@ function seoToHeadInput(decoded: Record<string, unknown>): unknown {
   return { title, titleTemplate, meta }
 }
 
+// Options a compiled entry takes: `head`, and the `seoMeta: true` marker of the useSeoMeta transform
 function isHeadOnly(node: any): boolean {
   const inner = unwrap(node)
-  const prop = inner.type === 'ObjectExpression' && inner.properties.length === 1 && inner.properties[0]
-  return !!prop && prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method && staticKey(prop.key) === 'head'
+  return inner.type === 'ObjectExpression' && inner.properties.length > 0 && inner.properties.every((prop: any) => prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method
+    && (staticKey(prop.key) === 'head' || (staticKey(prop.key) === 'seoMeta' && unwrap(prop.value).value === true)))
 }
 
 function isFunctionNode(node: any): boolean {

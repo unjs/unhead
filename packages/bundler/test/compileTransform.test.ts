@@ -552,7 +552,8 @@ describe('compile option', () => {
     const output = await pipeline(Unhead({ ...base, compile: true }, vue), code, '/src/page.js', client)
     expect(calls(output)).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' })] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
+      // the seoMeta option of the useSeoMeta transform marks the entry for `readEntry`
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] }), undefined, { seoMeta: true }] },
     ])
   })
 
@@ -565,8 +566,8 @@ describe('compile option', () => {
     const code = await pipeline(plugins, `${IMPORTS}useHead({ script: [{ innerHTML: 'var value = 1 ; var other = 2 ;' }] })\nuseSeoMeta({ description: 'x' }, { nuxt })\nuseSeoMeta({ title: 'T' })`, '/src/page.js', server)
     expect(calls(code, { nuxt: 'nuxt' })).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ script: [{ innerHTML: 'varvalue=1;varother=2;' }] })] },
-      { fn: 'useHead', args: [{ meta: [{ name: 'description', content: 'x' }] }, { nuxt: 'nuxt' }] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T' })] },
+      { fn: 'useHead', args: [{ meta: [{ name: 'description', content: 'x' }] }, { nuxt: 'nuxt', seoMeta: true }] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T' }), undefined, { seoMeta: true }] },
     ])
   })
 })
