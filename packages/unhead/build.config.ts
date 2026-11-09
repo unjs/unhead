@@ -1,3 +1,4 @@
+import type { RollupOptions } from 'rollup'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
@@ -99,21 +100,36 @@ async function buildIifeFromSource(rootDir: string) {
   return chunk.code
 }
 
-export default defineBuildConfig({
+function failOnSideEffects(_: unknown, options: RollupOptions) {
+  options.experimentalLogSideEffects = true
+  const onwarn = options.onwarn
+  options.onwarn = (warning, warn) => {
+    if (isFirstSideEffectWarning(warning))
+      throw new Error(warning.message)
+    if (onwarn)
+      return onwarn(warning, warn)
+    warn(warning)
+  }
+}
+
+export default defineBuildConfig([{
+  // The lazy head builds first and alone, so it shares no dist file with the other entries
+  // and leaves their dist as it was. Its runtime chunk holds its own copy of the resolve
+  // pipeline. The package exports of the next build do not exist yet, so warnings pass here.
   clean: true,
   declaration: true,
+  failOnWarn: false,
   hooks: {
-    'rollup:options': (_, options) => {
-      options.experimentalLogSideEffects = true
-      const onwarn = options.onwarn
-      options.onwarn = (warning, warn) => {
-        if (isFirstSideEffectWarning(warning))
-          throw new Error(warning.message)
-        if (onwarn)
-          return onwarn(warning, warn)
-        warn(warning)
-      }
-    },
+    'rollup:options': failOnSideEffects,
+  },
+  entries: [
+    { input: 'src/lazy/index', name: 'lazy' },
+  ],
+}, {
+  clean: false,
+  declaration: true,
+  hooks: {
+    'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {
       const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
@@ -143,4 +159,4 @@ export default defineBuildConfig({
     { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
-})
+}])

@@ -10,6 +10,7 @@
       "unhead": ["./packages/unhead/src/index"],
       "unhead/client": ["./packages/unhead/src/client/index"],
       "unhead/server": ["./packages/unhead/src/server/index"],
+      "unhead/lazy": ["./packages/unhead/src/lazy/index"],
       "unhead/plugins": ["./packages/unhead/src/plugins/index"],
       "unhead/legacy": ["./packages/unhead/src/legacy/index"],
       "unhead/minify": ["./packages/unhead/src/minify/index"],
