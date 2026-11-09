@@ -46,7 +46,8 @@ const ENTRY_SEO_KEYS = new Set([...TagConfigKeys, 'class', 'style', '_flatMeta']
 const BAIL = Symbol('bail')
 
 /**
- * Which builds compile head calls. Only server builds have a compiled runtime for now.
+ * Which builds compile head calls. Client builds leave head calls as written: the client
+ * head takes normal input only.
  */
 function compilesFor(consumer: BuildConsumer | undefined): boolean {
   return consumer === 'server'
@@ -563,10 +564,10 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
             const result = compileHeadCall(node, callee.kind, input)
             if (result._tag === 'Bail') {
               if (hasFunctionTitleTemplate(input))
-                warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input and the client loads the full runtime. Use a string, such as '%s %separator %siteName'.`)
+                warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input, and the server head renders it on a slower path. Use a string, such as '%s %separator %siteName'.`)
               const rel = !NODE_MODULES_RE.test(id) && result.reason === 'dynamic value in the identity of a link tag' && keylessLinkRel(input)
               if (rel)
-                warn(`[unhead] ${id}: a link with no key takes its rel and href as its identity, and this href is a dynamic value. So this head call stays normal input and the client loads the full runtime. To compile it, add a key, such as key: '${rel}'.`)
+                warn(`[unhead] ${id}: a link with no key takes its rel and href as its identity, and this href is a dynamic value. So this head call stays normal input, and the server head renders it on a slower path. To compile it, add a key, such as key: '${rel}'.`)
               return
             }
 

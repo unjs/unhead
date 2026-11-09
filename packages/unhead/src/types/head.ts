@@ -64,8 +64,8 @@ export interface HeadPluginOptions extends CreateHeadOptions {
    * tags it gets. It must copy or drop text it did not make, never test it, because the server
    * memo runs it once per sequence of compiled tags with a token in place of each dynamic value.
    *
-   * The full runtime runs it as a `tags:afterResolve` hook. The compiled runtimes run it
-   * themselves, so it keeps the server memo and never loads the full runtime.
+   * The v3 runtime runs it as a `tags:afterResolve` hook. The compiled server head runs it
+   * itself, so it keeps the server memo.
    *
    * @experimental
    */
