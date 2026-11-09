@@ -23,7 +23,33 @@ describe('readEntry on a compiled server head', () => {
       input: { title: 'Page', meta: [{ name: 'description', content: 'About us' }] },
       seoMeta: false,
       compiled: true,
+      dynamic: ['title', 'meta.0.content'],
     })
+  })
+
+  it('tells a dynamic value from a static one', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push(compiled({
+      title: dynamicValue(0),
+      meta: [
+        { property: 'og:image', content: '/static.png' },
+        { name: 'twitter:image', content: `/og/${dynamicValue(1)}.png` },
+      ],
+    }, 2), { values: ['Page', 'post'] })
+    const reading = readEntry(lastEntry(head), head)
+    expect(reading.input.meta).toEqual([
+      { property: 'og:image', content: '/static.png' },
+      { name: 'twitter:image', content: '/og/post.png' },
+    ])
+    expect(reading.dynamic).toEqual(['title', 'meta.1.content'])
+  })
+
+  it('reads no dynamic value for static compiled tags or loose input', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push(compiled({ meta: [{ property: 'og:image', content: '/static.png' }] }))
+    expect(readEntry(lastEntry(head), head).dynamic).toBeUndefined()
+    head.push({ meta: [{ property: 'og:image', content: '/loose.png' }] })
+    expect(readEntry(lastEntry(head), head).dynamic).toBeUndefined()
   })
 
   it('settles a value function once, before the render', () => {
@@ -93,10 +119,10 @@ describe('readEntry on a lazy head', () => {
     const dom = ssrDom([{ input: { title: 'x' } }], 'none')
     const head = compiledTagsHead({ document: dom.window.document })
     const entry = head.push(compiled({ title: dynamicValue(0) }, 1), { values: ['x'] })
-    expect(readEntry(head.entries.get(entry._i)!, head)).toEqual({ input: { title: 'x' }, seoMeta: false, compiled: true })
+    expect(readEntry(head.entries.get(entry._i)!, head)).toEqual({ input: { title: 'x' }, seoMeta: false, compiled: true, dynamic: ['title'] })
     head.blockLoad()
     entry.patch(compiled({ title: `${dynamicValue(0)}!` }, 1), { values: ['y'] })
-    expect(readEntry(head.entries.get(entry._i)!, head)).toEqual({ input: { title: 'y!' }, seoMeta: false, compiled: true })
+    expect(readEntry(head.entries.get(entry._i)!, head)).toEqual({ input: { title: 'y!' }, seoMeta: false, compiled: true, dynamic: ['title'] })
     entry.patch({ title: 'loose' })
     expect(readEntry(head.entries.get(entry._i)!, head)).toEqual({ input: { title: 'loose' }, seoMeta: false, compiled: false })
   })

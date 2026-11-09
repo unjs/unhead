@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, PropResolver, ResolvableHead, Unhead } from '.
 import type { CompiledEntry } from './core'
 import type { CompiledTags } from './types'
 import { walkResolver } from '../utils/walkResolver'
-import { toHeadInput } from './tags'
+import { DYNAMIC_VALUE_OPEN, toHeadInput } from './tags'
 
 /**
  * What `readEntry` reads of a head entry.
@@ -16,6 +16,26 @@ export interface EntryReading {
   seoMeta: boolean
   /** True when the entry holds compiled tags. */
   compiled: boolean
+  /**
+   * The paths in `input` of each dynamic value of compiled tags, such as `title` or
+   * `meta.0.content`. The server memo holds a token in place of each one, so a tag transform
+   * sees the token, and the value may differ on the next render. Undefined when every value is
+   * static, and for loose input, which never takes the memo.
+   */
+  dynamic?: string[]
+}
+
+// Every dynamic value reads as the token mark, so `toHeadInput` leaves a mark in each place one lands
+const MARKS = /* @__PURE__ */ new Proxy([], { get: () => DYNAMIC_VALUE_OPEN })
+
+function markPaths(value: unknown, path: string, out: string[]): string[] {
+  if (typeof value === 'string' && value.includes(DYNAMIC_VALUE_OPEN)) {
+    out.push(path)
+  }
+  else if (value && typeof value === 'object') {
+    for (const key in value) markPaths((value as Record<string, unknown>)[key], path ? `${path}.${key}` : key, out)
+  }
+  return out
 }
 
 /**
@@ -26,6 +46,8 @@ export interface EntryReading {
  * - Values settle. The value function of a compiled server entry runs now, once, as the first
  *   render would run it. Loose input resolves through the prop resolvers of the head, so a
  *   Vue ref reads as its value, and a getter runs.
+ * - `dynamic` names the values that may change between renders, so a tag transform can tell a
+ *   static value, which the server memo holds as it is, from a dynamic one.
  * - The flat meta of a `useSeoMeta` call unpacks to meta tags through the `FlatMetaPlugin` of
  *   the head, which every `useSeoMeta` call registers. So this reader carries no unpack code.
  *
@@ -54,8 +76,12 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
     values = (entry.options as { values?: unknown } | undefined)?.values
   }
   let seoMeta = !!(entry._seoMeta || entry.options?.seoMeta)
+  let dynamic: string[] | undefined
   if (tags) {
     input = toHeadInput(tags, values as unknown[] || [])
+    dynamic = markPaths(toHeadInput(tags, MARKS), '', [])
+    if (!dynamic.length)
+      dynamic = undefined
   }
   else {
     // v3 `resolveHeadInput`, which shares a module with normalize, so it stays out of an eager chunk
@@ -73,5 +99,5 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
         input = { ...rest, meta: [...rest.meta || [], ...ctx.tags.map(tag => tag.props)] }
     }
   }
-  return { input, seoMeta, compiled: !!tags }
+  return { input, seoMeta, compiled: !!tags, dynamic }
 }
