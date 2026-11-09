@@ -28,6 +28,7 @@
       "@unhead/vue": ["./packages/vue/src/index"],
       "@unhead/vue/client": ["./packages/vue/src/client"],
       "@unhead/vue/server": ["./packages/vue/src/server"],
+      "@unhead/vue/lazy": ["./packages/vue/src/lazy"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
       "@unhead/bundler/framework": ["./packages/bundler/src/unplugin/framework"],
