@@ -45,7 +45,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   }
   // Compile reads the minified inline content
   if (compile) {
-    plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths }))
+    const compileOpts = typeof options.compile === 'object' ? options.compile : {}
+    plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths, ...compileOpts }))
   }
 
   // Register runtime plugins into the shared context

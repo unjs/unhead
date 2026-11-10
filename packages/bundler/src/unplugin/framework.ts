@@ -83,7 +83,8 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
   }
   // Compile reads the minified inline content
   if (compile) {
-    defs.push({ instance: CompileTransform, options: { ...common, importPaths: seoMetaOpts.importPaths } })
+    const compileOpts = typeof options.compile === 'object' ? options.compile : {}
+    defs.push({ instance: CompileTransform, options: { ...common, importPaths: seoMetaOpts.importPaths, ...compileOpts } })
   }
 
   return defs

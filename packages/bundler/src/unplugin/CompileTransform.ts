@@ -26,8 +26,10 @@ const FLAG_STRING_VALUES = 16
 const IDENTIFIER_INPUT_RE = /\buse(?:Server)?(?:Head|SeoMeta)\(\s*[\w$]+\s*[,)]/
 // The runtime files of a Nuxt module, which call head composables as app code does
 const MODULE_RUNTIME_RE = /[\\/]dist[\\/]runtime[\\/]/
-// Nuxt's import paths of `useHead` and `injectHead`
-const NUXT_IMPORT_PATHS = ['#imports', 'nuxt/app']
+// Nuxt's own `useHead` and `injectHead`
+const NUXT_IMPORT_PATH = 'nuxt/app'
+// Nuxt's module of every auto import, by name. A project can replace one with its own function.
+const AUTO_IMPORT_PATH = '#imports'
 // `@unhead/vue` resolves the head itself. An auto import or another path may stand for a
 // wrapper that resolves it some other way, such as Nuxt, so the call passes the head
 // that the auto-imported `injectHead` finds when there is one.
@@ -64,9 +66,18 @@ function compilesFor(consumer: BuildConsumer | undefined): boolean {
 export interface CompileTransformOptions extends BaseTransformerTypes {
   /**
    * Extra import paths of `useHead` and `useSeoMeta`, as for `UseSeoMetaTransform`.
-   * `#imports` and `nuxt/app` always count.
+   * `nuxt/app` always counts.
    */
   importPaths?: string[]
+  /**
+   * The auto imports that are a head composable of `@unhead/vue`, or a wrapper that renders
+   * the same head, by name. Such as `['useHead', 'useSeoMeta']`.
+   *
+   * A call of a name that nothing declares, or that `#imports` exports, compiles only when
+   * this list holds the name. A project can replace an auto import with its own function, and
+   * the build cannot see that. So with no list, these calls stay as written.
+   */
+  autoImports?: string[]
 }
 
 type CompiledCall
@@ -446,7 +457,7 @@ function insertAfterImports(s: MagicString, body: any[], text: string): void {
  * to compiled tags that `useCompiledHead` pushes. A call that cannot compile stays as written.
  */
 export const CompileTransform = createUnplugin<CompileTransformOptions, false>((options: CompileTransformOptions = {}, meta) => {
-  const importPaths = new Set([...NUXT_IMPORT_PATHS, ...options.importPaths || []])
+  const importPaths = new Set([NUXT_IMPORT_PATH, ...options.importPaths || []])
   // Only these bundlers let `resolveId` resolve the runtime from the app
   const resolvesFromApp = meta?.framework === 'vite' || meta?.framework === 'rollup' || meta?.framework === 'rolldown'
   // Fallback for bundlers without a per-transform environment, as in `TreeshakeServerComposables`.
@@ -531,8 +542,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       return name
     }
 
-    // An import of `@unhead/vue` or an import path, `undefined` for a name that
-    // nothing declares, as an auto import leaves it, and `false` for anything else.
+    // An import of `@unhead/vue`, an import path, or `#imports`, `undefined` for a name
+    // that nothing declares, as an auto import leaves it, and `false` for anything else.
     function bindingOf(name: string): { source: string, imported: string } | false | undefined {
       const decl = scopeTracker.getDeclaration(name)
       if (!decl)
@@ -540,7 +551,7 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       return decl instanceof ScopeTrackerImport
         && decl.node.type === 'ImportSpecifier'
         && decl.node.imported.type === 'Identifier'
-        && (decl.importNode.source.value === '@unhead/vue' || importPaths.has(decl.importNode.source.value))
+        && (decl.importNode.source.value === '@unhead/vue' || decl.importNode.source.value === AUTO_IMPORT_PATH || importPaths.has(decl.importNode.source.value))
         && { source: decl.importNode.source.value, imported: decl.node.imported.name }
     }
 
@@ -548,7 +559,13 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       const binding = callee.type === 'Identifier' && bindingOf(callee.name)
       if (binding === false)
         return
-      const kind = CALLEES.get(binding ? binding.imported : callee.name)
+      const name = binding ? binding.imported : callee.name
+      // An auto import may be a function of the project, so the integration names the head composables.
+      // The option is read at each call, so the integration can fill the list before the build starts.
+      const isAutoImport = !binding || (binding.source === AUTO_IMPORT_PATH && !importPaths.has(AUTO_IMPORT_PATH))
+      if (isAutoImport && !options.autoImports?.includes(name))
+        return
+      const kind = CALLEES.get(name)
       return kind && { kind, resolvesHead: binding?.source === '@unhead/vue' }
     }
 
