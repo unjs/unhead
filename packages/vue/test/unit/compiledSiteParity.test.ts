@@ -24,7 +24,7 @@ const modules = {
 
 // The transforms of the bundler plugin, in order, as Vite runs them on one module
 async function build(source: string, compile: boolean, id = '/app/pages/page.js'): Promise<string> {
-  const plugins = Unhead({ compile, devtools: false, validate: false, treeshake: false, minify: false }) as any[]
+  const plugins = Unhead({ compile: compile && { autoImports: ['useHead', 'useSeoMeta'] }, devtools: false, validate: false, treeshake: false, minify: false }) as any[]
   let code = source
   for (const plugin of plugins) {
     const transform = plugin.transform

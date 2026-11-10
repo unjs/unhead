@@ -1,3 +1,4 @@
+import type { CompileTransformOptions } from './CompileTransform'
 import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
@@ -27,11 +28,13 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    * server builds. A call that cannot compile stays as written. The server head
    * must come from `@unhead/vue/compiled/server`.
    *
+   * An auto-imported call compiles only when `autoImports` names it. Pass an object to set it.
+   *
    * Applies to the `@unhead/vue` bundler plugin only. Off by default.
    *
    * @experimental
    */
-  compile?: boolean
+  compile?: boolean | CompileTransformOptions
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
