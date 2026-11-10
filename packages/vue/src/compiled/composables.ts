@@ -24,9 +24,10 @@ function resolveValues(values: CompiledValues): unknown[] {
   return (typeof values === 'function' ? values() : values).map(entryValue => toValue(entryValue))
 }
 
-// The flat meta values that `useSeoMeta` renders the same way compiled tags do.
+// The flat meta values that `useSeoMeta` renders the same way compiled tags do. v3 has its own
+// rule for each text here: it renders no tag for `_null`, and drops `false` from an object value.
 function isText(value: unknown): boolean {
-  return typeof value === 'string' ? !!value && value !== 'true' : Number.isFinite(value)
+  return typeof value === 'string' ? !!value && value !== 'true' && value !== 'false' && value !== '_null' : Number.isFinite(value)
 }
 
 // The `FLAG_UNDEFINED_DROPS` and `FLAG_STRING_VALUES` flags of `unhead/compiled/server`. The build marks
