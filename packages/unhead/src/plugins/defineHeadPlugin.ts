@@ -13,22 +13,21 @@ export function defineHeadPlugin(plugin: HeadPluginInput, key?: string): HeadPlu
  * The compiled server head knows the hook by `_t` and runs the transform itself. It lives here, not in
  * `registerPlugin`, so a head without tag transforms carries none of it.
  *
- * A `tags:afterResolve` listener that the plugin already has runs first. The hook then carries no
- * `_t`, so the compiled server head renders that head on the full runtime.
+ * A `tags:afterResolve` listener that the plugin already has runs first. The hook then carries a
+ * falsy `_t`, so the compiled server head renders that head on the full runtime.
  *
  * @experimental
  */
 export function withTagTransform<T extends HeadPlugin>(head: Unhead<any, any>, plugin: T): T {
   const own: any = plugin.hooks?.['tags:afterResolve']
   // a plugin that this function already changed keeps its hook
-  if (!own?._t) {
-    const hook = (ctx: any) => {
-      own?.(ctx)
-      ctx.tags = plugin.transform!(ctx.tags, head)
-    }
+  if (own?._t === undefined) {
     plugin.hooks = {
       ...plugin.hooks,
-      'tags:afterResolve': own ? hook : Object.assign(hook, { _t: 1 }),
+      'tags:afterResolve': Object.assign((ctx: any) => {
+        own?.(ctx)
+        ctx.tags = plugin.transform!(ctx.tags, head)
+      }, { _t: own ? 0 : 1 }),
     }
   }
   return plugin

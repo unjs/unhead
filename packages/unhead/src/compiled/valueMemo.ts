@@ -116,13 +116,17 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // `includes` scan, and a regex only when it holds a `<`.
 // With `InferSeoMetaPlugin` or a tag transform, a blank value takes the slow path: either may tell
 // blank text from other text, as the plugin does for an image, and the memo holds a token that is never blank.
-function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?: boolean): string | undefined {
+// A tag transform can also move text that takes template params into raw text, so `moved` gives raw text the param check.
+function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?: boolean, moved?: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
-  if (mode >= MODE_RAW)
-    return entryValue.includes('@import') ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
+  if (mode >= MODE_RAW) {
+    if ((moved && PARAM_UNSAFE_RE.test(entryValue)) || entryValue.includes('@import'))
+      return
+    return !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
+  }
   if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (transforms && !NOT_BLANK_RE.test(entryValue)))
     return
   return mode === MODE_ATTR
@@ -136,6 +140,7 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?
 export function renderValueMemo(memo: Memo, head: CompiledTagsHead, transforms: boolean): SSRHeadPayload | undefined {
   const state = memo.s!
   const tp = !!state._templateParams
+  const moved = tp && transforms
   transforms ||= !!head._infer
   const html: Record<string, unknown> = { ...memo.b }
   const values: EntryValues = []
@@ -172,7 +177,7 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead, transforms: 
       const pieces = bucket as (string | number)[]
       let out = pieces[0] as string
       for (let i = 1; i < pieces.length; i += 4) {
-        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, transforms)
+        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, transforms, moved)
         if (text === undefined)
           return
         out += text + (pieces[i + 3] as string)

@@ -77,6 +77,20 @@ describe('tag transforms', () => {
     head.push(input)
     renderV3(head)
     expect(calls.n).toBe(1)
+    // a plugin with its own listener gets a hook that the fast tiers do not know
+    const own = { n: 0 }
+    const listening = (head: Unhead<any>): HeadPlugin => withTagTransform(head, withTagTransform(head, {
+      key: 'listener-and-transform',
+      hooks: { 'tags:afterResolve': () => {} },
+      transform: (list) => {
+        own.n++
+        return list
+      },
+    }))
+    const withListener = createV3Head({ disableDefaults: true, plugins: [listening] })
+    withListener.push(input)
+    renderV3(withListener)
+    expect(own.n).toBe(1)
   })
 
   it('keep the memo, keyed by the cache key', () => {
@@ -215,6 +229,24 @@ describe('tag transforms', () => {
     expect(render('home', null)).toBe(' class="home"')
     expect(render('home', 'site')).toBe(' class="home"')
     expect(render('about', 'site')).toBe(' class="about"')
+  })
+
+  it('resolve a template param in a dynamic value that a transform moved into raw text', () => {
+    const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { dynamicValues: 1 }) as any
+    const toNoscript = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+      key: 'to-noscript',
+      transform: list => list.map(tag => tag.props.name === 'description' ? { ...tag, tag: 'noscript', props: {}, innerHTML: tag.props.content } as any : tag),
+      cacheKey: () => cacheKey,
+    })
+    const render = (value: string, cacheKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin, toNoscript(cacheKey)] })
+      head.push(result.tags, { values: [value] } as any)
+      return renderSSRHead(head).headTags
+    }
+    // a null cache key renders with no memo
+    expect(render('Hello %site', null)).toBe('<noscript>Hello World</noscript>')
+    expect(render('Hello', 'site')).toBe('<noscript>Hello</noscript>')
+    expect(render('Hello %site', 'site')).toBe('<noscript>Hello World</noscript>')
   })
 
   it('render with no memo when a cache key is undefined', () => {
