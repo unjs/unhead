@@ -15,7 +15,7 @@ export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   _tp?: unknown
   /** Set while `InferSeoMetaPlugin` runs natively: its hooks. */
   _infer?: Record<string, (ctx: any) => void>
-  /** Whether the memo may hold the output of `InferSeoMetaPlugin`: false with a custom `ogTitle` or `ogDescription`. */
+  /** Whether the memo may hold the output of `InferSeoMetaPlugin`: false with an `ogTitle` or `ogDescription` function. */
   _inferMemo?: boolean
   /** Marks a head that renders compiled tags, for `useCompiledHead`. */
   _acceptsCompiled?: 1
@@ -147,7 +147,7 @@ export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean 
 }
 
 // The memo key of a render: its options and the native plugins. `null` when the memo may not
-// hold the output: a custom `InferSeoMetaPlugin` function may test the text, which the memo holds as a token,
+// hold the output: an `InferSeoMetaPlugin` function may change the text, which the memo holds as a token,
 // and that plugin reads a title template that an earlier render of this head left behind.
 function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): number | null {
   if (head._infer && (!head._inferMemo || head._titleTemplate !== undefined))

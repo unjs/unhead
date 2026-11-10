@@ -65,7 +65,9 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
     return {
       key: 'infer-seo-meta',
       hooks: {
-        'tags:beforeResolve': ({ tagMap }) => {
+        // `_plain` tells the compiled server head that no function changes the text. Only then
+        // may its memo hold the inferred tags.
+        'tags:beforeResolve': Object.assign(({ tagMap }: any) => {
           let title = head._titleTemplate || head._title
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
@@ -86,7 +88,7 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
             ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
             ogDescription.processTemplateParams = true
           }
-        },
+        }, { _plain: !options.ogTitle && !options.ogDescription }),
         // after resolve so an image added or dropped by any other hook still counts
         'tags:afterResolve': (ctx) => {
           let cardIndex = -1

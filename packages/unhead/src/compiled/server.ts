@@ -117,35 +117,6 @@ function compileNativeInput(input: unknown): unknown {
   return tags || input
 }
 
-// A private-use text that no head holds
-const PROBE = '\uE002'
-
-// Whether `InferSeoMetaPlugin` copies the title and description as they are, as with no
-// `ogTitle` or `ogDescription` option. Only then may the memo hold its output.
-function infersPlainText(head: CompiledHead, hooks: Record<string, (ctx: any) => void>): boolean {
-  const { _title, _titleTemplate } = head
-  const inferred = (property: string) => ({ tag: 'meta', props: { property, 'data-infer': '' } })
-  const tagMap = new Map<string, any>([
-    ['meta:og:title', inferred('og:title')],
-    ['meta:og:description', inferred('og:description')],
-    ['meta:description', { tag: 'meta', props: { name: 'description', content: PROBE } }],
-  ])
-  head._title = PROBE
-  head._titleTemplate = undefined
-  try {
-    hooks['tags:beforeResolve']!({ tagMap, tags: [...tagMap.values()] })
-    return tagMap.get('meta:og:title').props.content === PROBE && tagMap.get('meta:og:description').props.content === PROBE
-  }
-  catch {
-    // a custom function may throw on the probe text, and it then runs on every render instead
-    return false
-  }
-  finally {
-    head._title = _title
-    head._titleTemplate = _titleTemplate
-  }
-}
-
 function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   const key = plugin.key!
   // Nuxt always registers template params, and SEO modules register inferred SEO meta. A head
@@ -172,7 +143,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     }
     else {
       head._infer = hooks
-      head._inferMemo = !head._v3 && infersPlainText(head, hooks)
+      // Only the plugin knows whether it has an `ogTitle` or `ogDescription` function. A function
+      // may change one text and leave the next, so no test of its output can clear it.
+      head._inferMemo = !head._v3 && !!hooks['tags:beforeResolve']?._plain
     }
     // Once the store exists, a reader may hold it and add a listener later, so the
     // hooks register now and keep the v3 order. The fast tiers skip them as native.
