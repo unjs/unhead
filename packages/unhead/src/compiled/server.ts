@@ -160,8 +160,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
   }
   else {
     registerPlugin(head, plugin)
-    // the key changes how v3 applies a title template, but this plugin has no native rules
-    head._v3 ||= head.plugins.has('template-params') && !head._tp
+    // The key changes how v3 applies a title template, but this plugin has no native rules. The
+    // object form of a native plugin, such as `InferSeoMetaPlugin()(head)`, has none either.
+    head._v3 ||= (head.plugins.has('template-params') && !head._tp) || (head.plugins.has('infer-seo-meta') && !head._infer)
     // a function plugin may have no static key, so every plugin is checked
     head.plugins.forEach(resolved => head._tt ||= isTagTransform(resolved))
   }

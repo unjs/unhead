@@ -55,6 +55,9 @@ const DYNAMIC_VALUE_BANNED_TAGS = /* @__PURE__ */ new Set(['templateParams', 'ti
 const PLUGIN_PROPS = ['children', 'hid', 'vmid', 'body', 'renderPriority']
 
 const WHOLE_DYNAMIC_VALUE_RE = /^\uE000\d+\uE001$/
+// Static style text that ends in a part of `@import`, right before a dynamic value. The value
+// could finish the rule, which no runtime check of the value alone can see.
+const IMPORT_START_RE = /@(?:i(?:m(?:p(?:or?)?)?)?)?\uE000/
 // The script types whose weight never depends on their content
 const JSON_SCRIPT_TYPE_RE = /json$|^importmap$|^speculationrules$/
 const COERCIBLE_TEXT_RE = /^[true]*$/
@@ -166,6 +169,8 @@ function findDynamicValueReason(tag: HeadTag, identity: string): string | undefi
     if (hasDynamicValue(tag[key]) && (!CONTENT_KEYS.has(key) || (tag.tag !== 'style' && DYNAMIC_VALUE_BANNED_TAGS.has(tag.tag))))
       return `dynamic value in ${tag.tag} ${key}`
   }
+  if (tag.tag === 'style' && typeof tag.innerHTML === 'string' && IMPORT_START_RE.test(tag.innerHTML))
+    return 'dynamic value in style innerHTML could finish an @import'
 }
 
 function compileTag(tag: HeadTag, identity: string): CompiledTag | string {

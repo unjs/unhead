@@ -37,6 +37,39 @@ describe('a dynamic value in style content', () => {
       expect(renderSSRHead(head)).toEqual(renderV3(v3))
     }
   })
+
+  // the static text and the values can each hold a part of `@import`
+  it.each([
+    ['static text, then a value', ['@imp', 0, ''], ['ort url(/a.css);']],
+    ['a value, then static text', ['', 0, 'ort url(/a.css);'], ['@imp']],
+    ['a value that ends with @', ['a{}', 0, 'import url(/a.css);'], ['@']],
+    ['two values', ['', 0, '', 1, ''], ['@imp', 'ort url(/a.css);']],
+    ['a value, static text, a value', ['', 0, 'po', 1, ''], ['@im', 'rt url(/a.css);']],
+    ['no @import', [':root{--c:', 0, '}'], ['red']],
+    ['an @ that starts another rule', ['', 0, 'media print{a{}}'], ['@']],
+  ])('renders an @import split over %s like v3', (_, parts, values) => {
+    const text = (value: (index: number) => string) => parts.map(part => typeof part === 'number' ? value(part) : part).join('')
+    const input = (innerHTML: string) => ({ script: [{ innerHTML: 'x()' }], style: [{ key: 's', innerHTML }] })
+    const template = compileTags(input(text(dynamicValue)), { valueCount: values.length })
+    const final = input(text(index => values[index]!))
+    for (const loose of [false, true]) {
+      for (let i = 0; i < 2; i++) {
+        const head = createHead()
+        // the build keeps the head input when it cannot compile
+        if (template._tag === 'Ok')
+          head.push(template.tags, { values })
+        else
+          head.push(final as any)
+        const v3 = createV3Head()
+        v3.push(final as any)
+        if (loose) {
+          head.push({ meta: [{ name: 'loose', content: 'a' }] })
+          v3.push({ meta: [{ name: 'loose', content: 'a' }] })
+        }
+        expect(renderSSRHead(head)).toEqual(renderV3(v3))
+      }
+    }
+  })
 })
 
 describe('memo tier', () => {
@@ -477,6 +510,32 @@ describe('entry points', () => {
     const head = createHead({ plugins: [TemplateParamsPlugin] })
     head.push(toCompiledTags(page))
     expect(transformV3(head as any, html)).toBe(transformV3(v3, html))
+  })
+})
+
+describe('a built-in plugin in object form', () => {
+  it.each([
+    ['InferSeoMetaPlugin', (head: any) => (InferSeoMetaPlugin() as any)(head)],
+    ['TemplateParamsPlugin', (head: any) => (TemplateParamsPlugin as any)(head)],
+  ])('runs %s like v3', (_, plugin) => {
+    const template = compileTags({ ...page, title: dynamicValue(0), meta: [...page.meta, { property: 'og:image', content: '/a.png' }] }, { valueCount: 1 })
+    if (template._tag !== 'Ok')
+      throw new Error(template.reason)
+    for (const loose of [false, true]) {
+      for (let i = 0; i < 2; i++) {
+        const head = createHead()
+        head.use(plugin(head))
+        head.push(template.tags, { values: ['Page'] })
+        const v3 = createV3Head()
+        v3.use(plugin(v3))
+        v3.push({ ...page, meta: [...page.meta, { property: 'og:image', content: '/a.png' }] })
+        if (loose) {
+          head.push({ meta: [{ name: 'loose', content: 'a' }] })
+          v3.push({ meta: [{ name: 'loose', content: 'a' }] })
+        }
+        expect(renderSSRHead(head)).toEqual(renderV3(v3))
+      }
+    }
   })
 })
 

@@ -111,19 +111,26 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // Returns undefined when the value could change a v3 decision. Escaping matches
 // v3: `escapeHtml` for title text, `encodeAttribute` for attributes, a `\u003C`
 // escape for each `<` of JSON script text, and other raw text holds no `<`, so no closing
-// tag rule applies. Raw text holds no `@import` either, which would change a style weight. Template params never reach script text, because the build
+// tag rule applies. Raw text holds no `@import` either, which would change a style weight, and
+// it does not end in a part of one that the next text could finish. Template params never reach script text, because the build
 // sends a tag that opts in to the slow path. So a large payload costs one
 // `includes` scan, and a regex only when it holds a `<`.
 // With `InferSeoMetaPlugin` or a tag transform, a blank value takes the slow path: either may tell
 // blank text from other text, as the plugin does for an image, and the memo holds a token that is never blank.
 // A tag transform can also move text that takes template params into raw text, so `moved` gives raw text the param check.
+function endsInImportStart(value: string): boolean {
+  const tail = value.slice(-6)
+  const at = tail.lastIndexOf('@')
+  return at >= 0 && '@import'.startsWith(tail.slice(at))
+}
+
 function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?: boolean, moved?: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
   if (mode >= MODE_RAW) {
-    if ((moved && PARAM_UNSAFE_RE.test(entryValue)) || entryValue.includes('@import'))
+    if ((moved && PARAM_UNSAFE_RE.test(entryValue)) || entryValue.includes('@import') || (mode === MODE_RAW && endsInImportStart(entryValue)))
       return
     return !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
   }

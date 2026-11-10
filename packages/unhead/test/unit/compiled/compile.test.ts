@@ -169,6 +169,14 @@ describe('compileTags', () => {
     expect(result._tag).toBe('Ok')
   })
 
+  it('refuses style content where static text starts an @import that a dynamic value can finish', () => {
+    const h = dynamicValue(0)
+    for (const start of ['@', '@i', '@impor', 'a{}@imp'])
+      expectBail({ style: [{ key: 'k', innerHTML: start + h }] }, 1)
+    for (const text of [`a{color:${h}}`, `@media ${h}{a{}}`, `@import url(${h});`, `@important${h}`])
+      expect(compileTags({ style: [{ key: 'k', innerHTML: text }] }, { valueCount: 1 })._tag).toBe('Ok')
+  })
+
   it('refuses a dynamic value a non-string value would normalize differently', () => {
     const h = dynamicValue(0)
     // a value array would expand here in the compiled tags but not in the input
