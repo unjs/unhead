@@ -72,7 +72,7 @@ describe('tag transforms', () => {
     for (let i = 0; i < 2; i++) {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages('https://c.com', calls, () => null)] })
       head.push(tags)
-      expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'the tag transform of the absolute-images plugin has a null cache key' })
+      expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'the tag transform of the absolute-images plugin gives no cache key' })
       expect(renderSSRHead(head).headTags).toContain('https://c.com/og.png')
     }
     expect(calls.n).toBe(2)
@@ -169,6 +169,35 @@ describe('tag transforms', () => {
     // a null cache key renders with no memo
     expect(render(undefined, null)).toBe('<title>Home</title>')
     expect(render(undefined, 'site')).toBe('<title>Home</title>')
+  })
+
+  it('render a dynamic value that a transform moved into a class', () => {
+    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 }) as any
+    const titleClass = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+      key: 'title-class',
+      transform: list => [...list, { tag: 'htmlAttrs', props: { class: new Set([list.find(tag => tag.tag === 'title')!.textContent]) } } as any],
+      cacheKey: () => cacheKey,
+    })
+    const render = (value: string, cacheKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [titleClass(cacheKey)] })
+      head.push(result.tags, { values: [value] } as any)
+      return renderSSRHead(head).htmlAttrs
+    }
+    // a null cache key renders with no memo
+    expect(render('home', null)).toBe(' class="home"')
+    expect(render('home', 'site')).toBe(' class="home"')
+    expect(render('about', 'site')).toBe(' class="about"')
+  })
+
+  it('render with no memo when a cache key is undefined', () => {
+    const calls = { n: 0 }
+    for (let i = 0; i < 2; i++) {
+      const head = createHead({ disableDefaults: true, plugins: [absoluteImages('https://a.com', calls, () => undefined as any)] })
+      head.push(tags)
+      expect(getRenderTier(head)._tag).toBe('Fast')
+      expect(renderSSRHead(head).headTags).toContain('content="https://a.com/og.png"')
+    }
+    expect(calls.n).toBe(2)
   })
 
   it('hold a limited number of memos per page when the cache key comes from the request', () => {

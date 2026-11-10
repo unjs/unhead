@@ -542,8 +542,8 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
   for (const plugin of head.plugins.values()) {
-    if (compiledHead._tt && isTagTransform(plugin) && plugin.cacheKey?.(head) === null)
-      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin has a null cache key` }
+    if (compiledHead._tt && isTagTransform(plugin) && plugin.cacheKey && typeof plugin.cacheKey(head) !== 'string')
+      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin gives no cache key` }
   }
   return { _tag: 'Memo' }
 }

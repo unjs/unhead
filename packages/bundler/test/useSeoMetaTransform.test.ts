@@ -54,6 +54,29 @@ describe('useSeoMetaTransform', () => {
       expect(await run({ markEntries: true }, server)).toEqual([{ seoMeta: true }, { tagPriority: 'low', seoMeta: true }, { seoMeta: true }, { head: 'h', seoMeta: true }])
     })
 
+    // runs the server build of a source, and gives the options of each call it writes
+    const serverCalls = async (code: string, scope: Record<string, unknown> = {}) => {
+      const plugin = UseSeoMetaTransform.vite({ markEntries: true }) as any
+      const output = (await runTransform(plugin, code, 'some-id.js', server))!.code
+      const useHead = vi.fn()
+      const useServerHead = vi.fn()
+      // eslint-disable-next-line no-new-func
+      new Function('useHead', 'useServerHead', ...Object.keys(scope), output.replace(/^import[^\n]*\n/, ''))(useHead, useServerHead, ...Object.values(scope))
+      return { useHead: useHead.mock.calls.map(call => call[1]), useServerHead: useServerHead.mock.calls.map(call => call[1]) }
+    }
+
+    it('marks both calls that a useServerSeoMeta call with a title becomes', async () => {
+      const marked = [{ seoMeta: true }, { tagPriority: 'low', seoMeta: true }]
+      expect(await serverCalls(`import { useServerSeoMeta } from 'unhead'\nuseServerSeoMeta({ title: 'T', description: 'D' })\nuseServerSeoMeta({ title: 'U', description: 'E' }, { tagPriority: 'low' })`))
+        .toEqual({ useHead: marked, useServerHead: marked })
+    })
+
+    it('marks a call that spreads its options', async () => {
+      const source = `import { useSeoMeta } from 'unhead'\nuseSeoMeta({ description: 'D' }, ...rest)`
+      expect((await serverCalls(source, { rest: [{ head: 'h' }] })).useHead).toEqual([{ head: 'h', seoMeta: true }])
+      expect((await serverCalls(source, { rest: [] })).useHead).toEqual([{ seoMeta: true }])
+    })
+
     it('marks no call of a client build, or with the option off', async () => {
       const plain = [undefined, { tagPriority: 'low' }, {}, { head: 'h' }]
       expect(await run({ markEntries: true }, client)).toEqual(plain)

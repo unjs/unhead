@@ -177,6 +177,24 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               return
             }
 
+            // The second argument (options like { head }) goes to each call this one becomes. An
+            // object literal takes the marker in place, so the compile transform still reads its
+            // `head`. A spread argument is a list, and the options are its first item.
+            const optionsNode = node.arguments[1]
+            const optionsArg = optionsNode && code.substring(optionsNode.start, optionsNode.end)
+            const entryOptions = !marks
+              ? optionsArg
+              : !optionsNode
+                  ? '{ seoMeta: true }'
+                  : optionsNode.type === 'SpreadElement'
+                    ? `{ ...[${optionsArg}][0], seoMeta: true }`
+                    : optionsNode.type !== 'ObjectExpression'
+                      ? `{ ...${optionsArg}, seoMeta: true }`
+                      : optionsNode.properties.length
+                        ? `${code.substring(optionsNode.start, optionsNode.properties.at(-1).end)}, seoMeta: true }`
+                        : '{ seoMeta: true }'
+            const close = entryOptions ? `}, ${entryOptions})` : '})'
+
             let output: string[] | false = []
             const title = properties.find((property: any) => property.key?.name === 'title')
             const titleTemplate = properties.find((property: any) => property.key?.name === 'titleTemplate')
@@ -191,13 +209,8 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               }
             }
             if (originalName === 'useServerSeoMeta') {
-              if (output.length) {
-                const secondArg = node.arguments[1]
-                if (secondArg)
-                  output.push(`}, ${code.substring(secondArg.start, secondArg.end)});`)
-                else
-                  output.push('});')
-              }
+              if (output.length)
+                output.push(`${close};`)
               output.push('useServerHead({')
             }
 
@@ -326,21 +339,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (output) {
               if (meta.length)
                 output.push('  ]')
-              // Preserve the second argument (options like { head }) if present
-              if (node.arguments.length >= 2) {
-                const optionsNode = node.arguments[1]
-                const optionsArg = code.substring(optionsNode.start, optionsNode.end)
-                // an object literal takes the marker in place, so the compile transform still reads its `head`
-                const marked = optionsNode.type !== 'ObjectExpression'
-                  ? `{ ...${optionsArg}, seoMeta: true }`
-                  : optionsNode.properties.length
-                    ? `${code.substring(optionsNode.start, optionsNode.properties.at(-1).end)}, seoMeta: true }`
-                    : '{ seoMeta: true }'
-                output.push(`}, ${marks ? marked : optionsArg})`)
-              }
-              else {
-                output.push(marks ? '}, { seoMeta: true })' : '})')
-              }
+              output.push(close)
               s.overwrite(node.start, node.end, output.join('\n'))
 
               // Track import for rewriting

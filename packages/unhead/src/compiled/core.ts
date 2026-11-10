@@ -170,7 +170,7 @@ export function isTagTransform(plugin: HeadPlugin): boolean {
 }
 
 // The memo key of a render: its options, the native plugins, and the cache key of each tag
-// transform. `null` when the memo may not hold the output: a cache key says so, or a custom
+// transform. `null` when the memo may not hold the output: a cache key is not a string, or a custom
 // `InferSeoMetaPlugin` function may test the text, which the memo holds as a token, and that
 // plugin reads a title template that an earlier render of this head left behind.
 function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): string | number | null {
@@ -183,7 +183,8 @@ function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): s
     for (const plugin of head.plugins.values()) {
       if (isTagTransform(plugin)) {
         const part = plugin.cacheKey ? plugin.cacheKey(head) : ''
-        if (part === null)
+        // a cache key that is not a string, such as one from untyped code, keeps the memo out
+        if (typeof part !== 'string')
           return null
         // each length keeps a separator inside a plugin key or a cache key from reading as two parts
         key = `${key}|${plugin.key.length}:${plugin.key}${part.length}:${part}`

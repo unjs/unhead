@@ -84,6 +84,10 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
       const pieces = buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
       for (let i = 1; i < pieces.length; i += 4)
         gone?.delete(`${pieces[i]}.${pieces[i + 1]}`)
+      // A token with no mode sits where the marks do not reach, such as a class Set that a
+      // tag transform filled. The memo cannot fill it, so the sequence takes the slow path.
+      for (let i = 0; i < pieces.length; i += 4)
+        unsafe ||= (pieces[i] as string).includes(DYNAMIC_VALUE_OPEN)
     }
   }
   const state: Memo['s'] = { _title: head._title }
