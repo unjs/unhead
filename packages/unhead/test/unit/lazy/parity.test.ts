@@ -69,6 +69,16 @@ function navigate(name: string): Step {
   }
 }
 
+const tags = (n: number, prefix = 'tag') => Array.from({ length: n }, (_, i) => ({ property: 'article:tag' as const, content: `${prefix}-${i}` }))
+const inferred: ResolvableHead = { meta: [{ 'property': 'og:title', 'data-infer': '', 'content': 'A' }] }
+const patchPage = (input: ResolvableHead): Step => (_, entries) => entries.at(-1).patch(input)
+function replacePage(input: ResolvableHead): Step {
+  return (head, entries) => {
+    entries.pop()!.dispose()
+    entries.push(head.push(input))
+  }
+}
+
 beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'production')
   return () => vi.unstubAllEnvs()
@@ -183,6 +193,51 @@ describe('lazy head parity with the default head', () => {
     head.render()
     await vi.waitFor(() => expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull())
     expect(doc.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0)
+  })
+
+  // The entry copy that the head keeps for a change before the load overrides the hydrated entry.
+  // The runtime must still remove what the server rendered for the hydrated entry.
+  describe.each([['with no load block', false], ['under a load block', true]])('a change before the load, %s', (_, block) => {
+    it.each<[string, ResolvableHead, Step]>([
+      ['a patch shortens a list of tags', { meta: tags(3) }, patchPage({ meta: tags(1) })],
+      ['a patch shortens a list of tags and changes its values', { meta: tags(3) }, patchPage({ meta: tags(1, 'new') })],
+      ['a patch removes an attribute', inferred, patchPage({ meta: [{ property: 'og:title', content: 'A' }] })],
+      ['a navigation shortens a list of tags', { meta: tags(3) }, replacePage({ meta: tags(2, 'new') })],
+      ['a navigation removes an attribute', inferred, replacePage({ meta: [{ property: 'og:title', content: 'B' }] })],
+    ])('matches the default head when %s', async (_, server, change) => {
+      const { offDom, lazyDom, load } = await both([], [{ title: 'Site' }, server], [(head, entries) => {
+        if (block)
+          head.blockLoad?.()
+        change(head, entries)
+      }])
+      expect(load).toHaveBeenCalled()
+      await vi.waitFor(() => expect(html(lazyDom)).toEqual(html(offDom)))
+    })
+  })
+
+  // The server rendered this late entry too, so its tags are the ones in the document.
+  it.each([
+    ['a longer list of tags', tags(2, 'page'), tags(4, 'late')],
+    ['a shorter list of tags', tags(4, 'page'), tags(2, 'late')],
+  ])('restores the hydrated tags that an entry pushed during the pause after hydration overrode with %s, once it is disposed', async (_, page, late) => {
+    const doc = ssrDom([], { meta: page }, { meta: late }).window.document
+    let paused = false
+    const head = createLazyHead({ document: doc })
+    head.hooks.hook('dom:beforeRender', (ctx) => {
+      ctx.shouldRender = !paused
+    })
+    head.push({ meta: page })
+    head.render()
+    paused = true
+    const entry = head.push({ meta: late })
+    await settle()
+    head.blockLoad()
+    entry.dispose()
+    head.push({ link: [{ rel: 'stylesheet', href: '/home.css' }] })
+    paused = false
+    head.render()
+    await vi.waitFor(() => expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull())
+    expect([...doc.querySelectorAll('meta[property="article:tag"]')].map(el => el.getAttribute('content'))).toEqual(page.map(tag => tag.content))
   })
 
   it('restores the server title as the base of a later runtime render', async () => {

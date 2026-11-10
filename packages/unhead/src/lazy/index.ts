@@ -132,6 +132,8 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   // Each entry pushed or patched after hydration and before the load, as it stood then. A hydrating
   // page can push or patch while a pause holds, so the server may have rendered those tags too.
   // The runtime adopts these as well, under ids of their own, so the hydrated entries stay.
+  // A copy can also hold a change the document does not show yet, and it overrides a hydrated
+  // entry with the same tags. So the runtime adopts the document twice: with the copies, then without.
   const late = new Map<number, HeadEntry<T>>()
   let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
@@ -262,7 +264,10 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   }
 
   head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => [...(hydrated || hydrationEntries.values()), ...late.values()]))
+    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => {
+      const server = [...(hydrated || hydrationEntries.values())]
+      return late.size ? [[...server, ...late.values()], server] : [server]
+    }))
     .then((renderer) => {
       // the runtime adopts these at its first render
       hydrated ||= [...hydrationEntries.values()]
