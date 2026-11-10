@@ -119,6 +119,36 @@ describe('tag transforms', () => {
     expect(renderSSRHead(full)).toEqual(expected)
   })
 
+  it('keep one memo for each order of a transform and InferSeoMetaPlugin', () => {
+    const page = { title: 'Home', meta: [{ name: 'description', content: 'A page' }] }
+    const pageTags = compile(page)
+    for (const plugins of [() => [addImage, InferSeoMetaPlugin()], () => [InferSeoMetaPlugin(), addImage]]) {
+      const v3 = createV3Head({ disableDefaults: true, plugins: plugins() })
+      v3.push(page)
+      const compiled = createHead({ disableDefaults: true, plugins: plugins() })
+      compiled.push(pageTags)
+      expect(getRenderTier(compiled)._tag).toBe('Memo')
+      expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
+    }
+  })
+
+  it('keep the memos of two transforms apart when a cache key holds the separator', () => {
+    const pageTags = compile(input)
+    // adds a meta tag that holds its cache key
+    const stamp = (key: string, value: string) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+      key,
+      transform: list => [...list, { tag: 'meta', props: { name: key, content: value } } as any],
+      cacheKey: () => value,
+    })
+    const render = (a: string, b: string) => {
+      const head = createHead({ disableDefaults: true, plugins: [stamp('a', a), stamp('b', b)] })
+      head.push(pageTags)
+      return renderSSRHead(head).headTags
+    }
+    expect(render('x|b:y', 'z')).toContain('<meta name="b" content="z">')
+    expect(render('x', 'y|b:z')).toContain('<meta name="b" content="y|b:z">')
+  })
+
   it('hold a limited number of memos per page when the cache key comes from the request', () => {
     const pageTags = compile(input)
     const calls = new Map<string, { n: number }>()

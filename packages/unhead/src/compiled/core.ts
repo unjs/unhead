@@ -172,14 +172,19 @@ function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): s
   if (head._infer && (!head._inferMemo || head._titleTemplate !== undefined))
     return null
   let key: string | number = (omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0) | (head._infer ? 4 : 0)
-  // a key with a tag transform is a string
+  // A key with a tag transform is a string. It holds the plugins in the order they run, because
+  // a transform before a native plugin and one after it render different tags.
   if (head._tt) {
     for (const plugin of head.plugins.values()) {
       if (isTagTransform(plugin)) {
         const part = plugin.cacheKey ? plugin.cacheKey(head) : ''
         if (part === null)
           return null
-        key = `${key}|${plugin.key}:${part}`
+        // each length keeps a separator inside a plugin key or a cache key from reading as two parts
+        key = `${key}|${plugin.key.length}:${plugin.key}${part.length}:${part}`
+      }
+      else if (plugin.hooks && (plugin.hooks === head._tp || plugin.hooks === head._infer)) {
+        key = `${key}|${plugin.hooks === head._tp ? 't' : 'i'}`
       }
     }
   }
