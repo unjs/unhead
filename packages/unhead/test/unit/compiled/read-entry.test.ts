@@ -7,8 +7,8 @@ import { FLAG_UNDEFINED_DROPS, toHeadInput } from '../../../src/compiled/tags'
 import { useSeoMeta } from '../../../src/composables'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 
-function compiled(input: any, dynamicValues?: number) {
-  const result = compileTags(input, { dynamicValues })
+function compiled(input: any, valueCount?: number) {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

@@ -58,11 +58,11 @@ describe('corpus compiled tags coverage', () => {
     for (const scenario of corpus) {
       const inputs = [...scenario.entries.flatMap(e => e.patch === undefined ? [e.input] : [e.input, e.patch]), ...(scenario.head?.init || [])]
       for (const input of inputs) {
-        if (input && compileTags(input)._tag === 'Bail')
+        if (input && compileTags(input)._tag === 'Err')
           bailed.add(scenario.name)
       }
       for (const { template, values } of scenario.entries) {
-        if (template && compileTags(template, { dynamicValues: values!.length })._tag === 'Bail')
+        if (template && compileTags(template, { valueCount: values!.length })._tag === 'Err')
           bailed.add(scenario.name)
       }
     }

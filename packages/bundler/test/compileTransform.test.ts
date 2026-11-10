@@ -21,8 +21,8 @@ function transform(code: string, id?: string, ctx?: any, options?: any): string 
   return transformResult(code, id, ctx, options)?.code
 }
 
-function compiledTagsOf(input: any, dynamicValues = 0) {
-  const result = compileTags(input, { dynamicValues })
+function compiledTagsOf(input: any, valueCount = 0) {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

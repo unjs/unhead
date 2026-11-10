@@ -25,7 +25,7 @@ const page: any = {
 describe('a dynamic value in style content', () => {
   // `@import` raises the weight of a style, which the compiled tags fixed at build time
   it.each(['a{color:red}', '@import url(a.css);', ''])('renders %j like v3', (value) => {
-    const template = compileTags({ link: [{ rel: 'stylesheet', href: '/a.css' }], style: [{ innerHTML: dynamicValue(0), id: 'colors' }] }, { dynamicValues: 1 })
+    const template = compileTags({ link: [{ rel: 'stylesheet', href: '/a.css' }], style: [{ innerHTML: dynamicValue(0), id: 'colors' }] }, { valueCount: 1 })
     if (template._tag !== 'Ok')
       throw new Error(template.reason)
     const input = { link: [{ rel: 'stylesheet', href: '/a.css' }], style: [{ innerHTML: value, id: 'colors' }] }
@@ -84,7 +84,7 @@ describe('memo tier', () => {
 
 describe('value tier', () => {
   it('serves structure from the memo and takes each value fresh', () => {
-    const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'd', content: dynamicValue(1) }] }, { dynamicValues: 2 })
+    const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'd', content: dynamicValue(1) }] }, { valueCount: 2 })
     const a = result._tag === 'Ok' ? [...result.tags] : []
     const render = (values: unknown[]) => {
       const head = createHead({ disableDefaults: true })
@@ -103,7 +103,7 @@ describe('value tier', () => {
       meta: [{ name: 'd', content: dynamicValue(1) }],
       script: [{ key: 'k', innerHTML: dynamicValue(2) }, { key: 'j', type: 'application/json', innerHTML: dynamicValue(3) }],
       noscript: [{ key: 'n', innerHTML: dynamicValue(4) }],
-    }, { dynamicValues: 5 })
+    }, { valueCount: 5 })
     const a = result._tag === 'Ok' ? result.tags : []
     const attack = [
       '</title><script>alert(1)</script>',
@@ -128,7 +128,7 @@ describe('value tier', () => {
   })
 
   it('cannot use a value to reach another dynamic value', () => {
-    const result = compileTags({ title: `${dynamicValue(0)} ${dynamicValue(1)}` }, { dynamicValues: 2 })
+    const result = compileTags({ title: `${dynamicValue(0)} ${dynamicValue(1)}` }, { valueCount: 2 })
     const a = result._tag === 'Ok' ? result.tags : []
     const head = createHead({ disableDefaults: true })
     head.push(a, { values: [dynamicValue(1), 'secret'] })
@@ -137,7 +137,7 @@ describe('value tier', () => {
   })
 
   it('sets the title state to the value', () => {
-    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 })
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 })
     const a = result._tag === 'Ok' ? result.tags : []
     const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
     head.push(a, { values: ['first'] })
@@ -373,7 +373,7 @@ describe('entries', () => {
   })
 
   it('rebuild compiled tags for resolveTags with values and the template params rules', () => {
-    const result = compileTags({ title: dynamicValue(0), titleTemplate: '%s %separator %siteName', link: [{ rel: 'preload', key: 'k', as: 'font', href: `%cdn/${dynamicValue(1)}` }], templateParams: { siteName: 's', cdn: 'https://c' } }, { dynamicValues: 2 })
+    const result = compileTags({ title: dynamicValue(0), titleTemplate: '%s %separator %siteName', link: [{ rel: 'preload', key: 'k', as: 'font', href: `%cdn/${dynamicValue(1)}` }], templateParams: { siteName: 's', cdn: 'https://c' } }, { valueCount: 2 })
     const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
     head.push(result._tag === 'Ok' ? result.tags : [], { values: ['t', 'f.woff'] })
     const tags = resolveTags(head)
@@ -433,7 +433,7 @@ describe('entries', () => {
   })
 
   it('runs a value function once, on the first render', () => {
-    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 })
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 })
     const a = result._tag === 'Ok' ? result.tags : []
     const head = createHead({ disableDefaults: true })
     let calls = 0
@@ -445,7 +445,7 @@ describe('entries', () => {
   })
 
   it('patch values', () => {
-    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 })
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 })
     const a = result._tag === 'Ok' ? result.tags : []
     const head = createHead({ disableDefaults: true })
     const entry = head.push(a, { values: ['one'] })
@@ -484,7 +484,7 @@ describe('memo with InferSeoMetaPlugin', () => {
   const inferPlugins = () => [TemplateParamsPlugin, InferSeoMetaPlugin()]
 
   it('serves a sequence of compiled tags from the memo', () => {
-    const result = compileTags({ ...page, title: dynamicValue(0), meta: [...page.meta, { property: 'og:image', content: '/a.png' }] }, { dynamicValues: 1 })
+    const result = compileTags({ ...page, title: dynamicValue(0), meta: [...page.meta, { property: 'og:image', content: '/a.png' }] }, { valueCount: 1 })
     const a: any[] = result._tag === 'Ok' ? [...result.tags] : []
     const render = () => {
       const head = createHead({ plugins: inferPlugins() })
@@ -515,7 +515,7 @@ describe('memo with InferSeoMetaPlugin', () => {
       titleTemplate: '%s %separator %siteName',
       templateParams: { siteName: 'Site' },
       meta: [{ name: 'description', content: dynamicValue(1) }, { property: 'og:image', content: dynamicValue(2) }],
-    }, { dynamicValues: 3 })
+    }, { valueCount: 3 })
     if (template._tag !== 'Ok')
       throw new Error(template.reason)
     const input = {

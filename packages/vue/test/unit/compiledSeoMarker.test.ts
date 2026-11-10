@@ -2,8 +2,8 @@ import { createHead, renderSSRHead, useCompiledHead, useCompiledSeoMeta, useStat
 import { compileTags, dynamicValue, readEntry } from 'unhead/compiled'
 import { describe, expect, it } from 'vitest'
 
-function compile(input: unknown, dynamicValues: number): any {
-  const result = compileTags(input, { dynamicValues })
+function compile(input: unknown, valueCount: number): any {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

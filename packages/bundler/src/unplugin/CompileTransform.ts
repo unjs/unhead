@@ -71,10 +71,10 @@ export interface CompileTransformOptions extends BaseTransformerTypes {
 
 type CompiledCall
   = | { _tag: 'Ok', tags: CompiledTags, values: any[], loose?: string }
-    | { _tag: 'Bail', reason: string }
+    | { _tag: 'Err', reason: string }
 
 function bail(reason: string): CompiledCall {
-  return { _tag: 'Bail', reason }
+  return { _tag: 'Err', reason }
 }
 
 function unwrap(node: any): any {
@@ -411,8 +411,8 @@ function compileInput(input: any, kind: HeadKind, shapeValues: boolean): Compile
     if (headInput === BAIL)
       return bail('a flat meta value that v3 does not normalize')
   }
-  const result = compiler!.compileTags(headInput, { dynamicValues: values.length })
-  if (result._tag === 'Bail')
+  const result = compiler!.compileTags(headInput, { valueCount: values.length })
+  if (result._tag === 'Err')
     return result
   if (kind === 'seo' && values.length) {
     const tags = JSON.parse(JSON.stringify(result.tags)) as CompiledTag[]
@@ -566,7 +566,7 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         const getter = !held && callee.kind === 'head' ? getterObject(arg) : undefined
         const input = held || getter?.object || unwrap(arg)
         const result = compileHeadCall(node, callee.kind, input)
-        if (result._tag === 'Bail') {
+        if (result._tag === 'Err') {
           if (hasFunctionTitleTemplate(input))
             warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input, and the server head renders it on a slower path. Use a string, such as '%s %separator %siteName'.`)
           const rel = !NODE_MODULES_RE.test(id) && result.reason === 'dynamic value in the identity of a link tag' && keylessLinkRel(input)

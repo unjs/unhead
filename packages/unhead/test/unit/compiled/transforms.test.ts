@@ -194,7 +194,7 @@ describe('tag transforms', () => {
   })
 
   it('omit a tag whose value is undefined when a transform replaced its text', () => {
-    const result = compileTags({ title: 'Home', meta: [{ name: 'description', content: dynamicValue(0) }] }, { dynamicValues: 1 }) as any
+    const result = compileTags({ title: 'Home', meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
     // the build marks a `useSeoMeta` tag that v3 omits for an undefined value
     result.tags.find((tag: any) => tag[0] === 'meta')[5] |= FLAG_UNDEFINED_DROPS
     const fixedDescription = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
@@ -214,7 +214,7 @@ describe('tag transforms', () => {
   })
 
   it('render a dynamic value that a transform moved into a class', () => {
-    const result = compileTags({ title: dynamicValue(0) }, { dynamicValues: 1 }) as any
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 }) as any
     const titleClass = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
       key: 'title-class',
       transform: list => [...list, { tag: 'htmlAttrs', props: { class: new Set([list.find(tag => tag.tag === 'title')!.textContent]) } } as any],
@@ -232,7 +232,7 @@ describe('tag transforms', () => {
   })
 
   it('resolve a template param in a dynamic value that a transform moved into raw text', () => {
-    const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { dynamicValues: 1 }) as any
+    const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
     const toNoscript = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
       key: 'to-noscript',
       transform: list => list.map(tag => tag.props.name === 'description' ? { ...tag, tag: 'noscript', props: {}, innerHTML: tag.props.content } as any : tag),

@@ -6,8 +6,8 @@ import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../
 const template = (type = 'application/ld+json') => ({ script: [{ type, innerHTML: dynamicValue(0) }] })
 const input = (value: unknown, type = 'application/ld+json') => ({ script: [{ type, innerHTML: value }] })
 
-function compiled(source: any, dynamicValues = 1) {
-  const result = compileTags(source, { dynamicValues })
+function compiled(source: any, valueCount = 1) {
+  const result = compileTags(source, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   // a fresh array per call, so one test cannot reach another through the memo
@@ -16,7 +16,7 @@ function compiled(source: any, dynamicValues = 1) {
 
 describe('a keyless JSON script with a value as its content', () => {
   it.each(['application/ld+json', 'application/json', 'importmap', 'speculationrules'])('compiles for type %s', (type) => {
-    expect(compileTags(template(type), { dynamicValues: 1 })._tag).toBe('Ok')
+    expect(compileTags(template(type), { valueCount: 1 })._tag).toBe('Ok')
   })
 
   it.each([
@@ -24,7 +24,7 @@ describe('a keyless JSON script with a value as its content', () => {
     ['a style', { style: [{ innerHTML: dynamicValue(0) }] }],
     ['a noscript', { noscript: [{ textContent: dynamicValue(0) }] }],
   ])('still bails for %s, whose weight or identity the value decides', (_, source) => {
-    expect(compileTags(source, { dynamicValues: 1 })).toMatchObject({ _tag: 'Bail', reason: expect.stringContaining('identity') })
+    expect(compileTags(source, { valueCount: 1 })).toMatchObject({ _tag: 'Err', reason: expect.stringContaining('identity') })
   })
 
   it('serves the head from the memo', () => {
