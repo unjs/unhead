@@ -434,7 +434,7 @@ export const organizationResolver
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 
       const webSite = ctx.find(PrimaryWebSiteId)
-      if (webSite)
+      if (webSite && isIdentity)
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },
   })
