@@ -31,7 +31,8 @@ const NUXT_IMPORT_PATHS = ['#imports', 'nuxt/app']
 // `@unhead/vue` resolves the head itself. An auto import or another path may stand for a
 // wrapper that resolves it some other way, such as Nuxt, so the call passes the head
 // that the auto-imported `injectHead` finds when there is one.
-const AUTO_HEAD = `{ head: typeof injectHead === 'function' ? injectHead() : undefined }`
+const AUTO_HEAD_PROP = `head: typeof injectHead === 'function' ? injectHead() : undefined`
+const AUTO_HEAD = `{ ${AUTO_HEAD_PROP} }`
 
 type HeadKind = 'head' | 'seo'
 const CALLEES = new Map<string, HeadKind>([['useHead', 'head'], ['useServerHead', 'head'], ['useSeoMeta', 'seo'], ['useServerSeoMeta', 'seo']])
@@ -291,10 +292,15 @@ function seoToHeadInput(decoded: Record<string, unknown>): unknown {
   return { title, titleTemplate, meta }
 }
 
+// Options a compiled entry takes: `head`, and the `seoMeta: true` marker of the useSeoMeta transform
 function isHeadOnly(node: any): boolean {
   const inner = unwrap(node)
-  const prop = inner.type === 'ObjectExpression' && inner.properties.length === 1 && inner.properties[0]
-  return !!prop && prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method && staticKey(prop.key) === 'head'
+  return inner.type === 'ObjectExpression' && inner.properties.length > 0 && inner.properties.every((prop: any) => prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method
+    && (staticKey(prop.key) === 'head' || (staticKey(prop.key) === 'seoMeta' && unwrap(prop.value).value === true)))
+}
+
+function namesHead(node: any): boolean {
+  return unwrap(node).properties.some((prop: any) => staticKey(prop.key) === 'head')
 }
 
 function isFunctionNode(node: any): boolean {
@@ -548,7 +554,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         if (!callee)
           return
         const [arg, options] = node.arguments
-        const autoHead = !callee.resolvesHead && !options
+        // options with only the marker name no head, so the auto import still picks it
+        const autoHead = !callee.resolvesHead && (!options || (isHeadOnly(options) && !namesHead(options)))
         // a returned useSeoMeta entry patches flat input, which a compiled entry does not take
         // another `injectHead` in scope would take the place of the auto import
         const injectHead = autoHead ? bindingOf('injectHead') : undefined
@@ -568,7 +575,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
           return
         }
 
-        const fn = result.loose ? 'useCompiledSeoMeta' : 'useCompiledHead'
+        // a `useSeoMeta` call with no values takes no fallback and no values, and keeps its marker
+        const fn = callee.kind === 'seo' ? result.loose ? 'useCompiledSeoMeta' : 'useStaticCompiledSeoMeta' : 'useCompiledHead'
         runtime.add(fn)
         const head = [hoist(JSON.stringify(result.tags), compiledTagSets)]
         if (result.loose)
@@ -576,7 +584,10 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         // a getter that runs statements keeps them, so it stays the values argument
         const valuesGetter = getter && (getter.block || result.values.length)
         const hasValues = result.values.length || valuesGetter
-        const tail = autoHead ? `, ${hasValues ? '' : 'undefined, '}${AUTO_HEAD}` : options && !hasValues ? ', undefined' : ''
+        const valuesSlot = hasValues || fn === 'useStaticCompiledSeoMeta' ? '' : 'undefined'
+        const tail = autoHead && !options ? `, ${valuesSlot && `${valuesSlot}, `}${AUTO_HEAD}` : options && valuesSlot ? `, ${valuesSlot}` : ''
+        if (autoHead && options)
+          s.overwrite(options.start, options.end, `{ ${AUTO_HEAD_PROP}, seoMeta: true }`)
         s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
         // A getter input returns its values in place of its object, so it still runs once
         // for each resolution and tracks as a whole, as v3 tracks it

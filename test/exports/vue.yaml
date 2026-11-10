@@ -25,6 +25,7 @@
   renderSSRHead: function
   useCompiledHead: function
   useCompiledSeoMeta: function
+  useStaticCompiledSeoMeta: function
 ./components:
   Head: object
 ./legacy:

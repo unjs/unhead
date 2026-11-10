@@ -12,7 +12,7 @@ import { CompileTransform } from '../../../bundler/src/unplugin/CompileTransform
 
 const IMPORT_RE = /^import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"];?$/gm
 const AS_RE = /\s+as\s+/
-const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta)\(/g
+const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta|useStaticCompiledSeoMeta)\(/g
 
 // a build loads the compiler in `buildStart`, before any transform
 beforeAll(() => (CompileTransform.vite({}) as any).buildStart.call({ environment: { config: { consumer: 'server' } } }))
@@ -271,7 +271,7 @@ describe('a dynamic value of an object-capable seo key renders like v3', () => {
     // the layout sets the same key, so a page value that renders no tag must not hide it
     const source = snippet(`useSeoMeta({ ${key}: 'layout', ogTitle: 'Layout' })
   useSeoMeta({ ${key}: ${value}, description: 'Page' })`, false)
-    expect(compile(source).match(COMPILED_CALL_RE)).toEqual(['__unhead_useCompiledHead(', '__unhead_useCompiledSeoMeta('])
+    expect(compile(source).match(COMPILED_CALL_RE)).toEqual(['__unhead_useStaticCompiledSeoMeta(', '__unhead_useCompiledSeoMeta('])
     for (const tp of [false, true]) {
       const { v3, compiled } = await renderBoth(source, tp, pick)
       expect(compiled).toEqual(v3)

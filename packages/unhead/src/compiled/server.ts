@@ -465,7 +465,7 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
   const _i = options?._index ?? head._entryCount++
   const entryOptions: Record<string, unknown> = {}
   for (const key in options) {
-    if (key !== 'head' && key !== 'onRendered' && key !== '_index' && key !== 'values')
+    if (key !== 'head' && key !== 'onRendered' && key !== '_index' && key !== 'values' && key !== 'seoMeta')
       entryOptions[key] = options[key as keyof CompiledEntryOptions]
   }
   let entry: CompiledEntry
@@ -479,6 +479,9 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
   else {
     entry = { _i, input, options: entryOptions, _compiled: undefined, _values: undefined }
   }
+  // as an entry option, the marker would take the entry off the memo
+  if (options?.seoMeta)
+    entry._seoMeta = true
   head.entries.set(_i, entry)
   return {
     _i,

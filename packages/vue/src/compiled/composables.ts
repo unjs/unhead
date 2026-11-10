@@ -62,6 +62,7 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
   const head = compiledTagsHead(options)
   const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
     ...options,
+    seoMeta: true,
     values: () => {
       const resolved = resolveValues(values)
       if (!resolved.every((value, index) => value === undefined
@@ -74,4 +75,14 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
     },
   } as any)
   return active
+}
+
+/**
+ * Pushes compiled tags that the bundler `compile` option made from a `useSeoMeta` call with
+ * no values. The entry keeps the marker of the call, which `readEntry` reports.
+ *
+ * @internal
+ */
+export function useStaticCompiledSeoMeta(compiledTags: CompiledTags, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  return compiledTagsHead(options).push(compiledTags as any, { ...options, seoMeta: true } as any)
 }

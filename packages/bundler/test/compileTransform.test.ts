@@ -300,14 +300,39 @@ useHead(headData)`)
     const result = calls(transform(`${IMPORTS}useServerHead({ title: 'A' })\nuseServerSeoMeta({ description: 'B' })`))
     expect(result).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' })] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
+      { fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
     ])
   })
 
   it('expands a static useSeoMeta call at build time', () => {
     const flat = { description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] }
     const result = calls(transform(`${IMPORTS}useSeoMeta({ title: 'T', description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] })`))
-    expect(result[0]).toEqual({ fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) })] })
+    expect(result[0]).toEqual({ fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) })] })
+  })
+
+  // the runtime call of a static useSeoMeta call takes no values, so its options come second
+  it('passes the head of a static useSeoMeta call with no values slot', () => {
+    const head = {}
+    expect(calls(transform(`${IMPORTS}useSeoMeta({ title: 'T' }, { head })`), { head }))
+      .toEqual([{ fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ title: 'T' }), { head }] }])
+    expect(calls(transform(`function setup() { useSeoMeta({ title: 'T' }) }\nsetup()`), { injectHead: () => head }))
+      .toEqual([{ fn: 'useStaticCompiledSeoMeta', args: [compiledTagsOf({ title: 'T' }), { head }] }])
+  })
+
+  it('compiles a useHead call with the seoMeta marker, and keeps the marker', () => {
+    const head = {}
+    expect(calls(transform(`${IMPORTS}useHead({ title: 'T' }, { seoMeta: true })\nuseHead({ title: v }, { head, seoMeta: true })`), { head, v: 'V' })).toEqual([
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T' }), undefined, { seoMeta: true }] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: dynamicValue(0) }, 1), ['V'], { head, seoMeta: true }] },
+    ])
+    expect(transform(`${IMPORTS}useHead({ title: 'T' }, { seoMeta: false })`)).toBeUndefined()
+  })
+
+  // an auto import resolves the head of the integration, which the marker must not replace
+  it('lets the auto-imported injectHead pick the head of a call with only the seoMeta marker', () => {
+    const head = {}
+    const code = transform(`function setup() { useHead({ title: 'A' }, { seoMeta: true }) }\nsetup()`)
+    expect(calls(code, { injectHead: () => head })).toEqual([{ fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' }), undefined, { head, seoMeta: true }] }])
   })
 
   it('compiles a dynamic useSeoMeta call with a full runtime fallback for its values', () => {
@@ -529,10 +554,17 @@ describe('compile option', () => {
     expect(plugins.map(plugin => plugin.name).slice(0, 4))
       .toEqual(['unhead:remove-server-composables', 'unhead:use-seo-meta-transform', 'unhead:minify-transform', 'unhead:compile-transform'])
     const code = await pipeline(plugins, `${IMPORTS}useHead({ script: [{ innerHTML: 'var value = 1 ; var other = 2 ;' }] })\nuseSeoMeta({ description: 'x' }, { nuxt })\nuseSeoMeta({ title: 'T' })`, '/src/page.js', server)
+    // each call the useSeoMeta transform rewrites carries the marker that `readEntry` reports
     expect(calls(code, { nuxt: 'nuxt' })).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ script: [{ innerHTML: 'varvalue=1;varother=2;' }] })] },
-      { fn: 'useHead', args: [{ meta: [{ name: 'description', content: 'x' }] }, { nuxt: 'nuxt' }] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T' })] },
+      { fn: 'useHead', args: [{ meta: [{ name: 'description', content: 'x' }] }, { nuxt: 'nuxt', seoMeta: true }] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T' }), undefined, { seoMeta: true }] },
     ])
+  })
+
+  it('marks no call of a build without compile', async () => {
+    const code = `${IMPORTS}useSeoMeta({ title: 'T' })`
+    const output = await pipeline(Unhead(base, vue), code, '/src/page.js', server)
+    expect(calls(output)).toEqual([{ fn: 'useHead', args: [{ title: 'T' }] }])
   })
 })

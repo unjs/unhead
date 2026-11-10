@@ -29,8 +29,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     plugins.push(TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
   }
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-  const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts })
   const compile = options.compile && framework === '@unhead/vue'
+  const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts, markEntries: !!compile })
   // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
   // without compile renders, in its tag order. Compile takes the calls it leaves.
   if (seoMeta)

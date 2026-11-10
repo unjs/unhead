@@ -46,6 +46,13 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /**
+   * Set from the `seoMeta` entry option by a head that takes compiled tags, so the option
+   * stays out of the entry options. `readEntry` reports it.
+   *
+   * @internal
+   */
+  _seoMeta?: true
 }
 
 /**
@@ -221,6 +228,12 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Marks the input of a `useSeoMeta` call, such as its compiled tags, so `readEntry` reports `seoMeta`.
+   *
+   * @experimental
+   */
+  seoMeta?: boolean
   /**
    * Called after unhead has finished applying DOM updates.
    *
