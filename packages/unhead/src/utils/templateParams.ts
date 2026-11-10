@@ -2,6 +2,8 @@ import type { TemplateParams } from '../types'
 
 const LT_RE = /</g
 const TOKEN_RE = /%\w+(?:\.\w+)?/g
+// decodeURI throws on a `%` that two hex digits do not follow, so skip the call for those strings
+const LONE_PERCENT_RE = /%(?![0-9a-f]{2})/i
 
 const SepSub = '%separator'
 
@@ -34,11 +36,13 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
     return s
   // need to avoid replacing url encoded values
   let decoded = s
-  try {
-    decoded = decodeURI(s)
-  }
-  catch {
-    // Malformed encoded input should fall back to token matching against the original string.
+  if (!LONE_PERCENT_RE.test(s)) {
+    try {
+      decoded = decodeURI(s)
+    }
+    catch {
+      // Malformed encoded input should fall back to token matching against the original string.
+    }
   }
   // find all tokens in decoded
   const tokens = decoded.match(TOKEN_RE)
