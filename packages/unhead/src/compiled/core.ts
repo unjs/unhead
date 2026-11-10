@@ -15,7 +15,7 @@ export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   _tp?: unknown
   /** Set while `InferSeoMetaPlugin` runs natively: its hooks. */
   _infer?: Record<string, (ctx: any) => void>
-  /** Whether the memo may hold the output of `InferSeoMetaPlugin`: false with a custom `ogTitle` or `ogDescription`. */
+  /** Whether the memo may hold the output of `InferSeoMetaPlugin`: false with an `ogTitle` or `ogDescription` function. */
   _inferMemo?: boolean
   /** Set once a plugin with a tag transform registers, so a head with none skips the scan for them. */
   _tt?: boolean
@@ -170,8 +170,8 @@ export function isTagTransform(plugin: HeadPlugin): boolean {
 }
 
 // The memo key of a render: its options, the native plugins, and the memo key of each tag
-// transform. `null` when the memo may not hold the output: a memo key is not a string, or a custom
-// `InferSeoMetaPlugin` function may test the text, which the memo holds as a token, and that
+// transform. `null` when the memo may not hold the output: a memo key is not a string, or an
+// `InferSeoMetaPlugin` function may change the text, which the memo holds as a token, and that
 // plugin reads a title template that an earlier render of this head left behind.
 function renderMemoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): string | number | null {
   if (head._infer && (!head._inferMemo || head._titleTemplate !== undefined))

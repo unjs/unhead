@@ -536,13 +536,28 @@ describe('memo with InferSeoMetaPlugin', () => {
     }
   })
 
+  // a function may leave one text as it is and change the next, so no render reuses its output
+  it.each([
+    ['ogTitle', { ogTitle: (title?: string) => title?.replace(/ \| .*$/, '') ?? '' }],
+    ['ogDescription', { ogDescription: (description?: string) => description?.toUpperCase() ?? '' }],
+  ])('runs an %s function on a dynamic value', (_, options) => {
+    const template = compileTags({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }] }, { valueCount: 2 })
+    if (template._tag !== 'Ok')
+      throw new Error(template.reason)
+    for (const values of [['Warm', 'Warm'], ['Post | Blog', 'About'], ['Post | Blog', 'About']]) {
+      const head = createHead({ plugins: [InferSeoMetaPlugin(options)] })
+      head.push(template.tags, { values })
+      const v3 = createV3Head({ plugins: [InferSeoMetaPlugin(options)] })
+      v3.push({ title: values[0], meta: [{ name: 'description', content: values[1] }] })
+      expect(renderSSRHead(head)).toEqual(renderV3(v3))
+    }
+  })
+
   it('calls a title function on every render', () => {
     const a = compiledTags({ title: 'Page' })
     const render = (create: any, render: any, input: any = a) => {
       let count = 0
       const head = create({ plugins: [InferSeoMetaPlugin({ ogTitle: title => `${title} ${++count}` })] })
-      // the compiled head calls it once when the plugin registers, to tell it from the default
-      count = 0
       head.push(input)
       render(head)
       return render(head).headTags

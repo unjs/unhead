@@ -25,8 +25,11 @@ describe('getRenderTier', () => {
     expect(getRenderTier(head)._tag).toBe('Fast')
   })
 
-  it('is Fast for an InferSeoMetaPlugin function', () => {
-    const head = createHead({ plugins: [InferSeoMetaPlugin({ ogTitle: title => `OG ${title}` })] })
+  it.each([
+    ['ogTitle', { ogTitle: (title?: string) => title?.replace(/ \| .*$/, '') ?? '' }],
+    ['ogDescription', { ogDescription: (description?: string) => description ?? '' }],
+  ])('is Fast for an InferSeoMetaPlugin %s function', (_, options) => {
+    const head = createHead({ plugins: [InferSeoMetaPlugin(options)] })
     head.push(tags)
     expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' })
   })
