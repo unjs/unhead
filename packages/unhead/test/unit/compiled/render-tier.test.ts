@@ -34,6 +34,16 @@ describe('getRenderTier', () => {
     expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' })
   })
 
+  it.each([
+    ['InferSeoMetaPlugin', (head: any) => (InferSeoMetaPlugin() as any)(head)],
+    ['TemplateParamsPlugin', (head: any) => (TemplateParamsPlugin as any)(head)],
+  ])('is Full for %s in object form', (_, plugin) => {
+    const head = createHead()
+    head.use(plugin(head))
+    head.push(tags)
+    expect(getRenderTier(head)._tag).toBe('Full')
+  })
+
   it('is Full for a foreign listener', () => {
     const head = createHead()
     head.push(tags)

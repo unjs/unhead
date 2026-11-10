@@ -513,6 +513,32 @@ describe('entry points', () => {
   })
 })
 
+describe('a built-in plugin in object form', () => {
+  it.each([
+    ['InferSeoMetaPlugin', (head: any) => (InferSeoMetaPlugin() as any)(head)],
+    ['TemplateParamsPlugin', (head: any) => (TemplateParamsPlugin as any)(head)],
+  ])('runs %s like v3', (_, plugin) => {
+    const template = compileTags({ ...page, title: dynamicValue(0), meta: [...page.meta, { property: 'og:image', content: '/a.png' }] }, { dynamicValues: 1 })
+    if (template._tag !== 'Ok')
+      throw new Error(template.reason)
+    for (const loose of [false, true]) {
+      for (let i = 0; i < 2; i++) {
+        const head = createHead()
+        head.use(plugin(head))
+        head.push(template.tags, { values: ['Page'] })
+        const v3 = createV3Head()
+        v3.use(plugin(v3))
+        v3.push({ ...page, meta: [...page.meta, { property: 'og:image', content: '/a.png' }] })
+        if (loose) {
+          head.push({ meta: [{ name: 'loose', content: 'a' }] })
+          v3.push({ meta: [{ name: 'loose', content: 'a' }] })
+        }
+        expect(renderSSRHead(head)).toEqual(renderV3(v3))
+      }
+    }
+  })
+})
+
 describe('memo with InferSeoMetaPlugin', () => {
   const inferPlugins = () => [TemplateParamsPlugin, InferSeoMetaPlugin()]
 
