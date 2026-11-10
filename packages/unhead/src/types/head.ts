@@ -67,9 +67,10 @@ export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
   /**
    * Changes the resolved tags: dedupe, sort, the title template, and template params ran.
-   * A pure function: it must read nothing outside `tags` and `ctx`, and must not change the
-   * tags it gets. It must copy or drop text it did not make, never test it, because the server
-   * memo runs it once per sequence of compiled tags with a token in place of each dynamic value.
+   * It must read nothing outside `tags` and `ctx`. The tags are copies for that render, so it
+   * may change a tag in place or return a new one. It must copy or drop text it did not make,
+   * never test it, because the server memo runs it once per sequence of compiled tags with a
+   * token in place of each dynamic value.
    *
    * Define the plugin with `defineTagTransform`, which adds the `tags:afterResolve` hook that runs it on
    * the full runtime. The compiled server head runs it itself, so a head keeps the server memo.

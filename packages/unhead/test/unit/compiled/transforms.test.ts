@@ -89,6 +89,45 @@ describe('tag transforms', () => {
     }
   })
 
+  it('give each render its own tags, so an edit in place stays in that render', () => {
+    // edits the tags in place, as a v3 `tags:afterResolve` listener may
+    const absoluteInPlace = (site: string) => defineTagTransform({
+      key: 'absolute-in-place',
+      transform: (list) => {
+        for (const tag of list) {
+          if (tag.tag === 'htmlAttrs')
+            (tag.props.class as any).add(new URL(site).hostname)
+          // no check of the value, so a second edit of the same tag would show
+          for (const key of ['href', 'content']) {
+            if (typeof tag.props[key] === 'string')
+              tag.props[key] = site + tag.props[key]
+          }
+        }
+        return list
+      },
+      memoKey: () => site,
+    })
+    const page = { htmlAttrs: { class: 'page' }, link: [{ rel: 'canonical' as const, href: '/page' }], meta: [{ property: 'og:image', content: '/og.png' }] }
+    const pageTags = compile(page)
+    const headInput = { meta: [{ name: 'thumbnail', content: '/thumb.png' }] }
+    for (const [tier, extra] of [['Memo', undefined], ['Fast', headInput]] as const) {
+      for (const site of ['https://in-place-a.com', 'https://in-place-b.com', 'https://in-place-a.com']) {
+        const v3 = createV3Head({ disableDefaults: true, plugins: [absoluteInPlace(site)] })
+        v3.push(page)
+        const compiled = createHead({ disableDefaults: true, plugins: [absoluteInPlace(site)] })
+        compiled.push(pageTags)
+        if (extra) {
+          v3.push(extra)
+          compiled.push(extra)
+        }
+        expect(getRenderTier(compiled)._tag).toBe(tier)
+        expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
+        // a second render of the same head reads the same tags
+        expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
+      }
+    }
+  })
+
   it('keep the memo, keyed by the memo key', () => {
     const render = (site: string, calls: { n: number }) => {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages(site, calls)] })

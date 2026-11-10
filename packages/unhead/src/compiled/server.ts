@@ -277,6 +277,21 @@ function hasParam(value: any): boolean {
   return value?.includes?.('%')
 }
 
+// v3 `cloneTagsInPlace` of utils/resolve, which stays unexported there as `valuesToTags` does.
+// v3 gives a `tags:afterResolve` listener its own tags, so a tag transform may change a tag in
+// place. The fast tiers share tags across renders and heads, so each render copies them first.
+function ownTags(tags: RuntimeTag[]) {
+  for (let i = 0; i < tags.length; i++) {
+    const tag = tags[i]!
+    const props = { ...tag.props }
+    if (props.class instanceof Set)
+      props.class = new Set(props.class)
+    if (props.style instanceof Map)
+      props.style = new Map(props.style)
+    tags[i] = { ...tag, props }
+  }
+}
+
 // Runs the real `tags:beforeResolve` hook of `InferSeoMetaPlugin`. It sets the content of the
 // inferred og tags in place, and tags may be shared across renders, so it sees copies of them.
 function applyNativeInferBeforeResolve(ctx: { tagMap: Map<string, any>, tags: RuntimeTag[] }, hooks: Record<string, (ctx: any) => void>) {
@@ -367,6 +382,10 @@ const renderer: CompiledRenderer = {
     return tags
   },
   r(tags, head) {
+    const { _tp, _infer, _tt } = head as CompiledHead
+    // before the dedupe, as in v3, so the tag map holds the copies
+    if (_tt)
+      ownTags(tags)
     const ctx = { tagMap: new Map(), tags: tags as HeadTag[] }
     const hasFlatMeta = dedupeTags(ctx)
     resolveTitleTemplate(ctx, head)
@@ -374,7 +393,6 @@ const renderer: CompiledRenderer = {
     // The v3 hook order: `tags:beforeResolve`, `tags:resolve`, then `tags:afterResolve`. A tag
     // transform may change any tag, so the `tags:afterResolve` listeners run as v3 runs them: in
     // the order their plugins registered.
-    const { _tp, _infer, _tt } = head as CompiledHead
     if (_infer)
       applyNativeInferBeforeResolve(ctx, _infer)
     if (_tp)
