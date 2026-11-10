@@ -484,7 +484,14 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
     // How often each binding is read, so an input held in a const compiles only
     // when the head call is its one reader
     const reads = new Map<unknown, number>()
+    // The declarations that the module exports. Another module can change an exported input
+    // before the head call reads it, so it stays as written.
+    const exported = new Set<unknown>()
     if (IDENTIFIER_INPUT_RE.test(code)) {
+      for (const statement of ast.program.body as any[]) {
+        if (statement.type === 'ExportNamedDeclaration' && statement.declaration)
+          exported.add(statement.declaration)
+      }
       walk(ast.program, {
         scopeTracker,
         enter(node: any, parent: any) {
@@ -495,10 +502,10 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       })
     }
 
-    // The object literal of a const that only this input reads
+    // The object literal of a const that only this input reads, and that the module keeps to itself
     function constInput(arg: any): any {
       const decl: any = arg?.type === 'Identifier' && scopeTracker.getDeclaration(arg.name)
-      const declarator = decl?.type === 'Variable' && decl.variableNode.kind === 'const' && reads.get(decl) === 1
+      const declarator = decl?.type === 'Variable' && decl.variableNode.kind === 'const' && reads.get(decl) === 1 && !exported.has(decl.variableNode)
         && decl.variableNode.declarations.find((d: any) => d.id === decl.node)
       const init = declarator && unwrap(declarator.init)
       return init?.type === 'ObjectExpression' ? init : undefined

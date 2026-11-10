@@ -194,6 +194,9 @@ useHead(headData)`)
   it.each([
     ['a second reference', `const headData = { title: 'T' }\nuseHead(headData)\nheadData.title = 'U'`],
     ['let', `let headData = { title: 'T' }\nuseHead(headData)`],
+    // another module can change an export before the call reads it
+    ['an export', `export const headData = { title: 'T' }\nuseHead(headData)`],
+    ['an export list', `const headData = { title: 'T' }\nexport { headData }\nuseHead(headData)`],
     ['a non-literal init', `const headData = make()\nuseHead(headData)`],
     ['a parameter', `function f(headData) { useHead(headData) }`],
   ])('leaves an identifier input with %s', (_, body) => {

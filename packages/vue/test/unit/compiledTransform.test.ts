@@ -77,6 +77,10 @@ const RUNTIME_VALUES: [string, string][] = [
   ['template param', `'%siteName page'`],
   ['empty', `''`],
   ['true text', `'true'`],
+  // v3 drops this text from an object value, such as `robots`
+  ['false text', `'false'`],
+  // v3 `useSeoMeta` renders no tag for this text
+  ['null marker text', `'_null'`],
   ['zero', `0`],
   ['number', `42`],
   ['null', `null`],
@@ -121,6 +125,7 @@ const POSITIONS: [string, (value: string) => string][] = [
   })`],
   ['useSeoMeta string list', value => `useSeoMeta({ articleTag: [${value}, 'static'], ogType: 'article' })`],
   ['useSeoMeta image list', value => `useSeoMeta({ ogImage: [{ url: ${value}, width: 1200 }, '/static.png'] })`],
+  ['useSeoMeta robots object', value => `useSeoMeta({ robots: { index: true, maxImagePreview: ${value} } })`],
 ]
 
 function snippet(call: string, layout = true): string {
