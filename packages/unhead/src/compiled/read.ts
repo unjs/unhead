@@ -19,9 +19,9 @@ export interface EntryReading {
   /**
    * The path in `input` of each value that holds a dynamic value, such as `title` or
    * `meta.0.content`. Set for compiled tags with dynamic values only. A tag transform with a
-   * cache key must not test the text at these paths: the memo holds one output for every value.
+   * memo key must not test the text at these paths: the memo holds one output for every value.
    */
-  dynamic?: string[]
+  dynamicPaths?: string[]
 }
 
 // a value list that gives the dynamic value marker for every index
@@ -61,15 +61,15 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
     input = entry._pending === undefined ? entry.input : entry._pending
   }
   let seoMeta = !!(entry._seoMeta || entry.options?.seoMeta)
-  let dynamic: string[] | undefined
+  let dynamicPaths: string[] | undefined
   if (tags) {
     const list = values as unknown[] || []
     input = toHeadInput(tags, list)
     // an undefined value omits some tags from the input, so the paths count only the tags it keeps
     const kept = tags.filter(tag => !(tag[5]! & FLAG_UNDEFINED_DROPS) || Object.keys(toHeadInput([tag], list)).length)
-    dynamic = markPaths(toHeadInput(kept, MARKS), '', [])
-    if (!dynamic.length)
-      dynamic = undefined
+    dynamicPaths = markPaths(toHeadInput(kept, MARKS), '', [])
+    if (!dynamicPaths.length)
+      dynamicPaths = undefined
   }
   else {
     const resolvers = head.resolvedOptions.propResolvers || []
@@ -86,5 +86,5 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
         input = { ...rest, meta: [...rest.meta || [], ...ctx.tags.map(tag => tag.props).filter(props => props.content !== undefined || props.charset || props['http-equiv'])] }
     }
   }
-  return { input, seoMeta, compiled: !!tags, dynamic }
+  return { input, seoMeta, compiled: !!tags, dynamicPaths }
 }

@@ -49,7 +49,7 @@ describe('readEntry on a compiled server head', () => {
       input: { title: 'Page', meta: [{ name: 'description', content: 'About us' }] },
       seoMeta: false,
       compiled: true,
-      dynamic: ['title', 'meta.0.content'],
+      dynamicPaths: ['title', 'meta.0.content'],
     })
   })
 
@@ -67,7 +67,7 @@ describe('readEntry on a compiled server head', () => {
       { property: 'og:image', content: '/static.png' },
       { name: 'twitter:image', content: '/og/post.png' },
     ])
-    expect(reading.dynamic).toEqual(['title', 'meta.1.content'])
+    expect(reading.dynamicPaths).toEqual(['title', 'meta.1.content'])
   })
 
   it('gives each dynamic value the path it has in the input when an undefined value omits a tag', () => {
@@ -88,15 +88,15 @@ describe('readEntry on a compiled server head', () => {
       { name: 'author', content: 'Harlan' },
       { property: 'og:image', content: '/og.png' },
     ])
-    expect(reading.dynamic).toEqual(['meta.1.content'])
+    expect(reading.dynamicPaths).toEqual(['meta.1.content'])
   })
 
   it('reads no dynamic value for static compiled tags or loose input', () => {
     const head = createHead({ disableDefaults: true })
     head.push(compiled({ meta: [{ property: 'og:image', content: '/static.png' }] }))
-    expect(readEntry(lastEntry(head), head).dynamic).toBeUndefined()
+    expect(readEntry(lastEntry(head), head).dynamicPaths).toBeUndefined()
     head.push({ meta: [{ property: 'og:image', content: '/loose.png' }] })
-    expect(readEntry(lastEntry(head), head).dynamic).toBeUndefined()
+    expect(readEntry(lastEntry(head), head).dynamicPaths).toBeUndefined()
   })
 
   it('settles a value function once, before the render', () => {
@@ -123,7 +123,7 @@ describe('readEntry on a compiled server head', () => {
     head.push(tags, { seoMeta: true, values: ['Page'] })
     const plain = createHead({ disableDefaults: true })
     plain.push(tags, { values: ['Page'] })
-    expect(readEntry(lastEntry(head), head)).toEqual({ input: { title: 'Page', meta: [{ name: 'description', content: 'Desc' }] }, seoMeta: true, compiled: true, dynamic: ['title'] })
+    expect(readEntry(lastEntry(head), head)).toEqual({ input: { title: 'Page', meta: [{ name: 'description', content: 'Desc' }] }, seoMeta: true, compiled: true, dynamicPaths: ['title'] })
     expect(renderSSRHead(head)).toEqual(renderSSRHead(plain))
   })
 

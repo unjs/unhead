@@ -18,7 +18,7 @@ describe('readEntry on a compiled useSeoMeta entry', () => {
     const seo = useCompiledSeoMeta(tags, loose, ['Title', 'Description'], { head })
     const plain = useCompiledHead(tags, ['Title', 'Description'], { head })
     renderSSRHead(head)
-    expect(readEntry(head.entries.get(seo._i)!, head)).toEqual({ input: { title: 'Title', meta: [{ name: 'description', content: 'Description' }] }, seoMeta: true, compiled: true, dynamic: ['title', 'meta.0.content'] })
+    expect(readEntry(head.entries.get(seo._i)!, head)).toEqual({ input: { title: 'Title', meta: [{ name: 'description', content: 'Description' }] }, seoMeta: true, compiled: true, dynamicPaths: ['title', 'meta.0.content'] })
     expect(readEntry(head.entries.get(plain._i)!, head).seoMeta).toBe(false)
   })
 

@@ -39,6 +39,7 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  defineTagTransform: function
   DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
@@ -47,7 +48,6 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
-  withTagTransform: function
 ./scripts:
   createSpyProxy: function
   useScript: function

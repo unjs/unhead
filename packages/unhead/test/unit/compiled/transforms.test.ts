@@ -1,9 +1,8 @@
-import type { HeadPlugin, Unhead } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
 import { dynamicValue } from '../../../src/compiled'
 import { compileTags, createHead, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
 import { FLAG_UNDEFINED_DROPS } from '../../../src/compiled/tags'
-import { withTagTransform } from '../../../src/plugins/defineHeadPlugin'
+import { defineTagTransform } from '../../../src/plugins/defineHeadPlugin'
 import { InferSeoMetaPlugin } from '../../../src/plugins/inferSeoMetaPlugin'
 import { TemplateParamsPlugin } from '../../../src/plugins/templateParams'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
@@ -13,32 +12,28 @@ const compile = (value: unknown) => (compileTags(value) as any).tags
 const tags = compile(input)
 
 // makes the og:image absolute, as a site URL module does
-function absoluteImages(site: string, calls: { n: number }, cacheKey?: (ctx: any) => string | null) {
-  return (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+function absoluteImages(site: string, calls: { n: number }, memoKey?: (ctx: any) => string | null) {
+  return defineTagTransform({
     key: 'absolute-images',
     transform: (list) => {
       calls.n++
       return list.map(tag => tag.tag === 'meta' && tag.props.property === 'og:image' ? { ...tag, props: { ...tag.props, content: site + tag.props.content } } : tag)
     },
-    cacheKey: cacheKey || (() => site),
+    memoKey: memoKey || (() => site),
   })
 }
 
 // adds an og:image, which changes the twitter:card that InferSeoMetaPlugin infers
-function addImage(head: Unhead<any>): HeadPlugin {
-  return withTagTransform(head, {
-    key: 'add-image',
-    transform: list => [...list, { tag: 'meta', props: { property: 'og:image', content: 'https://a.com/added.png' } } as any],
-  })
-}
+const addImage = defineTagTransform({
+  key: 'add-image',
+  transform: list => [...list, { tag: 'meta', props: { property: 'og:image', content: 'https://a.com/added.png' } } as any],
+})
 
 // writes a template param into the title
-function paramTitle(head: Unhead<any>): HeadPlugin {
-  return withTagTransform(head, {
-    key: 'param-title',
-    transform: list => list.map(tag => tag.tag === 'title' ? { ...tag, textContent: `${tag.textContent} %site` } : tag),
-  })
-}
+const paramTitle = defineTagTransform({
+  key: 'param-title',
+  transform: list => list.map(tag => tag.tag === 'title' ? { ...tag, textContent: `${tag.textContent} %site` } : tag),
+})
 
 describe('tag transforms', () => {
   it('render the same on the compiled server head as on v3', () => {
@@ -52,7 +47,7 @@ describe('tag transforms', () => {
   })
 
   it('keep a tags:afterResolve listener that the plugin already has', () => {
-    const plugin = (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+    const plugin = defineTagTransform({
       key: 'listener-and-transform',
       hooks: {
         'tags:afterResolve': (ctx) => {
@@ -71,29 +66,30 @@ describe('tag transforms', () => {
     expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
   })
 
-  it('run a transform once when a plugin is wrapped twice', () => {
-    const calls = { n: 0 }
-    const head = createV3Head({ disableDefaults: true, plugins: [(head: Unhead<any>) => withTagTransform(head, absoluteImages('https://a.com', calls)(head))] })
-    head.push(input)
-    renderV3(head)
-    expect(calls.n).toBe(1)
-    // a plugin with its own listener gets a hook that the fast tiers do not know
-    const own = { n: 0 }
-    const listening = (head: Unhead<any>): HeadPlugin => withTagTransform(head, withTagTransform(head, {
-      key: 'listener-and-transform',
-      hooks: { 'tags:afterResolve': () => {} },
-      transform: (list) => {
-        own.n++
-        return list
-      },
-    }))
-    const withListener = createV3Head({ disableDefaults: true, plugins: [listening] })
-    withListener.push(input)
-    renderV3(withListener)
-    expect(own.n).toBe(1)
+  it('give each head its own context when heads share one definition', () => {
+    // one definition at module scope serves every request
+    const siteCanonical = defineTagTransform({
+      key: 'site-canonical',
+      transform: (list, ctx: any) => list.map(tag => tag.tag === 'link' ? { ...tag, props: { ...tag.props, href: ctx.site + tag.props.href } } : tag),
+      memoKey: (ctx: any) => ctx.site,
+    })
+    const link = { link: [{ rel: 'canonical', href: '/page' }] }
+    for (const site of ['https://a.com', 'https://b.com']) {
+      const v3: any = createV3Head({ disableDefaults: true })
+      v3.site = site
+      v3.use(siteCanonical)
+      v3.push(link)
+      expect(renderV3(v3).headTags).toBe(`<link rel="canonical" href="${site}/page">`)
+      const compiled: any = createHead({ disableDefaults: true })
+      compiled.site = site
+      compiled.use(siteCanonical)
+      compiled.push(compile(link))
+      expect(getRenderTier(compiled)).toEqual({ _tag: 'Memo' })
+      expect(renderSSRHead(compiled).headTags).toBe(`<link rel="canonical" href="${site}/page">`)
+    }
   })
 
-  it('keep the memo, keyed by the cache key', () => {
+  it('keep the memo, keyed by the memo key', () => {
     const render = (site: string, calls: { n: number }) => {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages(site, calls)] })
       head.push(tags)
@@ -105,16 +101,16 @@ describe('tag transforms', () => {
     expect(render('https://memo-a.com', a)).toContain('https://memo-a.com/og.png')
     expect(render('https://b.com', b)).toContain('https://b.com/og.png')
     expect(render('https://b.com', b)).toContain('https://b.com/og.png')
-    // one run per cache key: the second render of each site is a memo hit
+    // one run per memo key: the second render of each site is a memo hit
     expect([a.n, b.n]).toEqual([1, 1])
   })
 
-  it('skip the memo for a null cache key', () => {
+  it('skip the memo for a null memo key', () => {
     const calls = { n: 0 }
     for (let i = 0; i < 2; i++) {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages('https://c.com', calls, () => null)] })
       head.push(tags)
-      expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'the tag transform of the absolute-images plugin gives no cache key' })
+      expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'the tag transform of the absolute-images plugin gives no memo key' })
       expect(renderSSRHead(head).headTags).toContain('https://c.com/og.png')
     }
     expect(calls.n).toBe(2)
@@ -176,13 +172,13 @@ describe('tag transforms', () => {
     }
   })
 
-  it('keep the memos of two transforms apart when a cache key holds the separator', () => {
+  it('keep the memos of two transforms apart when a memo key holds the separator', () => {
     const pageTags = compile(input)
-    // adds a meta tag that holds its cache key
-    const stamp = (key: string, value: string) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+    // adds a meta tag that holds its memo key
+    const stamp = (key: string, value: string) => defineTagTransform({
       key,
       transform: list => [...list, { tag: 'meta', props: { name: key, content: value } } as any],
-      cacheKey: () => value,
+      memoKey: () => value,
     })
     const render = (a: string, b: string) => {
       const head = createHead({ disableDefaults: true, plugins: [stamp('a', a), stamp('b', b)] })
@@ -197,35 +193,35 @@ describe('tag transforms', () => {
     const result = compileTags({ title: 'Home', meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
     // the build marks a `useSeoMeta` tag that v3 omits for an undefined value
     result.tags.find((tag: any) => tag[0] === 'meta')[5] |= FLAG_UNDEFINED_DROPS
-    const fixedDescription = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+    const fixedDescription = (memoKey: string | null) => defineTagTransform({
       key: 'fixed-description',
       transform: list => list.map(tag => tag.props.name === 'description' ? { ...tag, props: { ...tag.props, content: 'Fixed' } } : tag),
-      cacheKey: () => cacheKey,
+      memoKey: () => memoKey,
     })
-    const render = (value: unknown, cacheKey: string | null) => {
-      const head = createHead({ disableDefaults: true, plugins: [fixedDescription(cacheKey)] })
+    const render = (value: unknown, memoKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [fixedDescription(memoKey)] })
       head.push(result.tags, { values: [value] } as any)
       return renderSSRHead(head).headTags
     }
     expect(render('Text', 'site')).toContain('<meta name="description" content="Fixed">')
-    // a null cache key renders with no memo
+    // a null memo key renders with no memo
     expect(render(undefined, null)).toBe('<title>Home</title>')
     expect(render(undefined, 'site')).toBe('<title>Home</title>')
   })
 
   it('render a dynamic value that a transform moved into a class', () => {
     const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 }) as any
-    const titleClass = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+    const titleClass = (memoKey: string | null) => defineTagTransform({
       key: 'title-class',
       transform: list => [...list, { tag: 'htmlAttrs', props: { class: new Set([list.find(tag => tag.tag === 'title')!.textContent]) } } as any],
-      cacheKey: () => cacheKey,
+      memoKey: () => memoKey,
     })
-    const render = (value: string, cacheKey: string | null) => {
-      const head = createHead({ disableDefaults: true, plugins: [titleClass(cacheKey)] })
+    const render = (value: string, memoKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [titleClass(memoKey)] })
       head.push(result.tags, { values: [value] } as any)
       return renderSSRHead(head).htmlAttrs
     }
-    // a null cache key renders with no memo
+    // a null memo key renders with no memo
     expect(render('home', null)).toBe(' class="home"')
     expect(render('home', 'site')).toBe(' class="home"')
     expect(render('about', 'site')).toBe(' class="about"')
@@ -233,23 +229,23 @@ describe('tag transforms', () => {
 
   it('resolve a template param in a dynamic value that a transform moved into raw text', () => {
     const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
-    const toNoscript = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+    const toNoscript = (memoKey: string | null) => defineTagTransform({
       key: 'to-noscript',
       transform: list => list.map(tag => tag.props.name === 'description' ? { ...tag, tag: 'noscript', props: {}, innerHTML: tag.props.content } as any : tag),
-      cacheKey: () => cacheKey,
+      memoKey: () => memoKey,
     })
-    const render = (value: string, cacheKey: string | null) => {
-      const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin, toNoscript(cacheKey)] })
+    const render = (value: string, memoKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin, toNoscript(memoKey)] })
       head.push(result.tags, { values: [value] } as any)
       return renderSSRHead(head).headTags
     }
-    // a null cache key renders with no memo
+    // a null memo key renders with no memo
     expect(render('Hello %site', null)).toBe('<noscript>Hello World</noscript>')
     expect(render('Hello', 'site')).toBe('<noscript>Hello</noscript>')
     expect(render('Hello %site', 'site')).toBe('<noscript>Hello World</noscript>')
   })
 
-  it('render with no memo when a cache key is undefined', () => {
+  it('render with no memo when a memo key is undefined', () => {
     const calls = { n: 0 }
     for (let i = 0; i < 2; i++) {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages('https://a.com', calls, () => undefined as any)] })
@@ -260,7 +256,7 @@ describe('tag transforms', () => {
     expect(calls.n).toBe(2)
   })
 
-  it('hold a limited number of memos per page when the cache key comes from the request', () => {
+  it('hold a limited number of memos per page when the memo key comes from the request', () => {
     const pageTags = compile(input)
     const calls = new Map<string, { n: number }>()
     const render = (site: string) => {

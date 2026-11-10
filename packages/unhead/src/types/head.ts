@@ -71,7 +71,7 @@ export interface HeadPluginOptions extends CreateHeadOptions {
    * tags it gets. It must copy or drop text it did not make, never test it, because the server
    * memo runs it once per sequence of compiled tags with a token in place of each dynamic value.
    *
-   * Wrap the plugin in `withTagTransform`, which adds the `tags:afterResolve` hook that runs it on
+   * Define the plugin with `defineTagTransform`, which adds the `tags:afterResolve` hook that runs it on
    * the full runtime. The compiled server head runs it itself, so a head keeps the server memo.
    *
    * @experimental
@@ -83,7 +83,7 @@ export interface HeadPluginOptions extends CreateHeadOptions {
    *
    * @experimental
    */
-  cacheKey?: (ctx: TagTransformContext) => string | null
+  memoKey?: (ctx: TagTransformContext) => string | null
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })

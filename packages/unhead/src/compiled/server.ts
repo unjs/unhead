@@ -538,12 +538,12 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
       loose++
   }
   if (loose)
-    return { _tag: 'Fast', reason: `${loose} ${loose === 1 ? 'entry is' : 'entries are'} not compiled tags with no options` }
+    return { _tag: 'Fast', reason: `${loose} ${loose === 1 ? 'entry holds head input or has' : 'entries hold head input or have'} entry options` }
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
   for (const plugin of head.plugins.values()) {
-    if (compiledHead._tt && isTagTransform(plugin) && plugin.cacheKey && typeof plugin.cacheKey(head) !== 'string')
-      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin gives no cache key` }
+    if (compiledHead._tt && isTagTransform(plugin) && plugin.memoKey && typeof plugin.memoKey(head) !== 'string')
+      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin gives no memo key` }
   }
   return { _tag: 'Memo' }
 }
