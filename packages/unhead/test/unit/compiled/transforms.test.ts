@@ -51,6 +51,34 @@ describe('tag transforms', () => {
     expect(renderSSRHead(compiled).headTags).toContain('content="https://a.com/og.png"')
   })
 
+  it('keep a tags:afterResolve listener that the plugin already has', () => {
+    const plugin = (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+      key: 'listener-and-transform',
+      hooks: {
+        'tags:afterResolve': (ctx) => {
+          ctx.tags.push({ tag: 'meta', props: { name: 'from', content: 'listener' } })
+        },
+      },
+      transform: list => [...list, { tag: 'meta', props: { name: 'also-from', content: 'transform' } } as any],
+    })
+    const v3 = createV3Head({ disableDefaults: true, plugins: [plugin] })
+    v3.push(input)
+    expect(renderV3(v3).headTags).toContain('<meta name="from" content="listener">\n<meta name="also-from" content="transform">')
+    // the fast tiers run a transform only, so the listener keeps the full runtime
+    const compiled = createHead({ disableDefaults: true, plugins: [plugin] })
+    compiled.push(tags)
+    expect(getRenderTier(compiled)._tag).toBe('Full')
+    expect(renderSSRHead(compiled)).toEqual(renderV3(v3))
+  })
+
+  it('run a transform once when a plugin is wrapped twice', () => {
+    const calls = { n: 0 }
+    const head = createV3Head({ disableDefaults: true, plugins: [(head: Unhead<any>) => withTagTransform(head, absoluteImages('https://a.com', calls)(head))] })
+    head.push(input)
+    renderV3(head)
+    expect(calls.n).toBe(1)
+  })
+
   it('keep the memo, keyed by the cache key', () => {
     const render = (site: string, calls: { n: number }) => {
       const head = createHead({ disableDefaults: true, plugins: [absoluteImages(site, calls)] })

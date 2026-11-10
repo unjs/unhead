@@ -5,7 +5,7 @@ import { compileTags, dynamicValue, readEntry } from '../../../src/compiled'
 import { createHead, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
 import { FLAG_UNDEFINED_DROPS, toHeadInput } from '../../../src/compiled/tags'
 import { useSeoMeta } from '../../../src/composables'
-import { createHead as createV3Head } from '../../../src/server'
+import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 
 function compiled(input: any, dynamicValues?: number) {
   const result = compileTags(input, { dynamicValues })
@@ -153,6 +153,18 @@ describe('readEntry on a v3 head', () => {
       seoMeta: true,
       compiled: false,
     })
+  })
+
+  it('omits a flat meta tag whose value is undefined, as the render does', () => {
+    const head = createV3Head({ disableDefaults: true })
+    useSeoMeta(head, { description: undefined, ogTitle: '', charset: 'utf-8', ogImage: [{ url: '/og.png', width: undefined }] })
+    expect(renderV3(head).headTags).toBe('<meta charset="utf-8">\n<meta property="og:image" content="/og.png">\n<meta property="og:title" content>')
+    // an empty value stays as the input gave it, as it does for compiled tags
+    expect(readEntry(lastEntry(head), head).input.meta).toEqual([
+      { property: 'og:image', content: '/og.png' },
+      { property: 'og:title', content: '' },
+      { charset: 'utf-8' },
+    ])
   })
 
   it('resolves values with the prop resolvers of the head before it unpacks them', () => {

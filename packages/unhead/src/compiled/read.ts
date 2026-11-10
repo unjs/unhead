@@ -81,8 +81,9 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
       seoMeta = true
       const ctx = { tags: [{ tag: '_flatMeta', props: _flatMeta }] as HeadTag[] }
       unpack?.(ctx as any)
+      // the render drops a meta tag whose content is undefined, as compiled tags omit one
       if (unpack)
-        input = { ...rest, meta: [...rest.meta || [], ...ctx.tags.map(tag => tag.props)] }
+        input = { ...rest, meta: [...rest.meta || [], ...ctx.tags.map(tag => tag.props).filter(props => props.content !== undefined || props.charset || props['http-equiv'])] }
     }
   }
   return { input, seoMeta, compiled: !!tags, dynamic }
