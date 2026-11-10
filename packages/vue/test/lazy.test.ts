@@ -253,7 +253,7 @@ describe('vue lazy head', () => {
     it('a new page after blockLoad does not load before the pause starts', async () => {
       const Page = defineComponent({
         setup() {
-          useHead({ title: 'Next page', link: [{ rel: 'stylesheet', href: '/next.css' }] })
+          useHead({ title: 'Next page' })
           return () => h('span', 'next')
         },
       })
@@ -275,7 +275,7 @@ describe('vue lazy head', () => {
       expect(load).not.toHaveBeenCalled()
 
       head.render()
-      await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
+      expect(load).toHaveBeenCalledTimes(1)
       await vi.waitFor(() => expect(document.title).toBe('Next page'))
     })
 
@@ -316,7 +316,7 @@ describe('vue lazy head', () => {
 
       paused = false
       head.render()
-      await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
+      expect(load).toHaveBeenCalledTimes(1)
       await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
     })
 

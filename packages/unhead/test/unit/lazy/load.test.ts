@@ -108,14 +108,15 @@ describe('dev warning', () => {
     expect(messages).toEqual([expect.stringContaining('<title> differs from the server head: "Client" on the client, "Page" in the document. Pushed by entry 1.')])
   })
 
-  it('is silent for crawler tags, which crawlers read from the server head', async () => {
+  it('names crawler tags too, because they also wait for the first change', async () => {
     const { messages } = await warningsAfterHydration([page, { meta: [{ name: 'twitter:card', content: 'summary_large_image' }], link: [{ rel: 'canonical', href: '/a' }] }], [{
       ...page,
       meta: [{ name: 'description', content: 'Client' }, { name: 'theme-color', content: '#fff' }, { name: 'twitter:card', content: 'summary' }, { property: 'og:title', content: 'Client' }],
       link: [{ rel: 'icon', href: '/favicon.svg' }, { rel: 'canonical', href: '/b' }, { rel: 'alternate', hreflang: 'de', href: '/de' }],
       script: [{ type: 'application/ld+json', innerHTML: { a: 1 } }],
     }])
-    expect(messages).toEqual([])
+    for (const tag of ['<meta name="twitter:card">', '<meta property="og:title">', '<link rel="canonical" href="/b">', '<script> is missing'])
+      expect(messages.some(m => m.includes(tag)), tag).toBe(true)
   })
 
   it('warns once per tag and source across page loads', async () => {

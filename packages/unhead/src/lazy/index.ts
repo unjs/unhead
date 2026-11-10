@@ -1,7 +1,6 @@
 import type { HookableCore } from 'hookable'
 import type { ClientUnhead } from '../client/adapter'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
-import type { Shown } from './visible'
 import { createClientHeadAdapter } from '../client/adapter'
 import { createUnhead } from '../unhead'
 import { copyInput, sameInput } from './same'
@@ -116,9 +115,8 @@ function createHookStore(initial?: Record<string, any>) {
 
 /**
  * Creates the lazy head, for a server rendered page. It keeps entries
- * without touching the document. It loads the v3 DOM runtime on the first change that a
- * user can see, at idle with `load: 'idle'`, or when `load()` runs. A change to crawler
- * tags loads nothing, and a change to the title alone applies without the runtime.
+ * without touching the document. It loads the v3 DOM runtime on the first head change,
+ * at idle with `load: 'idle'`, or when `load()` runs.
  *
  * Use `createHead` from `unhead/client` for a page with no server rendered head.
  *
@@ -143,9 +141,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   let held = false
   let render: HeadRenderer<any>
   let plugins: Promise<void> | undefined
-  // what a user sees in the document, kept by the change check that loads with the first change
-  const shown: Shown = {}
-  let visible: Promise<typeof import('./visible')> | undefined
   const sources: Record<number, string | undefined> = {}
 
   const head = createClientHeadAdapter<T>(
@@ -186,39 +181,15 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     return !ctx.shouldRender
   }
 
-  const ready = () => !blocked && !isPaused()
-
   // During hydration a push is a page entry the server rendered, unless the adapter says
   // otherwise. A patch or dispose means the client already differs from the server. Both
-  // need the runtime now. After hydration, unless a load block or pause stops it, a small
-  // chunk checks the change: crawlers read the server HTML, so a change to crawler tags
-  // loads nothing, and a change to the title alone applies to the document. Any other
-  // change loads the runtime.
+  // need the runtime now. After hydration, every change loads unless a load block or pause stops it.
   let pushing = false
   const onChange = () => {
-    const h = hooks._hooks
-    if (!hydrated) {
-      if (!pushing) {
-        hydrationChanged = true
-        head.load()
-      }
-    }
-    else {
-      if (!ready())
-        return
-      if (loading || !document || options.render || h['dom:rendered'] || h['dom:renderTag']) {
-        head.load()
-      }
-      else {
-        (visible ||= import('./visible')).then((m) => {
-          if (ready() && (loading || !m.applyVisible(document, shown, hydrated!, head.entries.values())))
-            head.load()
-        }, () => {
-          visible = undefined
-          head.load()
-        })
-      }
-    }
+    if (!hydrated && !pushing)
+      hydrationChanged = true
+    if (hydrated ? !blocked && !isPaused() : !pushing)
+      head.load()
   }
   const push = head.push
   head.push = (input, entryOptions) => {
@@ -291,7 +262,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   }
 
   head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => [...(hydrated || hydrationEntries.values()), ...late.values()], () => shown.t))
+    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => [...(hydrated || hydrationEntries.values()), ...late.values()]))
     .then((renderer) => {
       // the runtime adopts these at its first render
       hydrated ||= [...hydrationEntries.values()]

@@ -11,20 +11,6 @@ import { tagWeight } from './runtime'
 // warned tags by source, kept for the browser tab, so each warns once and not on every page load
 const WARNED = 'unhead:lazy-warned'
 
-// The crawler tag list of `serverOnlyCrawlerTags`. Crawlers read the server head, so the
-// lazy head never applies these on its own, and a difference is no reason to warn.
-const CRAWLER_META_RE = /^(?:(?:og|twitter|article):|(?:description|robots|keywords)$)/i
-function isCrawlerTag(tag: HeadTag): boolean {
-  const p = tag.props as Record<string, any>
-  if (tag.tag === 'meta')
-    return CRAWLER_META_RE.test(p.name || p.property || '')
-  if (tag.tag === 'link') {
-    const rel = String(p.rel).toLowerCase()
-    return rel === 'canonical' || (rel === 'alternate' && p.hreflang != null)
-  }
-  return tag.tag === 'script' && String(p.type).toLowerCase() === 'application/ld+json'
-}
-
 function readWarned(view: Window | null): Set<string> {
   try {
     return new Set(JSON.parse(view?.sessionStorage.getItem(WARNED) || '[]'))
@@ -138,8 +124,6 @@ export async function checkHydratedHead(
   const counter: Record<string, number> = {}
   const warned = readWarned(document.defaultView)
   for (const tag of tags) {
-    if (isCrawlerTag(tag))
-      continue
     let problem: string | undefined
     if (tag.tag === 'title') {
       if (String(tag.textContent ?? '') !== document.title)

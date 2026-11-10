@@ -13,7 +13,7 @@ export const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ?
 // historical writes, so the next render removes stale ones. Respect rendering pauses.
 // Adoption reads a separate map, so an entry a hook pushes or disposes changes the live map through
 // the entry, and the restore keeps that change.
-function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[], title: string | undefined) {
+function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]) {
   const live = head.entries
   // A lookup by id falls back to the live map, so a hook that disposes or pushes an entry
   // outside the adoption, such as a client only entry, still finds it.
@@ -23,7 +23,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   adoption.has = id => has.call(adoption, id) || live.has(id)
   head.entries = adoption
   try {
-    return adoptDOMHead(head, title)
+    return adoptDOMHead(head)
   }
   finally {
     head.entries = live
@@ -31,7 +31,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[], serverTitle: () => string | undefined): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
   await useLazyPlugins()
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
@@ -40,7 +40,7 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOpt
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
     if (!head._dom && head.dirty) {
-      if (!adoptHydratedEntries(head, adoptionEntries(), serverTitle()))
+      if (!adoptHydratedEntries(head, adoptionEntries()))
         return
     }
     renderDom(head)
