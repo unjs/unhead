@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createHead as createClientHead } from '../../../src/client'
 import { compileTags, dynamicValue, readEntry } from '../../../src/compiled'
 import { createHead, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
-import { toHeadInput } from '../../../src/compiled/tags'
+import { FLAG_UNDEFINED_DROPS, toHeadInput } from '../../../src/compiled/tags'
 import { useSeoMeta } from '../../../src/composables'
 import { createHead as createV3Head } from '../../../src/server'
 
@@ -68,6 +68,27 @@ describe('readEntry on a compiled server head', () => {
       { name: 'twitter:image', content: '/og/post.png' },
     ])
     expect(reading.dynamic).toEqual(['title', 'meta.1.content'])
+  })
+
+  it('gives each dynamic value the path it has in the input when an undefined value omits a tag', () => {
+    const tags = compiled({
+      meta: [
+        { name: 'description', content: dynamicValue(0) },
+        { name: 'author', content: 'Harlan' },
+        { property: 'og:image', content: dynamicValue(1) },
+      ],
+    }, 2)
+    // the build marks a `useSeoMeta` tag that v3 omits for an undefined value
+    for (const tag of tags as any[])
+      tag[5] |= FLAG_UNDEFINED_DROPS
+    const head = createHead({ disableDefaults: true })
+    head.push(tags, { values: [undefined, '/og.png'] } as any)
+    const reading = readEntry(lastEntry(head), head)
+    expect(reading.input.meta).toEqual([
+      { name: 'author', content: 'Harlan' },
+      { property: 'og:image', content: '/og.png' },
+    ])
+    expect(reading.dynamic).toEqual(['meta.1.content'])
   })
 
   it('reads no dynamic value for static compiled tags or loose input', () => {

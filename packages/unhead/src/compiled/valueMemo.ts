@@ -38,11 +38,17 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
   // keyless JSON scripts whose identity holds a value, and every other identity
   const contentIds: string[] = []
   const ids = new Set<string>()
+  // With a tag transform, every value of the sequence. A transform may replace the text that
+  // holds one, and the tag of that text may be one that v3 omits for some values.
+  const gone = head._tt ? new Set<string>() : undefined
   let unsafe = false
   let index = 0
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
     const position = index++
-    const positioned = (value: string) => value.replace(DYNAMIC_VALUE_RE, `${DYNAMIC_VALUE_OPEN}${position}.$1${DYNAMIC_VALUE_CLOSE}`)
+    const positioned = (value: string) => value.replace(DYNAMIC_VALUE_RE, (_, valueIndex: string) => {
+      gone?.add(`${position}.${valueIndex}`)
+      return `${DYNAMIC_VALUE_OPEN}${position}.${valueIndex}${DYNAMIC_VALUE_CLOSE}`
+    })
     entry._compiled!.forEach((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i, (value) => {
         unsafe ||= tp && PARAM_NEIGHBOUR_RE.test(value)
@@ -75,7 +81,9 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     const bucket = buckets[key] as string
     if (bucket.includes(DYNAMIC_VALUE_OPEN)) {
       unsafe ||= RAW_NEIGHBOUR_RE.test(bucket) || (tp && PARAM_NEIGHBOUR_RE.test(bucket))
-      buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
+      const pieces = buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
+      for (let i = 1; i < pieces.length; i += 4)
+        gone?.delete(`${pieces[i]}.${pieces[i + 1]}`)
     }
   }
   const state: Memo['s'] = { _title: head._title }
@@ -87,7 +95,13 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     state._templateParams = head._templateParams
     state._separator = head._separator
   }
-  return { b: buckets, x: unsafe, s: state, ...contentIds.length && { i: { d: contentIds, k: ids } } }
+  return {
+    b: buckets,
+    x: unsafe,
+    s: state,
+    ...contentIds.length && { i: { d: contentIds, k: ids } },
+    ...gone?.size && { g: [...gone].flatMap(token => token.split('.').map(Number)) },
+  }
 }
 
 // Returns undefined when the value could change a v3 decision. Escaping matches
@@ -161,6 +175,11 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead, transforms: 
       }
       html[key] = out
     }
+  }
+  // a value that left the payload still decides whether v3 keeps its tag
+  for (let i = 0; memo.g && i < memo.g.length; i += 2) {
+    if (escapeValue(values[memo.g[i]!]?.[memo.g[i + 1]!], MODE_ATTR, tp, true) === undefined)
+      return
   }
   const title = resolveState(state._title)
   const params = copyValue(state._templateParams)

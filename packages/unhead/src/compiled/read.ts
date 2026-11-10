@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, PropResolver, ResolvableHead, Unhead } from '.
 import type { CompiledEntry } from './core'
 import type { CompiledTags } from './types'
 import { walkResolver } from '../utils/walkResolver'
-import { DYNAMIC_VALUE_OPEN, toHeadInput } from './tags'
+import { DYNAMIC_VALUE_OPEN, FLAG_UNDEFINED_DROPS, toHeadInput } from './tags'
 
 /**
  * What `readEntry` reads from a head entry.
@@ -63,8 +63,11 @@ export function readEntry(entry: HeadEntry<any>, head: Unhead<any, any>): EntryR
   let seoMeta = !!(entry._seoMeta || entry.options?.seoMeta)
   let dynamic: string[] | undefined
   if (tags) {
-    input = toHeadInput(tags, values as unknown[] || [])
-    dynamic = markPaths(toHeadInput(tags, MARKS), '', [])
+    const list = values as unknown[] || []
+    input = toHeadInput(tags, list)
+    // an undefined value omits some tags from the input, so the paths count only the tags it keeps
+    const kept = tags.filter(tag => !(tag[5]! & FLAG_UNDEFINED_DROPS) || Object.keys(toHeadInput([tag], list)).length)
+    dynamic = markPaths(toHeadInput(kept, MARKS), '', [])
     if (!dynamic.length)
       dynamic = undefined
   }

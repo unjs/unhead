@@ -1,6 +1,8 @@
 import type { HeadPlugin, Unhead } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
+import { dynamicValue } from '../../../src/compiled'
 import { compileTags, createHead, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
+import { FLAG_UNDEFINED_DROPS } from '../../../src/compiled/tags'
 import { withTagTransform } from '../../../src/plugins/defineHeadPlugin'
 import { InferSeoMetaPlugin } from '../../../src/plugins/inferSeoMetaPlugin'
 import { TemplateParamsPlugin } from '../../../src/plugins/templateParams'
@@ -147,6 +149,26 @@ describe('tag transforms', () => {
     }
     expect(render('x|b:y', 'z')).toContain('<meta name="b" content="z">')
     expect(render('x', 'y|b:z')).toContain('<meta name="b" content="y|b:z">')
+  })
+
+  it('omit a tag whose value is undefined when a transform replaced its text', () => {
+    const result = compileTags({ title: 'Home', meta: [{ name: 'description', content: dynamicValue(0) }] }, { dynamicValues: 1 }) as any
+    // the build marks a `useSeoMeta` tag that v3 omits for an undefined value
+    result.tags.find((tag: any) => tag[0] === 'meta')[5] |= FLAG_UNDEFINED_DROPS
+    const fixedDescription = (cacheKey: string | null) => (head: Unhead<any>): HeadPlugin => withTagTransform(head, {
+      key: 'fixed-description',
+      transform: list => list.map(tag => tag.props.name === 'description' ? { ...tag, props: { ...tag.props, content: 'Fixed' } } : tag),
+      cacheKey: () => cacheKey,
+    })
+    const render = (value: unknown, cacheKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [fixedDescription(cacheKey)] })
+      head.push(result.tags, { values: [value] } as any)
+      return renderSSRHead(head).headTags
+    }
+    expect(render('Text', 'site')).toContain('<meta name="description" content="Fixed">')
+    // a null cache key renders with no memo
+    expect(render(undefined, null)).toBe('<title>Home</title>')
+    expect(render(undefined, 'site')).toBe('<title>Home</title>')
   })
 
   it('hold a limited number of memos per page when the cache key comes from the request', () => {

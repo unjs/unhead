@@ -35,6 +35,11 @@ export interface Memo {
    * `d` holds each such identity with tokens, `k` every other identity.
    */
   i?: { d: string[], k: Set<string> }
+  /**
+   * The values with no token left in the payload after a tag transform ran, as a flat
+   * `[entry, value, entry, value, ...]` list. A hit checks them as it checks the others.
+   */
+  g?: number[]
 }
 
 /** The renderer of the compiled server head. */
