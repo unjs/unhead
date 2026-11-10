@@ -48,6 +48,7 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+  withTagTransform: function
 ./scripts:
   createSpyProxy: function
   useScript: function

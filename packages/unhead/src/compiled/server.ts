@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, settleValues } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, isTagTransform, renderCompiledHead, reviveTag, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -99,7 +99,8 @@ const RENDER_HOOK_RE = /^(?:entries:[nr]|tags:|ssr:[br])/
 function hasListeners(head: CompiledHead): string | undefined {
   const hooks = (head._hookStore as any)?._hooks
   for (const name in hooks) {
-    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: any) => !head._known?.has(listener)))
+    // a tag transform listener carries `_t`, and the fast tiers run its transform themselves
+    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: any) => !listener._t && !head._known?.has(listener)))
       return name
   }
 }
@@ -188,6 +189,8 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     registerPlugin(head, plugin)
     // the key changes how v3 applies a title template, but this plugin has no native rules
     head._v3 ||= head.plugins.has('template-params') && !head._tp
+    // a function plugin may have no static key, so every plugin is checked
+    head.plugins.forEach(resolved => head._tt ||= isTagTransform(resolved))
   }
   // matched by key and hook names, as for template params, so no plugin is bundled
   const resolved = head.plugins.get(key)
@@ -300,9 +303,6 @@ function hasParam(value: any): boolean {
   return value?.includes?.('%')
 }
 
-// Runs the real `TemplateParamsPlugin` hooks. A hook mutates tags in place and tags
-// may be shared across renders, so it only sees copies of the tags a param can change.
-// The params become `head._templateParams`, so their nested values are copied too.
 // Runs the real `tags:beforeResolve` hook of `InferSeoMetaPlugin`. It sets the content of the
 // inferred og tags in place, and tags may be shared across renders, so it sees copies of them.
 function applyNativeInferBeforeResolve(ctx: { tagMap: Map<string, any>, tags: RuntimeTag[] }, hooks: Record<string, (ctx: any) => void>) {
@@ -317,6 +317,9 @@ function applyNativeInferBeforeResolve(ctx: { tagMap: Map<string, any>, tags: Ru
   hooks['tags:beforeResolve']!(ctx)
 }
 
+// Runs the real `tags:resolve` hook of `TemplateParamsPlugin`. A hook mutates tags in place and
+// tags may be shared across renders, so it only sees copies of the tags a param can change.
+// The params become `head._templateParams`, so their nested values are copied too.
 function applyNativeTemplateParams(tags: RuntimeTag[], tagMap: Map<string, any>, hooks: Record<string, any>) {
   const changing: RuntimeTag[] = []
   const paramsTag = tagMap.get('templateParams')
@@ -334,7 +337,6 @@ function applyNativeTemplateParams(tags: RuntimeTag[], tagMap: Map<string, any>,
     }
   }
   hooks['tags:resolve']({ tagMap, tags: changing })
-  hooks['tags:afterResolve']({ tagMap })
 }
 
 const renderer: CompiledRenderer = {
@@ -395,15 +397,21 @@ const renderer: CompiledRenderer = {
     const hasFlatMeta = dedupeTags(ctx)
     resolveTitleTemplate(ctx, head)
     valuesToTags(ctx, hasFlatMeta)
-    // The v3 hook order: `tags:beforeResolve`, `tags:resolve`, then `tags:afterResolve`. The two
-    // `tags:afterResolve` listeners touch different tags, so their order does not matter.
-    const { _tp, _infer } = head as CompiledHead
+    // The v3 hook order: `tags:beforeResolve`, `tags:resolve`, then `tags:afterResolve`. A tag
+    // transform may change any tag, so the `tags:afterResolve` listeners run as v3 runs them: in
+    // the order their plugins registered.
+    const { _tp, _infer, _tt } = head as CompiledHead
     if (_infer)
       applyNativeInferBeforeResolve(ctx, _infer)
     if (_tp)
       applyNativeTemplateParams(ctx.tags, ctx.tagMap, _tp)
-    if (_infer)
-      _infer['tags:afterResolve']!(ctx)
+    for (const plugin of head.plugins.values()) {
+      const hooks: any = plugin.hooks
+      if (_tt && isTagTransform(plugin))
+        ctx.tags = plugin.transform!(ctx.tags, head)
+      else if (hooks && (hooks === _tp || hooks === _infer))
+        hooks['tags:afterResolve'](ctx)
+    }
     return ctx.tags
   },
   b: (head, omitLineBreaks, self) => buildValueMemo(head, omitLineBreaks, self, revive),
@@ -530,6 +538,10 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
     return { _tag: 'Fast', reason: `${loose} ${loose === 1 ? 'entry is' : 'entries are'} not compiled tags with no options` }
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
+  for (const plugin of head.plugins.values()) {
+    if (compiledHead._tt && isTagTransform(plugin) && plugin.cacheKey?.(head) === null)
+      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin has a null cache key` }
+  }
   return { _tag: 'Memo' }
 }
 

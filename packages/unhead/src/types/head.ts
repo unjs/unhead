@@ -48,8 +48,35 @@ export interface HeadEntry<Input> {
   _o?: Input
 }
 
+/**
+ * @experimental
+ */
+export interface TagTransformContext {
+  /** True on the server. */
+  ssr: boolean
+}
+
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Changes the resolved tags: dedupe, sort, the title template, and template params ran.
+   * A pure function: it must read nothing outside `tags` and `ctx`, and must not change the
+   * tags it gets. It must copy or drop text it did not make, never test it, because the server
+   * memo runs it once per sequence of compiled tags with a token in place of each dynamic value.
+   *
+   * Wrap the plugin in `withTagTransform`, which adds the `tags:afterResolve` hook that runs it on
+   * the full runtime. The compiled server head runs it itself, so a head keeps the server memo.
+   *
+   * @experimental
+   */
+  transform?: (tags: HeadTag[], ctx: TagTransformContext) => HeadTag[]
+  /**
+   * Anything else the output of `transform` depends on, such as the site URL. The server memo
+   * keys its output on it. `null` keeps the memo from holding the output at all.
+   *
+   * @experimental
+   */
+  cacheKey?: (ctx: TagTransformContext) => string | null
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })

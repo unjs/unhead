@@ -96,16 +96,16 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // tag rule applies. Raw text holds no `@import` either, which would change a style weight. Template params never reach script text, because the build
 // sends a tag that opts in to the slow path. So a large payload costs one
 // `includes` scan, and a regex only when it holds a `<`.
-// With `InferSeoMetaPlugin`, a blank value takes the slow path: it tells a blank image from
-// other text, and the memo holds a token that is never blank.
-function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boolean): string | undefined {
+// With `InferSeoMetaPlugin` or a tag transform, a blank value takes the slow path: either may tell
+// blank text from other text, as the plugin does for an image, and the memo holds a token that is never blank.
+function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
   if (mode >= MODE_RAW)
     return entryValue.includes('@import') ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
-  if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (infer && !NOT_BLANK_RE.test(entryValue)))
+  if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (transforms && !NOT_BLANK_RE.test(entryValue)))
     return
   return mode === MODE_ATTR
     ? entryValue.includes('"') ? entryValue.replace(DOUBLE_QUOTE_RE, '&quot;') : entryValue
@@ -115,10 +115,10 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boo
 /**
  * Restores the head fields of a memo and joins its pieces with escaped values.
  */
-export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayload | undefined {
+export function renderValueMemo(memo: Memo, head: CompiledTagsHead, transforms: boolean): SSRHeadPayload | undefined {
   const state = memo.s!
   const tp = !!state._templateParams
-  const infer = !!head._infer
+  transforms ||= !!head._infer
   const html: Record<string, unknown> = { ...memo.b }
   const values: EntryValues = []
   let safe = true
@@ -154,7 +154,7 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
       const pieces = bucket as (string | number)[]
       let out = pieces[0] as string
       for (let i = 1; i < pieces.length; i += 4) {
-        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, infer)
+        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, transforms)
         if (text === undefined)
           return
         out += text + (pieces[i + 3] as string)
