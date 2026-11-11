@@ -148,7 +148,7 @@ function isCrawlerSeoMetaProp(prop: any): boolean {
  */
 function removeListItems(s: MagicString, items: any[], remove: Set<any>) {
   items.forEach((item, i) => {
-    if (!item || !remove.has(item))
+    if (!remove.has(item))
       return
     const next = items[i + 1]
     if (next)
@@ -171,9 +171,10 @@ function stripHeadObject(s: MagicString, obj: any): StripResult {
     if (key !== 'meta' && key !== 'link' && key !== 'script')
       continue
     const arr = unwrap(prop.value)
-    if (arr?.type !== 'ArrayExpression' || !arr.elements.length)
+    // A hole (`[, tag]`) has no node to find a separator from, so the list stays.
+    if (arr?.type !== 'ArrayExpression' || !arr.elements.length || arr.elements.includes(null))
       continue
-    const removeEls = new Set(arr.elements.filter((el: any) => el && el.type !== 'SpreadElement' && isCrawlerTag(key, el)))
+    const removeEls = new Set(arr.elements.filter((el: any) => el.type !== 'SpreadElement' && isCrawlerTag(key, el)))
     if (!removeEls.size)
       continue
     changed = true

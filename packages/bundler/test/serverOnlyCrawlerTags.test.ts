@@ -122,6 +122,8 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     ['a computed useSeoMeta key', `useSeoMeta({ [key]: 'x' })`],
     ['no crawler tags', `useHead({ title: 'x', meta: [{ name: 'theme-color', content: '#fff' }] })`],
     ['a link rel=alternate without hreflang', `useHead({ link: [{ rel: 'alternate', href: '/feed' }] })`],
+    ['a tag list that starts with a hole', `useHead({ meta: [, { name: 'description', content: 'x' }] })`],
+    ['a tag list with a hole after a crawler tag', `useHead({ meta: [{ name: 'description', content: 'x' }, , { name: 'theme-color', content: '#fff' }] })`],
   ])('keeps %s as written', async (_label, source) => {
     expect(await transform(source)).toBeUndefined()
   })
