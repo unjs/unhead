@@ -2,6 +2,7 @@ import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPlugi
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
+import { CompileTransform, resolveCompileOptions } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -58,7 +59,7 @@ export interface UnheadBundlerFactory {
 
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
 
-function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
+function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[] {
   const defs: CoreDef[] = []
   const common = { filter: options.filter, sourcemap: options.sourcemap }
 
@@ -66,10 +67,13 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
   }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
-  }
+  const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
+  const seoMeta = options.transformSeoMeta !== false && { instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } }
+  const compileOpts = resolveCompileOptions(options.compile, framework)
+  // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
+  // without compile renders, in its tag order. Compile takes the calls it leaves.
+  if (seoMeta)
+    defs.push(seoMeta)
   const minifyTransformOptions = resolveMinifyTransformOptions(options)
   if (minifyTransformOptions) {
     defs.push({
@@ -77,6 +81,9 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
       options: { ...common, ...minifyTransformOptions },
     })
   }
+  // Compile reads the minified inline content
+  if (compileOpts)
+    defs.push({ instance: CompileTransform, options: { ...common, importPaths: seoMetaOpts.importPaths, ...compileOpts } })
 
   return defs
 }
@@ -136,7 +143,7 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
     const { streaming, validate, devtools, ...coreOpts } = options
-    const defs = resolveCoreDefs(coreOpts)
+    const defs = resolveCoreDefs(coreOpts, framework)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming
 

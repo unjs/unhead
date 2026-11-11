@@ -1,3 +1,4 @@
+import type { RollupOptions } from 'rollup'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
@@ -99,21 +100,25 @@ async function buildIifeFromSource(rootDir: string) {
   return chunk.code
 }
 
-export default defineBuildConfig({
+function failOnSideEffects(_: unknown, options: RollupOptions) {
+  options.experimentalLogSideEffects = true
+  const onwarn = options.onwarn
+  options.onwarn = (warning, warn) => {
+    if (isFirstSideEffectWarning(warning))
+      throw new Error(warning.message)
+    if (onwarn)
+      return onwarn(warning, warn)
+    warn(warning)
+  }
+}
+
+export default defineBuildConfig([{
   clean: true,
   declaration: true,
+  // The compiled server head comes from the next build, which then checks the package exports
+  failOnWarn: false,
   hooks: {
-    'rollup:options': (_, options) => {
-      options.experimentalLogSideEffects = true
-      const onwarn = options.onwarn
-      options.onwarn = (warning, warn) => {
-        if (isFirstSideEffectWarning(warning))
-          throw new Error(warning.message)
-        if (onwarn)
-          return onwarn(warning, warn)
-        warn(warning)
-      }
-    },
+    'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {
       const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
@@ -143,4 +148,15 @@ export default defineBuildConfig({
     { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
-})
+}, {
+  // The compiled server head builds alone. It then shares no dist file with the other
+  // entries, so their dist stays byte for byte the same.
+  clean: false,
+  declaration: true,
+  hooks: {
+    'rollup:options': failOnSideEffects,
+  },
+  entries: [
+    { input: 'src/compiled/server', name: 'compiled/server' },
+  ],
+}])

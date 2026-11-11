@@ -93,6 +93,10 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./compiled/server": {
+      "types": "./dist/compiled/server.d.ts",
+      "default": "./dist/compiled/server.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -147,6 +151,9 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "compiled/server": [
+        "dist/compiled/server.d.ts"
       ]
     }
   },

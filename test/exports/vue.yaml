@@ -20,6 +20,11 @@
   createHead: function
   renderDOMHead: function
   VueHeadMixin: object
+./compiled/server:
+  createHead: function
+  renderSSRHead: function
+  useCompiledHead: function
+  useCompiledSeoMeta: function
 ./components:
   Head: object
 ./legacy:

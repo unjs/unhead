@@ -80,6 +80,10 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
+    },
+    "./compiled/server": {
+      "types": "./dist/compiled/server.d.ts",
+      "default": "./dist/compiled/server.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -128,6 +132,9 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "compiled/server": [
+        "dist/compiled/server"
       ]
     }
   },

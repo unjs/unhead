@@ -1,0 +1,94 @@
+import type { CompiledTags } from 'unhead/compiled/server'
+import type { ActiveHeadEntry } from 'unhead/types'
+import type { UseHeadOptions, VueHeadClient } from '../types'
+import { FlatMetaPlugin } from 'unhead/plugins'
+import { toValue } from 'vue'
+import { injectHead } from '../install'
+
+type CompiledTagsHead = VueHeadClient<any> & { _acceptsCompiled?: 1 }
+
+// v3 `injectHead`, with its error outside `setup()`. A full runtime head would push the compiled tags
+// as loose input and render nothing for them.
+function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
+  const head = (options.head || injectHead()) as CompiledTagsHead
+  if (!head._acceptsCompiled)
+    throw new Error('[unhead] For compiled head calls, use @unhead/vue/compiled/server, or turn off compile.')
+  return head
+}
+
+/** The values of a call, or a getter that returns them, as the build makes of a getter input. */
+export type CompiledValues = readonly unknown[] | (() => readonly unknown[])
+
+/** Rebuilds the loose input of a call, as written, from its values. */
+export type LooseInput = (values: readonly unknown[]) => object
+
+// A getter input runs once for all its values
+function resolveValues(values: CompiledValues): unknown[] {
+  return (typeof values === 'function' ? values() : values).map(entryValue => toValue(entryValue))
+}
+
+// The flat meta values that `useSeoMeta` renders the same way compiled tags do. v3 has its own
+// rule for each text here: it renders no tag for `_null`, and drops `false` from an object value.
+function isText(value: unknown): boolean {
+  return typeof value === 'string' ? !!value && value !== 'true' && value !== 'false' && value !== '_null' : Number.isFinite(value)
+}
+
+// The `FLAG_UNDEFINED_DROPS` and `FLAG_STRING_VALUES` flags of `unhead/compiled/server`. The build marks
+// every tag of a flat meta value whose `undefined` makes no tag in v3, and of one whose number v3
+// renders by other rules.
+const FLAG_UNDEFINED_DROPS = 8
+const FLAG_STRING_VALUES = 16
+
+function isMarked(compiledTags: CompiledTags, index: number, flag: number): boolean {
+  return compiledTags.some(tag => tag[5]! & flag && JSON.stringify(tag).includes(`\uE000${index}\uE001`))
+}
+
+/**
+ * Pushes compiled tags that the bundler `compile` option made from a `useHead` call. The
+ * call site evaluates each value. A ref or getter value resolves once, on the first
+ * render, as v3 resolves it. The build passes `loose` when the input as written differs
+ * from the input that the compiled tags rebuild.
+ *
+ * @internal
+ */
+export function useCompiledHead(compiledTags: CompiledTags, loose?: LooseInput, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  const head = compiledTagsHead(options)
+  return head.push(compiledTags as any, loose || values
+    ? {
+        ...options,
+        values: values && (() => resolveValues(values)),
+        // a ref and a getter stay as written, and a getter input stays a getter
+        loose: loose && (() => typeof values === 'function' ? () => loose(values()) : loose(values || [])),
+      } as any
+    : options)
+}
+
+/**
+ * Pushes compiled tags that the bundler `compile` option made from a `useSeoMeta` call.
+ * When a value resolves to one that v3 renders by flat meta rules, such as an
+ * empty string, the entry takes the input that `loose` rebuilds.
+ *
+ * @internal
+ */
+export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: LooseInput, values?: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  const head = compiledTagsHead(options)
+  const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
+    ...options,
+    // v3 `useSeoMeta` registers the plugin at the call. Here only a reader of the input needs it.
+    loose: () => {
+      head.use(FlatMetaPlugin)
+      return loose(values || [])
+    },
+    values: values && (() => {
+      const resolved = resolveValues(values)
+      if (!resolved.every((value, index) => value === undefined
+        ? isMarked(compiledTags, index, FLAG_UNDEFINED_DROPS)
+        : isText(value) && (typeof value === 'string' || !isMarked(compiledTags, index, FLAG_STRING_VALUES)))) {
+        head.use(FlatMetaPlugin)
+        head.entries.get(active._i)!.input = loose(resolved)
+      }
+      return resolved
+    }),
+  } as any)
+  return active
+}
