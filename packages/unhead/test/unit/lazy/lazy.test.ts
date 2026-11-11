@@ -574,6 +574,29 @@ describe('lazy head createHead', () => {
     expect(head.load()).not.toBe(first)
   })
 
+  it('retries the load on a later change after a failed first render', async () => {
+    const dom = ssrDom(titled)
+    const onLoadError = vi.fn()
+    let fail = true
+    const render = vi.fn(() => {
+      if (fail)
+        throw new Error('render failed')
+    })
+    const head = createLazyHead({ document: dom.window.document, onLoadError, render })
+    head.push(titled)
+    head.render()
+    head.push({ title: 'First' })
+    await vi.waitFor(() => expect(onLoadError).toHaveBeenCalledTimes(1))
+    // a later change neither throws to the caller nor skips the retry
+    expect(() => head.push({ title: 'Second' })).not.toThrow()
+    await vi.waitFor(() => expect(onLoadError).toHaveBeenCalledTimes(2))
+    fail = false
+    render.mockClear()
+    head.push({ title: 'Third' })
+    await vi.waitFor(() => expect(render).toHaveBeenCalled())
+    expect(onLoadError).toHaveBeenCalledTimes(2)
+  })
+
   it('keeps the hook contract: unhook, ordered calls, and context mutation', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })

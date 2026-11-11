@@ -290,9 +290,15 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       }
       return true
     })
-    // a failed first render takes the same path as a failed import, so a later load retries
+    // a failed first render takes the same path as a failed import, so a later change or load retries
     .catch((error) => {
       loading = plugins = undefined
+      // the first render threw after the upgrade began, so restore the lazy head
+      if (!head._b) {
+        head._b = true
+        render = lazyRender
+        hooks.hook('entries:updated', onChange)
+      }
       ;(options.onLoadError || console.error)(error)
       return false
     })
@@ -305,7 +311,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
   // After hydration the server head is correct, so only a change loads the runtime.
-  render = () => {
+  const lazyRender: HeadRenderer<any> = () => {
     blocked = held = false
     if (hydrated && head.dirty)
       onChange()
@@ -313,6 +319,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       markHydrated()
     return false
   }
+  render = lazyRender
 
   hooks.hook('entries:updated', onChange)
   // `useScript` writes its script only once the runtime renders it
