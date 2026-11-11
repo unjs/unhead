@@ -401,6 +401,11 @@ export const organizationResolver
       node.numberOfEmployees = resolveRelation(node.numberOfEmployees, ctx, quantitativeValueResolver)
       if (node.url)
         node.url = resolveWithBase(ctx.meta.host, node.url)
+      // The identity also carries the host as its url when embedded in a relation
+      // resolved without `root: true` (e.g. a JobPosting hiringOrganization), as
+      // those never reach resolveRootNode.
+      if (resolveAsGraphKey(node['@id']) === IdentityId)
+        setIfEmpty(node, 'url', ctx.meta.host)
       return node
     },
     resolveRootNode(node, ctx) {

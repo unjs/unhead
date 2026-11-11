@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { organizationResolver } from '.'
-import { defineEvent, defineOrganization, defineWebPage, useSchemaOrg } from '../../'
+import { defineEvent, defineJobPosting, defineOrganization, defineWebPage, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
@@ -296,6 +296,31 @@ describe('defineOrganization', () => {
       const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
 
       expect(identity).toMatchObject({ url: 'https://example.com/' })
+    })
+  })
+
+  it('keeps the site host url on an embedded identity organization', async () => {
+    // A relation resolved without `root: true` never reaches resolveRootNode, so
+    // the identity url must also be assigned during the regular resolve pass.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          name: 'Engineer',
+          hiringOrganization: {
+            '@id': '#identity',
+            name: 'RankEval',
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const jobPosting = graph.find(node => node['@type'] === 'JobPosting')
+
+      expect(jobPosting?.hiringOrganization).toMatchObject({
+        '@type': 'Organization',
+        name: 'RankEval',
+        url: 'https://example.com/',
+      })
     })
   })
 })
