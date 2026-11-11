@@ -31,20 +31,30 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[][]): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[][], fail: (error: unknown) => void): Promise<HeadRenderer<any>> {
   await useLazyPlugins()
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
+  let rendered = false
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
   // Adoption waits for the first render that creates the DOM state, so a change after the
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    if (!head._dom && head.dirty) {
-      // Each pass keeps the cleanups of the pass before it. So the next render removes every
-      // element and attribute that any view of the server document has and the live entries lack.
-      if (!adoptionEntries().every(entries => adoptHydratedEntries(head, entries)))
-        return
+    try {
+      if (!head._dom && head.dirty) {
+        // Each pass keeps the cleanups of the pass before it. So the next render removes every
+        // element and attribute that any view of the server document has and the live entries lack.
+        if (!adoptionEntries().every(entries => adoptHydratedEntries(head, entries)))
+          return
+      }
+      rendered = renderDom(head) || rendered
     }
-    renderDom(head)
+    catch (error) {
+      // The first render runs in a timer after the load resolved. So its failure takes the
+      // load failure path, which restores the lazy head and lets a later change retry.
+      if (rendered)
+        throw error
+      fail(error)
+    }
   }, fn => setTimeout(fn, 0))
 }

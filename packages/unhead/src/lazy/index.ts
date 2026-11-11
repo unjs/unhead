@@ -20,7 +20,7 @@ export interface LazyHeadOptions extends CreateClientHeadOptions {
    */
   lazyPlugins?: () => Promise<HeadPluginInput[]>
   /**
-   * Called when the runtime fails to load. The default logs with `console.error`.
+   * Called when the runtime fails to load or its first render throws. The default logs with `console.error`.
    * A later change or `load()` tries again, but a browser may keep a failed `import()`
    * for this page. Use this to recover, for example with a reload on the next navigation.
    */
@@ -51,6 +51,8 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
   /**
    * Loads the runtime now. Safe to call more than once.
    * Resolves `false` if the load failed, and `onLoadError` receives the error.
+   * The default renderer renders first after this resolves. If that render throws,
+   * `onLoadError` receives the error, and a later change or `load()` tries again.
    */
   load: () => Promise<boolean>
   /**
@@ -285,11 +287,24 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   }
   render = lazyRender
 
+  // a failed first render takes the same path as a failed import, so a later change or load retries
+  const fail = (error: unknown) => {
+    loading = plugins = undefined
+    // the first render threw after the upgrade began, so restore the lazy head
+    if (!head._b) {
+      head._b = true
+      render = lazyRender
+      hooks.hook('entries:updated', onChange)
+    }
+    ;(options.onLoadError || console.error)(error)
+    return false
+  }
+
   head.load = () => loading ||= import('./runtime')
     .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => {
       const server = [...(hydrated || hydrationEntries.values())]
       return late.length ? [[...server, ...late], server] : [server]
-    }))
+    }, fail))
     .then((renderer) => {
       // the runtime adopts these at its first render
       hydrated ||= [...hydrationEntries.values()]
@@ -310,18 +325,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       }
       return true
     })
-    // a failed first render takes the same path as a failed import, so a later change or load retries
-    .catch((error) => {
-      loading = plugins = undefined
-      // the first render threw after the upgrade began, so restore the lazy head
-      if (!head._b) {
-        head._b = true
-        render = lazyRender
-        hooks.hook('entries:updated', onChange)
-      }
-      ;(options.onLoadError || console.error)(error)
-      return false
-    })
+    .catch(fail)
 
   head.blockLoad = () => {
     markHydrated()

@@ -39,7 +39,7 @@ function createHead(options?: LazyHeadOptions): LazyVueHead
 | --- | --- | --- |
 | `load` | `'change' \| 'idle'` | When the runtime loads after hydration. `'change'`, the default, loads on the first head change. `'idle'` loads at browser idle. |
 | `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager chunk. |
-| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk fails to load. The default logs with `console.error`. |
+| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk fails to load or its first render throws. The default logs with `console.error`. |
 
 A custom `render` option owns the document. With it, every change loads the runtime.
 
@@ -49,7 +49,7 @@ The head has the methods of the client head, plus these:
 
 | Method | Description |
 | --- | --- |
-| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. |
+| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. The default renderer renders first after `load()` resolves. If that render throws, `onLoadError` receives the error, and a later change or `load()` tries again. |
 | `blockLoad()` | Blocks the load during a navigation. The next `render()` releases it. A direct `load()` still runs. An idle load renders only after the release. |
 | `render()` | Before the runtime loads, it marks the end of hydration and releases a load block. If entries changed, it loads the runtime at once, unless a `dom:beforeRender` pause blocks it. After the runtime loads, it renders. |
 

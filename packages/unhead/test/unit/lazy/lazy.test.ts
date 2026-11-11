@@ -597,6 +597,40 @@ describe('lazy head createHead', () => {
     expect(onLoadError).toHaveBeenCalledTimes(2)
   })
 
+  it.each([false, true])('reports a failed first default render as a load error and retries (held: %s)', async (held) => {
+    const dom = ssrDom(titled)
+    const onLoadError = vi.fn()
+    const error = new Error('template failed')
+    let fail = true
+    const titleTemplate = (title?: string) => {
+      if (fail)
+        throw error
+      return `${title} | Site`
+    }
+    const head = createLazyHead({ document: dom.window.document, onLoadError })
+    head.push(titled)
+    head.render()
+    if (held) {
+      const loading = head.load()
+      head.blockLoad()
+      head.push({ titleTemplate })
+      expect(await loading).toBe(true)
+      await settle(30)
+      expect(onLoadError).not.toHaveBeenCalled()
+      head.render()
+    }
+    else {
+      head.push({ titleTemplate })
+    }
+    await vi.waitFor(() => expect(onLoadError).toHaveBeenCalledWith(error))
+    expect(dom.window.document.title).toBe('Server')
+    // the failed render is not cached as a load, so a later load renders again
+    fail = false
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Server | Site'))
+    expect(onLoadError).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps the hook contract: unhook, ordered calls, and context mutation', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
