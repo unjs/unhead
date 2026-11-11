@@ -1,7 +1,8 @@
 // Deep equality of head input against a copy from `copyInput`: plain objects, lists, and primitives.
 // The copy holds no plain object of the input, so the same object on both sides is one the copy
-// shares, such as a promise. It may have changed in place, so it counts as a change. A getter may
-// return a new value, so it counts as a change too. A `titleTemplate` or an event handler is a value.
+// shares, such as a promise. It may have changed in place, so it counts as a change. The copy holds
+// the value of a getter, so a getter in the input counts as a change too.
+// A `titleTemplate` or an event handler is a value.
 export function sameInput(a: any, b: any, key?: string): boolean {
   if (a === b)
     return typeof a === 'function' ? key === 'titleTemplate' || !!key?.startsWith('on') : !a || typeof a !== 'object'
@@ -13,11 +14,18 @@ export function sameInput(a: any, b: any, key?: string): boolean {
 
 // A copy of every plain object and list in head input, so an input that the app edits in place,
 // as a reactive object, keeps the values it had. Any other object stays shared.
-export function copyInput<T>(value: T): T {
+// A getter resolves now, with the rules of the resolver. A getter can return another value later,
+// so the copy keeps the value, and a hydrated copy keeps the tag that the server rendered.
+export function copyInput<T>(value: T, key?: string): T {
+  // the resolver leaves a schema.org node resolver as it is
+  if (key === '_resolver')
+    return value
+  if (typeof value === 'function' && key !== 'titleTemplate' && !key?.startsWith('on'))
+    value = value()
   if (!value || typeof value !== 'object' || (!Array.isArray(value) && (value as any).constructor !== Object))
     return value
   const out: any = Array.isArray(value) ? [] : {}
-  for (const key in value)
-    out[key] = copyInput((value as any)[key])
+  for (const k in value)
+    out[k] = copyInput((value as any)[k], k)
   return out
 }

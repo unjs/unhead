@@ -300,11 +300,12 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     return false
   }
 
+  // The comparison passes to the runtime, so the eager and runtime chunks share no module.
   head.load = () => loading ||= import('./runtime')
     .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => {
       const server = [...(hydrated || hydrationEntries.values())]
       return late.length ? [[...server, ...late], server] : [server]
-    }, fail))
+    }, fail, sameInput))
     .then((renderer) => {
       // the runtime adopts these at its first render
       hydrated ||= [...hydrationEntries.values()]

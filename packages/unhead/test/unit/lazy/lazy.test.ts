@@ -381,6 +381,20 @@ describe('lazy head createHead', () => {
     })
   })
 
+  it.each([
+    ['tag', (href: () => string): ResolvableHead => ({ link: [() => ({ rel: 'stylesheet', href: href() })] })],
+    ['prop', (href: () => string): ResolvableHead => ({ link: [{ rel: 'stylesheet', href }] })],
+  ] as const)('removes the server element when a %s getter changes its identity before load', async (_, input) => {
+    const dom = ssrDom({ link: [{ rel: 'stylesheet', href: '/a.css' }] })
+    const head = createLazyHead({ document: dom.window.document })
+    let href = '/a.css'
+    head.push(input(() => href))
+    head.render()
+    href = '/b.css'
+    expect(await head.load()).toBe(true)
+    await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual(['/b.css']))
+  })
+
   it('keeps an entry a plugin pushes during the adoption render', async () => {
     const dom = ssrDom(titled)
     let pushed = false

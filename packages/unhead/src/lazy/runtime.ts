@@ -31,7 +31,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[][], fail: (error: unknown) => void): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[][], fail: (error: unknown) => void, sameInput: (a: unknown, b: unknown) => boolean): Promise<HeadRenderer<any>> {
   await useLazyPlugins()
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
@@ -41,7 +41,9 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOpt
   // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
     try {
-      if (!head._dom && head.dirty) {
+      // A getter or a shared object can give another value than the server rendered, with no change.
+      // So the runtime also adopts when a hydrated copy differs from its live input.
+      if (!head._dom && (head.dirty || adoptionEntries()[0].some(e => !sameInput(e.input, head.entries.get(e._i)?.input)))) {
         // Each pass keeps the cleanups of the pass before it. So the next render removes every
         // element and attribute that any view of the server document has and the live entries lack.
         if (!adoptionEntries().every(entries => adoptHydratedEntries(head, entries)))
