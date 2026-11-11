@@ -1,7 +1,7 @@
 import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
-import { CompileTransform } from './CompileTransform'
+import { CompileTransform, resolveCompileOptions } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -30,7 +30,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   }
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
   const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts })
-  const compile = options.compile && framework === '@unhead/vue'
+  const compileOpts = resolveCompileOptions(options.compile, framework)
   // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
   // without compile renders, in its tag order. Compile takes the calls it leaves.
   if (seoMeta)
@@ -44,10 +44,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     }))
   }
   // Compile reads the minified inline content
-  if (compile) {
-    const compileOpts = typeof options.compile === 'object' ? options.compile : {}
+  if (compileOpts)
     plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths, ...compileOpts }))
-  }
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {

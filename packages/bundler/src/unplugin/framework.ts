@@ -2,7 +2,7 @@ import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPlugi
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
-import { CompileTransform } from './CompileTransform'
+import { CompileTransform, resolveCompileOptions } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -69,7 +69,7 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
   }
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
   const seoMeta = options.transformSeoMeta !== false && { instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } }
-  const compile = options.compile && framework === '@unhead/vue'
+  const compileOpts = resolveCompileOptions(options.compile, framework)
   // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
   // without compile renders, in its tag order. Compile takes the calls it leaves.
   if (seoMeta)
@@ -82,10 +82,8 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
     })
   }
   // Compile reads the minified inline content
-  if (compile) {
-    const compileOpts = typeof options.compile === 'object' ? options.compile : {}
+  if (compileOpts)
     defs.push({ instance: CompileTransform, options: { ...common, importPaths: seoMetaOpts.importPaths, ...compileOpts } })
-  }
 
   return defs
 }

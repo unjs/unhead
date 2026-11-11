@@ -16,7 +16,8 @@ const COMMONJS_RE = /\.c[jt]s$/
 const TOKEN_RE = /[]/
 const DYNAMIC_VALUE_JSON_RE = /"(\d+)"/g
 
-const RUNTIME = '@unhead/vue/compiled/server'
+const FRAMEWORK = '@unhead/vue'
+const RUNTIME = `${FRAMEWORK}/compiled/server`
 const WHOLE_DYNAMIC_VALUE_RE = /^\uE000\d+\uE001$/
 // the compiled tag flags of `unhead/compiled/server`
 const FLAG_DYNAMIC_VALUES = 4
@@ -52,6 +53,29 @@ let compiler: typeof import('unhead/compiled/server') | undefined
 
 async function loadCompiler(): Promise<void> {
   compiler ||= await import('unhead/compiled/server')
+}
+
+// A build that sets `compile` and cannot compile would do nothing with no sign, so it warns once per process
+const warned = /* @__PURE__ */ new Set<string>()
+function warnOnce(message: string) {
+  if (!warned.has(message)) {
+    warned.add(message)
+    console.warn(message)
+  }
+}
+
+/**
+ * The options of the compile transform, or nothing when the `compile` option is off or
+ * this framework cannot compile.
+ */
+export function resolveCompileOptions(compile: boolean | CompileTransformOptions | undefined, framework: string | undefined): CompileTransformOptions | undefined {
+  if (!compile)
+    return
+  if (framework !== FRAMEWORK) {
+    warnOnce(`[unhead] The \`compile\` option needs \`${FRAMEWORK}\`. With ${framework ? `\`${framework}\`` : 'this plugin'}, every head call stays as written.`)
+    return
+  }
+  return typeof compile === 'object' ? compile : {}
 }
 
 /**
@@ -456,6 +480,9 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
   const resolvesFromApp = meta?.framework === 'vite' || meta?.framework === 'rollup' || meta?.framework === 'rolldown'
   // Fallback for bundlers without a per-transform environment, as in `TreeshakeServerComposables`.
   let fallbackConsumer: BuildConsumer | undefined
+  // Only Vite tells this plugin which build is the server build
+  if (meta?.framework !== 'vite')
+    warnOnce(`[unhead] The \`compile\` option needs a Vite build. In this ${meta?.framework || 'unknown'} build, every head call stays as written.`)
 
   // A dependency compiles when `filter.include` names it, or when it is the runtime of a
   // Nuxt module. Its calls compile only if they import a head composable.
