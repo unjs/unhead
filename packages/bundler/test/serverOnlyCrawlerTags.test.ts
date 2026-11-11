@@ -107,6 +107,12 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     expect(calls(code)).toEqual([])
   })
 
+  it('removes getters, variables, and Vue computed values, which run no code when removed', async () => {
+    const code = await transform(`import { computed as c } from 'vue'
+useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.d), ogUrl: url, twitterTitle: 'a' + 1 })`)
+    expect(code).toBe(`import { computed as c } from 'vue'\n;`)
+  })
+
   it('keeps a call whose result is used, with the crawler tags removed', async () => {
     const code = await transform(`globalThis.__entry = useSeoMeta({ ogTitle: 'x' })`)
     expect(calls(code)).toEqual([{ name: 'useSeoMeta', input: {} }])
@@ -121,6 +127,15 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     ['a spread in a tag', `useHead({ meta: [{ name: 'description', ...rest }] })`],
     ['a value with a side effect', `useHead({ meta: [{ name: 'description', content: sideEffect() }] })`],
     ['a useSeoMeta value with a side effect', `useSeoMeta({ description: sideEffect() })`],
+    ['a property read, which can run a getter', `useSeoMeta({ ogTitle: page.title })`],
+    ['an optional property read', `useSeoMeta({ ogTitle: page?.title })`],
+    ['a local function named like a reactivity helper', `function ref(v) { sideEffect(); return v }\nuseSeoMeta({ ogTitle: ref('x') })`],
+    ['a reactivity helper from another package', `import { computed } from 'other-lib'\nuseSeoMeta({ ogTitle: computed(() => 'x') })`],
+    ['a translation call', `useSeoMeta({ ogTitle: t('og.title') })`],
+    ['toValue(), which calls a getter', `useSeoMeta({ ogTitle: toValue(getTitle) })`],
+    ['JSON.stringify() of a variable, which can reach toJSON()', `useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(schema) }] })`],
+    ['a template literal with a variable, which can call toString()', `useSeoMeta({ ogTitle: \`\${page} | Site\` })`],
+    ['a spread in a value', `useSeoMeta({ ogImage: { ...image } })`],
     ['a computed useSeoMeta key', `useSeoMeta({ [key]: 'x' })`],
     ['no crawler tags', `useHead({ title: 'x', meta: [{ name: 'theme-color', content: '#fff' }] })`],
     ['a link rel=alternate without hreflang', `useHead({ link: [{ rel: 'alternate', href: '/feed' }] })`],

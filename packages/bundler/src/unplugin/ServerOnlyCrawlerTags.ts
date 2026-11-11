@@ -18,18 +18,12 @@ const HEAD_NAMES = new Set(['useHead', 'useHeadSafe'])
 const SEO_META_NAMES = new Set(['useSeoMeta'])
 
 /**
- * Calls a crawler tag value may make and still be dropped: they read or wrap
- * a value and have no other effect. Any other call keeps the tag, because
+ * Vue calls a crawler tag value may make and still be dropped: they wrap a
+ * value and never call or read it. Any other call keeps the tag, because
  * removing it could remove a side effect.
  */
-const DROPPABLE_CALLS = new Set(['computed', 'ref', 'shallowRef', 'toRef', 'toValue', 'unref', 't', '$t', 'JSON.stringify'])
-
-function calleeName(callee: any): string | undefined {
-  if (callee.type === 'Identifier')
-    return callee.name
-  if (callee.type === 'MemberExpression' && !callee.computed && callee.object.type === 'Identifier' && callee.property.type === 'Identifier')
-    return `${callee.object.name}.${callee.property.name}`
-}
+const DROPPABLE_CALLS = new Set(['computed', 'ref', 'shallowRef'])
+const DROPPABLE_CALL_SOURCES = new Set(['vue', '#imports'])
 
 export interface ServerOnlyCrawlerTagsOptions extends BaseTransformerTypes {
   /**
@@ -61,13 +55,45 @@ function unwrap(node: any): any {
 }
 
 /**
- * Whether evaluating `node` can only produce a value. Removing a droppable
- * expression removes nothing a user can observe.
+ * Whether `node` is a literal value. Converting it to a string or JSON runs
+ * only built-in code, never a getter, `toString()`, or `toJSON()`.
  */
-function isDroppable(input: any): boolean {
+function isLiteral(input: any): boolean {
+  const node = unwrap(input)
+  switch (node?.type) {
+    case 'Literal':
+    case 'StringLiteral':
+    case 'NumericLiteral':
+    case 'BooleanLiteral':
+    case 'NullLiteral':
+      return true
+    case 'TemplateLiteral':
+      return node.expressions.every(isLiteral)
+    case 'UnaryExpression':
+      return node.operator === '-' && isLiteral(node.argument)
+    case 'ArrayExpression':
+      return node.elements.every((el: any) => !el || (el.type !== 'SpreadElement' && isLiteral(el)))
+    case 'ObjectExpression':
+      return node.properties.every((p: any) => p.type !== 'SpreadElement' && !p.computed && p.kind === 'init' && isLiteral(p.value))
+    default:
+      return false
+  }
+}
+
+/** Decides whether a call in a crawler tag value runs no user code. */
+type IsDroppableCall = (call: any) => boolean
+
+/**
+ * Whether evaluating `node` runs no user code. A property read can run a
+ * getter or a proxy trap, a spread runs an iterator, and converting a
+ * variable to a string can run `toString()`. Such an expression keeps the
+ * tag, so removing a droppable expression removes nothing a user can observe.
+ */
+function isDroppable(input: any, isDroppableCall: IsDroppableCall): boolean {
   const node = unwrap(input)
   if (!node)
     return true
+  const droppable = (n: any) => isDroppable(n, isDroppableCall)
   switch (node.type) {
     case 'Literal':
     case 'StringLiteral':
@@ -80,34 +106,33 @@ function isDroppable(input: any): boolean {
     case 'FunctionExpression':
       return true
     case 'TemplateLiteral':
-      return node.expressions.every(isDroppable)
-    case 'MemberExpression':
-      return isDroppable(node.object) && (!node.computed || isDroppable(node.property))
-    case 'ChainExpression':
-      return isDroppable(node.expression)
+      return node.expressions.every(isLiteral)
     case 'UnaryExpression':
-      return node.operator !== 'delete' && isDroppable(node.argument)
+      return node.operator === '!' || node.operator === 'typeof' || node.operator === 'void'
+        ? droppable(node.argument)
+        : node.operator !== 'delete' && isLiteral(node.argument)
     case 'BinaryExpression':
+      // Strict equality converts nothing. Other operators can convert an operand.
+      return node.operator === '===' || node.operator === '!=='
+        ? droppable(node.left) && droppable(node.right)
+        : node.operator !== 'in' && node.operator !== 'instanceof' && isLiteral(node.left) && isLiteral(node.right)
     case 'LogicalExpression':
-      return isDroppable(node.left) && isDroppable(node.right)
+      return droppable(node.left) && droppable(node.right)
     case 'ConditionalExpression':
-      return isDroppable(node.test) && isDroppable(node.consequent) && isDroppable(node.alternate)
+      return droppable(node.test) && droppable(node.consequent) && droppable(node.alternate)
     case 'ArrayExpression':
-      return node.elements.every((el: any) => !el || isDroppable(el.type === 'SpreadElement' ? el.argument : el))
+      return node.elements.every((el: any) => !el || (el.type !== 'SpreadElement' && droppable(el)))
     case 'ObjectExpression':
-      return node.properties.every((p: any) => p.type === 'SpreadElement'
-        ? isDroppable(p.argument)
-        : !p.computed && p.kind === 'init' && isDroppable(p.value))
+      return node.properties.every((p: any) => p.type !== 'SpreadElement' && !p.computed && p.kind === 'init' && droppable(p.value))
     case 'CallExpression':
-      return DROPPABLE_CALLS.has(calleeName(node.callee)!)
-        && node.arguments.every(isDroppable)
+      return isDroppableCall(node)
     default:
       return false
   }
 }
 
 /** Whether a `useHead` tag object is on the crawler tag list. Needs a static identity and no spread. */
-function isCrawlerTag(type: string, element: any): boolean {
+function isCrawlerTag(type: string, element: any, isDroppableCall: IsDroppableCall): boolean {
   const node = unwrap(element)
   if (node?.type !== 'ObjectExpression')
     return false
@@ -134,15 +159,15 @@ function isCrawlerTag(type: string, element: any): boolean {
   else if (type === 'script') {
     crawler = staticString(props.get('type'))?.toLowerCase() === 'application/ld+json'
   }
-  return crawler && [...props.values()].every(isDroppable)
+  return crawler && [...props.values()].every(v => isDroppable(v, isDroppableCall))
 }
 
 /** Whether a `useSeoMeta` property is on the crawler tag list. */
-function isCrawlerSeoMetaProp(prop: any): boolean {
+function isCrawlerSeoMetaProp(prop: any, isDroppableCall: IsDroppableCall): boolean {
   const key = staticKey(prop)
   if (key === undefined || key === 'title' || key === 'titleTemplate' || prop.method || prop.kind !== 'init')
     return false
-  return isCrawlerMetaKey(resolveMetaKeyValue(key)) && isDroppable(prop.value)
+  return isCrawlerMetaKey(resolveMetaKeyValue(key)) && isDroppable(prop.value, isDroppableCall)
 }
 
 /**
@@ -166,7 +191,7 @@ function removeListItems(s: MagicString, items: any[], remove: Set<any>) {
 type StripResult = 'unchanged' | 'stripped' | 'empty'
 
 /** Strips crawler tags from a `useHead` input object. */
-function stripHeadObject(s: MagicString, obj: any): StripResult {
+function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
   const removeProps = new Set<any>()
   let changed = false
   for (const prop of obj.properties) {
@@ -177,7 +202,7 @@ function stripHeadObject(s: MagicString, obj: any): StripResult {
     // A hole (`[, tag]`) has no node to find a separator from, so the list stays.
     if (arr?.type !== 'ArrayExpression' || !arr.elements.length || arr.elements.includes(null))
       continue
-    const removeEls = new Set(arr.elements.filter((el: any) => el.type !== 'SpreadElement' && isCrawlerTag(key, el)))
+    const removeEls = new Set(arr.elements.filter((el: any) => el.type !== 'SpreadElement' && isCrawlerTag(key, el, isDroppableCall)))
     if (!removeEls.size)
       continue
     changed = true
@@ -193,8 +218,8 @@ function stripHeadObject(s: MagicString, obj: any): StripResult {
 }
 
 /** Strips crawler keys from a `useSeoMeta` input object. */
-function stripSeoMetaObject(s: MagicString, obj: any): StripResult {
-  const removeProps = new Set(obj.properties.filter(isCrawlerSeoMetaProp))
+function stripSeoMetaObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
+  const removeProps = new Set(obj.properties.filter((p: any) => isCrawlerSeoMetaProp(p, isDroppableCall)))
   if (!removeProps.size)
     return 'unchanged'
   removeListItems(s, obj.properties, removeProps)
@@ -266,26 +291,35 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
         // Calls nested in code this pass removed must not be edited again.
         let removedUntil = -1
 
+        /** The exported name `local` refers to, when imported from a source `isSource` accepts or auto-imported. */
+        function importedName(local: string, isSource: (source: unknown) => boolean): string | undefined {
+          const decl = scopeTracker.getDeclaration(local)
+          // No declaration in scope: an auto-import (e.g. Nuxt).
+          if (!decl)
+            return local
+          if (decl instanceof ScopeTrackerImport && isSource(decl.importNode.source.value) && decl.node.type === 'ImportSpecifier' && decl.node.imported.type === 'Identifier')
+            return decl.node.imported.name
+        }
+
+        function isDroppableCall(call: any): boolean {
+          const { callee } = call
+          // `JSON.stringify()` of a literal never reaches a getter or `toJSON()`.
+          if (callee.type === 'MemberExpression' && !callee.computed && callee.object.type === 'Identifier' && callee.object.name === 'JSON' && callee.property.name === 'stringify')
+            return !scopeTracker.getDeclaration('JSON') && call.arguments.every(isLiteral)
+          return callee.type === 'Identifier'
+            && DROPPABLE_CALLS.has(importedName(callee.name, source => DROPPABLE_CALL_SOURCES.has(source as string))!)
+            && call.arguments.every((a: any) => isDroppable(a, isDroppableCall))
+        }
+
         walk(ast.program, {
           scopeTracker,
           enter(node: any, parent: any) {
             if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier' || node.start < removedUntil)
               return
 
-            const decl = scopeTracker.getDeclaration(node.callee.name)
-            let name: string
-            if (decl instanceof ScopeTrackerImport) {
-              if (!isValidPackage(decl.importNode.source.value) || decl.node.type !== 'ImportSpecifier' || decl.node.imported.type !== 'Identifier')
-                return
-              name = decl.node.imported.name
-            }
-            else if (!decl) {
-              // No declaration in scope: an auto-import (e.g. Nuxt).
-              name = node.callee.name
-            }
-            else {
+            const name = importedName(node.callee.name, isValidPackage)
+            if (!name)
               return
-            }
 
             const isSeoMeta = SEO_META_NAMES.has(name)
             if (!isSeoMeta && !HEAD_NAMES.has(name))
@@ -295,12 +329,12 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
             if (!obj)
               return
 
-            const result = isSeoMeta ? stripSeoMetaObject(s, obj) : stripHeadObject(s, obj)
+            const result = isSeoMeta ? stripSeoMetaObject(s, obj, isDroppableCall) : stripHeadObject(s, obj, isDroppableCall)
             if (result !== 'unchanged')
               removedUntil = node.end
             // A call with nothing left goes, so its runtime can drop from the bundle.
             // The options argument is ignored then: it only applies to the input.
-            if (result === 'empty' && parent?.type === 'ExpressionStatement' && node.arguments.slice(1).every(isDroppable))
+            if (result === 'empty' && parent?.type === 'ExpressionStatement' && node.arguments.slice(1).every((a: any) => isDroppable(a, isDroppableCall)))
               s.overwrite(parent.start, parent.end, ';')
           },
         })
