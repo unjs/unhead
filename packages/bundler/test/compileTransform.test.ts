@@ -373,6 +373,8 @@ useHead(headData)`)
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: dynamicValue(0) }, 1), ['V'], { head, seoMeta: true }] },
     ])
     expect(transform(`${IMPORTS}useHead({ title: 'T' }, { seoMeta: false })`)).toBeUndefined()
+    // a marker the build cannot read stays with v3
+    expect(transform(`${IMPORTS}useHead({ title: 'T' }, { seoMeta: flag })`)).toBeUndefined()
   })
 
   // an auto import resolves the head of the integration, which the marker must not replace
