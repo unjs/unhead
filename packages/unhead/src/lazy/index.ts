@@ -265,6 +265,18 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     return active
   }
 
+  // Frameworks call this when hydration ends, and again when a paused page is ready.
+  // After hydration the server head is correct, so only a change loads the runtime.
+  const lazyRender: HeadRenderer<any> = () => {
+    blocked = held = false
+    if (hydrated && head.dirty)
+      onChange()
+    else
+      markHydrated()
+    return false
+  }
+  render = lazyRender
+
   head.load = () => loading ||= import('./runtime')
     .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => {
       const server = [...(hydrated || hydrationEntries.values())]
@@ -308,18 +320,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     blocked = true
     held = !!loading && !!head._b
   }
-
-  // Frameworks call this when hydration ends, and again when a paused page is ready.
-  // After hydration the server head is correct, so only a change loads the runtime.
-  const lazyRender: HeadRenderer<any> = () => {
-    blocked = held = false
-    if (hydrated && head.dirty)
-      onChange()
-    else
-      markHydrated()
-    return false
-  }
-  render = lazyRender
 
   hooks.hook('entries:updated', onChange)
   // `useScript` writes its script only once the runtime renders it
