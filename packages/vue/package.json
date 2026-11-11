@@ -80,6 +80,10 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -128,6 +132,9 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "lazy": [
+        "dist/lazy"
       ]
     }
   },

@@ -93,6 +93,10 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -147,6 +151,9 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "lazy": [
+        "dist/lazy.d.ts"
       ]
     }
   },
