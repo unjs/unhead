@@ -210,6 +210,7 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
     ['toValue(), which calls a getter', `useSeoMeta({ ogTitle: toValue(getTitle) })`],
     ['JSON.stringify() of a variable, which can reach toJSON()', `useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(schema) }] })`],
     ['a template literal with a variable, which can call toString()', `useSeoMeta({ ogTitle: \`\${page} | Site\` })`],
+    ['a getter in a tag', `useHead({ meta: [{ name: 'description', get content() { return sideEffect() } }] })`],
     ['a spread in a value', `useSeoMeta({ ogImage: { ...image } })`],
     ['a computed useSeoMeta key', `useSeoMeta({ [key]: 'x' })`],
     ['no crawler tags', `useHead({ title: 'x', meta: [{ name: 'theme-color', content: '#fff' }] })`],

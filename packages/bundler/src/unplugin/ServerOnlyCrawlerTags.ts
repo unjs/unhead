@@ -147,8 +147,9 @@ function isCrawlerTag(type: string, element: any, isDroppableCall: IsDroppableCa
     // A spread or computed key could override the identity, so the tag stays.
     if (key === undefined)
       return false
+    // The head reads a getter on the client, so a tag with one stays.
     // A repeated key still evaluates its earlier value, so every value is checked.
-    if (!isDroppable(p.value, isDroppableCall))
+    if (p.kind !== 'init' || !isDroppable(p.value, isDroppableCall))
       return false
     props.set(key, p.value)
   }
