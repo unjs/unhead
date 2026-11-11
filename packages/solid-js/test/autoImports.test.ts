@@ -6,15 +6,15 @@ import * as packageEntry from '../src/index'
 import * as pluginsFacade from '../src/plugins'
 import * as utilsFacade from '../src/utils'
 
-// Guards src/autoImports.ts: the table drives auto-imports for `@unhead/solid`
+// Guards src/autoImports.ts: the table drives auto-imports for `@unhead/solid-js`
 // and must never drift from what the package entry actually exports.
 describe('hookImports', () => {
-  it('targets the @unhead/solid module only', () => {
-    expect(Object.keys(hookImports)).toEqual(['@unhead/solid'])
+  it('targets the @unhead/solid-js module only', () => {
+    expect(Object.keys(hookImports)).toEqual(['@unhead/solid-js'])
   })
 
   it('lists the composable names auto-imports should register', () => {
-    expect(hookImports['@unhead/solid']).toEqual([
+    expect(hookImports['@unhead/solid-js']).toEqual([
       'useUnhead',
       'useHead',
       'useSeoMeta',
@@ -23,7 +23,7 @@ describe('hookImports', () => {
   })
 
   it('only lists names the package entry actually exports', () => {
-    for (const name of hookImports['@unhead/solid']) {
+    for (const name of hookImports['@unhead/solid-js']) {
       expect((packageEntry as Record<string, unknown>)[name]).toBeTypeOf('function')
     }
   })

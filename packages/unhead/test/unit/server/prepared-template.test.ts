@@ -116,7 +116,10 @@ describe('prepareTemplate', () => {
         hooks: {
           'entries:resolve': ({ entries }) => {
             const templateEntry = entries.find(entry => entry._i === 0)
-            templateEntry!.input.meta[0].content = 'request-one'
+            const meta = templateEntry?.input.meta
+            if (!Array.isArray(meta) || !meta[0] || typeof meta[0] !== 'object')
+              throw new TypeError('expected an extracted meta entry')
+            meta[0].content = 'request-one'
           },
         },
       })
