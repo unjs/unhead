@@ -240,7 +240,7 @@ describe('lazy head createHead', () => {
     const head = createLazyHead({ document: dom.window.document })
     const titleTemplate = (t?: string) => t || 'Site'
     const onload = () => {}
-    const input = () => ({ title: 'Server', titleTemplate, link: [{ rel: 'stylesheet', href: '/a.css', onload }] })
+    const input = (): ResolvableHead => ({ title: 'Server', titleTemplate, link: [{ rel: 'stylesheet', href: '/a.css', onload }] })
     const entry = head.push(input())
     const load = vi.spyOn(head, 'load')
     entry.patch(input())
