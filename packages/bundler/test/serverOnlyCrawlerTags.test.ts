@@ -36,6 +36,22 @@ function calls(code: string | undefined): { name: string, input: unknown }[] {
   return out
 }
 
+/** Runs `code` through the runtime plugin, then evaluates it and returns the inputs each `createHead()` received. */
+async function runRuntime(code: string, consumer: 'client' | 'server' = 'client') {
+  const res = await runTransform(ServerOnlyCrawlerTagsRuntime.vite({}) as any, code, 'node_modules/@unhead/vue/dist/client.mjs', env(consumer))
+  const out = (res?.code ?? code)
+    .replace(/import \{([^}]+)\} from '([^']+)';?/g, (_: string, names: string, source: string) => `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
+    .replace(/import \* as (\w+) from '([^']+)';?/g, (_: string, name: string, source: string) => `const ${name} = modules[${JSON.stringify(source)}];`)
+  const received: any[] = []
+  // eslint-disable-next-line no-new-func
+  new Function('modules', out)({
+    'unhead/client': { createHead: (o: any) => received.push(o) },
+    'unhead/plugins': { ServerOnlyCrawlerTagsPlugin: 'crawler' },
+    'other': { createHead: (o: any) => received.push(o) },
+  })
+  return received
+}
+
 describe('serverOnlyCrawlerTags', () => {
   it('removes crawler keys from useSeoMeta and keeps the rest', async () => {
     const code = await transform(`useSeoMeta({
@@ -192,24 +208,21 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
   })
 
   it('adds the crawler tag plugin to every client createHead() from unhead/client', async () => {
-    const run = async (code: string, consumer: 'client' | 'server' = 'client') => {
-      const res = await runTransform(ServerOnlyCrawlerTagsRuntime.vite({}) as any, code, 'node_modules/@unhead/vue/dist/client.mjs', env(consumer))
-      const out = (res?.code ?? code)
-        .replace(/import \{([^}]+)\} from '([^']+)';?/g, (_: string, names: string, source: string) => `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
-      const received: any[] = []
-      // eslint-disable-next-line no-new-func
-      new Function('modules', out)({
-        'unhead/client': { createHead: (o: any) => received.push(o) },
-        'unhead/plugins': { ServerOnlyCrawlerTagsPlugin: 'crawler' },
-        'other': { createHead: (o: any) => received.push(o) },
-      })
-      return received
-    }
-    expect(await run(`import { createHead } from 'unhead/client'\ncreateHead()`)).toEqual([{ plugins: ['crawler'] }])
-    expect(await run(`import { createHead as _c } from 'unhead/client'\nconst options = { plugins: ['own'] }\n_c({ render: 1, ...options })`))
+    expect(await runRuntime(`import { createHead } from 'unhead/client'\ncreateHead()`)).toEqual([{ plugins: ['crawler'] }])
+    expect(await runRuntime(`import { createHead as _c } from 'unhead/client'\nconst options = { plugins: ['own'] }\n_c({ render: 1, ...options })`))
       .toEqual([{ render: 1, plugins: ['own', 'crawler'] }])
-    expect(await run(`import { createHead } from 'unhead/client'\ncreateHead({ document: 1 })`, 'server')).toEqual([{ document: 1 }])
-    expect(await run(`import { createHead } from 'other'\ncreateHead({ document: 1 })`)).toEqual([{ document: 1 }])
+    expect(await runRuntime(`import { createHead } from 'unhead/client'\ncreateHead({ document: 1 })`, 'server')).toEqual([{ document: 1 }])
+    expect(await runRuntime(`import { createHead } from 'other'\ncreateHead({ document: 1 })`)).toEqual([{ document: 1 }])
+  })
+
+  it('adds the crawler tag plugin to createHead() called through a namespace import', async () => {
+    expect(await runRuntime(`import * as unhead from 'unhead/client'\nunhead.createHead({ document: 1 })`))
+      .toEqual([{ document: 1, plugins: ['crawler'] }])
+  })
+
+  it('keeps the input of a local function that shadows the imported createHead()', async () => {
+    expect(await runRuntime(`import { createHead } from 'unhead/client'\nfunction make(createHead) { createHead({ document: 1 }) }\nmake(modules.other.createHead)`))
+      .toEqual([{ document: 1 }])
   })
 
   it('registers the runtime plugin only with the option on', () => {

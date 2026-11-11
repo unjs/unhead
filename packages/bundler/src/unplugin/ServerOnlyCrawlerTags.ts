@@ -395,20 +395,34 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
       handler(code, id) {
         if (resolveBuildConsumer(this, fallbackConsumer) !== 'client' || !code.includes(CLIENT_SOURCE))
           return
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
+        const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
-        const locals = new Set<string>()
-        parseAndWalkSource(code, id, {
+        scopeTracker.freeze()
+
+        /** The `unhead/client` import specifier `local` refers to at this point of the walk. */
+        function clientImport(local: string): any {
+          const decl = scopeTracker.getDeclaration(local)
+          if (decl instanceof ScopeTrackerImport && decl.importNode.source.value === CLIENT_SOURCE)
+            return decl.node
+        }
+
+        /** Whether `callee` is `createHead` from `unhead/client`: a named import or a namespace member. */
+        function isClientCreateHead(callee: any): boolean {
+          if (callee.type === 'Identifier') {
+            const spec = clientImport(callee.name)
+            return spec?.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === 'createHead'
+          }
+          return callee.type === 'MemberExpression'
+            && callee.object.type === 'Identifier'
+            && clientImport(callee.object.name)?.type === 'ImportNamespaceSpecifier'
+            && (callee.computed ? callee.property.value : callee.property.name) === 'createHead'
+        }
+
+        walk(ast.program, {
+          scopeTracker,
           enter(node: any) {
-            if (node.type === 'ImportDeclaration') {
-              if (node.source.value !== CLIENT_SOURCE)
-                return
-              for (const spec of node.specifiers) {
-                if (spec.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === 'createHead')
-                  locals.add(spec.local.name)
-              }
-              return
-            }
-            if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier' || !locals.has(node.callee.name))
+            if (node.type !== 'CallExpression' || !isClientCreateHead(node.callee))
               return
             const [arg] = node.arguments
             if (!arg) {
