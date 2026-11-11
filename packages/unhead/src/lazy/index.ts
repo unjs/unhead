@@ -229,6 +229,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     let queued = false
     active.patch = (next) => {
       if (loading || !head.entries.has(active._i)) {
+        lastRef = next
         patch(next)
       }
       else if (next !== lastRef) {
@@ -245,7 +246,8 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
         queued = true
         queueMicrotask(() => {
           queued = false
-          if (!head.entries.has(active._i) || sameInput(last, next))
+          // a patch with another object since then is newer, so this edit must not overwrite it
+          if (next !== lastRef || !head.entries.has(active._i) || sameInput(last, next))
             return
           last = copyInput(next)
           const entry = hydrationEntries.get(active._i)

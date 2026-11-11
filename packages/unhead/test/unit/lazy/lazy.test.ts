@@ -203,6 +203,24 @@ describe('lazy head createHead', () => {
     await vi.waitFor(() => expect(dom.window.document.title).toBe('Changed'))
   })
 
+  it.each(['before', 'after'] as const)('keeps a newer patch over an in-place edit queued %s the load starts', async (when) => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(titled)
+    head.render()
+    // the same input as the entry, so this patch changes nothing yet
+    const input = { ...titled }
+    entry.patch(input)
+    input.title = 'Edited'
+    entry.patch(input)
+    if (when === 'after')
+      head.push({ meta: [{ name: 'other', content: 'yes' }] })
+    entry.patch({ ...titled, title: 'Newer' })
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Newer'))
+    await settle(30)
+    expect(dom.window.document.title).toBe('Newer')
+  })
+
   it('treats a push from an entries:updated hook during hydration as server rendered', async () => {
     const dom = ssrDom(titled, { meta: [{ name: 'nested', content: 'yes' }] })
     let nested = false
