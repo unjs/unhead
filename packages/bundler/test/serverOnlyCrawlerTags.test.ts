@@ -116,6 +116,8 @@ useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@
     ['a dynamic input', `useHead(input)`],
     ['a dynamic tag list', `useHead({ meta: computed(() => [{ name: 'description', content: 'x' }]) })`],
     ['a dynamic meta name', `useHead({ meta: [{ name: key, content: 'x' }] })`],
+    ['a dynamic meta name beside a crawler property', `useHead({ meta: [{ name: key, property: 'og:title', content: 'x' }] })`],
+    ['a dynamic hreflang', `useHead({ link: [{ rel: 'alternate', hreflang: lang, href: '/feed' }] })`],
     ['a spread in a tag', `useHead({ meta: [{ name: 'description', ...rest }] })`],
     ['a value with a side effect', `useHead({ meta: [{ name: 'description', content: sideEffect() }] })`],
     ['a useSeoMeta value with a side effect', `useSeoMeta({ description: sideEffect() })`],

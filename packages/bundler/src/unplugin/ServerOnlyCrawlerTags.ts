@@ -120,13 +120,16 @@ function isCrawlerTag(type: string, element: any): boolean {
     props.set(key, p.value)
   }
   let crawler = false
+  // Every attribute the runtime check reads must be static. A dynamic one
+  // could resolve to a browser-facing tag, which must stay.
   if (type === 'meta') {
-    const name = staticString(props.get('name')) ?? staticString(props.get('property'))
+    // `name` wins over `property` at runtime, as in `isCrawlerTag()` from `unhead/utils`.
+    const name = staticString(props.get(props.has('name') ? 'name' : 'property'))
     crawler = name !== undefined && isCrawlerMetaKey(name)
   }
   else if (type === 'link') {
     const rel = staticString(props.get('rel'))?.toLowerCase()
-    crawler = rel === 'canonical' || (rel === 'alternate' && props.has('hreflang'))
+    crawler = rel === 'canonical' || (rel === 'alternate' && staticString(props.get('hreflang')) !== undefined)
   }
   else if (type === 'script') {
     crawler = staticString(props.get('type'))?.toLowerCase() === 'application/ld+json'
