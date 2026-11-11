@@ -170,7 +170,10 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
         // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
         // eslint-disable-next-line node/prefer-global/process
         else if (process.env.NODE_ENV !== 'production') {
-          import('./devCheck').then(m => m.checkHydratedHead(head, document, useLazyPlugins, sources, () => !!loading))
+          import('./devCheck')
+            .then(m => m.checkHydratedHead(head, document, useLazyPlugins, sources, () => !!loading))
+            // the check is advisory: its failure, such as a failing lazy plugin loader, must not reject unhandled
+            .catch(error => console.warn('[unhead] The lazy head dev check failed.', error))
         }
       }
     }

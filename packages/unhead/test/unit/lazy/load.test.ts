@@ -172,4 +172,18 @@ describe('dev warning', () => {
     await settle()
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it('reports a failing lazy plugin loader as a warning, not an unhandled rejection', async () => {
+    const rejections: unknown[] = []
+    const onRejection = (reason: unknown) => rejections.push(reason)
+    process.on('unhandledRejection', onRejection)
+    try {
+      const { messages } = await warningsAfterHydration([page], [page], { lazyPlugins: () => Promise.reject(new Error('chunk failed')) })
+      expect(rejections).toEqual([])
+      expect(messages).toEqual([expect.stringContaining('[unhead]')])
+    }
+    finally {
+      process.off('unhandledRejection', onRejection)
+    }
+  })
 })
