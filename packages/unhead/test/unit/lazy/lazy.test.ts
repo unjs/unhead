@@ -263,6 +263,19 @@ describe('lazy head createHead', () => {
     await vi.waitFor(() => expect(dom.window.document.querySelector('script[type="application/ld+json"]')?.textContent).toContain('"B"'))
   })
 
+  it('removes the SSR stylesheet of an entry pushed and patched during a load block', async () => {
+    const sheet = (href: string): ResolvableHead => ({ link: [{ rel: 'stylesheet', href }] })
+    const dom = ssrDom(titled, sheet('/server.css'))
+    const head = createLazyHead({ document: dom.window.document })
+    head.push(titled)
+    head.render()
+    head.blockLoad()
+    const entry = head.push(sheet('/server.css'))
+    entry.patch(sheet('/client.css'))
+    head.render()
+    await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual(['/client.css']))
+  })
+
   it('treats a push from an entries:updated hook during hydration as server rendered', async () => {
     const dom = ssrDom(titled, { meta: [{ name: 'nested', content: 'yes' }] })
     let nested = false
