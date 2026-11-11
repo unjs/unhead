@@ -12,7 +12,7 @@ const compiledTags = [
 async function doHead() {
   const head = createHead()
 
-  useCompiledHead(compiledTags as any, undefined, { head })
+  useCompiledHead(compiledTags as any, undefined, undefined, { head })
 
   return renderSSRHead(head)
 }

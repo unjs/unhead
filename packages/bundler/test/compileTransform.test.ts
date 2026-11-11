@@ -30,6 +30,9 @@ function compiledTagsOf(input: any, dynamicValues = 0) {
 
 interface Call { fn: string, args: any[] }
 
+// the place of the loose input of a call: a function of its values
+const LOOSE = expect.any(Function)
+
 // Runs a module body with each named import bound to a recorder, so a test reads
 // what every head call received at runtime.
 function run(code: string, globals: Record<string, unknown> = {}): { calls: Call[], exports: Record<string, any> } {
@@ -87,6 +90,7 @@ describe('compile transform', () => {
       fn: 'useCompiledHead',
       args: [
         compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }], link: [{ rel: 'canonical', href: dynamicValue(2) }] }, 3),
+        LOOSE,
         ['Name', 'Description', '/a'],
       ],
     })
@@ -100,13 +104,13 @@ describe('compile transform', () => {
     }
     const result = calls(transform(`${IMPORTS}useHead({ meta: [{ name: 'a', content: at('1') }], title: at('2') }, { head: at('3') })`), { at })
     expect(log).toEqual(['1', '2', '3'])
-    expect(result[0]!.args.slice(1)).toEqual([['1', '2'], { head: '3' }])
+    expect(result[0]!.args.slice(2)).toEqual([['1', '2'], { head: '3' }])
   })
 
   it('passes refs and getters through unresolved', () => {
     const title = { value: 'ref' }
     const result = calls(transform(`${IMPORTS}useHead({ title, meta: [{ name: 'description', content: () => title.value }] })`), { title })
-    const [, values] = result[0]!.args
+    const [, , values] = result[0]!.args
     expect(values[0]).toBe(title)
     expect(values[1]).toBeTypeOf('function')
   })
@@ -114,13 +118,13 @@ describe('compile transform', () => {
   it('keeps a static options argument holding only head', () => {
     const head = {}
     const result = calls(transform(`${IMPORTS}useHead({ title: 'A' }, { head })`), { head })
-    expect(result[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head }])
+    expect(result[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, undefined, { head }])
   })
 
   it('unwraps as const and satisfies', () => {
     const code = transform(`${IMPORTS}const title = 'T' as const\nuseHead({ title: title as string, meta: [{ name: 'x', content: 'y' } as const] } satisfies object)`, '/src/page.ts')
     const result = calls(stripTypeScriptTypes(code!))
-    expect(result[0]!.args).toEqual([compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'x', content: 'y' }] }, 1), ['T']])
+    expect(result[0]!.args).toEqual([compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'x', content: 'y' }] }, 1), LOOSE, ['T']])
   })
 
   it('compiles what <script setup> compiles to', () => {
@@ -151,7 +155,7 @@ return (_ctx,_push,_parent,_attrs) => {
     expect(result.map(call => call.fn)).toEqual(['defineComponent'])
     exports.default.setup()
     expect(result.map(call => call.fn)).toEqual(['defineComponent', 'ref', 'useCompiledHead', 'useCompiledSeoMeta'])
-    expect(result[2]!.args).toEqual([compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }] }, 2), ['Hello', 'x']])
+    expect(result[2]!.args).toEqual([compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }] }, 2), LOOSE, ['Hello', 'x']])
   })
 
   // A project can replace an auto import with its own function, and the transform cannot see that
@@ -168,8 +172,8 @@ return (_ctx,_push,_parent,_attrs) => {
   it('compiles the auto-import shape and lets the auto-imported injectHead pick the head', () => {
     const code = transform(`function setup() { useHead({ title: 'A' }) }\nsetup()`, undefined, server, { autoImports: ['useHead'] })
     const head = {}
-    expect(calls(code, { injectHead: () => head })[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head }])
-    expect(calls(code)[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head: undefined }])
+    expect(calls(code, { injectHead: () => head })[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, undefined, { head }])
+    expect(calls(code)[0]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, undefined, { head: undefined }])
   })
 
   it('compiles an aliased import', () => {
@@ -182,14 +186,14 @@ return (_ctx,_push,_parent,_attrs) => {
     expect(transform(code)).toBeUndefined()
     const head = {}
     expect(calls(transform(code, undefined, server, { importPaths: ['~/head'] }), { injectHead: () => head })[0]!.args)
-      .toEqual([compiledTagsOf({ title: 'A' }), undefined, { head }])
+      .toEqual([compiledTagsOf({ title: 'A' }), undefined, undefined, { head }])
   })
 
   it('compiles imports from nuxt/app by default', () => {
     const code = transform(`import { injectHead, useHead } from 'nuxt/app'\nuseHead({ title: 'A' })`)
     // the recorder stands in for injectHead, so the head is what it returns
     expect(calls(code).map(call => call.fn)).toEqual(['injectHead', 'useCompiledHead'])
-    expect(calls(code)[1]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head: undefined }])
+    expect(calls(code)[1]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, undefined, { head: undefined }])
   })
 
   // a file with no auto import, such as the runtime of a module, has no `injectHead` in scope
@@ -200,7 +204,7 @@ return (_ctx,_push,_parent,_attrs) => {
     const local = transform(`import { useHead } from 'nuxt/app'\nconst injectHead = () => 'local'\nuseHead({ title: 'A' })`)
     expect(calls(local)).toEqual([
       { fn: 'injectHead', args: [] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' }), undefined, { head: undefined }] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' }), undefined, undefined, { head: undefined }] },
     ])
   })
 
@@ -220,7 +224,7 @@ return (_ctx,_push,_parent,_attrs) => {
     expect(calls(transform(code, undefined, server, { autoImports: ['useHead'] })).map(call => call.fn))
       .toEqual(['injectHead', 'useCompiledHead', 'useSeoMeta'])
     expect(calls(transform(code, undefined, server, { importPaths: ['#imports'] })).map(call => call.fn))
-      .toEqual(['injectHead', 'useCompiledHead', 'injectHead', 'useCompiledHead'])
+      .toEqual(['injectHead', 'useCompiledHead', 'injectHead', 'useCompiledSeoMeta'])
   })
 
   // Nuxt UI keeps its head input in a const before the call
@@ -230,7 +234,7 @@ const headData = { style: [{ innerHTML: root, id: 'colors' }], title: 'T' }
 useHead(headData)`)
     expect(code).not.toContain('useHead(headData)')
     const result = calls(code)
-    expect(result[0]!.args).toEqual([compiledTagsOf({ style: [{ innerHTML: dynamicValue(0), id: 'colors' }], title: 'T' }, 1), [{ value: 'a' }]])
+    expect(result[0]!.args).toEqual([compiledTagsOf({ style: [{ innerHTML: dynamicValue(0), id: 'colors' }], title: 'T' }, 1), LOOSE, [{ value: 'a' }]])
   })
 
   it.each([
@@ -252,7 +256,7 @@ useHead(headData)`)
     expect(result[0]!.fn).toBe('useCompiledHead')
     expect(result[0]!.args[0]).toEqual(compiledTagsOf({ title: dynamicValue(0), meta: [{ name: 'description', content: dynamicValue(1) }, { name: 'robots', content: 'index' }] }, 2))
     expect(reads).toBe(0)
-    expect(result[0]!.args[1]()).toEqual(['1', '2'])
+    expect(result[0]!.args[2]()).toEqual(['1', '2'])
   })
 
   it('keeps the statements of a getter input that returns its object last', () => {
@@ -261,8 +265,8 @@ useHead(headData)`)
   return { title, link: [{ rel: 'canonical', href: \`/\${title}\` }] }
 }, { head })`), { page: { title: 'a' }, head: 'h' })
     expect(result[0]!.args[0]).toEqual(compiledTagsOf({ title: dynamicValue(0), link: [{ rel: 'canonical', href: dynamicValue(1) }] }, 2))
-    expect(result[0]!.args[1]()).toEqual(['a', '/a'])
-    expect(result[0]!.args[2]).toEqual({ head: 'h' })
+    expect(result[0]!.args[2]()).toEqual(['a', '/a'])
+    expect(result[0]!.args[3]).toEqual({ head: 'h' })
   })
 
   it('compiles a static getter input to compiled tags only', () => {
@@ -347,14 +351,31 @@ useHead(headData)`)
     const result = calls(transform(`${IMPORTS}useServerHead({ title: 'A' })\nuseServerSeoMeta({ description: 'B' })`))
     expect(result).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' })] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] })] },
+      { fn: 'useCompiledSeoMeta', args: [compiledTagsOf({ meta: [{ name: 'description', content: 'B' }] }), LOOSE] },
     ])
   })
 
   it('expands a static useSeoMeta call at build time', () => {
     const flat = { description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] }
     const result = calls(transform(`${IMPORTS}useSeoMeta({ title: 'T', description: 'D', ogImage: { url: '/a.png', width: 1200 }, robots: { index: true, maxSnippet: -1 }, themeColor: [{ content: 'red', media: 'x' }] })`))
-    expect(result[0]).toEqual({ fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) })] })
+    expect(result[0]).toEqual({ fn: 'useCompiledSeoMeta', args: [compiledTagsOf({ title: 'T', meta: unpackMeta(flat as any) }), LOOSE] })
+    // the input v3 `useSeoMeta` pushes, with the title keys it always sets
+    const loose = result[0]!.args[1]([])
+    expect(loose).toEqual({ title: 'T', _flatMeta: flat })
+    expect(Object.keys(loose)).toEqual(['title', 'titleTemplate', '_flatMeta'])
+  })
+
+  it('passes the input as written, as a function of the values', () => {
+    const result = calls(transform(`${IMPORTS}useHead({ title: name, link: [{ rel: 'alternate', hrefLang: 'en', href: \`/\${slug}\` }] })`), { name: 'Name', slug: 'a' })
+    expect(result[0]!.args[1](['N', '/b'])).toEqual({ title: 'N', link: [{ rel: 'alternate', hrefLang: 'en', href: '/b' }] })
+  })
+
+  // the input that compiled tags rebuild holds the shapes of the tags, such as a joined class
+  it('passes the input as written of a static call only when its compiled tags rebuild another input', () => {
+    expect(calls(transform(`${IMPORTS}useHead({ title: 'A', meta: [{ name: 'description', content: 'B' }] })`))[0]!.args).toHaveLength(1)
+    const result = calls(transform(`${IMPORTS}useHead({ htmlAttrs: { class: ['a', 'b'] } }, { head })`), { head: 'h' })
+    expect(result[0]!.args[1]([])).toEqual({ htmlAttrs: { class: ['a', 'b'] } })
+    expect(result[0]!.args.slice(2)).toEqual([undefined, { head: 'h' }])
   })
 
   it('compiles a dynamic useSeoMeta call with a full runtime fallback for its values', () => {
@@ -383,14 +404,14 @@ useHead(headData)`)
     const result = calls(transform(`${IMPORTS}useHead({ title: (useHead({ title: 'inner' }), 'outer') })`))
     expect(result).toEqual([
       { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'inner' })] },
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: dynamicValue(0) }, 1), ['outer']] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: dynamicValue(0) }, 1), LOOSE, ['outer']] },
     ])
   })
 
   it('compiles a keyless JSON-LD script whose content is a value', () => {
     const result = calls(transform(`${IMPORTS}useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ headline: title }) }] })`), { title: 'Post' })
     expect(result).toEqual([
-      { fn: 'useCompiledHead', args: [compiledTagsOf({ script: [{ type: 'application/ld+json', innerHTML: dynamicValue(0) }] }, 1), ['{"headline":"Post"}']] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ script: [{ type: 'application/ld+json', innerHTML: dynamicValue(0) }] }, 1), LOOSE, ['{"headline":"Post"}']] },
     ])
   })
 
@@ -410,7 +431,7 @@ useHead(headData)`)
 
   it('picks local names that do not collide with the module', () => {
     const result = calls(transform(`${IMPORTS}const __unhead_p0 = 'mine'\nconst __unhead_useCompiledHead = 'mine'\nuseHead({ title: 'A', meta: [{ name: 'x', content: __unhead_p0 + __unhead_useCompiledHead }] })`))
-    expect(result[0]!.args).toEqual([compiledTagsOf({ title: 'A', meta: [{ name: 'x', content: dynamicValue(0) }] }, 1), ['minemine']])
+    expect(result[0]!.args).toEqual([compiledTagsOf({ title: 'A', meta: [{ name: 'x', content: dynamicValue(0) }] }, 1), LOOSE, ['minemine']])
   })
 
   it('keeps a call in a braceless if inside that if', () => {

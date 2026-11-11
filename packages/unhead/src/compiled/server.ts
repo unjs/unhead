@@ -30,6 +30,11 @@ export type { CompiledTag, CompiledTagExtra, CompiledTagProps, CompiledTags, Com
 export interface CompiledEntryOptions extends HeadEntryOptions {
   /** Values for the dynamic values of compiled tags. A function runs once, before the first render reads them. */
   values?: readonly unknown[] | (() => readonly unknown[])
+  /**
+   * Returns the loose input of the compiled tags, as written. The full runtime takes it when a
+   * dynamic prop resolver or an entry hook can read the input.
+   */
+  loose?: () => unknown
 }
 
 /**
@@ -94,12 +99,14 @@ function hookStore(head: CompiledHead): HookableCore<any> {
 // `ssr:rendered`. A listener for any other hook, such as the `script:updated` one
 // `useScript` adds, cannot change a render.
 const RENDER_HOOK_RE = /^(?:entries:[nr]|tags:|ssr:[br])/
+// the hooks that read the input of an entry
+const ENTRY_HOOK_RE = /^entries:[nr]/
 
 /** The first render hook with a listener that the fast tiers cannot run. */
-function hasListeners(head: CompiledHead): string | undefined {
+function hasListeners(head: CompiledHead, names = RENDER_HOOK_RE): string | undefined {
   const hooks = (head._hookStore as any)?._hooks
   for (const name in hooks) {
-    if (RENDER_HOOK_RE.test(name) && hooks[name]?.some((listener: any) => !head._known?.has(listener)))
+    if (names.test(name) && hooks[name]?.some((listener: any) => !head._known?.has(listener)))
       return name
   }
 }
@@ -226,14 +233,24 @@ function staticTags(entry: CompiledEntry): RuntimeTag[] | false | undefined {
 // v3 `resolveTags` takes these through its precomputed slot, which it already skips
 // for an entry hook, a weight override, and entry options. A head weight or a dynamic
 // resolver would change the tags, so then nothing is supplied.
+// A dynamic resolver and a listener of an entry hook read the input. The input that an
+// entry rebuilds from its compiled tags holds the shapes of the tags, so the entry takes
+// its loose input, as written. A tag hook reads tags, which are the same either way.
 function supplyV3CompiledTags(head: CompiledHead) {
   const { _tagWeight, propResolvers } = head.resolvedOptions
-  if (_tagWeight !== capoTagWeight || propResolvers?.some(resolver => !resolver._static))
-    return
+  const dynamic = propResolvers?.some(resolver => !resolver._static)
+  const asWritten = dynamic || hasListeners(head, ENTRY_HOOK_RE)
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
+    if (!entry._compiled)
+      continue
+    if (asWritten && entry._loose) {
+      entry._tags = undefined
+      entry.input = entry._loose()
+    }
     // v3 runs a value function when it reads the input of the entry, and only then
-    if (entry._compiled && !entry._precomputedTags && typeof entry._values !== 'function')
+    else if (!dynamic && _tagWeight === capoTagWeight && !entry._precomputedTags && typeof entry._values !== 'function') {
       entry._precomputedTags = compiledTagsAt(entry, true) as HeadTag[] | undefined
+    }
   }
 }
 
@@ -410,7 +427,7 @@ const COMPILED_ENTRY = {
   },
   set input(value: unknown) {
     const entry = this as unknown as CompiledEntry & { _in: unknown }
-    entry._compiled = entry._values = entry._precomputedTags = undefined
+    entry._compiled = entry._values = entry._loose = entry._precomputedTags = undefined
     entry._in = value
   },
 }
@@ -426,7 +443,7 @@ const COMPILED_HEAD = {
 
 // v3 updates the same entry on patch, so a reader that holds it sees the new input.
 // A loose entry that becomes a compiled entry moves onto the compiled entry prototype, which is rare.
-function setInput(entry: CompiledEntry & { _in?: unknown }, input: unknown, values: CompiledEntryOptions['values']) {
+function setInput(entry: CompiledEntry & { _in?: unknown }, input: unknown, options?: CompiledEntryOptions) {
   entry._tags = entry._precomputedTags = undefined
   if (Array.isArray(input)) {
     if (Object.getPrototypeOf(entry) !== COMPILED_ENTRY) {
@@ -434,7 +451,8 @@ function setInput(entry: CompiledEntry & { _in?: unknown }, input: unknown, valu
       Object.setPrototypeOf(entry, COMPILED_ENTRY)
     }
     entry._compiled = input
-    entry._values = values as CompiledEntry['_values']
+    entry._values = options?.values as CompiledEntry['_values']
+    entry._loose = options?.loose
     entry._in = undefined
   }
   else {
@@ -446,7 +464,7 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
   const _i = options?._index ?? head._entryCount++
   const entryOptions: Record<string, unknown> = {}
   for (const key in options) {
-    if (key !== 'head' && key !== 'onRendered' && key !== '_index' && key !== 'values')
+    if (key !== 'head' && key !== 'onRendered' && key !== '_index' && key !== 'values' && key !== 'loose')
       entryOptions[key] = options[key as keyof CompiledEntryOptions]
   }
   let entry: CompiledEntry
@@ -456,9 +474,10 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
     entry.options = entryOptions
     entry._compiled = input
     entry._values = options?.values as CompiledEntry['_values']
+    entry._loose = options?.loose
   }
   else {
-    entry = { _i, input, options: entryOptions, _compiled: undefined, _values: undefined }
+    entry = { _i, input, options: entryOptions, _compiled: undefined, _values: undefined, _loose: undefined }
   }
   head.entries.set(_i, entry)
   return {
@@ -469,7 +488,7 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
     // v3 updates the same entry, so it keeps its place in the dedupe order and a
     // reader that holds it sees the new input
     patch(next: unknown, patchOptions?: CompiledEntryOptions) {
-      setInput(entry, next, patchOptions?.values)
+      setInput(entry, next, patchOptions)
       head.entries.set(_i, entry)
     },
   }
