@@ -50,6 +50,12 @@ export interface HeadEntry<Input> {
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Set by a built-in plugin that the compiled server head runs natively.
+   *
+   * @internal
+   */
+  _native?: true
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })

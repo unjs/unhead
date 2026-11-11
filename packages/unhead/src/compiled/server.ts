@@ -136,8 +136,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     const hooks = resolved.hooks || {}
     for (const name in hooks)
       (head._native ||= []).push([name, hooks[name]])
-    // another plugin with this key has hooks this entry cannot run natively
-    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key]
+    // Another plugin with this key has hooks this entry cannot run natively. The same hook
+    // names do not prove the real template params plugin, so that plugin marks itself.
+    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key] || (key === 'template-params' && !resolved._native)
     if (key === 'template-params') {
       head._tp = hooks
     }
