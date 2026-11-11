@@ -68,19 +68,26 @@ export interface HeadPluginOptions extends CreateHeadOptions {
   /**
    * Changes the resolved tags: dedupe, sort, the title template, and template params ran.
    * It must read nothing outside `tags` and `ctx`. The tags are copies for that render, so it
-   * may change a tag in place or return a new one. It must copy or drop text it did not make,
-   * never test it, because the server memo runs it once per sequence of compiled tags with a
-   * token in place of each dynamic value.
+   * may change a tag in place or return a new one.
    *
    * Define the plugin with `defineTagTransform`, which adds the `tags:afterResolve` hook that runs it on
-   * the full runtime. The compiled server head runs it itself, so a head keeps the server memo.
+   * the full runtime. The compiled server head runs it itself, so a head stays off the full
+   * runtime. It uses the server memo only when the plugin has a `memoKey`.
    *
    * @experimental
    */
   transform?: (tags: HeadTag[], ctx: TagTransformContext) => HeadTag[]
   /**
-   * Anything else the output of `transform` depends on, such as the site URL. The server memo
-   * keys its output on it. `null` keeps the memo from holding the output at all.
+   * Lets the server memo hold the output of `transform`. With no `memoKey`, each render runs
+   * the transform on the real values.
+   *
+   * It returns anything else the output depends on, such as the site URL, or `''` when the
+   * output depends on the tags only. The server memo keys the output on it. `null` keeps the
+   * memo from holding the output for that head.
+   *
+   * A `memoKey` states that the transform copies or drops text it did not make, and never
+   * tests it. The server memo runs the transform once per sequence of compiled tags, with a
+   * token in place of each dynamic value.
    *
    * @experimental
    */

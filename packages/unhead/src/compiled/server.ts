@@ -535,8 +535,8 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
   for (const plugin of head.plugins.values()) {
-    if (compiledHead._tt && isTagTransform(plugin) && plugin.memoKey && typeof plugin.memoKey(head) !== 'string')
-      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin gives no memo key` }
+    if (compiledHead._tt && isTagTransform(plugin) && typeof plugin.memoKey?.(head) !== 'string')
+      return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin ${plugin.memoKey ? 'gives no memo key' : 'has no memoKey'}` }
   }
   if (isMemoOff())
     return { _tag: 'Fast', reason: 'the memo is off, because this process created too many sequences of compiled tags' }

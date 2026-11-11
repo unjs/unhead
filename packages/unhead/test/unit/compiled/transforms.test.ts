@@ -27,12 +27,14 @@ function absoluteImages(site: string, calls: { n: number }, memoKey?: (ctx: any)
 const addImage = defineTagTransform({
   key: 'add-image',
   transform: list => [...list, { tag: 'meta', props: { property: 'og:image', content: 'https://a.com/added.png' } } as any],
+  memoKey: () => '',
 })
 
 // writes a template param into the title
 const paramTitle = defineTagTransform({
   key: 'param-title',
   transform: list => list.map(tag => tag.tag === 'title' ? { ...tag, textContent: `${tag.textContent} %site` } : tag),
+  memoKey: () => '',
 })
 
 describe('tag transforms', () => {
@@ -142,6 +144,25 @@ describe('tag transforms', () => {
     expect(render('https://b.com', b)).toContain('https://b.com/og.png')
     // one run per memo key: the second render of each site is a memo hit
     expect([a.n, b.n]).toEqual([1, 1])
+  })
+
+  it('skip the memo for a transform with no memo key, so it can test a dynamic value', () => {
+    // drops a description by its text, which only the real value can decide
+    const dropDraft = defineTagTransform({
+      key: 'drop-draft',
+      transform: list => list.filter(tag => tag.props.content !== 'draft'),
+    })
+    const template = (compileTags({ title: 'a', meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any).tags
+    const render = (value: string) => {
+      const v3 = createV3Head({ disableDefaults: true, plugins: [dropDraft] })
+      v3.push({ title: 'a', meta: [{ name: 'description', content: value }] })
+      const head = createHead({ disableDefaults: true, plugins: [dropDraft] })
+      head.push(template, { values: [value] } as any)
+      expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'the tag transform of the drop-draft plugin has no memoKey' })
+      expect(renderSSRHead(head)).toEqual(renderV3(v3))
+    }
+    render('published')
+    render('draft')
   })
 
   it('skip the memo for a null memo key', () => {
