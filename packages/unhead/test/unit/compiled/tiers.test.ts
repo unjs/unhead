@@ -1,6 +1,6 @@
 import type { HeadTag } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
-import { compileTags, createHead, dynamicValue, renderSSRHead } from '../../../src/compiled/server'
+import { compileTags, createHead, dynamicValue, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
 import { CanonicalPlugin, InferSeoMetaPlugin, MinifyPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3, transformHtmlTemplate as transformV3 } from '../../../src/server'
 import { normalizeEntryToTags, resolveTags } from '../../../src/utils'
@@ -309,6 +309,27 @@ describe('full runtime tier', () => {
 })
 
 describe('native template params', () => {
+  it('runs only the real plugin natively', () => {
+    // same key and hook names as the real plugin, but it adds a tag, which the native path drops
+    const lookalike = Object.assign(() => ({
+      key: 'template-params',
+      hooks: {
+        'tags:resolve': ({ tags }: any) => tags.push({ tag: 'meta', props: { name: 'custom', content: 'x' } }),
+        'tags:afterResolve': () => {},
+      },
+    }), { key: 'template-params' })
+    const v3 = createV3Head({ disableDefaults: true, plugins: [lookalike] })
+    v3.push({ title: 'a' })
+    const head = createHead({ disableDefaults: true, plugins: [lookalike] })
+    head.push(compiledTags({ title: 'a' }))
+    expect(getRenderTier(head)).toEqual({ _tag: 'Full', reason: expect.any(String) })
+    expect(renderSSRHead(head)).toEqual(renderV3(v3))
+
+    const real = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
+    real.push(compiledTags(page))
+    expect(getRenderTier(real)).toEqual({ _tag: 'Memo' })
+  })
+
   it('does not force the full runtime tier', () => {
     const a = compiledTags(page)
     const render = () => {

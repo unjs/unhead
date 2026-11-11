@@ -30,7 +30,8 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    *
    * An auto-imported call compiles only when `autoImports` names it. Pass an object to set it.
    *
-   * Applies to the `@unhead/vue` bundler plugin only. Off by default.
+   * Applies to a Vite build with the `@unhead/vue` bundler plugin only. Another build warns once
+   * and leaves every call as written. Off by default.
    *
    * @experimental
    */

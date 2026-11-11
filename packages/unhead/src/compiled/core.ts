@@ -77,6 +77,9 @@ const MAX_MEMO_KEYS = 16
 // every node a trie ever added, shared by the trie of each renderer
 let nodeCount = 0
 
+/** True once the process made so many sets of compiled tags that the memo is off for good. */
+export const isMemoOff = (): boolean => nodeCount >= 8192
+
 /** The v3 `DEFAULT_INIT` input, compiled. */
 export const DEFAULT_COMPILED_TAGS: CompiledTags = [
   ['htmlAttrs', { lang: 'en' }, 100, 'htmlAttrs', 0, 1],
@@ -218,10 +221,14 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
       // Compiled tags that are not at process scope must not grow the trie for ever, so every
       // 2048th new node drops the whole trie. With more live compiled tags than that, it would
       // start over on every render, so past the fourth drop it stays empty for good.
-      if (!(++nodeCount % 2048))
+      if (!(++nodeCount % 2048)) {
         renderer.n = { m: {} }
-      else if (nodeCount < 8192)
+        if (nodeCount === 8192)
+          console.warn('[unhead] The compiled server head turned its memo off, because this process created 8,192 sets of compiled tags. Create compiled tags once, never per request.')
+      }
+      else if (nodeCount < 8192) {
         nodes.set(compiledTags, next = { m: {} })
+      }
       if (!next) {
         node = undefined
         break

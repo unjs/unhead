@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, isTagTransform, renderCompiledHead, reviveTag, settleValues } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, isMemoOff, isTagTransform, renderCompiledHead, reviveTag, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -137,8 +137,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     const hooks = resolved.hooks || {}
     for (const name in hooks)
       (head._native ||= []).push([name, hooks[name]])
-    // another plugin with this key has hooks this entry cannot run natively
-    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key]
+    // Another plugin with this key has hooks this entry cannot run natively. The same hook
+    // names do not prove the real template params plugin, so that plugin marks itself.
+    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key] || (key === 'template-params' && !resolved._native)
     if (key === 'template-params') {
       head._tp = hooks
     }
@@ -537,6 +538,8 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
     if (compiledHead._tt && isTagTransform(plugin) && plugin.memoKey && typeof plugin.memoKey(head) !== 'string')
       return { _tag: 'Fast', reason: `the tag transform of the ${plugin.key} plugin gives no memo key` }
   }
+  if (isMemoOff())
+    return { _tag: 'Fast', reason: 'the memo is off, because this process created too many sets of compiled tags' }
   return { _tag: 'Memo' }
 }
 
