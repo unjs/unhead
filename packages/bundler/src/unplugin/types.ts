@@ -1,4 +1,5 @@
 import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
+import type { ServerOnlyCrawlerTagsOptions } from './ServerOnlyCrawlerTags'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 
@@ -13,6 +14,14 @@ export interface BaseTransformerTypes {
 export interface UnpluginOptions extends BaseTransformerTypes {
   treeshake?: TreeshakeServerComposablesOptions | false
   transformSeoMeta?: UseSeoMetaTransformOptions | false
+  /**
+   * Remove crawler-only tags (`og:*`, `twitter:*`, `description`, canonical,
+   * JSON-LD and others) from statically analysable `useHead()` and
+   * `useSeoMeta()` calls in client builds. The server still renders them.
+   *
+   * Disabled by default.
+   */
+  serverOnlyCrawlerTags?: ServerOnlyCrawlerTagsOptions | boolean
   minify?: MinifyTransformOptions | false
   /**
    * Transpile static inline scripts to the bundler's browser target.

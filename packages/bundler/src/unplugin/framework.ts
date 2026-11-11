@@ -4,6 +4,7 @@ import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -65,6 +66,11 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
+  }
+  if (options.serverOnlyCrawlerTags) {
+    const crawlerTagsOpts = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    defs.push({ instance: ServerOnlyCrawlerTags, options: { ...common, ...crawlerTagsOpts } })
+    defs.push({ instance: ServerOnlyCrawlerTagsRuntime, options: {} })
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
