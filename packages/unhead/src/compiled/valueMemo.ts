@@ -68,6 +68,9 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     // A tag transform can copy a value into the position of a tag. The memo has no place for
     // a tag that moves with its value, so the sequence takes the slow path.
     unsafe ||= !!tag.tagPosition?.includes?.(DYNAMIC_VALUE_OPEN)
+    // The type of a script decides how v3 escapes its text. A tag transform can copy a value
+    // into the type, and the memo holds text escaped for the token, so the same applies.
+    unsafe ||= tag.tag === 'script' && !!tag.props.type?.includes?.(DYNAMIC_VALUE_OPEN)
     // a value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in tag.props) {
       if (tag.props[key]?.includes?.(DYNAMIC_VALUE_OPEN))

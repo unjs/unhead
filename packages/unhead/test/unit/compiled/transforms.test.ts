@@ -305,6 +305,29 @@ describe('tag transforms', () => {
     expect(render('bodyOpen', 'site')).toEqual(render('bodyOpen', null))
   })
 
+  // the type of a script decides how v3 escapes its text
+  it('escape the text of a script by a type that a transform took from a dynamic value', () => {
+    const result = compileTags({ meta: [{ name: 'kind', content: dynamicValue(0) }], script: [{ key: 'data', innerHTML: '{"a":"<b>"}' }] }, { valueCount: 1 }) as any
+    const typed = (memoKey: string | null) => defineTagTransform({
+      key: 'typed',
+      transform: (list) => {
+        const kind = list.find(tag => tag.tag === 'meta')!.props.content
+        return list.map(tag => tag.tag === 'script' ? { ...tag, props: { ...tag.props, type: kind } } : tag)
+      },
+      memoKey: () => memoKey,
+    })
+    const render = (value: string, memoKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [typed(memoKey)] })
+      head.push(result.tags, { values: [value] } as any)
+      return renderSSRHead(head).headTags
+    }
+    // a null memo key renders with no memo
+    expect(render('application/json', null)).toContain('<script data-hid="data" type="application/json">{"a":"\\u003Cb>"}</script>')
+    expect(render('text/plain', null)).toContain('<script data-hid="data" type="text/plain">{"a":"<b>"}</script>')
+    expect(render('text/plain', 'site')).toEqual(render('text/plain', null))
+    expect(render('application/json', 'site')).toEqual(render('application/json', null))
+  })
+
   it('resolve a template param in a dynamic value that a transform moved into raw text', () => {
     const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
     const toNoscript = (memoKey: string | null) => defineTagTransform({
