@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, renderCompiledHead, reviveTag, settleValues } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, isMemoOff, renderCompiledHead, reviveTag, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -504,6 +504,8 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
     return { _tag: 'Fast', reason: `${loose} ${loose === 1 ? 'entry is' : 'entries are'} not compiled tags with no options` }
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
+  if (isMemoOff())
+    return { _tag: 'Fast', reason: 'the memo is off, because this process created too many sets of compiled tags' }
   return { _tag: 'Memo' }
 }
 
