@@ -5,7 +5,7 @@ import { createHead as _createServerHead } from 'unhead/compiled/server'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
-export { useCompiledHead, useCompiledSeoMeta, useStaticCompiledSeoMeta } from './composables'
+export { useCompiledHead, useCompiledSeoMeta } from './composables'
 export { type CompiledEntryOptions, type CompiledTags, renderSSRHead, type SSRHeadPayload } from 'unhead/compiled/server'
 
 /**

@@ -19,6 +19,9 @@ const DYNAMIC_VALUE_JSON_RE = /"(\d+)"/g
 const FRAMEWORK = '@unhead/vue'
 const RUNTIME = `${FRAMEWORK}/compiled/server`
 const WHOLE_DYNAMIC_VALUE_RE = /^\uE000\d+\uE001$/
+// Stands for `undefined` in decoded input. No value and no key of a call holds these characters.
+const UNSET = '\uE000\uE001'
+const UNSET_JSON = JSON.stringify(UNSET)
 // the compiled tag flags of `unhead/compiled/server`
 const FLAG_DYNAMIC_VALUES = 4
 const FLAG_UNDEFINED_DROPS = 8
@@ -456,12 +459,25 @@ function compileInput(input: any, kind: HeadKind, shapeValues: boolean): Compile
     const tags = JSON.parse(JSON.stringify(result.tags)) as CompiledTag[]
     if (!proveSeoTags(decoded as Record<string, unknown>, tags, values.length) && shapeValues)
       return bail('a value in a list or an object that v3 renders by other rules')
-    // the input v3 `useSeoMeta` pushes, rebuilt from the values
-    const { title, titleTemplate, ...flat } = decoded as Record<string, unknown>
-    const loose = JSON.stringify({ title, titleTemplate, _flatMeta: flat }).replace(DYNAMIC_VALUE_JSON_RE, 'f[$1]')
-    return { _tag: 'Ok', tags, values, loose: `f => (${loose})` }
+    return { _tag: 'Ok', tags, values, loose: looseSource(seoInput(decoded as Record<string, unknown>)) }
   }
-  return { _tag: 'Ok', tags: result.tags, values }
+  // An entry hook and a dynamic prop resolver read the input as written. A call with no
+  // values needs it only when the input its compiled tags rebuild is another one.
+  if (kind === 'seo')
+    return { _tag: 'Ok', tags: result.tags, values, loose: looseSource(seoInput(decoded as Record<string, unknown>)) }
+  const loose = values.length || JSON.stringify(compiledInput(result.tags, [])) !== JSON.stringify(decoded) ? looseSource(decoded) : undefined
+  return { _tag: 'Ok', tags: result.tags, values, loose }
+}
+
+// The input v3 `useSeoMeta` pushes, with the title keys it always sets
+function seoInput(decoded: Record<string, unknown>): unknown {
+  const { title = UNSET, titleTemplate = UNSET, ...flat } = decoded
+  return { title, titleTemplate, _flatMeta: flat }
+}
+
+// A function that rebuilds decoded input from the values of the call
+function looseSource(input: unknown): string {
+  return `f => (${JSON.stringify(input).replace(DYNAMIC_VALUE_JSON_RE, 'f[$1]').replaceAll(UNSET_JSON, 'undefined')})`
 }
 
 // Compiled tags must exist before any statement runs a head call, so they go after the
@@ -638,20 +654,22 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
           return
         }
 
-        // a `useSeoMeta` call with no values takes no fallback and no values, and keeps its marker
-        const fn = callee.kind === 'seo' ? result.loose ? 'useCompiledSeoMeta' : 'useStaticCompiledSeoMeta' : 'useCompiledHead'
+        const fn = callee.kind === 'seo' ? 'useCompiledSeoMeta' : 'useCompiledHead'
         runtime.add(fn)
         const head = [hoist(JSON.stringify(result.tags), compiledTagSets)]
-        if (result.loose)
-          head.push(hoist(result.loose))
         // a getter that runs statements keeps them, so it stays the values argument
         const valuesGetter = getter && (getter.block || result.values.length)
         const hasValues = result.values.length || valuesGetter
-        const valuesSlot = hasValues || fn === 'useStaticCompiledSeoMeta' ? '' : 'undefined'
+        const valuesSlot = hasValues ? '' : 'undefined'
         const headProp = !autoHead ? '' : callee.headSource ? `head: ${importedInjectHead(callee.headSource)}()` : AUTO_HEAD_PROP
         const tail = autoHead && !options ? `, ${valuesSlot && `${valuesSlot}, `}{ ${headProp} }` : options && valuesSlot ? `, ${valuesSlot}` : ''
         if (autoHead && options)
           s.overwrite(options.start, options.end, `{ ${headProp}, seoMeta: true }`)
+        // the place of the loose input stays when an argument follows it
+        if (result.loose)
+          head.push(hoist(result.loose))
+        else if (hasValues || autoHead || options)
+          head.push('undefined')
         s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
         // A getter input returns its values in place of its object, so it still runs once
         // for each resolution and tracks as a whole, as v3 tracks it

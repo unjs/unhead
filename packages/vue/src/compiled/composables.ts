@@ -19,6 +19,9 @@ function compiledTagsHead(options: UseHeadOptions): CompiledTagsHead {
 /** The values of a call, or a getter that returns them, as the build makes of a getter input. */
 export type CompiledValues = readonly unknown[] | (() => readonly unknown[])
 
+/** Rebuilds the loose input of a call, as written, from its values. */
+export type LooseInput = (values: readonly unknown[]) => object
+
 // A getter input runs once for all its values
 function resolveValues(values: CompiledValues): unknown[] {
   return (typeof values === 'function' ? values() : values).map(entryValue => toValue(entryValue))
@@ -43,13 +46,21 @@ function isMarked(compiledTags: CompiledTags, index: number, flag: number): bool
 /**
  * Pushes compiled tags that the bundler `compile` option made from a `useHead` call. The
  * call site evaluates each value. A ref or getter value resolves once, on the first
- * render, as v3 resolves it.
+ * render, as v3 resolves it. The build passes `loose` when the input as written differs
+ * from the input that the compiled tags rebuild.
  *
  * @internal
  */
-export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useCompiledHead(compiledTags: CompiledTags, loose?: LooseInput, values?: CompiledValues, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
-  return head.push(compiledTags as any, values ? { ...options, values: () => resolveValues(values) } as any : options)
+  return head.push(compiledTags as any, loose || values
+    ? {
+        ...options,
+        values: values && (() => resolveValues(values)),
+        // a ref and a getter stay as written, and a getter input stays a getter
+        loose: loose && (() => typeof values === 'function' ? () => loose(values()) : loose(values || [])),
+      } as any
+    : options)
 }
 
 /**
@@ -59,12 +70,17 @@ export function useCompiledHead(compiledTags: CompiledTags, values?: CompiledVal
  *
  * @internal
  */
-export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: unknown[]) => object, values: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: LooseInput, values?: readonly unknown[], options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = compiledTagsHead(options)
   const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
     ...options,
     seoMeta: true,
-    values: () => {
+    // v3 `useSeoMeta` registers the plugin at the call. Here only a reader of the input needs it.
+    loose: () => {
+      head.use(FlatMetaPlugin)
+      return loose(values || [])
+    },
+    values: values && (() => {
       const resolved = resolveValues(values)
       if (!resolved.every((value, index) => value === undefined
         ? isMarked(compiledTags, index, FLAG_UNDEFINED_DROPS)
@@ -73,17 +89,7 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: (values: u
         head.entries.get(active._i)!.input = loose(resolved)
       }
       return resolved
-    },
+    }),
   } as any)
   return active
-}
-
-/**
- * Pushes compiled tags that the bundler `compile` option made from a `useSeoMeta` call with
- * no values. The entry keeps the marker of the call, which `readEntry` reports.
- *
- * @internal
- */
-export function useStaticCompiledSeoMeta(compiledTags: CompiledTags, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
-  return compiledTagsHead(options).push(compiledTags as any, { ...options, seoMeta: true } as any)
 }

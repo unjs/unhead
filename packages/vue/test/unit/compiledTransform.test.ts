@@ -12,7 +12,7 @@ import { CompileTransform } from '../../../bundler/src/unplugin/CompileTransform
 
 const IMPORT_RE = /^import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"];?$/gm
 const AS_RE = /\s+as\s+/
-const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta|useStaticCompiledSeoMeta)\(/g
+const COMPILED_CALL_RE = /__unhead_(?:useCompiledHead|useCompiledSeoMeta)\(/g
 
 // a build loads the compiler in `buildStart`, before any transform
 beforeAll(() => (CompileTransform.vite({}) as any).buildStart.call({ environment: { config: { consumer: 'server' } } }))
@@ -276,7 +276,7 @@ describe('a dynamic value of an object-capable seo key renders like v3', () => {
     // the layout sets the same key, so a page value that renders no tag must not hide it
     const source = snippet(`useSeoMeta({ ${key}: 'layout', ogTitle: 'Layout' })
   useSeoMeta({ ${key}: ${value}, description: 'Page' })`, false)
-    expect(compile(source).match(COMPILED_CALL_RE)).toEqual(['__unhead_useStaticCompiledSeoMeta(', '__unhead_useCompiledSeoMeta('])
+    expect(compile(source).match(COMPILED_CALL_RE)).toEqual(['__unhead_useCompiledSeoMeta(', '__unhead_useCompiledSeoMeta('])
     for (const tp of [false, true]) {
       const { v3, compiled } = await renderBoth(source, tp, pick)
       expect(compiled).toEqual(v3)
@@ -359,10 +359,93 @@ describe('useCompiledHead', () => {
 
   it('returns the active entry', () => {
     const head = createCompiled({ disableDefaults: true })
-    const entry = compiledRuntime.useCompiledHead(compiledTags, undefined, { head })
+    const entry = compiledRuntime.useCompiledHead(compiledTags, undefined, undefined, { head })
     entry.patch({ title: 'B' })
     expect(renderCompiled(head).headTags).toBe('<title>B</title>')
     entry.dispose()
     expect(renderCompiled(head).headTags).toBe('')
+  })
+})
+
+// What a reader of an input sees. A ref and a getter keep their kind, with the value they hold.
+function shape(value: unknown): unknown {
+  if (typeof value === 'function')
+    return { getter: shape(value()) }
+  if (vue.isRef(value))
+    return { ref: shape(value.value) }
+  if (Array.isArray(value))
+    return value.map(shape)
+  if (value && typeof value === 'object')
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, shape(item)]))
+  return value
+}
+
+type Watch = (head: any, reads: unknown[]) => void
+
+// a listener of each entry hook, registered before any head call, as a plugin registers it
+const watchEntryHooks: Watch = (head, reads) => {
+  head.hooks.hook('entries:resolve', (ctx: any) => {
+    for (const entry of ctx.entries)
+      reads.push(['entries:resolve', shape(entry.input)])
+  })
+  head.hooks.hook('entries:normalize', (ctx: any) => {
+    reads.push(['entries:normalize', shape(ctx.entry.input), ctx.tags.map((tag: any) => [tag.tag, shape(tag.props)])])
+  })
+}
+
+// a dynamic prop resolver that runs before the Vue one, so it reads each ref as written
+const watchResolver: Watch = (head, reads) => {
+  head.resolvedOptions.propResolvers.unshift((key: string | undefined, value: unknown) => {
+    reads.push([key, shape(value)])
+    return value
+  })
+}
+
+async function inputReads(call: string, watch: Watch) {
+  const source = snippet(call, false)
+  const globals = () => ({ name: vue.ref('Ann'), url: vue.computed(() => '/en') })
+  const run = async (create: () => any, render: (head: any) => unknown, code: string) => {
+    const reads: unknown[] = []
+    const head = create()
+    watch(head, reads)
+    const threw = await ssr(head, () => evaluate(code, globals())())
+    return { html: threw || render(head), reads, flatMeta: head.plugins.has('flatMeta') }
+  }
+  const code = compile(source)
+  return {
+    calls: code.match(COMPILED_CALL_RE)?.length,
+    v3: await run(() => createV3({ disableDefaults: true }), renderV3, source),
+    compiled: await run(() => createCompiled({ disableDefaults: true }), renderCompiled, code),
+  }
+}
+
+// Each input differs from the input that its compiled tags rebuild: flat meta keys, a style
+// and a class to join, an attribute name to lowercase, a JSON object, and a ref or a getter.
+const AS_WRITTEN: [string, string][] = [
+  ['a useSeoMeta call with no values', `useSeoMeta({ title: 'Page', description: 'About', ogImage: [{ url: '/a.png', width: 100 }] })`],
+  ['a useSeoMeta call with values', `useSeoMeta({ description: () => 'About ' + name.value, ogTitle: name, twitterCard: 'summary' })`],
+  ['a useHead call with no values', `useHead({ htmlAttrs: { style: 'color: red', class: ['a', 'b'] }, script: [{ type: 'application/ld+json', innerHTML: { a: 1 } }] })`],
+  ['a useHead call with values', `useHead({ title: name, link: [{ rel: 'alternate', key: 'en', hrefLang: 'en', href: url }] })`],
+  ['a useHead getter input', `useHead(() => ({ title: name.value, bodyAttrs: { class: ['a', 'b'] } }))`],
+]
+
+describe('a reader of the input of a compiled call reads it as written', () => {
+  it.each(AS_WRITTEN)('gives the entry hooks %s as v3 does', async (_, call) => {
+    const { calls, v3, compiled } = await inputReads(call, watchEntryHooks)
+    expect(calls).toBe(1)
+    expect(compiled).toEqual(v3)
+    expect(v3.reads).toHaveLength(2)
+  })
+
+  it.each(AS_WRITTEN)('gives a dynamic prop resolver %s as v3 does', async (_, call) => {
+    const { calls, v3, compiled } = await inputReads(call, watchResolver)
+    expect(calls).toBe(1)
+    expect(compiled).toEqual(v3)
+    expect(v3.reads.length).toBeGreaterThan(2)
+  })
+
+  it('registers no flat meta plugin when nothing reads the input', async () => {
+    const { compiled } = await inputReads(AS_WRITTEN[0]![1], () => {})
+    expect(compiled.flatMeta).toBe(false)
   })
 })

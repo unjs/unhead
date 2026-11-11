@@ -8,6 +8,8 @@ export type RuntimeTag = Record<string, any>
 export interface CompiledEntry extends HeadEntry<any> {
   _compiled?: CompiledTags
   _values?: readonly unknown[]
+  /** Returns the loose input of the compiled tags, as written. */
+  _loose?: () => unknown
 }
 
 export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
