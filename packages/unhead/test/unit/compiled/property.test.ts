@@ -166,7 +166,7 @@ function composite(value: any) {
 
 describe('dynamic values equal v3 with the value in place', () => {
   describe.each(Object.keys(dynamicValueShapes))('%s', (shape) => {
-    const compiled = compileTags(dynamicValueShapes[shape]!(dynamicValue(0), dynamicValue(1)), { dynamicValues: 2 })
+    const compiled = compileTags(dynamicValueShapes[shape]!(dynamicValue(0), dynamicValue(1)), { valueCount: 2 })
     const compiledTags = compiled._tag === 'Ok' ? compiled.tags : undefined
 
     test.prop([valueArbitrary, valueArbitrary, fc.boolean()], { numRuns: 150 })('values', (a, b, tp) => {

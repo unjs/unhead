@@ -16,7 +16,7 @@ function throwaway(count: number) {
 // Whether a new route uses the memo: only the value memo can still return the old
 // static parts after the compiled tags changed, because the slow path rebuilds the input.
 function routeUsesMemo(): boolean {
-  const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'x', content: 'static' }] }, { dynamicValues: 1 })
+  const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'x', content: 'static' }] }, { valueCount: 1 })
   const compiledTags: any[] = result._tag === 'Ok' ? [...result.tags] : []
   const render = () => {
     const head = createHead({ disableDefaults: true })

@@ -15,7 +15,7 @@ function ok(result: ReturnType<typeof compileTags>) {
 function payloadTags() {
   return ok(compileTags({
     script: [{ 'type': 'application/json', 'data-nuxt-data': 'nuxt-app', 'data-ssr': true, 'id': '__NUXT_DATA__', 'innerHTML': dynamicValue(0), 'tagPosition': 'bodyClose', 'tagPriority': 'high' }],
-  }, { dynamicValues: 1 }))
+  }, { valueCount: 1 }))
 }
 
 function v3Payload(contents: string) {

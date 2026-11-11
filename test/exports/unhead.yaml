@@ -11,6 +11,10 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./compiled:
+  compileTags: function
+  dynamicValue: function
+  readEntry: function
 ./compiled/server:
   compileTags: function
   createHead: function
@@ -40,6 +44,7 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  defineTagTransform: function
   DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function

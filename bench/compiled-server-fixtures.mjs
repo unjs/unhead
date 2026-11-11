@@ -52,8 +52,8 @@ export function createFixtures(m) {
     ],
     link: [{ rel: 'preload', as: 'script', href: `/_nuxt/chunk-${i}.js` }],
     script: [{ type: 'application/ld+json', innerHTML: { '@context': 'https://schema.org', '@type': 'WebPage', 'name': `Page ${i}` } }],
-  }, { dynamicValues: 1 })))
-  const seoValueTags = ok(compileTags(seoInput(dynamicValue(0)), { dynamicValues: 1 }))
+  }, { valueCount: 1 })))
+  const seoValueTags = ok(compileTags(seoInput(dynamicValue(0)), { valueCount: 1 }))
 
   const titles = ['Perf benchmark', 'Another page', 'Third "quoted" title']
   const descriptions = Array.from({ length: COUNT }, (_, i) => titles.map(title => `${title} ${i}`))
@@ -108,7 +108,7 @@ export function createFixtures(m) {
     meta: [{ name: 'description', content: dynamicValue(1) }],
     link: [{ rel: 'canonical', key: 'canonical', href: dynamicValue(2) }],
     script: page.script,
-  }, { dynamicValues: 3 }))
+  }, { valueCount: 3 }))
   const pageValues = titles.map((title, i) => ({
     array: [title, `A post about ${title}`, `https://example.com/blog/${i}`],
     input: {

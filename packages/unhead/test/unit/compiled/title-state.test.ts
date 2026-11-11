@@ -19,7 +19,7 @@ function applyValues(value: unknown, values: unknown[]): unknown {
 // The title state a render leaves on the head, for a title value that may or may not
 // reach the HTML. Each head renders twice, and later heads hit the memo.
 function compare(template: Record<string, unknown>, valuesList: unknown[][], tp: boolean) {
-  const result = compileTags(template, { dynamicValues: valuesList[0]!.length })
+  const result = compileTags(template, { valueCount: valuesList[0]!.length })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   const compiledTags = [...result.tags]

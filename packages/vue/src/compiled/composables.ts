@@ -74,6 +74,7 @@ export function useCompiledSeoMeta(compiledTags: CompiledTags, loose: LooseInput
   const head = compiledTagsHead(options)
   const active: ActiveHeadEntry<any> = head.push(compiledTags as any, {
     ...options,
+    seoMeta: true,
     // v3 `useSeoMeta` registers the plugin at the call. Here only a reader of the input needs it.
     loose: () => {
       head.use(FlatMetaPlugin)

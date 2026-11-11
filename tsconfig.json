@@ -11,6 +11,7 @@
       "unhead/client": ["./packages/unhead/src/client/index"],
       "unhead/server": ["./packages/unhead/src/server/index"],
       "unhead/compiled/server": ["./packages/unhead/src/compiled/server"],
+      "unhead/compiled": ["./packages/unhead/src/compiled/index"],
       "unhead/plugins": ["./packages/unhead/src/plugins/index"],
       "unhead/legacy": ["./packages/unhead/src/legacy/index"],
       "unhead/minify": ["./packages/unhead/src/minify/index"],

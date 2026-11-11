@@ -5,9 +5,9 @@ import { toHeadInput } from '../../../src/compiled/tags'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3ServerHead, renderSSRHead as renderV3 } from '../../../src/server'
 
-function expectBail(input: unknown, dynamicValues?: number) {
-  const result = compileTags(input, { dynamicValues })
-  expect(result._tag).toBe('Bail')
+function expectBail(input: unknown, valueCount?: number) {
+  const result = compileTags(input, { valueCount })
+  expect(result._tag).toBe('Err')
 }
 
 describe('compileTags', () => {
@@ -165,7 +165,7 @@ describe('compileTags', () => {
 
   // Nuxt UI sets its color variables this way
   it('compiles a dynamic value in the content of a style with a fixed identity', () => {
-    const result = compileTags({ style: [{ innerHTML: dynamicValue(0), tagPriority: 'critical', id: 'colors' }] }, { dynamicValues: 1 })
+    const result = compileTags({ style: [{ innerHTML: dynamicValue(0), tagPriority: 'critical', id: 'colors' }] }, { valueCount: 1 })
     expect(result._tag).toBe('Ok')
   })
 
@@ -174,7 +174,7 @@ describe('compileTags', () => {
     for (const start of ['@', '@i', '@impor', 'a{}@imp'])
       expectBail({ style: [{ key: 'k', innerHTML: start + h }] }, 1)
     for (const text of [`a{color:${h}}`, `@media ${h}{a{}}`, `@import url(${h});`, `@important${h}`])
-      expect(compileTags({ style: [{ key: 'k', innerHTML: text }] }, { dynamicValues: 1 })._tag).toBe('Ok')
+      expect(compileTags({ style: [{ key: 'k', innerHTML: text }] }, { valueCount: 1 })._tag).toBe('Ok')
   })
 
   it('refuses a dynamic value a non-string value would normalize differently', () => {
@@ -199,7 +199,7 @@ describe('compileTags', () => {
       { htmlAttrs: { lang: h } },
       { base: { href: h } },
     ]) {
-      const result = compileTags(input, { dynamicValues: 1 })
+      const result = compileTags(input, { valueCount: 1 })
       expect(result).toMatchObject({ _tag: 'Ok', valueCount: 1 })
       expect(result._tag === 'Ok' && result.tags[0]![5]! & 4).toBe(4)
     }
@@ -222,12 +222,12 @@ describe('toHeadInput', () => {
   })
 
   it('substitutes values, keeping the raw value of a whole dynamic value', () => {
-    const result = compileTags({ title: `x ${dynamicValue(0)}`, meta: [{ name: 'a', content: dynamicValue(1) }] }, { dynamicValues: 2 })
+    const result = compileTags({ title: `x ${dynamicValue(0)}`, meta: [{ name: 'a', content: dynamicValue(1) }] }, { valueCount: 2 })
     expect(result._tag === 'Ok' && toHeadInput(result.tags, ['t', null])).toEqual({ title: 'x t', meta: [{ name: 'a', content: null }] })
   })
 
   it('leaves out a tag that its undefined value drops, and keeps one that it empties', () => {
-    const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'a', content: dynamicValue(1) }] }, { dynamicValues: 2 })
+    const result = compileTags({ title: dynamicValue(0), meta: [{ name: 'a', content: dynamicValue(1) }] }, { valueCount: 2 })
     const tags = result._tag === 'Ok' ? result.tags : []
     expect(toHeadInput(tags, [undefined, undefined])).toEqual({ meta: [{ name: 'a', content: undefined }] })
     // the build marks a flat meta tag, which v3 makes no tag for
@@ -263,6 +263,6 @@ describe('compileTags with a tagPriority option', () => {
   })
 
   it('bails on a priority alias', () => {
-    expect(compileTags(siteParams, { tagPriority: 'before:title' as any })._tag).toBe('Bail')
+    expect(compileTags(siteParams, { tagPriority: 'before:title' as any })._tag).toBe('Err')
   })
 })

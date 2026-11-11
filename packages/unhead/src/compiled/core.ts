@@ -1,4 +1,4 @@
-import type { HeadEntry, SSRHeadPayload, Unhead } from '../types'
+import type { HeadEntry, HeadPlugin, SSRHeadPayload, Unhead } from '../types'
 import type { CompiledTag, CompiledTags } from './types'
 import { DYNAMIC_VALUE_OPEN, FLAG_ARRAYABLE, FLAG_DYNAMIC_VALUES } from './tags'
 
@@ -19,6 +19,8 @@ export type CompiledTagsHead = Unhead<any, SSRHeadPayload> & {
   _infer?: Record<string, (ctx: any) => void>
   /** Whether the memo may hold the output of `InferSeoMetaPlugin`: false with an `ogTitle` or `ogDescription` function. */
   _inferMemo?: boolean
+  /** Set once a plugin with a tag transform registers, so a head with none skips the scan for them. */
+  _tt?: boolean
   /** Marks a head that renders compiled tags, for `useCompiledHead`. */
   _acceptsCompiled?: 1
 }
@@ -35,6 +37,11 @@ export interface Memo {
    * `d` holds each such identity with tokens, `k` every other identity.
    */
   i?: { d: string[], k: Set<string> }
+  /**
+   * The values with no token left in the payload after a tag transform ran, as a flat
+   * `[entry, value, entry, value, ...]` list. A hit checks them as it checks the others.
+   */
+  g?: number[]
 }
 
 /** The renderer of the compiled server head. */
@@ -51,20 +58,28 @@ export interface CompiledRenderer {
   r: (tags: RuntimeTag[], head: CompiledTagsHead) => RuntimeTag[]
   /** Builds the memo of a sequence of compiled tags. */
   b: (head: CompiledTagsHead, omitLineBreaks: boolean | undefined, renderer: CompiledRenderer) => Memo
-  /** Reads a memo hit. Returns nothing when a value could change a v3 decision. */
-  f?: (memo: Memo, head: CompiledTagsHead) => SSRHeadPayload | undefined
+  /** Reads a memo hit. Returns nothing when a value could change a v3 decision. `transforms` tells that a tag transform ran. */
+  f?: (memo: Memo, head: CompiledTagsHead, transforms: boolean) => SSRHeadPayload | undefined
 }
 
 export interface TrieNode {
   n?: WeakMap<CompiledTags, TrieNode>
-  /** Memos by render options and native plugins */
+  /** Memos by render options, native plugins, and the memo key of each tag transform. */
   m: Record<string | number, Memo>
+  /** The memos `m` held before it last reached `MAX_MEMO_KEYS`. A memo in use moves back to `m`. */
+  o?: Record<string | number, Memo>
+  /** How many memos `m` holds. */
+  k?: number
 }
+
+// A memo key may come from the request, such as a host name, so a node must not hold a memo
+// for every key it ever saw. It holds this many, plus as many from before they filled up.
+const MAX_MEMO_KEYS = 16
 
 // every node a trie ever added, shared by the trie of each renderer
 let nodeCount = 0
 
-/** True once the process made so many sets of compiled tags that the memo is off for good. */
+/** True once the process made so many sequences of compiled tags that the memo is off for good. */
 export const isMemoOff = (): boolean => nodeCount >= 8192
 
 /** The v3 `DEFAULT_INIT` input, compiled. */
@@ -159,13 +174,41 @@ export function buildStaticMemo(head: CompiledTagsHead, omitLineBreaks: boolean 
   return { b: renderTags(renderer.r(renderer.c(head), head), omitLineBreaks, renderer) as any }
 }
 
-// The memo key of a render: its options and the native plugins. `null` when the memo may not
-// hold the output: an `InferSeoMetaPlugin` function may change the text, which the memo holds as a token,
-// and that plugin reads a title template that an earlier render of this head left behind.
-function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): number | null {
+/**
+ * Whether a plugin has a tag transform that the full runtime runs too: `defineTagTransform` marks
+ * its `tags:afterResolve` listener with `_t`. A fast tier runs only what the full runtime runs.
+ */
+export function isTagTransform(plugin: HeadPlugin): boolean {
+  return !!plugin.transform && !!(plugin.hooks?.['tags:afterResolve'] as any)?._t
+}
+
+// The memo key of a render: its options, the native plugins, and the memo key of each tag
+// transform. `null` when the memo may not hold the output: a tag transform has no `memoKey`, so
+// nothing says that it tests no dynamic value, a memo key is not a string, or an
+// `InferSeoMetaPlugin` function may change the text, which the memo holds as a token, and that
+// plugin reads a title template that an earlier render of this head left behind.
+function renderMemoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): string | number | null {
   if (head._infer && (!head._inferMemo || head._titleTemplate !== undefined))
     return null
-  return (omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0) | (head._infer ? 4 : 0)
+  let key: string | number = (omitLineBreaks ? 1 : 0) | (head._tp ? 2 : 0) | (head._infer ? 4 : 0)
+  // A key with a tag transform is a string. It holds the plugins in the order they run, because
+  // a transform before a native plugin and one after it render different tags.
+  if (head._tt) {
+    for (const plugin of head.plugins.values()) {
+      if (isTagTransform(plugin)) {
+        const part = plugin.memoKey?.(head)
+        // no `memoKey`, or a memo key that is not a string, keeps the memo out
+        if (typeof part !== 'string')
+          return null
+        // each length keeps a separator inside a plugin key or a memo key from reading as two parts
+        key = `${key}|${plugin.key.length}:${plugin.key}${part.length}:${part}`
+      }
+      else if (plugin.hooks && (plugin.hooks === head._tp || plugin.hooks === head._infer)) {
+        key = `${key}|${plugin.hooks === head._tp ? 't' : 'i'}`
+      }
+    }
+  }
+  return key
 }
 
 /**
@@ -194,7 +237,7 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
       if (!(++nodeCount % 2048)) {
         renderer.n = { m: {} }
         if (nodeCount === 8192)
-          console.warn('[unhead] The compiled server head turned its memo off, because this process created 8,192 sets of compiled tags. Create compiled tags once, never per request.')
+          console.warn('[unhead] The compiled server head turned its memo off, because this process created 8,192 sequences of compiled tags. Create compiled tags once, never per request.')
       }
       else if (nodeCount < 8192) {
         nodes.set(compiledTags, next = { m: {} })
@@ -207,11 +250,21 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
     node = next
     last = i
   }
-  const key = node && memoKey(head, omitLineBreaks)
+  const key = node && renderMemoKey(head, omitLineBreaks)
   if (key != null) {
-    const memo = node!.m[key] ||= renderer.b(head, omitLineBreaks, renderer)
+    let memo = node!.m[key]
+    if (!memo) {
+      // a full node starts over, and keeps what it held for the keys still in use
+      if (node!.k! >= MAX_MEMO_KEYS) {
+        node!.o = node!.m
+        node!.m = {}
+        node!.k = 0
+      }
+      memo = node!.m[key] = node!.o?.[key] || renderer.b(head, omitLineBreaks, renderer)
+      node!.k = (node!.k || 0) + 1
+    }
     if (!memo.x) {
-      const payload = renderer.f ? renderer.f(memo, head) : { ...memo.b } as unknown as SSRHeadPayload
+      const payload = renderer.f ? renderer.f(memo, head, typeof key === 'string') : { ...memo.b } as unknown as SSRHeadPayload
       if (payload)
         return payload
     }

@@ -68,8 +68,8 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
   }
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-  const seoMeta = options.transformSeoMeta !== false && { instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } }
   const compileOpts = resolveCompileOptions(options.compile, framework)
+  const seoMeta = options.transformSeoMeta !== false && { instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts, markEntries: !!compileOpts } }
   // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
   // without compile renders, in its tag order. Compile takes the calls it leaves.
   if (seoMeta)

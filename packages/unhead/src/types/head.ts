@@ -46,10 +46,52 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /**
+   * Set from the `seoMeta` entry option by a head that takes compiled tags, so the option
+   * stays out of the entry options. `readEntry` reports it.
+   *
+   * @internal
+   */
+  _seoMeta?: true
+}
+
+/**
+ * @experimental
+ */
+export interface TagTransformContext {
+  /** True on the server. */
+  ssr: boolean
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Changes the resolved tags: dedupe, sort, the title template, and template params ran.
+   * It must read nothing outside `tags` and `ctx`. The tags are copies for that render, so it
+   * may change a tag in place or return a new one.
+   *
+   * Define the plugin with `defineTagTransform`, which adds the `tags:afterResolve` hook that runs it on
+   * the full runtime. The compiled server head runs it itself, so a head stays off the full
+   * runtime. It uses the server memo only when the plugin has a `memoKey`.
+   *
+   * @experimental
+   */
+  transform?: (tags: HeadTag[], ctx: TagTransformContext) => HeadTag[]
+  /**
+   * Lets the server memo hold the output of `transform`. With no `memoKey`, each render runs
+   * the transform on the real values.
+   *
+   * It returns anything else the output depends on, such as the site URL, or `''` when the
+   * output depends on the tags only. The server memo keys the output on it. `null` keeps the
+   * memo from holding the output for that head.
+   *
+   * A `memoKey` states that the transform copies or drops text it did not make, and never
+   * tests it. The server memo runs the transform once per sequence of compiled tags, with a
+   * token in place of each dynamic value.
+   *
+   * @experimental
+   */
+  memoKey?: (ctx: TagTransformContext) => string | null
   /**
    * Set by a built-in plugin that the compiled server head runs natively.
    *
@@ -200,6 +242,12 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Marks the input of a `useSeoMeta` call, such as its compiled tags, so `readEntry` reports `seoMeta`.
+   *
+   * @experimental
+   */
+  seoMeta?: boolean
   /**
    * Called after unhead has finished applying DOM updates.
    *

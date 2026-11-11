@@ -26,7 +26,7 @@ export function toCompiledTags(input: any): any {
 function toCompiledEntry({ input, template, values, options }: ScenarioEntry): [any, any] {
   if (!template)
     return [toCompiledTags(input), options]
-  const result = compileTags(template, { dynamicValues: values!.length })
+  const result = compileTags(template, { valueCount: values!.length })
   return result._tag === 'Ok' ? [result.tags, { ...options, values }] : [input, options]
 }
 

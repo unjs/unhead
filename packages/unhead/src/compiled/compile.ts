@@ -12,7 +12,7 @@ import { ALIAS_PRIORITY_RE, copyValue, DYNAMIC_VALUE_CLOSE, DYNAMIC_VALUE_OPEN, 
  */
 export type CompileResult
   = | { _tag: 'Ok', tags: CompiledTags, valueCount: number }
-    | { _tag: 'Bail', reason: string }
+    | { _tag: 'Err', reason: string }
 
 /**
  * @experimental
@@ -22,7 +22,7 @@ export interface CompileOptions {
    * Number of dynamic values. Each `dynamicValue(index)` token below this count marks one.
    * Any other private-use token in the input bails.
    */
-  dynamicValues?: number
+  valueCount?: number
   /**
    * The `tagPriority` entry option. Each tag takes it, as v3 assigns entry options onto each
    * tag, so the entry needs no options. A `before:` or `after:` alias bails.
@@ -66,23 +66,23 @@ const COERCIBLE_TEXT_RE = /^[true]*$/
 const VALUE_PROBES: unknown[] = [null, undefined, '', 'true', 'x', 0, false, ['a', 'b'], { a: 1 }]
 
 function bail(reason: string): CompileResult {
-  return { _tag: 'Bail', reason }
+  return { _tag: 'Err', reason }
 }
 
 function hasDynamicValue(value: unknown): boolean {
   return typeof value === 'string' && value.includes(DYNAMIC_VALUE_OPEN)
 }
 
-function hasStrayToken(value: string, dynamicValues: number): boolean {
-  const rest = value.replace(DYNAMIC_VALUE_RE, (match, index) => +index < dynamicValues ? '' : match)
+function hasStrayToken(value: string, valueCount: number): boolean {
+  const rest = value.replace(DYNAMIC_VALUE_RE, (match, index) => +index < valueCount ? '' : match)
   return rest.includes(DYNAMIC_VALUE_OPEN) || rest.includes(DYNAMIC_VALUE_CLOSE)
 }
 
-function findUnprovable(value: unknown, dynamicValues: number, depth: number): string | undefined {
+function findUnprovable(value: unknown, valueCount: number, depth: number): string | undefined {
   if (value === undefined || value === null || typeof value === 'boolean')
     return
   if (typeof value === 'string')
-    return hasStrayToken(value, dynamicValues) ? 'private-use token in a string value' : undefined
+    return hasStrayToken(value, valueCount) ? 'private-use token in a string value' : undefined
   if (typeof value === 'number')
     return Number.isFinite(value) ? undefined : 'non-finite number'
   if (typeof value !== 'object')
@@ -94,7 +94,7 @@ function findUnprovable(value: unknown, dynamicValues: number, depth: number): s
   for (const key of Object.keys(value)) {
     if (hasStrayToken(key, 0))
       return 'private-use token in a key'
-    const reason = findUnprovable((value as Record<string, unknown>)[key], dynamicValues, depth + 1)
+    const reason = findUnprovable((value as Record<string, unknown>)[key], valueCount, depth + 1)
     if (reason)
       return reason
   }
@@ -232,10 +232,10 @@ function compileTag(tag: HeadTag, identity: string): CompiledTag | string {
   return flags || hasExtra ? [...compiledTag, hasExtra ? extra as CompiledTagExtra : 0, flags] as unknown as CompiledTag : compiledTag
 }
 
-function compile(input: unknown, dynamicValues: number, tagPriority: CompileOptions['tagPriority']): CompileResult {
+function compile(input: unknown, valueCount: number, tagPriority: CompileOptions['tagPriority']): CompileResult {
   if (!input || typeof input !== 'object' || Array.isArray(input))
     return bail('input is not an object')
-  const reason = findUnprovable(input, dynamicValues, 0)
+  const reason = findUnprovable(input, valueCount, 0)
   if (reason)
     return bail(reason)
   // v3 assigns the entry options onto each normalized tag
@@ -270,28 +270,28 @@ function compile(input: unknown, dynamicValues: number, tagPriority: CompileOpti
   }
   if (compiledTags.length >= MAX_ENTRY_TAGS)
     return bail('too many tags in one entry')
-  if (fingerprint(normalize(toHeadInput(compiledTags, Array.from({ length: dynamicValues }, (_, i) => dynamicValue(i))))) !== fingerprint(tags))
+  if (fingerprint(normalize(toHeadInput(compiledTags, Array.from({ length: valueCount }, (_, i) => dynamicValue(i))))) !== fingerprint(tags))
     return bail('compiled tags do not rebuild the input')
-  if (dynamicValues) {
+  if (valueCount) {
     for (const probe of VALUE_PROBES) {
-      const values = Array.from({ length: dynamicValues }).fill(probe)
+      const values = Array.from({ length: valueCount }).fill(probe)
       if (fingerprint(normalize(toHeadInput(compiledTags, values))) !== fingerprint(normalize(applyValues(input, values))))
         return bail('a value would change how the input normalizes')
     }
   }
-  return { _tag: 'Ok', tags: compiledTags, valueCount: dynamicValues }
+  return { _tag: 'Ok', tags: compiledTags, valueCount }
 }
 
 /**
  * Compiles static head input to compiled tags at build time. It uses the v3 normalize,
  * dedupe, and weight rules, keeps no state, and never throws: input it cannot
- * prove returns `Bail`, and the call stays loose.
+ * prove returns `Err`, and the call stays loose.
  *
  * @experimental
  */
 export function compileTags(input: unknown, options: CompileOptions = {}): CompileResult {
   try {
-    return compile(input, options.dynamicValues || 0, options.tagPriority)
+    return compile(input, options.valueCount || 0, options.tagPriority)
   }
   catch (error) {
     return bail(`input could not be normalized: ${(error as Error).message}`)

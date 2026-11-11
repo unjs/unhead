@@ -39,11 +39,17 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
   // keyless JSON scripts whose identity holds a value, and every other identity
   const contentIds: string[] = []
   const ids = new Set<string>()
+  // With a tag transform, every value of the sequence. A transform may replace the text that
+  // holds one, and the tag of that text may be one that v3 omits for some values.
+  const gone = head._tt ? new Set<string>() : undefined
   let unsafe = false
   let index = 0
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
     const position = index++
-    const positioned = (value: string) => value.replace(DYNAMIC_VALUE_RE, `${DYNAMIC_VALUE_OPEN}${position}.$1${DYNAMIC_VALUE_CLOSE}`)
+    const positioned = (value: string) => value.replace(DYNAMIC_VALUE_RE, (_, valueIndex: string) => {
+      gone?.add(`${position}.${valueIndex}`)
+      return `${DYNAMIC_VALUE_OPEN}${position}.${valueIndex}${DYNAMIC_VALUE_CLOSE}`
+    })
     entry._compiled!.forEach((compiledTag, i) => {
       const tag = revive(compiledTag, (entry._i << 10) + i, (value) => {
         unsafe ||= tp && PARAM_NEIGHBOUR_RE.test(value)
@@ -59,6 +65,12 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
   const previousTemplate = head._titleTemplate
   head._titleTemplate = undefined
   const buckets: Memo['b'] = renderTags(renderer.r(tags, head), omitLineBreaks, renderer, (tag) => {
+    // A tag transform can copy a value into the position of a tag. The memo has no place for
+    // a tag that moves with its value, so the sequence takes the slow path.
+    unsafe ||= !!tag.tagPosition?.includes?.(DYNAMIC_VALUE_OPEN)
+    // The type of a script decides how v3 escapes its text. A tag transform can copy a value
+    // into the type, and the memo holds text escaped for the token, so the same applies.
+    unsafe ||= tag.tag === 'script' && !!tag.props.type?.includes?.(DYNAMIC_VALUE_OPEN)
     // a value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in tag.props) {
       if (tag.props[key]?.includes?.(DYNAMIC_VALUE_OPEN))
@@ -77,7 +89,13 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     const bucket = buckets[key] as string
     if (bucket.includes(DYNAMIC_VALUE_OPEN)) {
       unsafe ||= RAW_NEIGHBOUR_RE.test(bucket) || (tp && PARAM_NEIGHBOUR_RE.test(bucket))
-      buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
+      const pieces = buckets[key] = bucket.split(TOKEN_MARKED_RE).map((piece, i) => i % 4 ? +piece : piece)
+      for (let i = 1; i < pieces.length; i += 4)
+        gone?.delete(`${pieces[i]}.${pieces[i + 1]}`)
+      // A token with no mode sits where the marks do not reach, such as a class Set that a
+      // tag transform filled. The memo cannot fill it, so the sequence takes the slow path.
+      for (let i = 0; i < pieces.length; i += 4)
+        unsafe ||= (pieces[i] as string).includes(DYNAMIC_VALUE_OPEN)
     }
   }
   const state: Memo['s'] = { _title: head._title }
@@ -89,7 +107,13 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     state._templateParams = head._templateParams
     state._separator = head._separator
   }
-  return { b: buckets, x: unsafe, s: state, ...contentIds.length && { i: { d: contentIds, k: ids } } }
+  return {
+    b: buckets,
+    x: unsafe,
+    s: state,
+    ...contentIds.length && { i: { d: contentIds, k: ids } },
+    ...gone?.size && { g: [...gone].flatMap(token => token.split('.').map(Number)) },
+  }
 }
 
 // Returns undefined when the value could change a v3 decision. Escaping matches
@@ -99,22 +123,26 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
 // it does not end in a part of one that the next text could finish. Template params never reach script text, because the build
 // sends a tag that opts in to the slow path. So a large payload costs one
 // `includes` scan, and a regex only when it holds a `<`.
-// With `InferSeoMetaPlugin`, a blank value takes the slow path: it tells a blank image from
-// other text, and the memo holds a token that is never blank.
+// With `InferSeoMetaPlugin` or a tag transform, a blank value takes the slow path: either may tell
+// blank text from other text, as the plugin does for an image, and the memo holds a token that is never blank.
+// A tag transform can also move text that takes template params into raw text, so `moved` gives raw text the param check.
 function endsInImportStart(value: string): boolean {
   const tail = value.slice(-6)
   const at = tail.lastIndexOf('@')
   return at >= 0 && '@import'.startsWith(tail.slice(at))
 }
 
-function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boolean): string | undefined {
+function escapeValue(entryValue: unknown, mode: number, tp: boolean, transforms?: boolean, moved?: boolean): string | undefined {
   if (typeof entryValue === 'number' && entryValue && Number.isFinite(entryValue))
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
-  if (mode >= MODE_RAW)
-    return entryValue.includes('@import') || (mode === MODE_RAW && endsInImportStart(entryValue)) ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
-  if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (infer && !NOT_BLANK_RE.test(entryValue)))
+  if (mode >= MODE_RAW) {
+    if ((moved && PARAM_UNSAFE_RE.test(entryValue)) || entryValue.includes('@import') || (mode === MODE_RAW && endsInImportStart(entryValue)))
+      return
+    return !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
+  }
+  if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (transforms && !NOT_BLANK_RE.test(entryValue)))
     return
   return mode === MODE_ATTR
     ? entryValue.includes('"') ? entryValue.replace(DOUBLE_QUOTE_RE, '&quot;') : entryValue
@@ -124,10 +152,11 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boo
 /**
  * Restores the head fields of a memo and joins its pieces with escaped values.
  */
-export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayload | undefined {
+export function renderValueMemo(memo: Memo, head: CompiledTagsHead, transforms: boolean): SSRHeadPayload | undefined {
   const state = memo.s!
   const tp = !!state._templateParams
-  const infer = !!head._infer
+  const moved = tp && transforms
+  transforms ||= !!head._infer
   const html: Record<string, unknown> = { ...memo.b }
   const values: EntryValues = []
   let safe = true
@@ -163,13 +192,18 @@ export function renderValueMemo(memo: Memo, head: CompiledTagsHead): SSRHeadPayl
       const pieces = bucket as (string | number)[]
       let out = pieces[0] as string
       for (let i = 1; i < pieces.length; i += 4) {
-        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, infer)
+        const text = escapeValue(values[pieces[i] as number]?.[pieces[i + 1] as number], pieces[i + 2] as number, tp, transforms, moved)
         if (text === undefined)
           return
         out += text + (pieces[i + 3] as string)
       }
       html[key] = out
     }
+  }
+  // a value that left the payload still decides whether v3 keeps its tag
+  for (let i = 0; memo.g && i < memo.g.length; i += 2) {
+    if (escapeValue(values[memo.g[i]!]?.[memo.g[i + 1]!], MODE_ATTR, tp, true) === undefined)
+      return
   }
   const title = resolveState(state._title)
   const params = copyValue(state._templateParams)
