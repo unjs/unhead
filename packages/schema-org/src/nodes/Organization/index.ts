@@ -12,9 +12,9 @@ import {
   IdentityId,
   idReference,
   isHomePage,
+  isSiteIdentityId,
   prefixId,
   resolvableDateToIso,
-  resolveAsGraphKey,
   resolveDefaultType,
   resolveWithBase,
   setIfEmpty,
@@ -450,24 +450,3 @@ export const organizationResolver
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },
   })
-
-/**
- * The site's own identity node (`<host>/#identity`) is the only organization
- * allowed to inherit the host as its `url`. A graph-key comparison alone is not
- * enough: an external `@id` such as `https://partner.example/#identity` reduces
- * to the same `#identity` fragment key.
- */
-function isSiteIdentityId(id: string | undefined, host: string): boolean {
-  if (!id)
-    return false
-  if (id === IdentityId)
-    return true
-  if (resolveAsGraphKey(id) !== IdentityId)
-    return false
-  try {
-    return new URL(id).origin === host.replace(/\/$/, '')
-  }
-  catch {
-    return false
-  }
-}

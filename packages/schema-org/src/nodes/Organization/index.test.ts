@@ -369,4 +369,15 @@ describe('defineOrganization', () => {
       expect(partner).not.toHaveProperty('url')
     })
   })
+
+  it('keeps the site host url on the identity organization with a base path', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineOrganization({ name: 'RankEval' })])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/app/#identity')
+
+      expect(identity).toMatchObject({ url: 'https://example.com/app/' })
+    }, { host: 'https://example.com/app/' })
+  })
 })
