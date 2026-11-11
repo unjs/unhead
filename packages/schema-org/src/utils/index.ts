@@ -146,7 +146,7 @@ export function prefixId(url: string | undefined, id: Id | string) {
  * canonical id also keeps hosts with base paths (`https://example.com/app/`)
  * working.
  */
-export function isSiteIdentityId(id: string | undefined, host: string): boolean {
+export function isSiteIdentityId(id: string | undefined, host: string | undefined): boolean {
   if (!id)
     return false
   return id === IdentityId || id === prefixId(host, IdentityId)

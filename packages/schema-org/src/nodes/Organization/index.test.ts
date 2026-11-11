@@ -306,10 +306,14 @@ describe('defineOrganization', () => {
       useSchemaOrg(head, [
         defineJobPosting({
           name: 'Engineer',
+          description: 'Build things',
+          title: 'Engineer',
+          datePosted: '2026-01-01',
           hiringOrganization: {
             '@id': '#identity',
-            name: 'RankEval',
+            'name': 'RankEval',
           },
+          jobLocation: { name: 'Headquarters', address: '1 Main Street' },
         }),
       ])
 
@@ -318,8 +322,8 @@ describe('defineOrganization', () => {
 
       expect(jobPosting?.hiringOrganization).toMatchObject({
         '@type': 'Organization',
-        name: 'RankEval',
-        url: 'https://example.com/',
+        'name': 'RankEval',
+        'url': 'https://example.com/',
       })
     })
   })
@@ -331,10 +335,14 @@ describe('defineOrganization', () => {
       useSchemaOrg(head, [
         defineJobPosting({
           name: 'Engineer',
+          description: 'Build things',
+          title: 'Engineer',
+          datePosted: '2026-01-01',
           hiringOrganization: {
             '@id': 'https://partner.example/#identity',
-            name: 'Partner',
+            'name': 'Partner',
           },
+          jobLocation: { name: 'Headquarters', address: '1 Main Street' },
         }),
       ])
 
@@ -345,7 +353,7 @@ describe('defineOrganization', () => {
       expect(hiringOrganization).toMatchObject({
         '@type': 'Organization',
         '@id': 'https://partner.example/#identity',
-        name: 'Partner',
+        'name': 'Partner',
       })
       expect(hiringOrganization).not.toHaveProperty('url')
     })
@@ -358,14 +366,14 @@ describe('defineOrganization', () => {
       useSchemaOrg(head, [
         defineOrganization({
           '@id': 'https://partner.example/#identity',
-          name: 'Partner',
+          'name': 'Partner',
         }),
       ])
 
       const graph = await injectSchemaOrg(head)
       const partner = graph.find(node => node['@id'] === 'https://partner.example/#identity')
 
-      expect(partner).toMatchObject({ '@type': 'Organization', name: 'Partner' })
+      expect(partner).toMatchObject({ '@type': 'Organization', 'name': 'Partner' })
       expect(partner).not.toHaveProperty('url')
     })
   })
