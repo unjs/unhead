@@ -51,6 +51,10 @@ describe.each([['without template params', false], ['with template params', true
     compare({ title: dynamicValue(0), titleTemplate: '%s | Acme' }, [[7], [8]], tp)
   })
 
+  it('takes v3 rules for a value that completes a replacement pattern after a static $', () => {
+    compare({ title: `A $${dynamicValue(0)}`, titleTemplate: '%s | Site' }, [['&x'], ['\'x'], ['`x'], ['ok']], tp)
+  })
+
   it('takes v3 rules for a value v3 may treat differently', () => {
     compare({ title: dynamicValue(0), titleTemplate: 'Acme' }, [[null], [''], [0], [false], ['true'], ['a%b'], [' pad '], ['$&'], [{ a: 1 }], ['ok']], tp)
   })

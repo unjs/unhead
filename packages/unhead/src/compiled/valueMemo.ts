@@ -15,6 +15,7 @@ const TOKEN_ENTRY_RE = /\uE000(\d+)\.(\d+)\uE001/g
 // a static prefix of a closing tag or a template param next to a dynamic value
 const RAW_NEIGHBOUR_RE = /<\/?[a-z]*\uE000/i
 const PARAM_NEIGHBOUR_RE = /%[\w.]*\uE000/
+const TITLE_PATTERN_RE = /\$\uE000/
 const PARAM_UNSAFE_RE = /%|^\s|\s$/
 const NOT_BLANK_RE = /\S/
 
@@ -65,8 +66,9 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     }
     for (const key of ['textContent', 'innerHTML']) {
       if (tag[key]?.includes?.(DYNAMIC_VALUE_OPEN)) {
-        // a param expansion escapes JSON values, which a raw value would not
-        unsafe ||= !!tag.processTemplateParams
+        // a param expansion escapes JSON values, which a raw value would not. A `$`
+        // before a title value can start a replacement pattern in the title template
+        unsafe ||= !!tag.processTemplateParams || (tag.tag === 'title' && TITLE_PATTERN_RE.test(tag[key]))
         tag[key] = markMode(tag[key], tag.tag === 'title' ? MODE_TITLE : tag.tag === 'script' && JSON_TYPE_RE.test(String(tag.props.type)) ? MODE_JSON : MODE_RAW)
       }
     }

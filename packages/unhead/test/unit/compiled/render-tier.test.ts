@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compileTags, createHead, getRenderTier } from '../../../src/compiled/server'
+import { compileTags, createHead, getRenderTier, renderSSRHead } from '../../../src/compiled/server'
 import { InferSeoMetaPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head } from '../../../src/server'
 
@@ -23,6 +23,24 @@ describe('getRenderTier', () => {
     const head = createHead()
     head.push(tags, { tagPriority: 'low' })
     expect(getRenderTier(head)._tag).toBe('Fast')
+  })
+
+  it.each([
+    ['out of order', [5, 2]],
+    ['above 2,097,151', [2097152]],
+  ])('is Fast for an entry index %s', (_, indexes) => {
+    const head = createHead()
+    for (const _index of indexes)
+      head.push(tags, { _index })
+    expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'an entry index is out of order, or above 2,097,151' })
+  })
+
+  it('is Fast for InferSeoMetaPlugin once a render left a title template on the head', () => {
+    const head = createHead({ plugins: [InferSeoMetaPlugin()] })
+    head.push((compileTags({ title: 'Page', titleTemplate: '%s | Site' }) as any).tags)
+    expect(getRenderTier(head)).toEqual({ _tag: 'Memo' })
+    renderSSRHead(head)
+    expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: 'InferSeoMetaPlugin reads the title template that an earlier render left on the head' })
   })
 
   it.each([
@@ -54,6 +72,13 @@ describe('getRenderTier', () => {
   it('is Full for a plugin with a native key and other hooks', () => {
     const head = createHead({ plugins: [Object.assign(() => ({ key: 'infer-seo-meta', hooks: { 'tags:resolve': () => {} } }), { key: 'infer-seo-meta' })] })
     head.push(tags)
+    expect(getRenderTier(head)._tag).toBe('Full')
+  })
+
+  it('is Full for a dynamic prop resolver that a plugin adds after the head exists', () => {
+    const head = createHead()
+    head.push(tags)
+    head.resolvedOptions.propResolvers = [...head.resolvedOptions.propResolvers!, (_, value) => value]
     expect(getRenderTier(head)._tag).toBe('Full')
   })
 

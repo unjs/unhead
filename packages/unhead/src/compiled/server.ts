@@ -14,7 +14,7 @@ import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeStyleClassProps } from '../utils/normalize'
 import { dedupeTags, resolveTitleTemplate, sanitizeTags, syncEntryHookCache } from '../utils/resolve'
 import { compileTags } from './compile'
-import { DEFAULT_COMPILED_TAGS, isEmpty, isMemoOff, renderCompiledHead, reviveTag, settleValues } from './core'
+import { DEFAULT_COMPILED_TAGS, isEmpty, isMemoEntry, isMemoOff, MAX_MEMO_INDEX, renderCompiledHead, reviveTag, settleValues } from './core'
 import { ALIAS_PRIORITY_RE, copyValue, FLAG_DYNAMIC_VALUES, FLAG_IDENTITY, toHeadInput } from './tags'
 import { buildValueMemo, renderValueMemo } from './valueMemo'
 
@@ -218,6 +218,11 @@ function compiledTagsAt(entry: CompiledEntry, v3?: boolean): RuntimeTag[] | unde
   return tags
 }
 
+// The shared tags of an entry that needs no v3 normalize: compiled tags with no dynamic values and no entry options
+function staticTags(entry: CompiledEntry): RuntimeTag[] | false | undefined {
+  return !!entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)
+}
+
 // v3 `resolveTags` takes these through its precomputed slot, which it already skips
 // for an entry hook, a weight override, and entry options. A head weight or a dynamic
 // resolver would change the tags, so then nothing is supplied.
@@ -226,7 +231,8 @@ function supplyV3CompiledTags(head: CompiledHead) {
   if (_tagWeight !== capoTagWeight || propResolvers?.some(resolver => !resolver._static))
     return
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    if (entry._compiled && !entry._precomputedTags)
+    // v3 runs a value function when it reads the input of the entry, and only then
+    if (entry._compiled && !entry._precomputedTags && typeof entry._values !== 'function')
       entry._precomputedTags = compiledTagsAt(entry, true) as HeadTag[] | undefined
   }
 }
@@ -347,15 +353,23 @@ const renderer: CompiledRenderer = {
         entry.input = entry._pending
         entry._pending = entry._tags = entry._precomputedTags = undefined
       }
-      lists.push((entry._compiled && !entry._tags && isEmpty(entry.options) && compiledTagsAt(entry)) || loose[loose.push(entry) - 1]!)
+      lists.push((typeof entry._values !== 'function' && staticTags(entry)) || loose[loose.push(entry) - 1]!)
     }
     // the v3 call, with only the entries a listener can change: compiled tags hold no promise
     store?.callHook('entries:resolve', { entries: loose, tagMap: new Map(), tags: [] })
     const alias = head.plugins.has('aliasSorting')
     const tags: RuntimeTag[] = []
     for (const item of lists) {
+      let list: RuntimeTag[] | false | undefined = []
+      if (Array.isArray(item)) {
+        list = item
+      }
       // an entry the listener removed is left out, as in v3
-      const list = Array.isArray(item) ? item : loose.includes(item) ? looseTags(item, head) : []
+      else if (loose.includes(item)) {
+        // a value function runs here, in entry order, as a v3 getter does
+        settleValues(item)
+        list = staticTags(item) || looseTags(item, head)
+      }
       for (const tag of list) {
         // only v3 runs `AliasSortingPlugin`, and compile refuses an alias in compiled tags
         if (alias && tag.tagPriority && ALIAS_PRIORITY_RE.test(tag.tagPriority))
@@ -463,7 +477,8 @@ function addEntry(head: Unhead<any, any>, input: unknown, options?: CompiledEntr
 
 // Why a render must take the full v3 runtime, or nothing when a fast tier can render it
 function fullTierReason(head: CompiledHead, options?: RenderSSRHeadOptions): string | undefined {
-  if (head._v3 !== false)
+  // read on every render: a plugin may add a resolver after the head exists
+  if (head._v3 !== false || head.resolvedOptions.propResolvers!.some(resolver => !resolver._static))
     return 'a custom tag weight, a dynamic prop resolver, or a plugin that the head cannot run natively'
   if (options?.resolvedTags)
     return 'the resolvedTags render option'
@@ -496,15 +511,24 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
   const full = compiledHead._acceptsCompiled ? fullTierReason(compiledHead, options) : 'the head does not come from a compiled server entry'
   if (full)
     return { _tag: 'Full', reason: full }
+  // the same checks as the memo walk of `renderCompiledHead`, in the same order
   let loose = 0
+  let last = -1
+  let unordered = false
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    if (!entry._compiled || entry._tags || entry._pending !== undefined || !isEmpty(entry.options))
+    if (!isMemoEntry(entry))
       loose++
+    unordered ||= entry._i <= last || entry._i >= MAX_MEMO_INDEX
+    last = entry._i
   }
   if (loose)
     return { _tag: 'Fast', reason: `${loose} ${loose === 1 ? 'entry is' : 'entries are'} not compiled tags with no options` }
+  if (unordered)
+    return { _tag: 'Fast', reason: 'an entry index is out of order, or above 2,097,151' }
   if (compiledHead._infer && !compiledHead._inferMemo)
     return { _tag: 'Fast', reason: 'InferSeoMetaPlugin has an ogTitle or ogDescription function' }
+  if (compiledHead._infer && compiledHead._titleTemplate !== undefined)
+    return { _tag: 'Fast', reason: 'InferSeoMetaPlugin reads the title template that an earlier render left on the head' }
   if (isMemoOff())
     return { _tag: 'Fast', reason: 'the memo is off, because this process created too many sets of compiled tags' }
   return { _tag: 'Memo' }
@@ -517,16 +541,18 @@ export function getRenderTier(head: Unhead<any>, options?: RenderSSRHeadOptions)
  * @experimental
  */
 export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
-  head.entries.forEach(settleValues)
-  try {
-    if (!fullTierReason(head as CompiledHead, options))
+  // A fast tier runs each value function as it reads the entry. The full runtime runs it
+  // when v3 reads the entry input, so a render that reads no entry runs none.
+  if (!fullTierReason(head as CompiledHead, options)) {
+    try {
       return renderCompiledHead(head as CompiledTagsHead, options?.omitLineBreaks, renderer)
-  }
-  catch (error) {
-    // A loose tag has a priority alias. v3 calls `entries:resolve` a second time in this
-    // render, and reuses the loose tags, so `entries:normalize` still runs once per entry.
-    if (error !== renderer)
-      throw error
+    }
+    catch (error) {
+      // A loose tag has a priority alias. v3 calls `entries:resolve` a second time in this
+      // render, and reuses the loose tags, so `entries:normalize` still runs once per entry.
+      if (error !== renderer)
+        throw error
+    }
   }
   supplyV3CompiledTags(head as CompiledHead)
   return createV3Renderer(options)(head)
@@ -559,7 +585,7 @@ export function createHead<T = ResolvableHead>(options: CompiledServerHeadOption
   head.render = () => renderSSRHead(head, renderOptions)
   head.use = plugin => usePlugin(head, plugin)
   head.push = (input: unknown, entryOptions?: HeadEntryOptions) => addEntry(head, input, entryOptions)
-  head._v3 = tagWeight !== capoTagWeight || !!options.propResolvers?.some(resolver => !resolver._static)
+  head._v3 = tagWeight !== capoTagWeight
   head._acceptsCompiled = 1
   head._hookStore = options.hooks && createHooks<ServerHeadHooks>(options.hooks)
   if (!options.disableDefaults)
