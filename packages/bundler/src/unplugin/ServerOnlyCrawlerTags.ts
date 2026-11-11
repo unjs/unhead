@@ -18,12 +18,17 @@ const HEAD_NAMES = new Set(['useHead', 'useHeadSafe'])
 const SEO_META_NAMES = new Set(['useSeoMeta'])
 
 /**
- * Vue calls a crawler tag value may make and still be dropped: they wrap a
- * value and never call or read it. Any other call keeps the tag, because
- * removing it could remove a side effect.
+ * Vue calls a crawler tag value may make and still be dropped. Given a literal
+ * or a function, they wrap the value and never call or read it. Given a
+ * variable, they read its properties, which can run a getter or a proxy trap.
+ * Any other call keeps the tag, because removing it could remove a side effect.
  */
 const DROPPABLE_CALLS = new Set(['computed', 'ref', 'shallowRef'])
 const DROPPABLE_CALL_SOURCES = new Set(['vue', '#imports'])
+const FUNCTION_TYPES = new Set(['ArrowFunctionExpression', 'FunctionExpression'])
+
+// The core composables take the head first: `useHead(head, input, options)`.
+const CORE_SOURCE = 'unhead'
 
 export interface ServerOnlyCrawlerTagsOptions extends BaseTransformerTypes {
   /**
@@ -142,6 +147,9 @@ function isCrawlerTag(type: string, element: any, isDroppableCall: IsDroppableCa
     // A spread or computed key could override the identity, so the tag stays.
     if (key === undefined)
       return false
+    // A repeated key still evaluates its earlier value, so every value is checked.
+    if (!isDroppable(p.value, isDroppableCall))
+      return false
     props.set(key, p.value)
   }
   let crawler = false
@@ -159,7 +167,7 @@ function isCrawlerTag(type: string, element: any, isDroppableCall: IsDroppableCa
   else if (type === 'script') {
     crawler = staticString(props.get('type'))?.toLowerCase() === 'application/ld+json'
   }
-  return crawler && [...props.values()].every(v => isDroppable(v, isDroppableCall))
+  return crawler
 }
 
 /** Whether a `useSeoMeta` property is on the crawler tag list. */
@@ -172,19 +180,38 @@ function isCrawlerSeoMetaProp(prop: any, isDroppableCall: IsDroppableCall): bool
 
 /**
  * Removes `remove` from a comma separated list (array elements or object
- * properties), with the separator next to each removed item.
+ * properties). Each run of removed items goes in one edit, with one separator,
+ * so a trailing comma never follows another comma. `close` is the index of
+ * the closing bracket of the list.
  */
-function removeListItems(s: MagicString, items: any[], remove: Set<any>) {
-  items.forEach((item, i) => {
-    if (!remove.has(item))
-      return
+function removeListItems(s: MagicString, items: any[], remove: Set<any>, close: number) {
+  for (let i = 0; i < items.length; i++) {
+    if (!remove.has(items[i]))
+      continue
+    const first = i
+    while (remove.has(items[i + 1]))
+      i++
     const next = items[i + 1]
     if (next)
-      s.remove(item.start, next.start)
-    else if (i > 0)
-      s.remove(items[i - 1].end, item.end)
+      s.remove(items[first].start, next.start)
+    else if (first > 0)
+      s.remove(items[first - 1].end, items[i].end)
+    // Nothing stays, so a trailing comma goes too.
     else
-      s.remove(item.start, item.end)
+      s.remove(items[first].start, close)
+  }
+}
+
+/**
+ * Whether an options argument does nothing for an entry with no tags. An
+ * `onRendered` callback runs after every render of the head, and a variable
+ * or a spread can hold one.
+ */
+function isInertOptions(arg: any, isDroppableCall: IsDroppableCall): boolean {
+  const node = unwrap(arg)
+  return node?.type === 'ObjectExpression' && node.properties.every((p: any) => {
+    const key = staticKey(p)
+    return key !== undefined && key !== 'onRendered' && p.kind === 'init' && isDroppable(p.value, isDroppableCall)
   })
 }
 
@@ -209,9 +236,9 @@ function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableC
     if (removeEls.size === arr.elements.length)
       removeProps.add(prop)
     else
-      removeListItems(s, arr.elements, removeEls)
+      removeListItems(s, arr.elements, removeEls, arr.end - 1)
   }
-  removeListItems(s, obj.properties, removeProps)
+  removeListItems(s, obj.properties, removeProps, obj.end - 1)
   if (!changed)
     return 'unchanged'
   return removeProps.size === obj.properties.length ? 'empty' : 'stripped'
@@ -222,7 +249,7 @@ function stripSeoMetaObject(s: MagicString, obj: any, isDroppableCall: IsDroppab
   const removeProps = new Set(obj.properties.filter((p: any) => isCrawlerSeoMetaProp(p, isDroppableCall)))
   if (!removeProps.size)
     return 'unchanged'
-  removeListItems(s, obj.properties, removeProps)
+  removeListItems(s, obj.properties, removeProps, obj.end - 1)
   return removeProps.size === obj.properties.length ? 'empty' : 'stripped'
 }
 
@@ -308,7 +335,13 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
             return !scopeTracker.getDeclaration('JSON') && call.arguments.every(isLiteral)
           return callee.type === 'Identifier'
             && DROPPABLE_CALLS.has(importedName(callee.name, source => DROPPABLE_CALL_SOURCES.has(source as string))!)
-            && call.arguments.every((a: any) => isDroppable(a, isDroppableCall))
+            && call.arguments.every((a: any) => isLiteral(a) || FUNCTION_TYPES.has(unwrap(a)?.type))
+        }
+
+        /** Whether `local` is an import from the core package, whose composables take the head first. */
+        function isCoreImport(local: string): boolean {
+          const decl = scopeTracker.getDeclaration(local)
+          return decl instanceof ScopeTrackerImport && decl.importNode.source.value === CORE_SOURCE
         }
 
         walk(ast.program, {
@@ -325,7 +358,8 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
             if (!isSeoMeta && !HEAD_NAMES.has(name))
               return
 
-            const obj = inputObject(node.arguments[0])
+            const inputIndex = isCoreImport(node.callee.name) ? 1 : 0
+            const obj = inputObject(node.arguments[inputIndex])
             if (!obj)
               return
 
@@ -333,8 +367,9 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
             if (result !== 'unchanged')
               removedUntil = node.end
             // A call with nothing left goes, so its runtime can drop from the bundle.
-            // The options argument is ignored then: it only applies to the input.
-            if (result === 'empty' && parent?.type === 'ExpressionStatement' && node.arguments.slice(1).every((a: any) => isDroppable(a, isDroppableCall)))
+            // Its other arguments must do nothing then: a head before the input, inert options after it.
+            const inert = (a: any, i: number) => i === inputIndex || (i < inputIndex ? isDroppable(a, isDroppableCall) : isInertOptions(a, isDroppableCall))
+            if (result === 'empty' && parent?.type === 'ExpressionStatement' && node.arguments.every(inert))
               s.overwrite(parent.start, parent.end, ';')
           },
         })

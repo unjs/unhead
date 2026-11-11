@@ -115,6 +115,62 @@ describe('serverOnlyCrawlerTags', () => {
     expect(calls(code)).toEqual([{ name: 'useHead', input: { title: 'Home' } }])
   })
 
+  it('removes crawler tags at the end of a list that has a trailing comma', async () => {
+    const code = await transform(`useHead({
+      meta: [
+        { name: 'theme-color', content: '#fff' },
+        { name: 'description', content: 'Desc' },
+        { property: 'og:title', content: 'Home' },
+      ],
+    })
+    useSeoMeta({
+      title: 'Home',
+      description: 'Desc',
+      ogTitle: 'Home',
+    })`)
+    expect(calls(code)).toEqual([
+      { name: 'useHead', input: { meta: [{ name: 'theme-color', content: '#fff' }] } },
+      { name: 'useSeoMeta', input: { title: 'Home' } },
+    ])
+  })
+
+  it('removes every key of a used call whose input has a trailing comma', async () => {
+    const code = await transform(`globalThis.__a = useSeoMeta({ ogTitle: 'x', })
+    globalThis.__b = useSeoMeta({
+      description: 'Desc',
+      ogTitle: 'x', // a note
+    })
+    globalThis.__c = useHead({ meta: [{ name: 'description', content: 'Desc' }], link: [{ rel: 'canonical', href: '/' }], })`)
+    expect(calls(code)).toEqual([
+      { name: 'useSeoMeta', input: {} },
+      { name: 'useSeoMeta', input: {} },
+      { name: 'useHead', input: {} },
+    ])
+  })
+
+  it('keeps an empty call whose options can hold a render callback', async () => {
+    const code = await transform(`const options = {}
+    useHead({ meta: [{ property: 'og:title', content: 'x' }] }, { onRendered() {} })
+    useSeoMeta({ ogTitle: 'x' }, { onRendered: () => {} })
+    useHead({ link: [{ rel: 'canonical', href: '/' }] }, options)`)
+    expect(calls(code)).toEqual([
+      { name: 'useHead', input: {} },
+      { name: 'useSeoMeta', input: {} },
+      { name: 'useHead', input: {} },
+    ])
+  })
+
+  it('reads the input of a core composable after its head', async () => {
+    const code = await transform(`import { useHead, useSeoMeta } from 'unhead'
+useHead(head, { title: 'Home', meta: [{ name: 'description', content: 'Desc' }] })
+useSeoMeta(head, { ogTitle: 'Home' })
+useSeoMeta(head, { ogTitle: 'Home' }, { onRendered() {} })`)
+    expect(code).toBe(`import { useHead, useSeoMeta } from 'unhead'
+useHead(head, { title: 'Home' })
+;
+useSeoMeta(head, { }, { onRendered() {} })`)
+  })
+
   it('removes a useHead call left empty, including a getter input', async () => {
     const code = await transform(`useHead({ meta: [{ property: 'og:title', content: 'x' }] })
 useHeadSafe(() => ({ link: [{ rel: 'canonical', href: '/' }] }))
@@ -147,6 +203,9 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
     ['an optional property read', `useSeoMeta({ ogTitle: page?.title })`],
     ['a local function named like a reactivity helper', `function ref(v) { sideEffect(); return v }\nuseSeoMeta({ ogTitle: ref('x') })`],
     ['a reactivity helper from another package', `import { computed } from 'other-lib'\nuseSeoMeta({ ogTitle: computed(() => 'x') })`],
+    ['a Vue ref of a variable, which reads the variable', `import { ref } from 'vue'\nuseSeoMeta({ ogTitle: ref(page) })`],
+    ['a Vue computed of a variable, which can read its get key', `import { computed } from 'vue'\nuseSeoMeta({ ogTitle: computed(title) })`],
+    ['a duplicate key whose first value has a side effect', `useHead({ meta: [{ name: 'description', content: sideEffect(), content: 'x' }] })`],
     ['a translation call', `useSeoMeta({ ogTitle: t('og.title') })`],
     ['toValue(), which calls a getter', `useSeoMeta({ ogTitle: toValue(getTitle) })`],
     ['JSON.stringify() of a variable, which can reach toJSON()', `useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(schema) }] })`],
