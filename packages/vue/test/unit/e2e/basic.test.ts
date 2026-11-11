@@ -141,7 +141,7 @@ describe('vue e2e', () => {
   })
 
   it('hydration breaking', async () => {
-    const schema = <ReactiveHead> {
+    const schema = {
       title: 'My amazing site',
       htmlAttrs: {
         class: 'layout-default',
@@ -179,7 +179,7 @@ describe('vue e2e', () => {
           charset: 'utf-8',
         },
       ],
-    }
+    } satisfies ReactiveHead
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = await ssrVueAppWithUnhead(() => {
