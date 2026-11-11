@@ -249,6 +249,14 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
           keepLate()
           patch(next)
         }
+        else {
+          // The entry takes the equal object with no change, so a later in-place edit to it renders
+          const entry = head.entries.get(active._i)!
+          if (entry._pending !== undefined)
+            entry._pending = next
+          else
+            entry.input = next
+        }
       }
       // The same object, edited in place, as Nuxt's `<Link>` does in its render. Reading it now
       // would make that render depend on it, so the check waits for a microtask.

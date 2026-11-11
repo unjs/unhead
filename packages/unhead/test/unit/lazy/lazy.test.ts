@@ -221,6 +221,23 @@ describe('lazy head createHead', () => {
     expect(dom.window.document.title).toBe('Newer')
   })
 
+  it('renders an in-place edit during hydration that follows an equal patch', async () => {
+    const dom = ssrDom({ title: 'Edited' })
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push({ title: 'Server' })
+    // a reactive input resolves to an equal object, then the app edits that object in place
+    const input = { title: 'Server' }
+    entry.patch(input)
+    input.title = 'Edited'
+    entry.patch(input)
+    await Promise.resolve()
+    head.render()
+    expect(head.entries.get(entry._i)?.input).toBe(input)
+    expect(await head.load()).toBe(true)
+    await settle(30)
+    expect(dom.window.document.title).toBe('Edited')
+  })
+
   it('loads for a patch whose getter may return a new value', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
