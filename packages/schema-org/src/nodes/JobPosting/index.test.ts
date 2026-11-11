@@ -41,7 +41,6 @@ describe('defineJobPosting', () => {
             "hiringOrganization": {
               "@type": "Organization",
               "name": "Organization inc",
-              "url": "https://example.com/",
             },
             "jobLocation": {
               "@type": "Place",

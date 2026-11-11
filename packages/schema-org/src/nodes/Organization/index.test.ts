@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { organizationResolver } from '.'
-import { defineOrganization, defineWebPage, useSchemaOrg } from '../../'
+import { defineEvent, defineJobPosting, defineOrganization, defineWebPage, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
@@ -257,5 +257,135 @@ describe('defineOrganization', () => {
         },
       })
     })
+  })
+
+  it('does not give a third-party organization the site host as url', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'A concert',
+          startDate: '2026-11-06',
+          location: {
+            '@type': 'Place',
+            'name': 'Venue',
+            'address': {
+              addressLocality: 'Springfield',
+              addressCountry: 'US',
+            },
+          },
+          organizer: {
+            '@type': 'Organization',
+            'name': 'Third-party promoter',
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const organizer = graph.find(node => node.name === 'Third-party promoter')
+
+      expect(organizer).toMatchObject({ '@type': 'Organization', 'name': 'Third-party promoter' })
+      expect(organizer).not.toHaveProperty('url')
+    })
+  })
+
+  it('keeps the site host url on the identity organization', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineOrganization({ name: 'RankEval' })])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
+
+      expect(identity).toMatchObject({ url: 'https://example.com/' })
+    })
+  })
+
+  it('keeps the site host url on an embedded identity organization', async () => {
+    // A relation resolved without `root: true` never reaches resolveRootNode, so
+    // the identity url must also be assigned during the regular resolve pass.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          name: 'Engineer',
+          description: 'Build things',
+          title: 'Engineer',
+          datePosted: '2026-01-01',
+          hiringOrganization: {
+            '@id': '#identity',
+            'name': 'RankEval',
+          },
+          jobLocation: { name: 'Headquarters', address: '1 Main Street' },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const jobPosting = graph.find(node => node['@type'] === 'JobPosting')
+
+      expect(jobPosting?.hiringOrganization).toMatchObject({
+        '@type': 'Organization',
+        'name': 'RankEval',
+        'url': 'https://example.com/',
+      })
+    })
+  })
+
+  it('does not give the site host url to an external identity organization', async () => {
+    // `https://partner.example/#identity` shares the `#identity` fragment key but
+    // belongs to another site, so it must not inherit this site's host url.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          name: 'Engineer',
+          description: 'Build things',
+          title: 'Engineer',
+          datePosted: '2026-01-01',
+          hiringOrganization: {
+            '@id': 'https://partner.example/#identity',
+            'name': 'Partner',
+          },
+          jobLocation: { name: 'Headquarters', address: '1 Main Street' },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const jobPosting = graph.find(node => node['@type'] === 'JobPosting')
+      const hiringOrganization = jobPosting?.hiringOrganization as any
+
+      expect(hiringOrganization).toMatchObject({
+        '@type': 'Organization',
+        '@id': 'https://partner.example/#identity',
+        'name': 'Partner',
+      })
+      expect(hiringOrganization).not.toHaveProperty('url')
+    })
+  })
+
+  it('does not give a top-level external identity organization the site host url', async () => {
+    // A top-level organization resolved as the root node takes the resolveRootNode
+    // path: its external `#identity` id must not be treated as this site's identity.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          '@id': 'https://partner.example/#identity',
+          'name': 'Partner',
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const partner = graph.find(node => node['@id'] === 'https://partner.example/#identity')
+
+      expect(partner).toMatchObject({ '@type': 'Organization', 'name': 'Partner' })
+      expect(partner).not.toHaveProperty('url')
+    })
+  })
+
+  it('keeps the site host url on the identity organization with a base path', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineOrganization({ name: 'RankEval' })])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/app/#identity')
+
+      expect(identity).toMatchObject({ url: 'https://example.com/app/' })
+    }, { host: 'https://example.com/app/' })
   })
 })

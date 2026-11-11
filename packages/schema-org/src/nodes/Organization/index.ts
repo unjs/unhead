@@ -12,9 +12,9 @@ import {
   IdentityId,
   idReference,
   isHomePage,
+  isSiteIdentityId,
   prefixId,
   resolvableDateToIso,
-  resolveAsGraphKey,
   resolveDefaultType,
   resolveWithBase,
   setIfEmpty,
@@ -381,9 +381,6 @@ export const organizationResolver
       '@type': 'Organization',
     },
     idPrefix: ['host', IdentityId],
-    inheritMeta: [
-      { meta: 'host', key: 'url' },
-    ],
     resolve(node, ctx) {
       resolveDefaultType(node, 'Organization')
       node.address = resolveRelation(node.address, ctx, addressResolver)
@@ -404,11 +401,26 @@ export const organizationResolver
       node.numberOfEmployees = resolveRelation(node.numberOfEmployees, ctx, quantitativeValueResolver)
       if (node.url)
         node.url = resolveWithBase(ctx.meta.host, node.url)
+      // The identity also carries the host as its url when embedded in a relation
+      // resolved without `root: true` (e.g. a JobPosting hiringOrganization), as
+      // those never reach resolveRootNode. Only the site's own identity qualifies:
+      // an external `@id` such as `https://partner.example/#identity` reduces to
+      // the same graph key but must not inherit this site's host url.
+      if (isSiteIdentityId(node['@id'], ctx.meta.host))
+        setIfEmpty(node, 'url', ctx.meta.host)
       return node
     },
     resolveRootNode(node, ctx) {
-      const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
+      // Host-aware: an external `@id` like `https://partner.example/#identity`
+      // reduces to the same `#identity` graph key, but only this site's own
+      // identity may inherit the host url (and the related webSite/webPage wiring).
+      const isIdentity = isSiteIdentityId(node['@id'], ctx.meta.host)
       const webPage = ctx.find(PrimaryWebPageId)
+      // The site identity carries the host as its url; organizations elsewhere in
+      // the graph (an event organizer, a publisher on someone else's site) must
+      // not inherit it, only `createSchemaOrgIdentity()` marks the identity.
+      if (isIdentity)
+        setIfEmpty(node, 'url', ctx.meta.host)
       if (node.logo && isIdentity) {
         const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
         // Google expects a single logo, so use the first configured image.
