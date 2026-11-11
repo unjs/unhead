@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { organizationResolver } from '.'
-import { defineOrganization, defineWebPage, useSchemaOrg } from '../../'
+import { defineEvent, defineOrganization, defineWebPage, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
@@ -256,6 +256,46 @@ describe('defineOrganization', () => {
           },
         },
       })
+    })
+  })
+
+  it('does not give a third-party organization the site host as url', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'A concert',
+          startDate: '2026-11-06',
+          location: {
+            '@type': 'Place',
+            'name': 'Venue',
+            'address': {
+              addressLocality: 'Springfield',
+              addressCountry: 'US',
+            },
+          },
+          organizer: {
+            '@type': 'Organization',
+            'name': 'Third-party promoter',
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const organizer = graph.find(node => node.name === 'Third-party promoter')
+
+      expect(organizer).toMatchObject({ '@type': 'Organization', 'name': 'Third-party promoter' })
+      expect(organizer).not.toHaveProperty('url')
+    })
+  })
+
+  it('keeps the site host url on the identity organization', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineOrganization({ name: 'RankEval' })])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
+
+      expect(identity).toMatchObject({ url: 'https://example.com/' })
     })
   })
 })

@@ -381,9 +381,6 @@ export const organizationResolver
       '@type': 'Organization',
     },
     idPrefix: ['host', IdentityId],
-    inheritMeta: [
-      { meta: 'host', key: 'url' },
-    ],
     resolve(node, ctx) {
       resolveDefaultType(node, 'Organization')
       node.address = resolveRelation(node.address, ctx, addressResolver)
@@ -409,6 +406,11 @@ export const organizationResolver
     resolveRootNode(node, ctx) {
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
       const webPage = ctx.find(PrimaryWebPageId)
+      // The site identity carries the host as its url; organizations elsewhere in
+      // the graph (an event organizer, a publisher on someone else's site) must
+      // not inherit it, only `createSchemaOrgIdentity()` marks the identity.
+      if (isIdentity)
+        setIfEmpty(node, 'url', ctx.meta.host)
       if (node.logo && isIdentity) {
         const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
         // Google expects a single logo, so use the first configured image.
