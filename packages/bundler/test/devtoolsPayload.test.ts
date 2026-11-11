@@ -28,12 +28,12 @@ describe('devtools SSR payload', () => {
 
     head.push({ script: [{ id: 'application-script', innerHTML: 'a'.repeat(3 * 1024) }] })
     readPayload(renderSSRHead(head).headTags)
-    expect(rules.filter(rule => rule.id === 'inline-script-size').map(rule => rule.tag?.props.id)).toEqual(['application-script'])
+    expect(rules.filter(rule => rule.id === 'inline-script-size').map(rule => rule.tag?.attrs.id)).toEqual(['application-script'])
   })
 
   it('does not add diagnostics to supplied resolved tags across renders', () => {
     const head = createHead({ plugins: [devtoolsPlugin()] })
-    const resolvedTags = [{ tag: 'title' as const, props: {}, textContent: 'Home' }]
+    const resolvedTags = [{ tag: 'title' as const, attrs: {}, textContent: 'Home' }]
     for (let i = 0; i < 2; i++) {
       const payload = readPayload(renderSSRHead(head, { resolvedTags }).headTags)
       expect(payload.tags.map((tag: any) => tag.tag)).toEqual(['title'])

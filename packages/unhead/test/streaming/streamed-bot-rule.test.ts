@@ -237,8 +237,8 @@ describe('streamed-tag-hidden-from-bots', () => {
     renderSSRHeadSuspenseChunk(head)
 
     expect(seen).toHaveLength(1)
-    expect(seen[0]!.props).not.toBe(templateParams)
-    seen[0]!.props.site = 'HACKED'
+    expect(seen[0]!.attrs).not.toBe(templateParams)
+    seen[0]!.attrs.site = 'HACKED'
     expect(templateParams.site).toBe('Acme')
   })
 })
