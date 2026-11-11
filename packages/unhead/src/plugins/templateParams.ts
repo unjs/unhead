@@ -19,6 +19,8 @@ function processIfNeeded(value: string, params: TemplateParams, separator: strin
 export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
+    // tells the compiled server head that this is the plugin it runs natively
+    _native: true,
     hooks: {
       'tags:resolve': ({ tagMap, tags }) => {
         // we always process params so we can substitute the title

@@ -85,6 +85,12 @@ export interface HeadPluginOptions extends CreateHeadOptions {
    * @experimental
    */
   memoKey?: (ctx: TagTransformContext) => string | null
+  /**
+   * Set by a built-in plugin that the compiled server head runs natively.
+   *
+   * @internal
+   */
+  _native?: true
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
