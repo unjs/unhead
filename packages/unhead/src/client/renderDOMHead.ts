@@ -2,10 +2,10 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps } from '../utils/normalize'
+import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
-const WHITESPACE_RE = /\s+/
+const HTML_ASCII_WHITESPACE_RE = /[\t\n\f\r ]+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -44,7 +44,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
         const cls = orig[t]?.class
         if (typeof cls === 'string') {
           const $el = state._e.get(t)!
-          for (const c of cls.split(WHITESPACE_RE)) {
+          for (const c of cls.split(HTML_ASCII_WHITESPACE_RE)) {
             if (c)
               state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
           }
@@ -128,6 +128,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       renderState._e.set(id, $el)
+      const isAttrsTag = tag.tag.endsWith('Attrs')
       if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -157,7 +158,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }))
       }
       for (const k in tag.props) {
-        const v = tag.props[k]
+        const v: unknown = tag.props[k]
+        if (v === false || v == null)
+          continue
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
@@ -166,24 +169,67 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           continue
         }
         const ck = `${id}:attr:${k}`
-        if (k === 'class' && v) {
-          for (const c of v as Iterable<string>) {
+        if (k === 'class' || k === 'style') {
+          const rawKey = `${id}:raw-attr:${k}`
+          if (typeof v === 'string') {
+            if ($el.getAttribute(k) !== v)
+              $el.setAttribute(k, v)
+            track(rawKey, () => {
+              if ($el.getAttribute(k) === v)
+                $el.removeAttribute(k)
+            }, true)
+          }
+          else if (previous[rawKey]) {
+            previous[rawKey]()
+            delete previous[rawKey]
+          }
+        }
+        if (k === 'class') {
+          const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
+          let hasClasses = false
+          for (const c of classes as Iterable<string>) {
+            hasClasses = true
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
-        }
-        else if (k === 'style' && v) {
-          for (const [sk, sv] of v as Iterable<[string, string]>) {
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+          if (!isAttrsTag && (hasClasses || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!$el.classList.length)
+                $el.removeAttribute(k)
+            }))
           }
         }
-        else if (v !== false as any && v !== null) {
-          if ($el.getAttribute(k) !== v as any)
-            $el.setAttribute(k, v === true as any ? '' : String(v))
+        else if (k === 'style') {
+          const $style = ($el as HTMLElement).style
+          let hasStyles = false
+          if (typeof v === 'string') {
+            for (let i = 0; i < $style.length; i++) {
+              const sk = $style.item(i)
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+            }
+          }
+          else {
+            for (const [sk, sv] of v as Iterable<[string, string]>) {
+              hasStyles = true
+              const key = `${ck}:${sk}`
+              track(key, previous[key] || (() => $style.removeProperty(sk)))
+              $style.setProperty(sk, sv)
+            }
+          }
+          if (!isAttrsTag && (hasStyles || typeof v === 'string')) {
+            track(ck, previous[ck] || (() => {
+              if (!$style.length)
+                $el.removeAttribute(k)
+            }))
+          }
+        }
+        else {
+          if ($el.getAttribute(k) !== v)
+            $el.setAttribute(k, v === true ? '' : String(v))
           track(ck, previous[ck] || (() => $el.removeAttribute(k)))
         }
       }
@@ -217,20 +263,28 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
       const tracked = new Set(renderState._e.values())
+      const pendingIds = new Set(pending.map(ctx => ctx.id))
       for (const el of [...dom.body.children, ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
           continue
-        const props: Record<string, any> = { innerHTML: el.innerHTML }
-        for (const n of el.getAttributeNames())
-          props[n] = el.getAttribute(n)
-        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
-        next.key = el.getAttribute('data-hid') || undefined
-        const dedupe = dedupeKey(next) || hashTag(next)
+        const attrs: Record<string, string | null> = {}
+        for (const name of el.getAttributeNames())
+          attrs[name] = el.getAttribute(name)
+        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, { attrs, innerHTML: el.innerHTML })
+        let dedupe = dedupeKey(next) || hashTag(next)
         let k = dedupe
         let c = 1
         while (renderState._e.has(k))
           k = `${dedupe}:${c++}`
+        if (!pendingIds.has(k) && attrs['data-hid']) {
+          next.key = attrs['data-hid']
+          dedupe = dedupeKey(next) || hashTag(next)
+          k = dedupe
+          c = 1
+          while (renderState._e.has(k))
+            k = `${dedupe}:${c++}`
+        }
         renderState._e.set(k, el)
       }
     }

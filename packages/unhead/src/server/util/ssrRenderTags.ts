@@ -10,11 +10,18 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
     bodyAttrs: HeadTag['props']
   } = { htmlAttrs: {}, bodyAttrs: {}, tags: { head: '', bodyClose: '', bodyOpen: '' } }
 
+  const encoding: Record<'htmlAttrs' | 'bodyAttrs', Record<string, 'text'>> = { htmlAttrs: {}, bodyAttrs: {} }
   const lineBreaks = !options?.omitLineBreaks ? '\n' : ''
 
   for (const tag of tags) {
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
       Object.assign(schema[tag.tag], tag.props)
+      for (const key in tag.props) {
+        if (tag._attrEncoding?.[key])
+          encoding[tag.tag][key] = tag._attrEncoding[key]
+        else
+          delete encoding[tag.tag][key]
+      }
       continue
     }
     const s = tagToString(tag)
@@ -28,7 +35,7 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
     headTags: schema.tags.head,
     bodyTags: schema.tags.bodyClose,
     bodyTagsOpen: schema.tags.bodyOpen,
-    htmlAttrs: propsToString(schema.htmlAttrs),
-    bodyAttrs: propsToString(schema.bodyAttrs),
+    htmlAttrs: propsToString(schema.htmlAttrs, encoding.htmlAttrs),
+    bodyAttrs: propsToString(schema.bodyAttrs, encoding.bodyAttrs),
   }
 }

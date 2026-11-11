@@ -93,6 +93,10 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -147,6 +151,9 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "vite": [
+        "dist/vite.d.ts"
       ]
     }
   },
