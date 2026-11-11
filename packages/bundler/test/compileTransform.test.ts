@@ -192,6 +192,26 @@ return (_ctx,_push,_parent,_attrs) => {
     expect(calls(code)[1]!.args).toEqual([compiledTagsOf({ title: 'A' }), undefined, { head: undefined }])
   })
 
+  // a file with no auto import, such as the runtime of a module, has no `injectHead` in scope
+  it('imports injectHead from nuxt/app for a composable that the file imports from there', () => {
+    const code = transform(`import { useHead } from 'nuxt/app'\nuseHead({ title: 'A' })`)
+    expect(calls(code).map(call => call.fn)).toEqual(['injectHead', 'useCompiledHead'])
+    // a local of the same name does not take its place
+    const local = transform(`import { useHead } from 'nuxt/app'\nconst injectHead = () => 'local'\nuseHead({ title: 'A' })`)
+    expect(calls(local)).toEqual([
+      { fn: 'injectHead', args: [] },
+      { fn: 'useCompiledHead', args: [compiledTagsOf({ title: 'A' }), undefined, { head: undefined }] },
+    ])
+  })
+
+  it('imports injectHead from #imports when the integration names it', () => {
+    const code = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
+    expect(calls(transform(code, undefined, server, { autoImports: ['useHead'] })).map(call => call.fn))
+      .toEqual(['useCompiledHead'])
+    expect(calls(transform(code, undefined, server, { autoImports: ['useHead', 'injectHead'] })).map(call => call.fn))
+      .toEqual(['injectHead', 'useCompiledHead'])
+  })
+
   // `#imports` exports every auto import by its name, a replaced one too
   it('compiles an import from #imports only when the integration names it', () => {
     const code = `import { injectHead, useHead as setHead, useSeoMeta } from '#imports'\nsetHead({ title: 'A' })\nuseSeoMeta({ description: 'B' })`
@@ -280,12 +300,13 @@ useHead(headData)`)
     expect(transform(source, '/app/node_modules/pkg/dist/index.mjs', server, options)).toBeUndefined()
   })
 
-  // webpack has no resolveId that can resolve the runtime from the app
-  it('leaves module runtime files as written under webpack', () => {
-    const source = `import { useHead } from '#imports'\nuseHead({ title: 'A' })`
-    const plugin = (CompileTransform as any).raw({ autoImports: ['useHead'] }, { framework: 'webpack' })
-    expect(runTransform(plugin, source, '/app/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js', server)).toBeUndefined()
-    expect(runTransform(plugin, source, '/app/src/page.js', server)?.code).toContain('useCompiledHead')
+  // only a Vite build tells the plugin which build is the server build
+  it.each(['webpack', 'rspack', 'rollup'])('leaves every head call as written under %s', (framework) => {
+    const source = `${IMPORTS}useHead({ title: 'A' })`
+    const plugin = (CompileTransform as any).raw({}, { framework })
+    plugin.webpack?.({ name: 'server' })
+    expect(runTransform(plugin, source, '/app/src/page.js', {})).toBeUndefined()
+    expect(runTransform(plugin, source, '/app/src/page.js', server)).toBeUndefined()
   })
 
   it('compiles a dependency that filter.include names', () => {
@@ -580,8 +601,8 @@ describe('compile option', () => {
     const compiled = await pipeline(Unhead({ ...base, compile }, vue), code, '/src/page.js', server)
     expect(calls(compiled, { injectHead: () => null }).map(call => call.fn)).toEqual(['useCompiledHead'])
     // the bundler factory builds the transform on its own
-    const UnheadVue = createFrameworkPlugin({ framework: '@unhead/vue', streamingPlugin: { rollup: () => [] } as any })
-    expect(await pipeline(UnheadVue({ ...base, compile }).rollup(), code, '/src/page.js', server)).toBe(compiled)
+    const UnheadVue = createFrameworkPlugin({ framework: '@unhead/vue', streamingPlugin: { vite: () => [] } as any })
+    expect(await pipeline(UnheadVue({ ...base, compile }).vite(), code, '/src/page.js', server)).toBe(compiled)
   })
 
   // a build without compile renders the `useHead` call that the transform writes

@@ -287,6 +287,16 @@ describe('full runtime tier', () => {
     const dynamic = createHead({ disableDefaults: true, propResolvers: [upper] })
     dynamic.push(toCompiledTags(input))
     expect(renderSSRHead(dynamic)).toEqual(renderV3(dynamicV3))
+
+    // a plugin may add a resolver after the head exists, as `ValidatePlugin` does
+    const lateV3 = createV3Head({ disableDefaults: true })
+    lateV3.push(input)
+    lateV3.resolvedOptions.propResolvers!.push(upper)
+    const late = createHead({ disableDefaults: true })
+    late.push(toCompiledTags(input))
+    late.resolvedOptions.propResolvers!.push(upper)
+    expect(renderSSRHead(late)).toEqual(renderV3(lateV3))
+    expect(renderSSRHead(late).headTags).toContain('<title>A</title>')
   })
 
   it('runs an event handler and a function input through the loose path', () => {
@@ -496,6 +506,50 @@ describe('entries', () => {
     expect(renderSSRHead(head).headTags).toBe('<title>render 1</title>')
     expect(renderSSRHead(head).headTags).toBe('<title>render 1</title>')
     expect(calls).toBe(1)
+  })
+
+  it('runs no value function in a render that reads no entry, as v3 runs no getter', () => {
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 })
+    const a = result._tag === 'Ok' ? result.tags : []
+    const count = (create: (options?: any) => any, render: (head: any, options?: any) => unknown, push: (head: any, value: () => string) => void) => {
+      let calls = 0
+      const value = () => `render ${++calls}`
+      const resolved = create({ disableDefaults: true })
+      push(resolved, value)
+      render(resolved, { resolvedTags: [] })
+      const cancel = (ctx: any) => {
+        ctx.shouldRender = false
+      }
+      const cancelled = create({ disableDefaults: true, hooks: { 'ssr:beforeRender': cancel } })
+      push(cancelled, value)
+      render(cancelled)
+      const remove = (ctx: any) => {
+        ctx.entries.length = 0
+      }
+      const removed = create({ disableDefaults: true, hooks: { 'entries:resolve': remove } })
+      push(removed, value)
+      render(removed)
+      return calls
+    }
+    expect(count(createV3Head, renderV3, (head, value) => head.push({ title: value }))).toBe(0)
+    expect(count(createHead, renderSSRHead, (head, value) => head.push(a, { values: () => [value()] }))).toBe(0)
+  })
+
+  it('runs a value function in entry order, between the getters of loose entries', () => {
+    const result = compileTags({ title: dynamicValue(0) }, { valueCount: 1 })
+    const a = result._tag === 'Ok' ? result.tags : []
+    const order: string[] = []
+    // a getter input, which the head resolves at render
+    const loose = (name: string): any => () => {
+      order.push(name)
+      return { meta: [{ name, content: name }] }
+    }
+    const head = createHead({ disableDefaults: true })
+    head.push(loose('first'))
+    head.push(a, { values: () => [order.push('values') && 'title'] })
+    head.push(loose('last'))
+    expect(renderSSRHead(head).headTags).toContain('<title>title</title>')
+    expect(order).toEqual(['first', 'values', 'last'])
   })
 
   it('patch values', () => {

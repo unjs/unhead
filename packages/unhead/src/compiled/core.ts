@@ -98,6 +98,14 @@ export function settleValues(entry: CompiledEntry): void {
     entry._values = values()
 }
 
+// `_i << 10` wraps from this index on, which only the slow path reproduces
+export const MAX_MEMO_INDEX = 2097152
+
+/** Whether the memo can hold an entry: compiled tags with no options, that no render has normalized. */
+export function isMemoEntry(entry: CompiledEntry): boolean {
+  return !!entry._compiled && !entry._tags && entry._pending === undefined && isEmpty(entry.options)
+}
+
 /** @returns whether an object has no enumerable keys */
 export function isEmpty(value: object | undefined): boolean {
   // eslint-disable-next-line no-unreachable-loop -- intentional: any key means non-empty
@@ -209,10 +217,12 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
   let node: TrieNode | undefined = renderer.n
   let last = -1
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
-    const compiledTags = entry._compiled
+    // a value function runs here, in entry order, and may replace the input of its entry
+    if (entry._pending === undefined)
+      settleValues(entry)
+    const compiledTags = entry._compiled!
     const i = entry._i
-    // `_i << 10` wraps from 2 ** 21 on, which only the slow path reproduces
-    if (!compiledTags || entry._tags || entry._pending || !isEmpty(entry.options) || i <= last || i >= 2097152) {
+    if (!isMemoEntry(entry) || i <= last || i >= MAX_MEMO_INDEX) {
       node = undefined
       break
     }

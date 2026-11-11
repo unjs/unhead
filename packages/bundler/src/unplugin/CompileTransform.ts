@@ -33,9 +33,9 @@ const NUXT_IMPORT_PATH = 'nuxt/app'
 const AUTO_IMPORT_PATH = '#imports'
 // `@unhead/vue` resolves the head itself. An auto import or another path may stand for a
 // wrapper that resolves it some other way, such as Nuxt, so the call passes the head
-// that the auto-imported `injectHead` finds when there is one.
+// that `injectHead` finds. The call imports `injectHead` from the module of its composable
+// when that module is known to export it. Otherwise it reads the auto import when there is one.
 const AUTO_HEAD_PROP = `head: typeof injectHead === 'function' ? injectHead() : undefined`
-const AUTO_HEAD = `{ ${AUTO_HEAD_PROP} }`
 
 type HeadKind = 'head' | 'seo'
 const CALLEES = new Map<string, HeadKind>([['useHead', 'head'], ['useServerHead', 'head'], ['useSeoMeta', 'seo'], ['useServerSeoMeta', 'seo']])
@@ -100,6 +100,9 @@ export interface CompileTransformOptions extends BaseTransformerTypes {
    * A call of a name that nothing declares, or that `#imports` exports, compiles only when
    * this list holds the name. A project can replace an auto import with its own function, and
    * the build cannot see that. So with no list, these calls stay as written.
+   *
+   * With `injectHead` in the list, a call that imports its composable from `#imports` also
+   * imports `injectHead` from there, so a file with no auto import still finds the head.
    */
   autoImports?: string[]
 }
@@ -482,12 +485,11 @@ function insertAfterImports(s: MagicString, body: any[], text: string): void {
  */
 export const CompileTransform = createUnplugin<CompileTransformOptions, false>((options: CompileTransformOptions = {}, meta) => {
   const importPaths = new Set([NUXT_IMPORT_PATH, ...options.importPaths || []])
-  // Only these bundlers let `resolveId` resolve the runtime from the app
-  const resolvesFromApp = meta?.framework === 'vite' || meta?.framework === 'rollup' || meta?.framework === 'rolldown'
-  // Fallback for bundlers without a per-transform environment, as in `TreeshakeServerComposables`.
-  let fallbackConsumer: BuildConsumer | undefined
   // Only Vite tells this plugin which build is the server build
-  if (meta?.framework !== 'vite')
+  const compiles = meta?.framework === 'vite'
+  // Fallback for a Vite version without a per-transform environment, as in `TreeshakeServerComposables`.
+  let fallbackConsumer: BuildConsumer | undefined
+  if (!compiles)
     warnOnce(`[unhead] The \`compile\` option needs a Vite build. In this ${meta?.framework || 'unknown'} build, every head call stays as written.`)
 
   // A dependency compiles when `filter.include` names it, or when it is the runtime of a
@@ -498,7 +500,7 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       return false
     if (options.filter?.include?.some(pattern => id.match(pattern)))
       return true
-    return (!NODE_MODULES_RE.test(pathname) || (resolvesFromApp && MODULE_RUNTIME_RE.test(pathname)))
+    return (!NODE_MODULES_RE.test(pathname) || MODULE_RUNTIME_RE.test(pathname))
       && (isVueScriptRequest(pathname, query) || JS_EXT_RE.test(pathname))
   }
 
@@ -582,7 +584,16 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         && { source: decl.importNode.source.value, imported: decl.node.imported.name }
     }
 
-    function resolveCallee(callee: any): { kind: HeadKind, resolvesHead: boolean } | undefined {
+    // the module that is known to export the `injectHead` of a composable, as its local name
+    const headImports = new Map<string, string>()
+    function importedInjectHead(source: string): string {
+      let name = headImports.get(source)
+      if (!name)
+        headImports.set(source, name = `${prefix}injectHead${headImports.size || ''}`)
+      return name
+    }
+
+    function resolveCallee(callee: any): { kind: HeadKind, resolvesHead: boolean, headSource?: string } | undefined {
       const binding = callee.type === 'Identifier' && bindingOf(callee.name)
       if (binding === false)
         return
@@ -593,7 +604,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
       if (isAutoImport && !options.autoImports?.includes(name))
         return
       const kind = CALLEES.get(name)
-      return kind && { kind, resolvesHead: binding?.source === '@unhead/vue' }
+      const headSource = binding && (binding.source === NUXT_IMPORT_PATH || (binding.source === AUTO_IMPORT_PATH && options.autoImports?.includes('injectHead'))) ? binding.source : undefined
+      return kind && { kind, resolvesHead: binding?.source === '@unhead/vue', headSource }
     }
 
     walk(ast.program, {
@@ -609,7 +621,7 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         const autoHead = !callee.resolvesHead && (!options || (isHeadOnly(options) && !namesHead(options)))
         // a returned useSeoMeta entry patches flat input, which a compiled entry does not take
         // another `injectHead` in scope would take the place of the auto import
-        const injectHead = autoHead ? bindingOf('injectHead') : undefined
+        const injectHead = autoHead && !callee.headSource ? bindingOf('injectHead') : undefined
         if ((callee.kind === 'seo' && parent?.type !== 'ExpressionStatement') || injectHead === false || (injectHead && injectHead.imported !== 'injectHead'))
           return
         const held = constInput(arg)
@@ -636,9 +648,10 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         const valuesGetter = getter && (getter.block || result.values.length)
         const hasValues = result.values.length || valuesGetter
         const valuesSlot = hasValues || fn === 'useStaticCompiledSeoMeta' ? '' : 'undefined'
-        const tail = autoHead && !options ? `, ${valuesSlot && `${valuesSlot}, `}${AUTO_HEAD}` : options && valuesSlot ? `, ${valuesSlot}` : ''
+        const headProp = !autoHead ? '' : callee.headSource ? `head: ${importedInjectHead(callee.headSource)}()` : AUTO_HEAD_PROP
+        const tail = autoHead && !options ? `, ${valuesSlot && `${valuesSlot}, `}{ ${headProp} }` : options && valuesSlot ? `, ${valuesSlot}` : ''
         if (autoHead && options)
-          s.overwrite(options.start, options.end, `{ ${AUTO_HEAD_PROP}, seoMeta: true }`)
+          s.overwrite(options.start, options.end, `{ ${headProp}, seoMeta: true }`)
         s.overwrite(node.callee.start, node.callee.end, `${prefix}${fn}`)
         // A getter input returns its values in place of its object, so it still runs once
         // for each resolution and tracks as a whole, as v3 tracks it
@@ -681,7 +694,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
     if (!runtime.size)
       return
     const specifiers = [...runtime].map(fn => `${fn} as ${prefix}${fn}`).join(', ')
-    insertAfterImports(s, ast.program.body, `import { ${specifiers} } from '${RUNTIME}';\n${hoisted.join('\n')}`)
+    const headSpecifiers = [...headImports].map(([source, name]) => `import { injectHead as ${name} } from '${source}';\n`).join('')
+    insertAfterImports(s, ast.program.body, `import { ${specifiers} } from '${RUNTIME}';\n${headSpecifiers}${hoisted.join('\n')}`)
     return {
       code: s.toString(),
       map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
@@ -694,13 +708,13 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
 
     // A module in node_modules may not resolve `@unhead/vue` itself, so the app resolves it
     resolveId(id, importer) {
-      if (resolvesFromApp && id === RUNTIME && importer && NODE_MODULES_RE.test(importer))
+      if (compiles && id === RUNTIME && importer && NODE_MODULES_RE.test(importer))
         return (this as unknown as { resolve: (id: string, importer?: string, options?: object) => Promise<unknown> }).resolve(id, undefined, { skipSelf: true }) as any
     },
 
     // a client build never loads the compiler
     async buildStart() {
-      if (resolveBuildConsumer(this, fallbackConsumer) !== 'client')
+      if (compiles && resolveBuildConsumer(this, fallbackConsumer) !== 'client')
         await loadCompiler()
     },
 
@@ -710,16 +724,13 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         id: { include: [JS_VUE_RE, ...options.filter?.include || []] },
       },
       handler(code, id) {
-        if (!compilesFor(resolveBuildConsumer(this, fallbackConsumer)) || !shouldTransformId(id))
+        if (!compiles || !compilesFor(resolveBuildConsumer(this, fallbackConsumer)) || !shouldTransformId(id))
           return
         // a bundler that skips `buildStart` waits for the compiler once
         if (!compiler)
           return loadCompiler().then(() => transformCode.call(this, code, id))
         return transformCode.call(this, code, id)
       },
-    },
-    webpack(ctx) {
-      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
     },
     vite: {
       // Per-call target resolution via `this.environment` makes the plugin
