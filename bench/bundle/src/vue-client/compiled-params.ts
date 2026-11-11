@@ -1,0 +1,16 @@
+import { useCompiledHead } from '@unhead/vue/compiled'
+import { createLazyHead } from '@unhead/vue/lazy'
+
+// compiled.ts with template params, whose plugin loads with the runtime
+const compiledTags = [
+  ['title', 0, 10, 'title', { textContent: 'Test' }, 1],
+  ['titleTemplate', 0, 100, 'titleTemplate', { textContent: '%s %separator %siteName' }, 1],
+  ['templateParams', { siteName: 'Site' }, 100, 'templateParams', 0, 1],
+  ['meta', { name: 'description', content: 'Test' }, 100, 'meta:description', 0, 1],
+  ['link', { rel: 'icon', href: '/favicon.ico' }, 100, 'link:icon:/favicon.ico', 0, 1],
+  ['script', { src: '/test.js', defer: true }, 80, 'script:defer:true,src:/test.js'],
+] as const
+
+const head = createLazyHead({ lazyPlugins: () => import('unhead/plugins').then(m => [m.TemplateParamsPlugin]) })
+
+useCompiledHead(compiledTags as any, undefined, { head })

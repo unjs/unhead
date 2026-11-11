@@ -22,6 +22,30 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    * to override the target.
    */
   transformInlineScripts?: InlineScriptTransformOptions | false
+  /**
+   * Compile static `useHead` and `useSeoMeta` calls of `@unhead/vue` to compiled tags in
+   * server and client builds. A call that cannot compile stays as written. The
+   * server head must come from `@unhead/vue/compiled/server`, and the client head
+   * from `createLazyHead` of `@unhead/vue/lazy`. The dev server does not
+   * compile.
+   *
+   * Applies to the `@unhead/vue` bundler plugin only. Off by default.
+   *
+   * Pass `{ debug: true }` to compile and keep the debug signals. Then a lazy head sets
+   * `head._fullRuntimeReason` when it loads the full runtime. Without `debug`, the
+   * build drops that code.
+   *
+   * @experimental
+   */
+  compile?: boolean | CompileOptions
+}
+
+export interface CompileOptions {
+  /**
+   * Keep the debug signals of compiler mode in the build, such as
+   * `head._fullRuntimeReason`. Off by default, so they cost no bytes.
+   */
+  debug?: boolean
 }
 
 export interface VitePluginOptions extends UnpluginOptions {

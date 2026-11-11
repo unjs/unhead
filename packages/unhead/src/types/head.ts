@@ -46,10 +46,44 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /**
+   * Set from the `seoMeta` entry option by a head that takes compiled tags, so the option stays
+   * out of the entry options. `readEntry` reports it.
+   *
+   * @internal
+   */
+  _seoMeta?: true
+}
+
+/**
+ * @experimental
+ */
+export interface TagTransformContext {
+  /** True on the server. */
+  ssr: boolean
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Changes the resolved tags: dedupe, sort, the title template, and template params ran.
+   * A pure function: it must read nothing outside `tags` and `ctx`, and must not change the
+   * tags it gets. It must copy or drop text it did not make, never test it, because the server
+   * memo runs it once per sequence of compiled tags with a token in place of each dynamic value.
+   *
+   * The full runtime runs it as a `tags:afterResolve` hook. The compiled runtimes run it
+   * themselves, so it keeps the server memo and never loads the full runtime.
+   *
+   * @experimental
+   */
+  transform?: (tags: HeadTag[], ctx: TagTransformContext) => HeadTag[]
+  /**
+   * Anything else the output of `transform` depends on, such as the site URL. The server memo
+   * keys its output on it. `null` keeps the memo from holding the output at all.
+   *
+   * @experimental
+   */
+  cacheKey?: (ctx: TagTransformContext) => string | null
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
@@ -194,6 +228,12 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Marks the input of a `useSeoMeta` call, such as its compiled tags, so `readEntry` reports `seoMeta`.
+   *
+   * @experimental
+   */
+  seoMeta?: boolean
   /**
    * Called after unhead has finished applying DOM updates.
    *

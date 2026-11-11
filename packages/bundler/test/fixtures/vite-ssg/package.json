@@ -1,0 +1,7 @@
+{
+  "name": "vite-ssg-fixture",
+  "private": true,
+  "dependencies": {
+    "vite-ssg": "*"
+  }
+}

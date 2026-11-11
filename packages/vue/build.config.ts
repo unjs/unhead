@@ -15,7 +15,11 @@ export default defineBuildConfig({
     { input: 'src/index', name: 'index' },
     { input: 'src/components', name: 'components' },
     { input: 'src/server', name: 'server' },
+    { input: 'src/compiled/index', name: 'compiled' },
+    { input: 'src/compiled/node', name: 'compiled.node' },
+    { input: 'src/compiled/server', name: 'compiled/server' },
     { input: 'src/client', name: 'client' },
+    { input: 'src/lazy', name: 'lazy' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/types/index', name: 'types' },
@@ -31,6 +35,12 @@ export default defineBuildConfig({
   hooks: {
     'rollup:options': (_, options) => {
       options.experimentalLogSideEffects = true
+      // An entry file imports only what it uses: a hoisted import puts a file in the initial
+      // chunks of an app, though only a lazy chunk uses it.
+      for (const output of [options.output].flat()) {
+        if (output)
+          output.hoistTransitiveImports = false
+      }
     },
   },
 })

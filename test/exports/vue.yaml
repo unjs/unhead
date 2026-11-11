@@ -20,8 +20,19 @@
   createHead: function
   renderDOMHead: function
   VueHeadMixin: object
+./compiled:
+  useCompiledHead: function
+  useCompiledSeoMeta: function
+  useStaticCompiledSeoMeta: function
+./compiled/server:
+  createHead: function
+  prepareHeadInput: function
+  renderSSRHead: function
+  transformHtmlTemplate: function
 ./components:
   Head: object
+./lazy:
+  createLazyHead: function
 ./legacy:
   createClientHead: function
   createHead: function
@@ -41,6 +52,7 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+  withTagTransform: function
 ./scripts:
   createSpyProxy: function
   useScript: function

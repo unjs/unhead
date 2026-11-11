@@ -11,6 +11,19 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./compiled:
+  compileTags: function
+  dynamicValue: function
+  readEntry: function
+./compiled/server:
+  createHead: function
+  createServerRenderer: function
+  prepareHeadInput: function
+  renderSSRHead: function
+  transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
+./lazy:
+  createLazyHead: function
 ./legacy:
   activeHead: object
   createHead: function
@@ -42,6 +55,7 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+  withTagTransform: function
 ./scripts:
   createSpyProxy: function
   useScript: function

@@ -1,6 +1,8 @@
 import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
+import { compileDebug, CompileDebugReplace } from './CompileDebugReplace'
+import { CompileTransform } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -27,10 +29,13 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     plugins.push(TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
   }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
-  }
+  const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
+  const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts })
+  const compile = options.compile && framework === '@unhead/vue'
+  // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
+  // without compile renders, in its tag order. Compile takes the calls it leaves.
+  if (seoMeta)
+    plugins.push(seoMeta)
   const minifyTransformOptions = resolveMinifyTransformOptions(options)
   if (minifyTransformOptions) {
     plugins.push(MinifyTransform.vite({
@@ -38,6 +43,11 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       sourcemap: options.sourcemap,
       ...minifyTransformOptions,
     }))
+  }
+  // Compile reads the minified inline content
+  if (compile) {
+    plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths }))
+    plugins.push(CompileDebugReplace.vite({ debug: compileDebug(options.compile) }))
   }
 
   // Register runtime plugins into the shared context
