@@ -1,7 +1,55 @@
 ---
-title: Product Schema
-description: Use defineProduct() to add Product structured data for e-commerce pages with pricing, reviews, and availability.
+title: "Product Schema Markup: JSON-LD Examples and API"
+description: Add product schema markup with defineProduct(). See Product JSON-LD with offers and ratings, plus Google product snippet and variant fields.
+navigation:
+  title: Product
 ---
+
+[Product structured data](https://developers.google.com/search/docs/appearance/structured-data/product) describes a product with its price, availability, and ratings. Google can use it to show product snippets and merchant listings.
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for a product with an offer and a rating. It resolves the image to an `ImageObject` node and fills the offer currency from the `currency` option.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/blog/my-article#product",
+      "@type": "Product",
+      "name": "Ergonomic Desk Chair",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": 88,
+        "bestRating": 100,
+        "ratingCount": 20
+      },
+      "image": {
+        "@id": "https://example.com/#/schema/image/1"
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "price": 50,
+        "priceCurrency": "AUD",
+        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+      }
+    },
+    {
+      "@id": "https://example.com/#/schema/image/1",
+      "@type": "ImageObject",
+      "contentUrl": "https://example.com/product.png",
+      "inLanguage": "en-AU",
+      "url": "https://example.com/product.png"
+    }
+  ]
+}
+```
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org Product
 

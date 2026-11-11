@@ -1,6 +1,9 @@
+import type { WebSite } from '../WebSite'
 import { describe, expect, it } from 'vitest'
-import { defineEvent, defineOrganization, definePerson, definePlace, useSchemaOrg } from '../../'
-import { injectSchemaOrg, useSetup } from '../../../test'
+import { defineEvent, defineOrganization, definePerson, definePlace, defineWebSite, useSchemaOrg } from '../../'
+import { findNode, injectSchemaOrg, useSetup } from '../../../test'
+import { IdentityId, idReference } from '../../utils'
+import { PrimaryWebSiteId } from '../WebSite'
 
 describe('defineEvent', () => {
   it('can be registered', async () => {
@@ -85,6 +88,25 @@ describe('defineEvent', () => {
         '@type': 'Person',
         'name': 'Ada Lovelace',
       })
+    })
+  })
+
+  it('keeps the identity as the website publisher when a third-party organizer is resolved first', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({ name: 'My Site' }),
+        defineWebSite({ name: 'My Site' }),
+        defineEvent({
+          name: 'A concert',
+          startDate: '2026-11-06',
+          organizer: { '@type': 'Organization', 'name': 'Third-party promoter' },
+        }),
+      ])
+
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
+      const identity = await findNode<WebSite>(head, IdentityId)
+
+      expect(website.publisher).toEqual(idReference(identity))
     })
   })
 

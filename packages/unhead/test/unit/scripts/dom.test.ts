@@ -100,12 +100,20 @@ describe('dom useScript', () => {
       preload!.getAttribute('referrerpolicy'),
     ]).toEqual(expected)
   })
-  it('defaults undefined privacy fields on object input', async () => {
+  it.each([
+    [{}, 'anonymous'],
+    [{ crossorigin: undefined }, null],
+    // The runtime accepts false, although the public type excludes it.
+    [{ crossorigin: false as any }, null],
+    [{ crossorigin: '' }, ''],
+    [{ crossorigin: 'anonymous' }, 'anonymous'],
+    [{ crossorigin: 'use-credentials' }, 'use-credentials'],
+  ] as const)('keeps script and preload crossorigin aligned for %o', async (input, expected) => {
     const head = useDOMHead()
 
     useScript(head, {
       src: 'https://cdn.example.com/script.js',
-      crossorigin: undefined,
+      ...input,
       referrerpolicy: undefined,
     })
     await useDelayedSerializedDom()
@@ -116,11 +124,11 @@ describe('dom useScript', () => {
     expect([
       script!.getAttribute('crossorigin'),
       script!.getAttribute('referrerpolicy'),
-    ]).toEqual(['anonymous', 'no-referrer'])
+    ]).toEqual([expected, 'no-referrer'])
     expect([
       preload!.getAttribute('crossorigin'),
       preload!.getAttribute('referrerpolicy'),
-    ]).toEqual(['anonymous', 'no-referrer'])
+    ]).toEqual([expected, 'no-referrer'])
   })
   it('preconnects when the document proves a scheme-dependent origin', async () => {
     const head = useDOMHead()

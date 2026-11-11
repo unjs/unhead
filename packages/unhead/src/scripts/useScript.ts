@@ -120,7 +120,7 @@ function _useScript<T extends object = Record<PropertyKey, unknown>>(head: Scrip
     return result
   }
   const parsedOrigin = input.src ? parseHttpOrigin(input.src, scriptHead.resolvedOptions.document?.baseURI) : undefined
-  if (parsedOrigin && input.crossorigin === undefined)
+  if (parsedOrigin && !hasOwn(input, 'crossorigin'))
     input.crossorigin = 'anonymous'
   if (parsedOrigin && input.referrerpolicy === undefined)
     input.referrerpolicy = 'no-referrer'

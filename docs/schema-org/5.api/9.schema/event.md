@@ -1,7 +1,77 @@
 ---
-title: Event Schema
-description: Use defineEvent() to add Event structured data for concerts, conferences, and meetups with dates, venues, and ticket information.
+title: "Event Schema Markup: JSON-LD Example and API"
+description: Add event schema markup with defineEvent(). See Event JSON-LD with dates, a venue, and tickets, plus the Google event search requirements.
+navigation:
+  title: Event
 ---
+
+[Event structured data](https://developers.google.com/search/docs/appearance/structured-data/event) describes a concert, conference, meetup, or other event with its dates, venue, and tickets. Google can show eligible events in its event search experience.
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for an in-person event with a venue, an organizer, and a free ticket offer. It expands `eventStatus` and `eventAttendanceMode` to full Schema.org URLs.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/blog/my-article#event",
+      "@type": "Event",
+      "description": "An evening of talks about Vue.js and Nuxt.",
+      "endDate": "2027-03-18T21:00:00+11:00",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "inLanguage": "en-AU",
+      "name": "Vue.js Meetup Sydney",
+      "startDate": "2027-03-18T18:00:00+11:00",
+      "image": {
+        "@id": "https://example.com/#/schema/image/1"
+      },
+      "location": {
+        "@type": "Place",
+        "name": "Harbour Conference Centre",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "1 Harbour St",
+          "addressLocality": "Sydney",
+          "postalCode": "2000",
+          "addressRegion": "NSW",
+          "addressCountry": "AU"
+        }
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "price": 0,
+        "priceCurrency": "AUD",
+        "url": "https://example.com/tickets",
+        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+      },
+      "organizer": {
+        "@id": "https://example.com/#/schema/organization/1"
+      }
+    },
+    {
+      "@id": "https://example.com/#/schema/organization/1",
+      "@type": "Organization",
+      "name": "Vue Sydney",
+      "url": "https://example.com"
+    },
+    {
+      "@id": "https://example.com/#/schema/image/1",
+      "@type": "ImageObject",
+      "contentUrl": "https://example.com/photos/meetup.jpg",
+      "inLanguage": "en-AU",
+      "url": "https://example.com/photos/meetup.jpg"
+    }
+  ]
+}
+```
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org Event
 
