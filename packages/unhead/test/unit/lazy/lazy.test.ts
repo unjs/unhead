@@ -221,6 +221,48 @@ describe('lazy head createHead', () => {
     expect(dom.window.document.title).toBe('Newer')
   })
 
+  it('loads for a patch whose getter may return a new value', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    let title = 'Server'
+    const getTitle = () => title
+    const entry = head.push({ title: getTitle })
+    head.render()
+    const load = vi.spyOn(head, 'load')
+    title = 'Next'
+    entry.patch({ title: getTitle })
+    expect(load).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Next'))
+  })
+
+  it('loads nothing for a patch with the same titleTemplate and event handler', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const titleTemplate = (t?: string) => t || 'Site'
+    const onload = () => {}
+    const input = () => ({ title: 'Server', titleTemplate, link: [{ rel: 'stylesheet', href: '/a.css', onload }] })
+    const entry = head.push(input())
+    const load = vi.spyOn(head, 'load')
+    entry.patch(input())
+    head.render()
+    entry.patch(input())
+    await settle()
+    expect(load).not.toHaveBeenCalled()
+  })
+
+  it('loads for a patch after an in-place edit deep inside JSON-LD', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const data = { '@graph': [{ '@type': 'Thing', 'name': 'A' }] }
+    const entry = head.push({ script: [{ type: 'application/ld+json', innerHTML: data }] })
+    head.render()
+    const load = vi.spyOn(head, 'load')
+    data['@graph'][0].name = 'B'
+    entry.patch({ script: [{ type: 'application/ld+json', innerHTML: data }] })
+    expect(load).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(dom.window.document.querySelector('script[type="application/ld+json"]')?.textContent).toContain('"B"'))
+  })
+
   it('treats a push from an entries:updated hook during hydration as server rendered', async () => {
     const dom = ssrDom(titled, { meta: [{ name: 'nested', content: 'yes' }] })
     let nested = false
