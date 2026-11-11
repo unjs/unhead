@@ -287,6 +287,24 @@ describe('tag transforms', () => {
     expect(render('about', 'site')).toBe(' class="about"')
   })
 
+  it('render a dynamic value that a transform moved into the position of a tag', () => {
+    const result = compileTags({ meta: [{ name: 'position', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
+    const positioned = (memoKey: string | null) => defineTagTransform({
+      key: 'positioned',
+      transform: list => list.map(tag => tag.tag === 'meta' ? { ...tag, tagPosition: tag.props.content } as any : tag),
+      memoKey: () => memoKey,
+    })
+    const render = (value: string, memoKey: string | null) => {
+      const head = createHead({ disableDefaults: true, plugins: [positioned(memoKey)] })
+      head.push(result.tags, { values: [value] } as any)
+      return renderSSRHead(head)
+    }
+    // a null memo key renders with no memo
+    expect(render('bodyClose', null).bodyTags).toBe('<meta name="position" content="bodyClose">')
+    expect(render('bodyClose', 'site')).toEqual(render('bodyClose', null))
+    expect(render('bodyOpen', 'site')).toEqual(render('bodyOpen', null))
+  })
+
   it('resolve a template param in a dynamic value that a transform moved into raw text', () => {
     const result = compileTags({ templateParams: { site: 'World' }, meta: [{ name: 'description', content: dynamicValue(0) }] }, { valueCount: 1 }) as any
     const toNoscript = (memoKey: string | null) => defineTagTransform({

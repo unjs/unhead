@@ -65,6 +65,9 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
   const previousTemplate = head._titleTemplate
   head._titleTemplate = undefined
   const buckets: Memo['b'] = renderTags(renderer.r(tags, head), omitLineBreaks, renderer, (tag) => {
+    // A tag transform can copy a value into the position of a tag. The memo has no place for
+    // a tag that moves with its value, so the sequence takes the slow path.
+    unsafe ||= !!tag.tagPosition?.includes?.(DYNAMIC_VALUE_OPEN)
     // a value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in tag.props) {
       if (tag.props[key]?.includes?.(DYNAMIC_VALUE_OPEN))
