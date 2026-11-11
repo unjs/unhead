@@ -350,4 +350,23 @@ describe('defineOrganization', () => {
       expect(hiringOrganization).not.toHaveProperty('url')
     })
   })
+
+  it('does not give a top-level external identity organization the site host url', async () => {
+    // A top-level organization resolved as the root node takes the resolveRootNode
+    // path: its external `#identity` id must not be treated as this site's identity.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          '@id': 'https://partner.example/#identity',
+          name: 'Partner',
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const partner = graph.find(node => node['@id'] === 'https://partner.example/#identity')
+
+      expect(partner).toMatchObject({ '@type': 'Organization', name: 'Partner' })
+      expect(partner).not.toHaveProperty('url')
+    })
+  })
 })

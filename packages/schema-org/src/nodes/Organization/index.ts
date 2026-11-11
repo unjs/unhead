@@ -411,7 +411,10 @@ export const organizationResolver
       return node
     },
     resolveRootNode(node, ctx) {
-      const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
+      // Host-aware: an external `@id` like `https://partner.example/#identity`
+      // reduces to the same `#identity` graph key, but only this site's own
+      // identity may inherit the host url (and the related webSite/webPage wiring).
+      const isIdentity = isSiteIdentityId(node['@id'], ctx.meta.host)
       const webPage = ctx.find(PrimaryWebPageId)
       // The site identity carries the host as its url; organizations elsewhere in
       // the graph (an event organizer, a publisher on someone else's site) must
