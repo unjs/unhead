@@ -219,16 +219,17 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // eslint-disable-next-line node/prefer-global/process
     if (process.env.NODE_ENV !== 'production' && adapter._entrySource)
       sources[active._i] ||= adapter._entrySource()
-    if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
-      const entry = head.entries.get(active._i)
-      if (entry)
-        hydrationEntries.set(active._i, { ...entry, input: copyInput(entry.input) })
-    }
     // A reactive input resolves again on any dependency change, such as the route that the router
     // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
     // The check compares with a copy, because an app can edit the input object in place and patch with it.
-    const patch = active.patch
     let last = copyInput(input)
+    if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
+      const entry = head.entries.get(active._i)
+      // the hydrated entry takes the same copy, so a getter in the input runs once
+      if (entry)
+        hydrationEntries.set(active._i, { ...entry, input: entry.input === input ? last : copyInput(entry.input) })
+    }
+    const patch = active.patch
     const keepLate = () => {
       const entry = head.entries.get(active._i)
       if (entry && hydrated && !loading)

@@ -412,6 +412,25 @@ describe('lazy head createHead', () => {
     await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual(['/b.css']))
   })
 
+  it('reads a getter once for a push during hydration', () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const title = vi.fn(() => 'Home')
+    head.push({ title })
+    expect(title).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the error of a getter that throws to the render', () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const input: ResolvableHead = {
+      title: () => {
+        throw new Error('no title yet')
+      },
+    }
+    expect(() => head.push(input)).not.toThrow()
+  })
+
   it('keeps an entry a plugin pushes during the adoption render', async () => {
     const dom = ssrDom(titled)
     let pushed = false

@@ -20,8 +20,15 @@ export function copyInput<T>(value: T, key?: string): T {
   // the resolver leaves a schema.org node resolver as it is
   if (key === '_resolver')
     return value
-  if (typeof value === 'function' && key !== 'titleTemplate' && !key?.startsWith('on'))
-    value = value()
+  if (typeof value === 'function' && key !== 'titleTemplate' && !key?.startsWith('on')) {
+    try {
+      value = value()
+    }
+    catch {
+      // A getter that throws stays in the copy and counts as a change. The render calls it again
+      // and reports the error, as the eager head does, so a push never throws for it.
+    }
+  }
   if (!value || typeof value !== 'object' || (!Array.isArray(value) && (value as any).constructor !== Object))
     return value
   const out: any = Array.isArray(value) ? [] : {}
