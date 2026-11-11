@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,7 +36,7 @@ jobs:
       - run: pnpm lint
 
   import-inert:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,7 +50,7 @@ jobs:
       - run: pnpm test:import-inert
 
   typecheck:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     env:
       NODE_OPTIONS: --max-old-space-size=8048
     steps:
@@ -68,7 +68,7 @@ jobs:
       - run: pnpm test:attw
 
   test:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     env:
       NODE_OPTIONS: --max-old-space-size=8048
     steps:
