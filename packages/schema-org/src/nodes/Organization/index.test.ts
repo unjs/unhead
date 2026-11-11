@@ -323,4 +323,31 @@ describe('defineOrganization', () => {
       })
     })
   })
+
+  it('does not give the site host url to an external identity organization', async () => {
+    // `https://partner.example/#identity` shares the `#identity` fragment key but
+    // belongs to another site, so it must not inherit this site's host url.
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          name: 'Engineer',
+          hiringOrganization: {
+            '@id': 'https://partner.example/#identity',
+            name: 'Partner',
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const jobPosting = graph.find(node => node['@type'] === 'JobPosting')
+      const hiringOrganization = jobPosting?.hiringOrganization as any
+
+      expect(hiringOrganization).toMatchObject({
+        '@type': 'Organization',
+        '@id': 'https://partner.example/#identity',
+        name: 'Partner',
+      })
+      expect(hiringOrganization).not.toHaveProperty('url')
+    })
+  })
 })

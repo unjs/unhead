@@ -403,8 +403,10 @@ export const organizationResolver
         node.url = resolveWithBase(ctx.meta.host, node.url)
       // The identity also carries the host as its url when embedded in a relation
       // resolved without `root: true` (e.g. a JobPosting hiringOrganization), as
-      // those never reach resolveRootNode.
-      if (resolveAsGraphKey(node['@id']) === IdentityId)
+      // those never reach resolveRootNode. Only the site's own identity qualifies:
+      // an external `@id` such as `https://partner.example/#identity` reduces to
+      // the same graph key but must not inherit this site's host url.
+      if (isSiteIdentityId(node['@id'], ctx.meta.host))
         setIfEmpty(node, 'url', ctx.meta.host)
       return node
     },
@@ -445,3 +447,24 @@ export const organizationResolver
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },
   })
+
+/**
+ * The site's own identity node (`<host>/#identity`) is the only organization
+ * allowed to inherit the host as its `url`. A graph-key comparison alone is not
+ * enough: an external `@id` such as `https://partner.example/#identity` reduces
+ * to the same `#identity` fragment key.
+ */
+function isSiteIdentityId(id: string | undefined, host: string): boolean {
+  if (!id)
+    return false
+  if (id === IdentityId)
+    return true
+  if (resolveAsGraphKey(id) !== IdentityId)
+    return false
+  try {
+    return new URL(id).origin === host.replace(/\/$/, '')
+  }
+  catch {
+    return false
+  }
+}
