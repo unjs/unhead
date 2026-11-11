@@ -5,9 +5,9 @@
     "br": 4982
   },
   "clientFull": {
-    "size": 26125,
-    "gz": 10045,
-    "br": 9110
+    "size": 26123,
+    "gz": 10055,
+    "br": 9099
   },
   "server": {
     "size": 12666,
@@ -20,9 +20,9 @@
     "br": 5464
   },
   "vueClientFull": {
-    "size": 29164,
-    "gz": 11205,
-    "br": 10150
+    "size": 29162,
+    "gz": 11212,
+    "br": 10151
   },
   "vueServer": {
     "size": 13752,
@@ -35,9 +35,9 @@
     "br": 5433
   },
   "reactClientFull": {
-    "size": 29376,
-    "gz": 11179,
-    "br": 10139
+    "size": 29374,
+    "gz": 11198,
+    "br": 10189
   },
   "reactServer": {
     "size": 13356,
