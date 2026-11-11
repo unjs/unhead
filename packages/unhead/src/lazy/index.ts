@@ -58,7 +58,7 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
    * The next `head.render()` releases it, and loads at once if entries changed.
    * So call `head.render()` when the navigation ends, even if it aborted.
    * A direct `load()` still runs. A load already in flight finishes, and its first render
-   * waits for that next `head.render()`.
+   * waits for that next `head.render()`. An idle load during the block waits the same way.
    */
   blockLoad: () => void
 }
@@ -165,7 +165,12 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       if (document && !loading) {
         if (options.load === 'idle') {
           const view = document.defaultView as (Window & typeof globalThis) | null
-          ;(view?.requestIdleCallback || setTimeout)(() => head.load())
+          ;(view?.requestIdleCallback || setTimeout)(() => {
+            // During a load block, the idle load renders first at the release, as a load in flight does
+            if (!loading)
+              held = blocked
+            head.load()
+          })
         }
         // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
         // eslint-disable-next-line node/prefer-global/process

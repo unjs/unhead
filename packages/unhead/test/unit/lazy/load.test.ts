@@ -59,6 +59,20 @@ describe('load option', () => {
     expect(doc.title).toBe('Page')
   })
 
+  it('holds an idle load during a load block until the block ends', async () => {
+    const dom = ssrDom(page)
+    const doc = dom.window.document
+    const head = createHead({ document: doc, load: 'idle' })
+    head.push(clientOnly)
+    head.render()
+    head.blockLoad()
+    await settle()
+    expect(themeColor(doc)).toBe('#fff')
+
+    head.render()
+    await vi.waitFor(() => expect(themeColor(doc)).toBe('#000'))
+  })
+
   it('loads the runtime when useScript adds its script during hydration', async () => {
     const dom = ssrDom(page)
     const doc = dom.window.document
