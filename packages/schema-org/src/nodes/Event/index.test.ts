@@ -262,6 +262,55 @@ describe('defineEvent', () => {
     })
   })
 
+  it('resolves a typed Place with a url as a Place', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'A concert',
+          location: {
+            '@type': 'Place',
+            'name': 'Venue',
+            'url': 'https://example.com/venues/venue',
+            'address': { streetAddress: '1 Main Street', addressLocality: 'Springfield', addressCountry: 'US' },
+          },
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+      expect(event.location).toEqual({
+        '@type': 'Place',
+        'name': 'Venue',
+        'url': 'https://example.com/venues/venue',
+        'address': {
+          '@type': 'PostalAddress',
+          'streetAddress': '1 Main Street',
+          'addressLocality': 'Springfield',
+          'addressCountry': 'US',
+        },
+      })
+    })
+  })
+
+  it('resolves an untyped location with a url and an address as a Place', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'A concert',
+          location: [
+            { name: 'Venue', url: 'https://example.com/venues/venue', address: '1 Main Street' },
+            { url: 'https://example.com/live' },
+          ],
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+      expect(event.location).toMatchObject([
+        { '@type': 'Place', 'name': 'Venue' },
+        { '@type': 'VirtualLocation', 'url': 'https://example.com/live' },
+      ])
+    })
+  })
+
   it('replicate google example', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

@@ -150,7 +150,10 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
           || (typeof location === 'object' && location !== null && (
             type === 'VirtualLocation'
             || (Array.isArray(type) && type.includes('VirtualLocation'))
-            || typeof (location as { url?: unknown }).url !== 'undefined'
+            // an untyped `{ url }` is an online location, unless it also has a physical address
+            || (!type
+              && typeof (location as { url?: unknown }).url !== 'undefined'
+              && typeof (location as { address?: unknown }).address === 'undefined')
           ))
         return isVirtual
           ? resolveRelation(location as NodeRelation<VirtualLocation | string>, ctx, virtualLocationResolver)
