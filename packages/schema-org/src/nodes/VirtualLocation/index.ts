@@ -1,5 +1,6 @@
 import type { Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
+import { resolveWithBase } from '../../utils'
 
 export interface VirtualLocationSimple extends Thing {
   '@type'?: 'VirtualLocation'
@@ -22,5 +23,10 @@ export const virtualLocationResolver = defineSchemaOrgResolver<VirtualLocation, 
   },
   defaults: {
     '@type': 'VirtualLocation',
+  },
+  resolve(node, ctx) {
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
+    return node
   },
 })
