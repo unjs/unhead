@@ -3,6 +3,20 @@ import { MinifyPlugin } from '../../../src/plugins'
 import { createServerHeadWithContext } from '../../util'
 
 describe('minifyPlugin', () => {
+  it.each([
+    ['script', 'var r = /[//]/; alert(1)', 'var r = /[//]/; alert(1)'],
+    ['script', 'let ü = 1;  console.log(ü)', 'let ü=1;console.log(ü)'],
+    ['script', 'var n = 1 .toString()', 'var n=1 .toString()'],
+    ['style', 'div :first-child { color: red }', 'div :first-child{color:red}'],
+    ['style', '@media screen and (max-width: 600px) { a { color: red } }', '@media screen and (max-width: 600px){a{color:red}}'],
+    ['style', '@supports not (display: grid) { a { b: c } }', '@supports not (display: grid){a{b:c}}'],
+    ['style', 'a { background: url(img/a-0.5x.png) }', 'a { background: url(img/a-0.5x.png) }'],
+  ] as const)('preserves significant tokens in SSR %s: %s', (tag, input, expected) => {
+    const head = createServerHeadWithContext({ plugins: [MinifyPlugin()] })
+    head.push({ [tag]: [{ innerHTML: input }] })
+    expect(head.render().headTags).toBe(`<${tag}>${expected}</${tag}>`)
+  })
+
   it('minifies inline script content', () => {
     const head = createServerHeadWithContext({
       plugins: [MinifyPlugin()],

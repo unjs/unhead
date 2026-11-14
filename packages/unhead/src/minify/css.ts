@@ -3,6 +3,11 @@
  * Strips comments and collapses whitespace while preserving string literals.
  */
 export function minifyCSS(code: string): string {
+  // URLs, escapes and custom property token streams need a full CSS lexer.
+  // Preserve the whole input rather than rewrite their contents.
+  if (/url\(/i.test(code) || code.includes('\\') || code.includes('--'))
+    return code
+
   if (!/[\s/]|;\}|0\.\d/.test(code))
     return code
 
@@ -37,7 +42,14 @@ export function minifyCSS(code: string): string {
       i += 2
       while (i < len && !(code[i] === '*' && code[i + 1] === '/'))
         i++
+      if (i >= len)
+        return code
       i += 2
+      // An empty comment keeps adjacent tokens separate without a combinator.
+      if (last && !/\s/.test(last) && code[i] && !/\s/.test(code[i])) {
+        result += '/**/'
+        last = '/'
+      }
     }
     // track paren depth for calc()/min()/max()/clamp()/var()
     else if (ch === '(') {
@@ -59,12 +71,11 @@ export function minifyCSS(code: string): string {
       if (next === '!')
         continue
       if (parenDepth > 0) {
-        // inside parens (calc/min/max/clamp/var): strip around * and / (safe per spec),
-        // preserve around + and - (required by spec), strip around base punctuation
-        if (last && next && !isCSSCalcPunctuation(last) && !isCSSCalcPunctuation(next))
+        // Function arguments can contain selectors as well as calculations.
+        if (last && next && last !== '(' && next !== ')' && last !== ',' && next !== ',')
           append(' ')
       }
-      else if (last && next && !isCSSPunctuation(last) && !isCSSPunctuation(next)) {
+      else if (last && next && !isCSSPunctuation(last) && last !== ':' && last !== '(' && !isCSSPunctuation(next)) {
         append(' ')
       }
     }
@@ -83,8 +94,8 @@ export function minifyCSS(code: string): string {
     }
     // leading zero: 0.x → .x
     else if (ch === '0' && code[i + 1] === '.' && code[i + 2] >= '0' && code[i + 2] <= '9') {
-      // only strip if prev is not a digit (avoid turning 10.5 into 1.5)
-      if (last && last >= '0' && last <= '9') {
+      // Only rewrite a number at a value boundary, never an identifier.
+      if (last && last !== ':' && last !== '(' && last !== ',' && !/\s/.test(last)) {
         append(ch)
         i++
       }
@@ -102,9 +113,5 @@ export function minifyCSS(code: string): string {
 }
 
 function isCSSPunctuation(ch: string): boolean {
-  return ch === '{' || ch === '}' || ch === ';' || ch === ':' || ch === ',' || ch === '>' || ch === '~' || ch === '+' || ch === '(' || ch === ')'
-}
-
-function isCSSCalcPunctuation(ch: string): boolean {
-  return ch === '*' || ch === '/' || ch === '(' || ch === ')' || ch === ','
+  return ch === '{' || ch === '}' || ch === ';' || ch === ',' || ch === '>' || ch === '~' || ch === '+'
 }
