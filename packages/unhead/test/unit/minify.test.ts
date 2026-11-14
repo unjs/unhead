@@ -1,8 +1,38 @@
+import { compileFunction } from 'node:vm'
 import { fc, it as fcIt } from '@fast-check/vitest'
 import { describe, expect, it } from 'vitest'
 import { minifyCSS, minifyJS, minifyJSON } from '../../src/minify'
 
 describe('minifyJS', () => {
+  it.each([
+    ['var r = /[//]/; return r.test("/")', true],
+    ['var r = /["\']/; return r.test("\'")', true],
+    ['let ü = 1;  return ü', 1],
+    ['var n = 1 .toString(); return n', '1'],
+    ['let/* separator */value = 2; return value', 2],
+    ['function f() { return/*\n*/1 }; return f()', undefined],
+    ['function f() { return\r1 }; return f()', undefined],
+    ['function f() { return\u20281 }; return f()', undefined],
+    ['let x = 1; let y = 2; x\n++y; return [x, y]', [1, 3]],
+    ['return 2 / /[//]/.source.length', 0.5],
+    // eslint-disable-next-line no-template-curly-in-string -- Literal source for the minifier.
+    ['return `outer ${`inner ${1 + 2}`} tail`', 'outer inner 3 tail'],
+    ['let \\u00fc = 3; return ü', 3],
+    ['let x = 2; return 1 < !--x', false],
+  ])('preserves execution of %s', (input, expected) => {
+    expect(compileFunction(minifyJS(input))()).toEqual(expected)
+  })
+
+  it.each([
+    'if (ok) /[//]/.test(value);',
+    'const r = /[\\/"\']/v;  consume(r);',
+    // eslint-disable-next-line no-template-curly-in-string -- Literal source for the minifier.
+    'const result = `a ${`b ${value}`} c`; ',
+    'const value = left / right; ',
+  ])('keeps uncertain syntax unchanged: %s', (input) => {
+    expect(minifyJS(input)).toBe(input)
+  })
+
   it('strips single-line comments', () => {
     const result = minifyJS('var x = 1 // comment\nvar y = 2')
     expect(result).toContain('var x=1')
@@ -59,6 +89,23 @@ describe('minifyJS', () => {
 })
 
 describe('minifyCSS', () => {
+  it.each([
+    ['@media screen and (max-width: 600px) { a { color: red } }', '@media screen and (max-width: 600px){a{color:red}}'],
+    ['@supports not (display: grid) { a { b: c } }', '@supports not (display: grid){a{b:c}}'],
+    ['div :first-child { color: red }', 'div :first-child{color:red}'],
+    ['a { background: url(img/a-0.5x.png) }', 'a { background: url(img/a-0.5x.png) }'],
+    ['a { background: URL(data:image/svg+xml,a-0.5) }', 'a { background: URL(data:image/svg+xml,a-0.5) }'],
+    ['.a-0.5x { color: red }', '.a-0.5x{color:red}'],
+    ['a { --tokens: 0.5x + 1; color: red }', 'a { --tokens: 0.5x + 1; color: red }'],
+    [String.raw`a\:b :hover { color: red }`, String.raw`a\:b :hover { color: red }`],
+    ['a/**/b { color: red }', 'a/**/b{color:red}'],
+    ['@supports ((display: grid) and (color: red)) { a { color: red } }', '@supports ((display: grid) and (color: red)){a{color:red}}'],
+    ['@supports selector(div * :hover) { a { color: red } }', '@supports selector(div * :hover){a{color:red}}'],
+    [':is(a) :hover { color: red }', ':is(a) :hover{color:red}'],
+  ])('preserves CSS tokens: %s', (input, expected) => {
+    expect(minifyCSS(input)).toBe(expected)
+  })
+
   it('strips comments', () => {
     expect(minifyCSS('body { /* reset */ margin: 0 }')).not.toContain('reset')
   })
