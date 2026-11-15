@@ -6,7 +6,7 @@ import {
   IdentityId,
   idReference,
   isHomePage,
-  resolveAsGraphKey,
+  isSiteIdentityId,
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
@@ -93,7 +93,7 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
   },
   resolveRootNode(node, { find, meta }) {
     // if this person is the identity
-    if (resolveAsGraphKey(node['@id']) === IdentityId) {
+    if (isSiteIdentityId(node['@id'], meta.host)) {
       setIfEmpty(node, 'url', meta.host)
 
       // Default the homepage's about relation to the site identity.

@@ -61,7 +61,6 @@ describe('defineEvent', () => {
               "PerformingGroup",
             ],
             "name": "My Organisation",
-            "url": "https://example.com/",
           },
         ]
       `)
