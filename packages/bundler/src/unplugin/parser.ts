@@ -63,6 +63,8 @@ export function resolveParser(load: ParserLoader): ParserResolution {
 
 const require = createRequire(import.meta.url)
 let cachedParser: ParserResolutionSuccess | undefined
+let rawTransferParser: { parseSync: ParseSync } | undefined
+let rawTransferChecked = false
 
 function loadParser(id: ParserId): ParserLoadResult {
   try {
@@ -93,6 +95,24 @@ function getParser(): ParserResolutionSuccess {
   return cachedParser
 }
 
+function getRawTransferParser(): { parseSync: ParseSync } | undefined {
+  if (!rawTransferChecked) {
+    rawTransferChecked = true
+    const loaded = loadParser('oxc-parser')
+    if (loaded._tag === 'ok') {
+      const mod = loaded.module as { parseSync?: unknown, rawTransferSupported?: unknown }
+      if (typeof mod.rawTransferSupported === 'function' && mod.rawTransferSupported() && typeof mod.parseSync === 'function') {
+        const parseSync = mod.parseSync as ParseSync
+        rawTransferParser = {
+          parseSync: (filename: string, sourceText: string, parseOptions: any) =>
+            parseSync(filename, sourceText, { ...parseOptions, experimentalRawTransfer: true }),
+        }
+      }
+    }
+  }
+  return rawTransferParser
+}
+
 export function isMissingParserError(error: unknown): error is MissingParserError {
   return error instanceof Error
     && '_tag' in error
@@ -102,6 +122,6 @@ export function isMissingParserError(error: unknown): error is MissingParserErro
 export function parseAndWalkSource(code: string, id: string, options: ParseAndWalkOptions): ReturnType<typeof parseAndWalk> {
   return parseAndWalk(code, id, {
     ...options,
-    parseSync: getParser().parseSync,
+    parseSync: getRawTransferParser()?.parseSync ?? getParser().parseSync,
   })
 }
