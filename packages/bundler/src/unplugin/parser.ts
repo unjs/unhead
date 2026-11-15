@@ -95,20 +95,26 @@ function getParser(): ParserResolutionSuccess {
   return cachedParser
 }
 
+export function resolveRawTransferParser(load: ParserLoader): { parseSync: ParseSync } | undefined {
+  const loaded = load('oxc-parser')
+  if (loaded._tag === 'error')
+    return undefined
+
+  const mod = loaded.module as { parseSync?: unknown, rawTransferSupported?: unknown }
+  if (typeof mod.rawTransferSupported !== 'function' || !mod.rawTransferSupported() || typeof mod.parseSync !== 'function')
+    return undefined
+
+  const parseSync = mod.parseSync as ParseSync
+  return {
+    parseSync: (filename: string, sourceText: string, parseOptions: any) =>
+      parseSync(filename, sourceText, { ...parseOptions, experimentalRawTransfer: true }),
+  }
+}
+
 function getRawTransferParser(): { parseSync: ParseSync } | undefined {
   if (!rawTransferChecked) {
     rawTransferChecked = true
-    const loaded = loadParser('oxc-parser')
-    if (loaded._tag === 'ok') {
-      const mod = loaded.module as { parseSync?: unknown, rawTransferSupported?: unknown }
-      if (typeof mod.rawTransferSupported === 'function' && mod.rawTransferSupported() && typeof mod.parseSync === 'function') {
-        const parseSync = mod.parseSync as ParseSync
-        rawTransferParser = {
-          parseSync: (filename: string, sourceText: string, parseOptions: any) =>
-            parseSync(filename, sourceText, { ...parseOptions, experimentalRawTransfer: true }),
-        }
-      }
-    }
+    rawTransferParser = resolveRawTransferParser(loadParser)
   }
   return rawTransferParser
 }
