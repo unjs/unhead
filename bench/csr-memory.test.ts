@@ -4,7 +4,7 @@ import { createHead } from '../packages/unhead/src/client'
 import { createHead as createServerHead, renderSSRHead } from '../packages/unhead/src/server'
 import { createNavigationSession, renderProductPage } from './csr-memory'
 
-it.each([true, false])('updates product-page metadata with router hints set to %s', async (routerHints) => {
+it.each(['router-hints', 'managed', 'large-app'] as const)('updates product-page metadata for the %s profile', async (profile) => {
   const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
   let insertedHints = 0
   const observer = new dom.window.MutationObserver((records) => {
@@ -17,7 +17,7 @@ it.each([true, false])('updates product-page metadata with router hints set to %
   })
   observer.observe(dom.window.document.head, { childList: true })
   try {
-    const session = createNavigationSession(createHead, dom.window.document, routerHints)
+    const session = createNavigationSession(createHead, dom.window.document, profile)
     await session.navigate(2)
     await session.navigate(3)
 
@@ -25,9 +25,12 @@ it.each([true, false])('updates product-page metadata with router hints set to %
     expect(dom.window.document.querySelector('link[rel="canonical"]')?.getAttribute('href'))
       .toBe('https://example.com/products/5')
     expect(dom.window.document.querySelectorAll('link[rel="prefetch"]')).toHaveLength(0)
-    expect(insertedHints > 0).toBe(routerHints)
-    expect(dom.window.document.querySelector('link[rel="modulepreload"]')?.getAttribute('href'))
-      .toBe('/_nuxt/page-5.js')
+    expect(insertedHints).toBe(profile === 'managed' ? 0 : profile === 'large-app' ? 120 : 40)
+    expect(dom.window.document.querySelector('link[href="/_nuxt/page-5.js"]')).not.toBeNull()
+    if (profile === 'large-app') {
+      expect(dom.window.document.querySelector('link[href="/_nuxt/shared-0.js"]')).not.toBeNull()
+      expect(dom.window.document.querySelector('link[href="/_nuxt/shared-15.css"]')).not.toBeNull()
+    }
     expect(dom.window.document.querySelector('link[rel="preload"]')?.getAttribute('href'))
       .toBe('/products/5/hero.webp')
   }
