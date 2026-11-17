@@ -28,7 +28,7 @@ export const placeResolver = defineSchemaOrgResolver<Place>({
   resolve(node, ctx) {
     if (typeof node.address !== 'string')
       node.address = resolveRelation(node.address, ctx, addressResolver)
-    if (node.url && !node.url.startsWith('//'))
+    if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
     return node
   },
