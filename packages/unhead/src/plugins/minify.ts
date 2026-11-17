@@ -1,7 +1,7 @@
-import type { HeadPluginInput } from '../types/head'
 import { minifyCSS } from '../minify/css'
 import { minifyJS } from '../minify/js'
 import { minifyJSON } from '../minify/json'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 export interface MinifyPluginOptions {
   /**
@@ -50,12 +50,12 @@ const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculat
  * })
  * ```
  */
-export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
+export function MinifyPlugin(options?: MinifyPluginOptions) {
   const jsMinify = options?.js === false ? false : (options?.js || minifyJS)
   const cssMinify = options?.css === false ? false : (options?.css || minifyCSS)
   const jsonMinify = options?.json !== false
   const omitLineBreaks = options?.omitLineBreaks === true
-  return {
+  return defineHeadPlugin({
     key: 'minify',
     hooks: {
       'ssr:render': (ctx) => {
@@ -68,7 +68,7 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
 
           if (tag.tag === 'script') {
             const type = tag.props?.type
-            if (type && JSON_TYPES.has(type)) {
+            if (typeof type === 'string' && JSON_TYPES.has(type)) {
               if (jsonMinify) {
                 const min = minifyJSON(content)
                 if (min.length < content.length)
@@ -90,5 +90,5 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
         }
       },
     },
-  }
+  })
 }

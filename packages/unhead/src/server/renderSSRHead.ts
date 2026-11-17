@@ -1,12 +1,12 @@
-import type { HeadRenderer, RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
+import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
 import { callHook } from '../utils/hooks'
 import { resolveTags } from '../utils/resolve'
 import { capoTagWeight } from './sort'
 import { ssrRenderTags } from './util'
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRenderer<SSRHeadPayload> {
-  return (head: Unhead<any>) => {
+export function createServerRenderer(options: RenderSSRHeadOptions = {}): <Input, RenderResult>(head: Unhead<Input, RenderResult>) => SSRHeadPayload {
+  return (head) => {
     const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
     callHook(head, 'ssr:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
@@ -29,6 +29,6 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRe
  * @deprecated Use `head.render()` instead.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
+export function renderSSRHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, options?: RenderSSRHeadOptions): SSRHeadPayload {
   return createServerRenderer(options)(head)
 }

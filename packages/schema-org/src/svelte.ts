@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, UseHeadInput } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadEntryTarget, UseHeadInput } from 'unhead/types'
 import type { UseSchemaOrgInput } from './index'
 import { useHead, useUnhead } from '@unhead/svelte'
 import { schemaAutoImports } from './imports'
@@ -7,7 +7,12 @@ import {
 } from './index'
 import { UnheadSchemaOrg } from './plugin'
 
-export function useSchemaOrg(input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
+type UseSchemaOrgOptions = Omit<HeadEntryOptions<UseHeadInput>, 'head'> & {
+  head?: HeadEntryTarget<UseHeadInput> & SchemaOrgPluginHost
+}
+
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseSchemaOrgOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || useUnhead()
   unhead.use(UnheadSchemaOrg())

@@ -10,5 +10,6 @@ export { UnheadContextKey } from '../context'
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,
+  type StreamingGlobal,
   type UnheadStreamQueue,
 } from 'unhead/stream/client'

@@ -4,7 +4,7 @@ import type {
   UseScriptOptions,
 } from './types'
 
-type BaseScriptApi = Record<symbol | string, any>
+type BaseScriptApi = object
 type Disposer = () => void
 
 /** Create an independently disposable consumer view of a shared script. */

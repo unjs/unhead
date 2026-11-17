@@ -1,4 +1,4 @@
-import type { HeadEntry } from '../types'
+import type { HeadEntry, HeadPlugin, Unhead } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 function isThenable(v: any): v is PromiseLike<any> {
@@ -100,8 +100,8 @@ function walkPromises(v: any): any {
  * Resolves Promise values outside the synchronous tag pipeline. Pending entries
  * are omitted from the current render and become available on the next render.
  */
-export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
-  const pending = new WeakMap<HeadEntry<any>, unknown>()
+export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>): HeadPlugin<Input, RenderResult> => {
+  const pending = new WeakMap<HeadEntry<Input>, unknown>()
 
   return {
     key: 'promises',

@@ -1,10 +1,10 @@
-import type { ResolvableHead } from 'unhead/types'
+import type { ReactiveHead } from '@unhead/vue'
 import { createHead, prepareHeadInput, renderSSRHead } from '@unhead/vue/server'
 import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, expect, it } from 'vitest'
 import { createStreamableHead } from '../../../src/stream/server'
 
-function appHead(): ResolvableHead {
+function appHead(): ReactiveHead {
   return {
     htmlAttrs: { lang: 'de' },
     title: 'App',
@@ -33,6 +33,7 @@ describe('vue ssr prepared head input', () => {
   it('applies to vue streamable heads', () => {
     const { head } = createStreamableHead({ ...options, init: [prepared] })
     expect(head.entries.get(1)?._precomputedTags).toBeDefined()
+    expect(renderSSRHead(head).headTags).toContain('<title>App | My App</title>')
     expect(renderSSRHead(head)).toEqual(renderSSRHead(createStreamableHead({ ...options, init: [appHead()] }).head))
   })
 })

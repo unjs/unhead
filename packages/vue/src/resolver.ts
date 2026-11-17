@@ -1,9 +1,28 @@
 import type { PropResolver } from 'unhead/types'
-import { unref } from 'vue'
+import { isRef, unref } from 'vue'
+
+const refResolvers = new WeakMap<object, unknown>()
+
+/** @internal */
+export function setVueRefResolver(ref: object, resolver: unknown): void {
+  refResolvers.set(ref, resolver)
+}
 
 export const VueResolver: PropResolver = /* @__PURE__ */ Object.assign(
-  // unref reads a ref and returns anything else as it is, functions included
-  (_?: string, value?: any) => unref(value),
+  (_: string | undefined, value: unknown) => {
+    if (!isRef(value))
+      return value
+
+    const resolved = unref(value)
+    const resolver = (value as typeof value & { _resolver?: unknown })._resolver || refResolvers.get(value)
+    if (resolver && resolved && typeof resolved === 'object') {
+      return {
+        ...(resolved as Record<string, unknown>),
+        _resolver: resolver,
+      }
+    }
+    return resolved
+  },
   // identity for plain non-reactive values, so SSR init entries keep
   // their precomputed fast path (see unhead/server createHead)
   { _static: true },

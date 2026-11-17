@@ -110,7 +110,8 @@ it('keeps script events mutable after initial and updated snapshots are frozen',
   head.render()
   expect(snapshots.at(-1)!.scripts[0]!.events.map(event => event.type)).toEqual(['loading'])
   // Event records must also belong to the snapshot, not the live runtime.
-  const runtimeEvents = head._scripts![script.id]._events as { type: string, timestamp: number }[]
+  const runtimeScript = head._scripts![script.id] as { _events: UnheadDevtoolsState['scripts'][number]['events'] }
+  const runtimeEvents = runtimeScript._events
   expect(Object.isFrozen(runtimeEvents[0])).toBe(false)
 
   document.querySelector<HTMLScriptElement>('script[src="/devtools-script.js"]')!.dispatchEvent(new Event('load'))

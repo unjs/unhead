@@ -1,3 +1,4 @@
+import type { Unhead } from 'unhead/types'
 import type { App } from 'vue'
 import type { VueHeadClient } from './types'
 import { hasInjectionContext, inject } from 'vue'
@@ -13,7 +14,7 @@ export function injectHead() {
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function vueInstall(head: VueHeadClient<any>): (app: App) => void {
+export function vueInstall<I, RenderResult>(head: Unhead<I, RenderResult>): (app: App) => void {
   return (app) => {
     // `$head` is for the @vueuse/head polyfill
     app.config.globalProperties.$unhead = app.config.globalProperties.$head = head

@@ -1,3 +1,4 @@
+import type { CompatibleHead, ResolvableHead, UseHeadInput } from 'unhead/types'
 // @vitest-environment jsdom
 import { act, fireEvent, render } from '@testing-library/react'
 import React, { StrictMode, useState } from 'react'
@@ -25,7 +26,7 @@ function Page2() {
   return <div>Page 2</div>
 }
 
-function App({ head }: { head: ReturnType<typeof createHead> }) {
+function App<RenderResult>({ head }: { head: CompatibleHead<UseHeadInput, ResolvableHead, RenderResult> }) {
   const [currPage, setCurrPage] = useState<'Page 1' | 'Page 2'>('Page 2')
   return (
     <UnheadProvider head={head}>
