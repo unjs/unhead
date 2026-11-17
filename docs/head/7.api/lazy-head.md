@@ -13,7 +13,7 @@ app.mount('#app')
 head.render()
 ```
 
-The [lazy head](/docs/vue/head/guides/core-concepts/lazy-head) is a client head for a server rendered page. It stores entries without touching the document. It loads the standard DOM runtime on the first head change, or when `load()` runs.
+The [lazy head](/docs/vue/head/guides/core-concepts/lazy-head) is a client head for a server rendered page. It stores entries without touching the document. It loads the DOM runtime on the first head change, or when `load()` runs.
 
 ::note
 The lazy head is experimental. Its API may change in a minor release.
@@ -26,7 +26,7 @@ The lazy head is experimental. Its API may change in a minor release.
 | `@unhead/vue/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyVueHead` |
 | `unhead/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyUnhead` |
 
-The Vue export adds the Vue plugin install. During hydration, it also loads the runtime at once for a call the server never ran, such as `useHead()` in `onMounted()`. In development, it names components in the dev warning. Use `unhead/lazy` only to build an adapter for another framework.
+The Vue export adds the Vue plugin install. During hydration, it loads the runtime at once for a call the server never ran. An example is `useHead()` in `onMounted()`. It also names components in the dev warning. Use `unhead/lazy` only to build an adapter for another framework.
 
 ## API Reference
 
@@ -41,7 +41,7 @@ function createHead(options?: LazyHeadOptions): LazyVueHead
 | Option | Type | Description |
 | --- | --- | --- |
 | `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager chunk. |
-| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk or the `lazyPlugins` loader fails, or when a custom `render` throws during the load. The default logs with `console.error`. |
+| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk or the `lazyPlugins` loader fails. It also receives the error when a custom `render` throws during the load. The default logs with `console.error`. |
 
 A custom `render` option owns the document. The runtime never adopts the server head. After the load, each change calls your `render`.
 
@@ -51,8 +51,10 @@ The head has the methods of the client head. It adds `load()` and changes `rende
 
 | Method | Description |
 | --- | --- |
-| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. A failed load resets, so a later change or `load()` tries again. Call it at once for a page with no server render, or for a head created after hydration. Before hydration ends, a load that no change started means no server head applies, so the head adopts nothing. |
+| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. After a failure, a later change or `load()` tries again. |
 | `render()` | Before the runtime loads, the first call marks the end of hydration. A later call loads the runtime if entries changed, unless a `dom:beforeRender` pause holds it. After the runtime loads, it renders. |
+
+Call `load()` at once for a page with no server render, or for a head created after hydration. If a load starts before hydration ends and before any change, the head assumes that no server head applies. The runtime then adopts nothing.
 
 After hydration, a `dom:beforeRender` pause holds the load. Pause during a navigation, and call `render()` when it ends. Before hydration ends, a change loads the runtime at once. A `load()` call and a `useScript()` load skip the pause, but the runtime renders nothing until the pause lifts.
 
@@ -64,7 +66,7 @@ After hydration, a `dom:beforeRender` pause holds the load. Pause during a navig
 | The runtime | With the first head change | About 4.5 KB |
 | The dev check | In development, after hydration | None in production |
 
-A renderer that adds prefetch hints for dynamic imports downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
+If your server adds prefetch hints for dynamic imports, the browser downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
 
 ## Dev warning
 
