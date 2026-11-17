@@ -443,7 +443,7 @@ function renderStars(value: number, max: number = 5): string {
                 </template>
               </div>
               <div v-else class="text-xs text-neutral-600 dark:text-[#bdc1c6] leading-tight truncate">
-                {{ seo.canonical || 'example.com' }}
+                {{ seo.canonical || state.url }}
               </div>
             </div>
             <h3 class="serp-preview__title" :class="previewMode === 'mobile' ? 'serp-preview__title--mobile' : ''">

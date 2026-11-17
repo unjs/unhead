@@ -70,13 +70,43 @@ export interface ValidatePluginOptions {
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
+// Mirrors the token syntax TemplateParamsPlugin substitutes (`%siteName`,
+// `%site.name`); a trailing `%` is not part of the syntax.
+const TEMPLATE_PARAM_TOKEN_RE = /%\w+(?:\.\w+)?/
 const AT_PREFIX_RE = /^at\s+/
+// Data blocks, import maps, and speculation rules must stay inline.
+const JAVASCRIPT_TYPES = new Set([
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
 const SLACK_TWITTER_META_NAMES = new Set([
   'twitter:data1',
   'twitter:data2',
   'twitter:label1',
   'twitter:label2',
 ])
+
+function isExecutableScript(type: unknown): boolean {
+  const value = typeof type === 'boolean' ? '' : String(type ?? '')
+  if (!value)
+    return true
+  const normalized = value.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '').toLowerCase()
+  return normalized === 'module' || JAVASCRIPT_TYPES.has(normalized)
+}
 
 /**
  * Per-rule severity used by the runtime ValidatePlugin path that runs through
@@ -235,7 +265,7 @@ function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
 
 function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
-  // Served JSON-LD remains visible as Streamed Body Tags.
+  // Served JSON-LD remains visible as streamed body tags.
   if (tag.tag === 'script')
     return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
   // Other reported tags only carry meaning from the head.
@@ -385,7 +415,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         'tags:afterResolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
-          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
+          function report(id: ValidationRuleId, message: string, defaultSeverity: RuleSeverity, tag?: HeadTag, inputEntryIndex?: number) {
             const severity = severityFor(id, defaultSeverity)
             if (severity === 'off')
               return
@@ -512,11 +542,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             // === Performance Hints ===
             // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
 
-            // Preload + fetchpriority="low" without a matching low-priority script is contradictory
-            // Note: preload + fetchpriority="low" is a valid warmup pattern (used by useScript)
-            // to hint the browser to start fetching early at low priority
+            // Early discovery and fetch priority are independent. Keep this heuristic opt-in.
             if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low' && props.as !== 'script')
-              report('preload-fetchpriority-conflict', `Preload with fetchpriority="low" is contradictory — preload signals critical, low priority contradicts that.`, 'warn', tag)
+              report('preload-fetchpriority-conflict', `This preload uses fetchpriority="low". Check whether the resource needs a higher priority.`, 'off', tag)
 
             // Inline style size check (14KB critical CSS budget)
             if (tag.tag === 'style' && (tag.innerHTML || tag.textContent)) {
@@ -528,7 +556,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             }
 
             // Inline script size check (2KB threshold)
-            if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)) {
+            if (tag.tag === 'script' && isExecutableScript(props.type) && !props.src && (tag.innerHTML || tag.textContent)) {
               const content = tag.innerHTML || tag.textContent || ''
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
@@ -601,7 +629,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               report('redundant-dns-prefetch', `dns-prefetch for "${tag.props.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
           }
 
-          // Preload + async/defer script conflict (priority escalation anti-pattern)
+          // Preloading deferred application entries is valid. Keep priority advice opt-in.
           // Skip when the preload has fetchpriority="low" as this is a valid warmup pattern (used by useScript)
           const preloadScriptHrefs = new Map<string, HeadTag>()
           for (const tag of tags) {
@@ -613,7 +641,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               const preloadTag = preloadScriptHrefs.get(tag.props.src)
               if (preloadTag) {
                 const attr = tag.props.async ? 'async' : 'defer'
-                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
+                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded with "${attr}". Check whether early fetching is intentional.`, 'off', preloadTag)
               }
             }
           }
@@ -634,8 +662,23 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Missing TemplateParamsPlugin (silent breakage — %params appear literally)
           if (!head.plugins.has('template-params')) {
             const tpTag = tags.find((t: HeadTag) => t.tag === 'templateParams')
-            if (tpTag)
+            if (tpTag) {
               report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tpTag)
+            }
+            else {
+              const tokenTag = tags.find((t: HeadTag) => {
+                if (t.tag === 'title' || t.tag === 'titleTemplate')
+                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.textContent ?? ''))
+                if (t.tag === 'meta')
+                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.props.content ?? ''))
+                return false
+              })
+              if (tokenTag) {
+                const text = String(tokenTag.tag === 'meta' ? tokenTag.props.content : tokenTag.textContent)
+                const token = TEMPLATE_PARAM_TOKEN_RE.exec(text!)![0]
+                report('missing-template-params-plugin', `A template param "${token}" is used but TemplateParamsPlugin is not registered, so it renders literally. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tokenTag)
+              }
+            }
           }
 
           // Missing AliasSortingPlugin (silent breakage — before:/after: priorities ignored)

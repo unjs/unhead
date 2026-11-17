@@ -144,7 +144,7 @@ defineLocalBusiness({
 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- for the primary identity, a string `logo` creates a root ImageObject with the `#logo` ID and a compact Organization node with the absolute logo URL
+- for the primary identity, a string `logo` creates a root ImageObject with the `#logo` ID, referenced by the identity
 
 - `@type` resolve: `Dentist` -> `['Organization', 'LocalBusiness', 'Dentist']`
 

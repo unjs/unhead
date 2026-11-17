@@ -44,6 +44,7 @@ See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `
 - [ssr:beforeRender](/docs/head/api/hooks/ssr-before-render): Called before server-side rendering
 - [ssr:render](/docs/head/api/hooks/ssr-render): Called after tags resolve but before serialization
 - [ssr:rendered](/docs/head/api/hooks/ssr-rendered): Called with the final SSR payload
+- [ssr:streamChunk](/docs/head/api/hooks/ssr-stream-chunk): Called with tags that resolve after the streamed shell (synchronous)
 
 ### Script loading
 

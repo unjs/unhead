@@ -1,10 +1,54 @@
+import type { Script } from '../../../src/types'
 import { describe, it } from 'vitest'
 
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
+import { processTemplateParams } from '../../../src/utils'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
+  for (const type of ['application/json', 'application/ld+json'] as const) {
+    it.each(Array.from({ length: 32 }, (_, code) => code))(`escapes control character %i in ${type} template parameters`, (code) => {
+      const value = `before${String.fromCharCode(code)}after"\\</script>`
+      const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+      const script: Script = {
+        type,
+        innerHTML: { value: '%value' },
+      }
+      head.push({
+        script: [{ ...script, processTemplateParams: true }],
+        templateParams: { value },
+      })
+
+      const { headTags } = renderSSRHead(head)
+      const json = headTags.match(/<script[^>]*>([\s\S]*?)<\/script>/)?.[1]
+
+      expect(json).toBeDefined()
+      expect(JSON.parse(json!)).toEqual({ value })
+      expect(json).not.toContain('</script>')
+    })
+  }
+
+  it('preserves control characters in plain-text template parameters', () => {
+    expect(processTemplateParams('Before %value after', { value: 'line1\nline2' }))
+      .toBe('Before line1\nline2 after')
+  })
+
+  it.each([
+    // a fully encoded URL has no tokens
+    ['https://example.com/some%20image.jpg', 'https://example.com/some%20image.jpg'],
+    // a token next to an encoded value resolves, and the encoded value stays
+    ['%siteName https://example.com/some%20image.jpg', 'My Site https://example.com/some%20image.jpg'],
+    // a literal percent sign stays
+    ['100% %siteName', '100% My Site'],
+    // an encoded byte that is not valid UTF-8 stays
+    ['caf%E9 %siteName', 'caf%E9 My Site'],
+    ['caf%E9', 'caf%E9'],
+  ])('resolves tokens in %s and keeps percent-encoded values', (input, expected) => {
+    expect(processTemplateParams(input, { siteName: 'My Site', image: 'wrong' }))
+      .toBe(expected)
+  })
+
   it('basic', async () => {
     const head = createServerHeadWithContext({
       plugins: [TemplateParamsPlugin],
@@ -141,5 +185,38 @@ describe('ssr templateParams', () => {
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test foo | subPage% | test</title>"`,
     )
+  })
+
+  it('numeric params, including 0', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      title: '%count items',
+      meta: [
+        {
+          name: 'description',
+          content: '%count items from %price',
+        },
+      ],
+      script: [
+        {
+          type: 'application/ld+json',
+          innerHTML: '{"price":"%price","count":"%count"}',
+          processTemplateParams: true,
+        },
+      ],
+      templateParams: {
+        count: 0,
+        price: 5,
+      },
+    })
+    const { headTags } = renderSSRHead(head)
+
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>0 items</title>
+      <meta name="description" content="0 items from 5">
+      <script type="application/ld+json">{"price":"5","count":"0"}</script>"
+    `)
   })
 })

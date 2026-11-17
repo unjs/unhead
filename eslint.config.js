@@ -19,6 +19,13 @@ export default antfu(
   },
   ...harlanzw(),
   {
+    files: ['**/*.bench.ts'],
+    rules: {
+      // Vitest 5 exposes bench.compare() as a fixture, not a test declaration.
+      'test/consistent-test-it': 'off',
+    },
+  },
+  {
     rules: {
       'harlanzw/vue-no-faux-composables': 'off',
     },

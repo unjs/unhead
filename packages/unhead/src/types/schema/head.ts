@@ -164,7 +164,7 @@ export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugm
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
-export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>> & TemplateParamsAugmentations
+export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | boolean | number | Record<string, string | boolean | number>> & TemplateParamsAugmentations
 
 export interface ResolvableHead {
   /**

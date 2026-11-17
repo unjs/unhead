@@ -4,19 +4,27 @@ import { brokenLinks, validateLinks } from '~/composables/link-checker'
 import { useDevtoolsConnection } from '~/composables/rpc'
 import { applyOverrides, useRuleOverrides } from '~/composables/rule-overrides'
 import { loadShiki } from '~/composables/shiki'
-import { state } from '~/composables/state'
+import { connectionStatus, state, unheadVersion } from '~/composables/state'
 import { checkForUpdate, hasUpdate, latestVersion } from '~/composables/update-check'
 
-useDevtoolsConnection()
+useDevtoolsConnection().catch((err) => {
+  console.error('[unhead devtools] connection failed:', err)
+})
 loadShiki()
 
 // Validate external links whenever tags change
 watch(() => state.value.tags, tags => validateLinks(tags), { immediate: true })
 
 // Check for version updates once we have the version
-watch(() => state.value.version, v => checkForUpdate(v), { immediate: true })
+watch(unheadVersion, v => checkForUpdate(v), { immediate: true })
 
 const { overrides } = useRuleOverrides()
+
+// Audit and Docs work without the page script; every other tab renders head state.
+const route = useRoute()
+const showConnectionState = computed(() =>
+  connectionStatus.value !== 'connected' && !route.path.startsWith('/audit') && !route.path.startsWith('/docs'),
+)
 
 const tagsErrors = computed(() => brokenLinks.value.size)
 const tagsWarnings = computed(() =>
@@ -58,7 +66,7 @@ const navItems = computed<DevtoolsNavItem[]>(() => [
       <template #brand>
         <div class="flex items-center gap-1.5 text-sm font-semibold text-highlighted">
           <Logo />
-          <UTooltip v-if="state.version" :text="hasUpdate ? `Update available: v${latestVersion}` : `v${state.version}`">
+          <UTooltip v-if="unheadVersion" :text="hasUpdate ? `Update available: v${latestVersion}` : `v${unheadVersion}`">
             <a
               :href="hasUpdate ? 'https://npmx.dev/unhead' : undefined"
               :target="hasUpdate ? '_blank' : undefined"
@@ -66,7 +74,7 @@ const navItems = computed<DevtoolsNavItem[]>(() => [
               class="relative inline-flex items-center"
             >
               <UBadge class="font-mono text-[10px]">
-                v{{ state.version }}
+                v{{ unheadVersion }}
               </UBadge>
               <span v-if="hasUpdate" class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-green-500 border border-[var(--ui-bg)]" />
             </a>
@@ -74,7 +82,8 @@ const navItems = computed<DevtoolsNavItem[]>(() => [
         </div>
       </template>
       <template #stats />
-      <NuxtPage />
+      <DevtoolsConnectionState v-if="showConnectionState && connectionStatus !== 'connected'" :status="connectionStatus" />
+      <NuxtPage v-else />
     </DevtoolsLayout>
   </UApp>
 </template>

@@ -1,5 +1,5 @@
 import { JSDOM } from 'jsdom'
-import { bench, describe } from 'vitest'
+import { describe, it } from 'vitest'
 import { createHead, renderDOMHead } from '../packages/unhead/src/client'
 
 // Re-render hot path: one head, ~12 tags incl htmlAttrs/bodyAttrs (with classes)
@@ -35,8 +35,10 @@ function setup() {
 
 describe('renderDOMHead re-render', () => {
   const { head, document } = setup()
-  bench('forced dirty re-render (12 tags)', () => {
-    head.dirty = true
-    renderDOMHead(head, { document })
+  it('forced dirty re-render (12 tags)', async ({ bench }) => {
+    await bench('forced dirty re-render (12 tags)', () => {
+      head.dirty = true
+      renderDOMHead(head, { document })
+    }).run()
   })
 })

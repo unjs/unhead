@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isBrokenUrl } from '~/composables/link-checker'
-import { state } from '~/composables/state'
+import { pageHost, resolvePageUrl, state } from '~/composables/state'
 
 const seo = computed(() => state.value.seo)
 
@@ -10,7 +10,7 @@ const previewImage = computed(() => {
   const img = seo.value.ogImage
   if (!img || isBrokenUrl(img))
     return null
-  return img
+  return resolvePageUrl(img)
 })
 const ogImageBroken = computed(() => !!seo.value.ogImage && isBrokenUrl(seo.value.ogImage))
 const previewSiteName = computed(() => {
@@ -18,7 +18,8 @@ const previewSiteName = computed(() => {
     return new URL(seo.value.canonical || '').hostname
   }
   catch {
-    return seo.value.canonical || 'example.com'
+    // No absolute canonical: show the page's own host, as a share would.
+    return pageHost()
   }
 })
 
@@ -303,7 +304,7 @@ const socialChecklist = computed<TipItem[]>(() => [
       </div>
       <template v-else>
         <div class="rounded-lg overflow-hidden border border-default">
-          <img :src="seo.ogImage" class="w-full max-h-64 object-contain bg-neutral-100 dark:bg-neutral-800" alt="OG Image" loading="lazy">
+          <img :src="resolvePageUrl(seo.ogImage)" class="w-full max-h-64 object-contain bg-neutral-100 dark:bg-neutral-800" alt="OG Image" loading="lazy">
         </div>
         <p class="mt-2 text-xs text-muted font-mono truncate">
           {{ seo.ogImage }}

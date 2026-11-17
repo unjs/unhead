@@ -323,6 +323,61 @@ describe('schema.org e2e', () => {
     const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
+
+  it('nullish input is a no-op', async () => {
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+      plugins: [
+        UnheadSchemaOrg(),
+      ],
+    })
+    useSchemaOrg(ssrHead, null)
+    useSchemaOrg(ssrHead, undefined)
+
+    const data = renderSSRHead(ssrHead)
+    expect(data.bodyTags).toBe('')
+  })
+
+  it('nullish input is a no-op as the only entry', async () => {
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+      plugins: [
+        UnheadSchemaOrg(),
+      ],
+    })
+    useSchemaOrg(ssrHead, null)
+
+    const data = renderSSRHead(ssrHead)
+    expect(data.bodyTags).toBe('')
+  })
+  it('nullish input does not suppress other entries', async () => {
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+      plugins: [
+        UnheadSchemaOrg(),
+      ],
+    })
+    useSchemaOrg(ssrHead, [defineWebPage({ name: 'a' })])
+    useSchemaOrg(ssrHead, null)
+    const data = renderSSRHead(ssrHead)
+    expect(data.bodyTags).toContain('"@type": "WebPage"')
+    expect(data.bodyTags).toContain('"name": "a"')
+  })
+
+  it('nullish input first does not suppress other entries', async () => {
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+      plugins: [
+        UnheadSchemaOrg(),
+      ],
+    })
+    useSchemaOrg(ssrHead, null)
+    useSchemaOrg(ssrHead, [defineWebPage({ name: 'a' })])
+    const data = renderSSRHead(ssrHead)
+    expect(data.bodyTags).toContain('"@type": "WebPage"')
+    expect(data.bodyTags).toContain('"name": "a"')
+  })
+
   it('#441', async () => {
     const ssrHead = createServerHead({
       disableDefaults: true,

@@ -39,9 +39,11 @@ export function HeadStream(): ReactNode {
     throw new Error('HeadStream: head context not found')
   }
 
-  const update = renderSSRHeadSuspenseChunk(head)
+  // Initial entries belong to the shell, including tags from earlier components.
+  const update = head._stream?.shellRendered ? renderSSRHeadSuspenseChunk(head) : ''
   // Always render script element for hydration consistency with client
   return createElement('script', {
+    nonce: head._stream?.nonce,
     suppressHydrationWarning: true,
     dangerouslySetInnerHTML: update ? { __html: update } : undefined,
   })
@@ -96,7 +98,7 @@ export function createStreamableHead<T = ResolvableHead>(
     head,
     onShellReady,
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
-      // `renderStreamEnd()` writes Streamed Body Tags.
+      // `renderStreamEnd()` writes streamed body tags.
       // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {

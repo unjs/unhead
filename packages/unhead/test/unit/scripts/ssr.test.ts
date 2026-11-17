@@ -3,6 +3,31 @@ import { useScript } from '../../../src/composables'
 import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
 describe('ssr useScript', () => {
+  it.each([
+    [{}, 'anonymous'],
+    [{ crossorigin: undefined }, null],
+    // The runtime accepts false, although the public type excludes it.
+    [{ crossorigin: false as any }, null],
+    [{ crossorigin: '' }, ''],
+    [{ crossorigin: 'anonymous' }, 'anonymous'],
+    [{ crossorigin: 'use-credentials' }, 'use-credentials'],
+  ] as const)('keeps script and preload crossorigin aligned for %o', (input, expected) => {
+    const head = createServerHead({ disableDefaults: true })
+    const script = useScript(head, {
+      src: 'https://cdn.example.com/script.js',
+      ...input,
+    }, { trigger: 'server' })
+    script.warmup('preload')
+
+    const { headTags } = renderSSRHead(head)
+    const tags = headTags.match(/<(?:script|link)\b[^>]*>/g)
+    expect(tags).toHaveLength(2)
+    for (const tag of tags!) {
+      const crossorigin = tag.match(/\scrossorigin(?:="([^"]*)")?(?=\s|>)/)
+      expect(crossorigin ? crossorigin[1] ?? '' : null).toBe(expected)
+      expect(tag).toContain('referrerpolicy="no-referrer"')
+    }
+  })
   it('default', async () => {
     const head = createServerHead({
       disableDefaults: true,
@@ -40,7 +65,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
+        "headTags": "<script defer fetchpriority="low" src="https://cdn.example.com/script.js" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -63,7 +88,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
+        "headTags": "<script defer fetchpriority="low" src="https://cdn.example.com/script.js" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -101,7 +126,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
+        "headTags": "<script defer fetchpriority="low" src="https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true"></script>",
         "htmlAttrs": "",
       }
     `)
