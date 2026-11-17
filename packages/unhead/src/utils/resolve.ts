@@ -12,8 +12,9 @@ const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w 
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
-// emptiness check without allocating an Object.keys array (runs per tag in sanitizeTags)
-function isEmptyProps(props: Record<string, any>): boolean {
+// emptiness check without allocating an Object.keys array (runs per tag in sanitizeTags).
+// Not in the `unhead/utils` export list, so it stays internal.
+export function isEmptyProps(props: Record<string, any>): boolean {
   // eslint-disable-next-line no-unreachable-loop -- intentional: any key means non-empty
   for (const _ in props)
     return false
@@ -196,23 +197,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     if (!tags) {
-      // Precomputed shared tags (SSR init entries, see server/createHead.ts).
-      // Valid only while nothing can observe or alter normalization for this entry:
-      // no per-resolve tagWeight override (the array was weighted with the head's
-      // default weight fn), no entries:normalize hook (it must see every entry's
-      // tags, e.g. the legacy DeprecationsPlugin), no entries:resolve hook (its
-      // listeners may reach and mutate `_tags`, and this array is SHARED across
-      // head instances), and no entry options (they get assigned onto each tag).
-      // Deliberately NOT cached on `e._tags` so a hook registered between renders
-      // takes the normalize path instead of reaching the shared array.
-      if (e._precomputedTags
-        && weightFn === head.resolvedOptions._tagWeight
-        && !hooks['entries:normalize']?.length
-        && !hooks['entries:resolve']?.length
-        && (!e.options || isEmptyProps(e.options))) {
-        tags = e._precomputedTags
-      }
-      else {
+      // Only the server head sets `_precomputed`: it returns the entry's shared precomputed
+      // tags while they are valid (see server/createHead.ts), so client bundles skip the check.
+      tags = head.resolvedOptions._precomputed?.(e, weightFn, hooks)
+      if (!tags) {
         tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
         if (e.options && !isEmptyProps(e.options)) {
           for (const t of tags)

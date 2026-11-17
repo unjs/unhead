@@ -112,6 +112,12 @@ export interface CreateHeadOptions {
    * @internal
    */
   _tagWeight?: (tag: HeadTag) => number
+  /**
+   * Returns the shared precomputed tags of an entry while they are valid, so the
+   * resolve skips normalizing it. Only the server head sets it.
+   * @internal
+   */
+  _precomputed?: (entry: HeadEntry<any>, tagWeight: (tag: HeadTag) => number, hooks: Record<string, unknown[] | undefined>) => HeadTag[] | undefined
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
