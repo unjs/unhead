@@ -50,14 +50,17 @@ const scenarios = {
   'missing': { name: 'CSR cache miss, 128 managed tags', unit: 'render' },
   'router-fresh': { name: 'CSR router hints, after 30 navs', unit: 'nav' },
   'router-long': { name: 'CSR router hints, after 500 navs', unit: 'nav' },
+  'large-fresh': { name: 'CSR large app, 24 hints, after 30 navs', unit: 'nav' },
+  'large-long': { name: 'CSR large app, 24 hints, after 1000 navs', unit: 'nav' },
 } as const
 
 export type CsrScenario = keyof typeof scenarios
 
 export function createCsrWorkload(createHead: typeof CreateHead, document: Document, scenario: CsrScenario) {
-  if (scenario === 'router-fresh' || scenario === 'router-long') {
-    const session = createNavigationSession(createHead, document)
-    session.navigateSync(scenario === 'router-long' ? 500 : 30)
+  if (scenario === 'router-fresh' || scenario === 'router-long' || scenario === 'large-fresh' || scenario === 'large-long') {
+    const large = scenario === 'large-fresh' || scenario === 'large-long'
+    const session = createNavigationSession(createHead, document, large ? 'large-app' : 'router-hints')
+    session.navigateSync(scenario === 'large-long' ? 1000 : scenario === 'router-long' ? 500 : 30)
     return () => session.navigateSync(1)
   }
 
@@ -90,19 +93,19 @@ function stats(samples: number[]) {
 async function measureScenario(createHead: typeof CreateHead, JSDOM: typeof import('jsdom').JSDOM, scenario: CsrScenario): Promise<PerfBench[]> {
   const cpu: number[] = []
   const wall: number[] = []
-  const runs = 40
+  const runs = 100
   const definition = scenarios[scenario]
   const createDom = () => new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
   // Warm up separately so both history lengths start each sample at a known age.
   const warmup = createDom()
   try {
     const render = createCsrWorkload(createHead, warmup.window.document, scenario)
-    for (let i = 0; i < 40; i++) render()
+    for (let i = 0; i < runs; i++) render()
   }
   finally {
     warmup.window.close()
   }
-  for (let rep = 0; rep < 8; rep++) {
+  for (let rep = 0; rep < 12; rep++) {
     await setImmediate()
     globalThis.gc!()
     const dom = createDom()

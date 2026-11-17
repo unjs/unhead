@@ -47,13 +47,25 @@ it('counts actual connectivity reads and restores normal DOM access', () => {
   }
 })
 
-it.each(['router-fresh', 'router-long'] as const)('measures two discovery passes for %s navigation', (scenario) => {
+it.each([
+  ['router-fresh', 31],
+  ['router-long', 501],
+  ['large-fresh', 31],
+  ['large-long', 1001],
+] as const)('measures two discovery passes for %s navigation', (scenario, page) => {
   const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
   try {
     const render = createCsrWorkload(createHead, dom.window.document, scenario)
+    const observer = new dom.window.MutationObserver(() => {})
+    observer.observe(dom.window.document.head, { childList: true })
     expect(observeDomReads(dom.window.document, render).scans).toBe(2)
+    const hints = observer.takeRecords()
+      .flatMap(record => [...record.addedNodes])
+      .filter(node => node instanceof dom.window.HTMLLinkElement && node.rel === 'prefetch')
+    observer.disconnect()
+    expect(hints).toHaveLength(scenario.startsWith('large-') ? 24 : 8)
     expect(dom.window.document.querySelectorAll('link[rel="prefetch"]')).toHaveLength(0)
-    expect(dom.window.document.title).toBe(`Product ${scenario === 'router-long' ? 501 : 31} | Example Store`)
+    expect(dom.window.document.title).toBe(`Product ${page} | Example Store`)
   }
   finally {
     dom.window.close()
