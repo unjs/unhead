@@ -1,7 +1,6 @@
 import type { HookableCore } from 'hookable'
 import type { ClientUnhead } from '../client/adapter'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
-import { createClientHeadAdapter } from '../client/adapter'
 import { createUnhead } from '../unhead'
 import { copyInput, sameInput } from './same'
 
@@ -119,12 +118,13 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   let plugins: Promise<void> | undefined
   const sources: Record<number, string | undefined> = {}
 
-  const head = createClientHeadAdapter<T>(
-    createUnhead<T, boolean>(() => false, { document, propResolvers: options.propResolvers, init: [] }),
-    hooks as unknown as HookableCore<ClientHeadHooks>,
-    h => render(h),
-  ) as LazyUnhead<T>
-  // the adapter renders on every change unless batching, so changes reach `onChange` only
+  // The client head of `createClientHeadAdapter`, built in place: each change then tells
+  // the lazy head at once whether it needs the runtime, with no hook listener or second wrapper.
+  const head = createUnhead<T, boolean>(h => render(h), { document, propResolvers: options.propResolvers, init: [] }) as LazyUnhead<T>
+  head.ssr = false
+  head.hooks = hooks as unknown as HookableCore<ClientHeadHooks>
+  head.dirty = false
+  // the runtime renders each change after the load, unless batching
   head._b = true
 
   // the lazy plugins register once, for the runtime or the dev check, whichever runs first
@@ -132,8 +132,120 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     list?.forEach(p => head.use(p))
   })
 
-  const markHydrated = () => {
-    if (!hydrated) {
+  // During hydration a change means the client already differs from the server, so it loads
+  // the runtime now. After hydration, a change loads unless the documented pause for DOM
+  // updates holds it: nothing could render yet. A framework pauses during a navigation,
+  // so the load waits for the next page.
+  const change = () => {
+    if (!hydrated)
+      hydrationChanged = true
+    const ctx = { shouldRender: true, tags: [] }
+    if (hydrated)
+      hooks.callHook('dom:beforeRender', ctx)
+    if (ctx.shouldRender)
+      head.load()
+  }
+  // Render here because an async hook listener could break batching.
+  const notify = (changed?: boolean) => {
+    hooks.callHook('entries:updated', head)
+    if (!head._b)
+      head.render()
+    else if (changed)
+      change()
+  }
+  head.invalidate = () => {
+    for (const entry of head.entries.values())
+      delete entry._tags
+    head.dirty = true
+    notify(true)
+  }
+
+  const corePush = head.push
+  head.push = (input, entryOptions) => {
+    const unhook = entryOptions?.onRendered
+      ? hooks.hook('dom:rendered', entryOptions.onRendered as any)
+      : undefined
+    // During hydration a push is a page entry the server rendered, unless the adapter says otherwise.
+    const serverRendered = !hydrated && !adapter._isClientOnlyPush?.()
+    const { _i, patch, dispose } = corePush(input, entryOptions)
+    const entry = head.entries.get(_i)!
+    entry._o = input
+    // A reactive input resolves again on any dependency change, such as the route that the router
+    // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
+    // The check compares with a copy, because an app can edit the input object in place and patch with it.
+    let last = copyInput(input)
+    if (serverRendered)
+      hydrationEntries.set(_i, { ...entry, input: last })
+    // eslint-disable-next-line node/prefer-global/process
+    if (process.env.NODE_ENV !== 'production' && adapter._entrySource)
+      sources[_i] ||= adapter._entrySource()
+    head.dirty = true
+    notify(!serverRendered)
+    const update = (next: T) => {
+      patch(next)
+      head.dirty = true
+      notify(true)
+    }
+    let lastRef = input
+    let queued = false
+    return {
+      _i,
+      patch(next) {
+        if (loading || !head.entries.has(_i)) {
+          lastRef = next
+          update(next)
+        }
+        else if (next !== lastRef) {
+          lastRef = next
+          if (!sameInput(last, next)) {
+            last = copyInput(next)
+            update(next)
+          }
+          // The entry takes the equal object with no change, so a later in-place edit to it renders
+          else if (entry._pending !== undefined) {
+            entry._pending = next
+          }
+          else {
+            entry.input = next
+          }
+        }
+        // The same object, edited in place, as Nuxt's `<Link>` does in its render. Reading it now
+        // would make that render depend on it, so the check waits for a microtask.
+        else if (!queued) {
+          queued = true
+          queueMicrotask(() => {
+            queued = false
+            // a patch with another object since then is newer, so this edit must not overwrite it
+            if (next !== lastRef || !head.entries.has(_i) || sameInput(last, next))
+              return
+            last = copyInput(next)
+            const server = hydrationEntries.get(_i)
+            // During hydration, a component that builds its input in place renders what the server rendered
+            if (!hydrated && !loading && server)
+              server.input = last
+            else
+              update(next)
+          })
+        }
+      },
+      dispose() {
+        unhook?.()
+        if (head.entries.has(_i)) {
+          dispose()
+          head.invalidate()
+        }
+      },
+    }
+  }
+
+  // Frameworks call this when hydration ends, and again when a paused page is ready.
+  // After hydration the server head is correct, so only a change loads the runtime.
+  render = () => {
+    if (hydrated) {
+      if (head.dirty)
+        change()
+    }
+    else {
       hydrated = [...hydrationEntries.values()]
       head.dirty = hydrationChanged
       // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
@@ -145,104 +257,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
           .catch(error => console.warn('[unhead] The lazy head dev check failed.', error))
       }
     }
-  }
-
-  // The documented pause for DOM updates also holds the load: nothing could render yet.
-  // A framework pauses during a navigation, so the load waits for the next page.
-  const isPaused = () => {
-    const ctx = { shouldRender: true, tags: [] }
-    hooks.callHook('dom:beforeRender', ctx)
-    return !ctx.shouldRender
-  }
-
-  // During hydration a push is a page entry the server rendered, unless the adapter says
-  // otherwise. A patch or dispose means the client already differs from the server. Both
-  // need the runtime now. After hydration, every change loads unless a pause holds it.
-  let pushing = false
-  const onChange = () => {
-    if (!hydrated && !pushing)
-      hydrationChanged = true
-    if (hydrated ? !isPaused() : !pushing)
-      head.load()
-  }
-  const push = head.push
-  head.push = (input, entryOptions) => {
-    const serverRendered = !adapter._isClientOnlyPush?.()
-    // a hook may push inside this push, so restore the outer value, even if the push throws
-    const outer = pushing
-    pushing = serverRendered
-    let active: ReturnType<typeof push>
-    try {
-      active = push(input, entryOptions)
-    }
-    finally {
-      pushing = outer
-    }
-    // eslint-disable-next-line node/prefer-global/process
-    if (process.env.NODE_ENV !== 'production' && adapter._entrySource)
-      sources[active._i] ||= adapter._entrySource()
-    // A reactive input resolves again on any dependency change, such as the route that the router
-    // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
-    // The check compares with a copy, because an app can edit the input object in place and patch with it.
-    let last = copyInput(input)
-    if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
-      const entry = head.entries.get(active._i)
-      // the hydrated entry reuses the copy when the entry holds the pushed input
-      if (entry)
-        hydrationEntries.set(active._i, { ...entry, input: entry.input === input ? last : copyInput(entry.input) })
-    }
-    const patch = active.patch
-    let lastRef = input
-    let queued = false
-    active.patch = (next) => {
-      if (loading || !head.entries.has(active._i)) {
-        lastRef = next
-        patch(next)
-      }
-      else if (next !== lastRef) {
-        lastRef = next
-        if (!sameInput(last, next)) {
-          last = copyInput(next)
-          patch(next)
-        }
-        else {
-          // The entry takes the equal object with no change, so a later in-place edit to it renders
-          const entry = head.entries.get(active._i)!
-          if (entry._pending !== undefined)
-            entry._pending = next
-          else
-            entry.input = next
-        }
-      }
-      // The same object, edited in place, as Nuxt's `<Link>` does in its render. Reading it now
-      // would make that render depend on it, so the check waits for a microtask.
-      else if (!queued) {
-        queued = true
-        queueMicrotask(() => {
-          queued = false
-          // a patch with another object since then is newer, so this edit must not overwrite it
-          if (next !== lastRef || !head.entries.has(active._i) || sameInput(last, next))
-            return
-          last = copyInput(next)
-          const entry = hydrationEntries.get(active._i)
-          // During hydration, a component that builds its input in place renders what the server rendered
-          if (!hydrated && !loading && entry)
-            entry.input = last
-          else
-            patch(next)
-        })
-      }
-    }
-    return active
-  }
-
-  // Frameworks call this when hydration ends, and again when a paused page is ready.
-  // After hydration the server head is correct, so only a change loads the runtime.
-  render = () => {
-    if (hydrated && head.dirty)
-      onChange()
-    else
-      markHydrated()
     return false
   }
 
@@ -256,13 +270,11 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     }
     // The runtime and the lazy plugins load together, so the first change waits one round trip.
     return loading ||= Promise.all([import('./runtime'), useLazyPlugins()])
-      .then(([runtime]) => runtime.upgradeHead(head, options, () => hydrated!))
-      .then((renderer) => {
+      .then(([runtime]) => {
+        render = runtime.upgradeHead(head, options, () => hydrated!)
         // the runtime adopts these at its first render, which runs after this
         hydrated ||= [...hydrationEntries.values()]
         hydrationEntries.clear()
-        hooks.removeHook('entries:updated', onChange)
-        render = renderer
         head._b = false
         head.render()
         return true
@@ -275,7 +287,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       })
   }
 
-  hooks.hook('entries:updated', onChange)
   // `useScript` writes its script only once the runtime renders it
   hooks.hook('script:updated', ({ script }: { script: { status: string } }) => {
     if (script.status === 'loading')

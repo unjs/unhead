@@ -241,6 +241,20 @@ describe('lazy head createHead', () => {
     expect(load).not.toHaveBeenCalled()
   })
 
+  it('loads for a patch an entries:updated hook makes during a push in hydration', async () => {
+    const dom = ssrDom(titled, { meta: [{ name: 'other', content: 'yes' }] })
+    const head = createLazyHead({ document: dom.window.document })
+    const entry = head.push(titled)
+    head.hooks.hook('entries:updated', () => {
+      entry.patch({ ...titled, title: 'Patched' })
+    })
+    const load = vi.spyOn(head, 'load')
+    head.push({ meta: [{ name: 'other', content: 'yes' }] })
+    head.render()
+    expect(load).toHaveBeenCalled()
+    await vi.waitFor(() => expect(dom.window.document.title).toBe('Patched'))
+  })
+
   it('blocks a change after hydration while paused', async () => {
     const dom = ssrDom(titled)
     const { head, setPaused } = pausableHead(dom)
