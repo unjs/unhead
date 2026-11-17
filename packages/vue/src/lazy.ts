@@ -30,7 +30,13 @@ function _entrySource() {
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: LazyHeadOptions = {}): LazyVueHead {
-  const head = _createHead<UseHeadInput>({ _isClientOnlyPush, _entrySource, ...options } as LazyHeadOptions) as LazyVueHead
+  const head = _createHead<UseHeadInput>({
+    _isClientOnlyPush,
+    // only dev warnings read the entry source, so production builds drop it
+    // eslint-disable-next-line node/prefer-global/process
+    ...(process.env.NODE_ENV !== 'production' && { _entrySource }),
+    ...options,
+  } as LazyHeadOptions) as LazyVueHead
   head.install = vueInstall(head)
   return head
 }
