@@ -400,6 +400,9 @@ const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
 const memoryBenches = ['ssr', 'csr', 'router-hints'].flatMap(scenario => JSON.parse(execFileSync(process.execPath, [
   '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)), scenario,
 ], { encoding: 'utf8' })).benches)
+const csrCpuBenches = JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-perf.ts', import.meta.url)),
+], { encoding: 'utf8' })).benches
 
 const result = {
   benches: [
@@ -411,6 +414,7 @@ const result = {
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
+    ...csrCpuBenches,
     ...memoryBenches,
   ],
 }

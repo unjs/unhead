@@ -36,26 +36,31 @@ export function createNavigationSession(createHead: typeof CreateHead, document:
   const entry = head.push(pageHead(0))
   let page = 0
 
+  function navigateSync(count: number) {
+    for (let i = 0; i < count; i++) {
+      page++
+      // A router inserts hints before the page renders, then removes them after loading.
+      const hints = routerHints
+        ? Array.from({ length: 8 }, (_, chunk) => {
+            const link = document.createElement('link')
+            link.rel = 'prefetch'
+            link.href = `/_nuxt/product-${page}-${chunk}.js`
+            document.head.appendChild(link)
+            return link
+          })
+        : []
+      entry.patch(pageHead(page))
+      for (const hint of hints)
+        hint.remove()
+      // Async page content adds a new image preload, causing another head scan.
+      entry.patch(pageHead(page, true))
+    }
+  }
+
   return {
+    navigateSync,
     async navigate(count: number) {
-      for (let i = 0; i < count; i++) {
-        page++
-        // A router inserts hints before the page renders, then removes them after loading.
-        const hints = routerHints
-          ? Array.from({ length: 8 }, (_, chunk) => {
-              const link = document.createElement('link')
-              link.rel = 'prefetch'
-              link.href = `/_nuxt/product-${page}-${chunk}.js`
-              document.head.appendChild(link)
-              return link
-            })
-          : []
-        entry.patch(pageHead(page))
-        for (const hint of hints)
-          hint.remove()
-        // Async page content adds a new image preload, causing another head scan.
-        entry.patch(pageHead(page, true))
-      }
+      navigateSync(count)
       // Let jsdom release mutation records before measuring retained memory.
       await setImmediate()
     },

@@ -176,6 +176,8 @@ function renderSection(category: Category, rows: Row[]): string {
 
   // informational benches are shown in the details but never drive the verdict
   const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
+  const observedWork = rows.filter(r => r.bench.informational && r.bench.kind === 'count' && (r.status === 'slower' || r.status === 'faster'))
+  const highlighted = rows.filter(r => (r.status === 'slower' || r.status === 'faster') && (!r.bench.informational || r.bench.kind === 'count'))
   const slower = changed.filter(r => r.status === 'slower')
 
   const out: string[] = [`### ⚡ Perf - ${category === 'cpu' ? 'CPU' : 'Memory'}`, '']
@@ -183,12 +185,14 @@ function renderSection(category: Category, rows: Row[]): string {
     out.push(`⚠️ **${slower.length} ${category === 'cpu' ? 'slower' : 'higher'}**`)
   else if (changed.length)
     out.push(`🟢 **${changed.length} ${category === 'cpu' ? 'faster' : 'lower'}**`)
+  else if (category === 'cpu' && observedWork.length)
+    out.push('✅ **No significant timing change**')
   else
     out.push('✅ **No significant change**')
 
-  if (changed.length) {
+  if (highlighted.length) {
     out.push('', '| Benchmark | base → PR | Δ |', '|---|---|---|')
-    for (const row of changed)
+    for (const row of highlighted)
       out.push(`| **${row.bench.name}** | ${fmtValue(row.base!)} → ${fmtValue(row.bench)} | ${deltaCell(row)} |`)
   }
 
@@ -200,6 +204,8 @@ function renderSection(category: Category, rows: Row[]): string {
   }
   if (category === 'cpu')
     out.push('', 'Timing results are directional measurements from a shared CI runner.')
+  if (rows.some(row => row.bench.kind === 'count' && row.bench.informational))
+    out.push('', 'DOM read counts use a separate untimed run.')
   if (rows.some(row => row.bench.kind === 'alloc'))
     out.push('', 'Allocation rows show bytes allocated per operation.')
   if (rows.some(row => row.bench.kind === 'memory')) {

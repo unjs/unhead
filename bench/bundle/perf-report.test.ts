@@ -57,6 +57,24 @@ describe('parseVitestBenchmarks', () => {
 })
 
 describe('renderPerfReport sections', () => {
+  it('surfaces extra DOM checks even when CPU timing stays within noise', () => {
+    const report = renderPerfReport(
+      { benches: [
+        { id: 'cpu', name: 'Navigation CPU', kind: 'time', value: 1, rme: 5 },
+        { id: 'reads', name: 'Connectivity reads', kind: 'count', category: 'cpu', value: 0, informational: true },
+      ] },
+      { benches: [
+        { id: 'cpu', name: 'Navigation CPU', kind: 'time', value: 1.01, rme: 5 },
+        { id: 'reads', name: 'Connectivity reads', kind: 'count', category: 'cpu', value: 12, informational: true },
+      ] },
+    )
+
+    const visible = report.split('<details>')[0]
+    expect(visible).toContain('No significant timing change')
+    expect(visible).toContain('| **Connectivity reads** | 0 → 12 | ℹ️ +12 |')
+    expect(visible).not.toContain('slower')
+  })
+
   it('gives CPU work and memory measurements separate verdicts and tables', () => {
     const report = renderPerfReport(
       { benches: [
