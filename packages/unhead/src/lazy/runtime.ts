@@ -11,12 +11,13 @@ import { tagWeight } from '../client/tagWeight'
 // the entry, and the restore keeps that change.
 function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]) {
   const live = head.entries
-  // A lookup by id falls back to the live map, so a hook that disposes or pushes an entry
-  // outside the adoption, such as a client only entry, still finds it.
   const adoption = new Map(hydrated.map(entry => [entry._i, entry]))
-  const { get, has } = adoption
-  adoption.get = id => get.call(adoption, id) ?? live.get(id)
-  adoption.has = id => has.call(adoption, id) || live.has(id)
+  // A lookup by id falls back to the live map, so a hook that disposes or pushes an entry
+  // outside the adoption, such as a client only entry, still finds it. An entry is an object,
+  // so `has` is a lookup that found one.
+  const get = adoption.get.bind(adoption)
+  adoption.get = id => get(id) || live.get(id)
+  adoption.has = id => !!adoption.get(id)
   head.entries = adoption
   try {
     return renderLazyDOMHead(head, true)
