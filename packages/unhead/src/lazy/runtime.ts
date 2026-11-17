@@ -34,9 +34,10 @@ export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOpt
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
   // The first render that creates the DOM state adopts first, so a change after the load,
-  // in the debounce or during a pause, still adopts. A pause holds both.
+  // in the debounce or during a pause, still adopts. A pause holds both. With no hydrated
+  // entries there is no server head to adopt.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    if (head._dom || adoptHydratedEntries(head, hydrated()))
+    if (head._dom || !hydrated().length || adoptHydratedEntries(head, hydrated()))
       renderDom(head)
   }, fn => setTimeout(fn, 0))
 }

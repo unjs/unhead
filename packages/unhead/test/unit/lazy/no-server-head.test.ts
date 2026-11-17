@@ -9,7 +9,7 @@ import { ValidatePlugin } from '../../../src/plugins'
 // app head. The integration calls `head.load()` at once and holds renders with a
 // `dom:beforeRender` pause until the app has mounted, as Nuxt does for its default client head.
 // The page component pushes its entries after the runtime has loaded, because the page chunk
-// loads after the runtime.
+// loads after the runtime. A load that no change started before hydration ended adopts nothing.
 function spaShell() {
   return new JSDOM('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div id="app"></div></body></html>')
 }
@@ -57,8 +57,7 @@ describe('lazy head with no server head', () => {
     pause.state.paused = false
     head.render()
     await vi.waitFor(() => expect(doc.title).toBe('SPA page'))
-    // Fails: the adoption render resolves only the entries pushed before the load,
-    // so resolve hooks see a head with no title.
+    // no server head applies, so no render resolves the app head alone
     expect(resolved.filter(tags => !tags.includes('title'))).toEqual([])
   })
 
@@ -76,7 +75,6 @@ describe('lazy head with no server head', () => {
     head.render()
     await vi.waitFor(() => expect(doc.title).toBe('SPA page'))
     await new Promise(resolve => setTimeout(resolve, 50))
-    // Fails: the adoption render runs the validation on the app head alone.
     expect(titleWarnings(warn)).toEqual([])
   })
 

@@ -304,6 +304,8 @@ describe('lazy head createHead', () => {
         return plugins.promise
       },
     })
+    // a patch during hydration starts the load, so the server head still applies
+    head.push({ title: 'Server' }).patch({ title: 'Client' })
     const loading = head.load()
     await started.promise
     const entry = head.push(input)

@@ -246,24 +246,33 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     return false
   }
 
-  head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => hydrated!))
-    .then((renderer) => {
-      // the runtime adopts these at its first render, which runs after this
-      hydrated ||= [...hydrationEntries.values()]
+  head.load = () => {
+    // A load before hydration ends that no change started means no server head applies: a page
+    // with no server render, or a head created after hydration. Nothing is left to adopt, so the
+    // first render takes the entries as they are then, as the default client head does.
+    if (!hydrated && !loading && !hydrationChanged) {
+      hydrated = []
       hydrationEntries.clear()
-      hooks.removeHook('entries:updated', onChange)
-      render = renderer
-      head._b = false
-      head.render()
-      return true
-    })
-    // a failed load resets, so a later change or `load()` retries
-    .catch((error) => {
-      loading = plugins = undefined
-      ;(options.onLoadError || console.error)(error)
-      return false
-    })
+    }
+    return loading ||= import('./runtime')
+      .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => hydrated!))
+      .then((renderer) => {
+        // the runtime adopts these at its first render, which runs after this
+        hydrated ||= [...hydrationEntries.values()]
+        hydrationEntries.clear()
+        hooks.removeHook('entries:updated', onChange)
+        render = renderer
+        head._b = false
+        head.render()
+        return true
+      })
+      // a failed load resets, so a later change or `load()` retries
+      .catch((error) => {
+        loading = plugins = undefined
+        ;(options.onLoadError || console.error)(error)
+        return false
+      })
+  }
 
   hooks.hook('entries:updated', onChange)
   // `useScript` writes its script only once the runtime renders it
