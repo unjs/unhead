@@ -254,8 +254,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       hydrated = []
       hydrationEntries.clear()
     }
-    return loading ||= import('./runtime')
-      .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => hydrated!))
+    // The runtime and the lazy plugins load together, so the first change waits one round trip.
+    return loading ||= Promise.all([import('./runtime'), useLazyPlugins()])
+      .then(([runtime]) => runtime.upgradeHead(head, options, () => hydrated!))
       .then((renderer) => {
         // the runtime adopts these at its first render, which runs after this
         hydrated ||= [...hydrationEntries.values()]

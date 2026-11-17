@@ -494,6 +494,15 @@ describe('lazy head createHead', () => {
     await vi.waitFor(() => expect(dom.window.document.title).toBe('LOUD'))
   })
 
+  it('starts loading lazy plugins with the runtime, not after it', () => {
+    const dom = ssrDom(titled)
+    const lazyPlugins = vi.fn(async () => [])
+    const head = createLazyHead({ document: dom.window.document, lazyPlugins })
+    head.push(titled)
+    head.load()
+    expect(lazyPlugins).toHaveBeenCalledTimes(1)
+  })
+
   it('registers lazy plugins with the runtime', async () => {
     const dom = ssrDom(titled)
     const lazyPlugins = vi.fn(async () => [{ key: 'late', hooks: { 'tags:resolve': ({ tags }: any) => {

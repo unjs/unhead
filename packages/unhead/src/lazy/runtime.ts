@@ -28,8 +28,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, hydrated: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
-  await useLazyPlugins()
+export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[]): HeadRenderer<any> {
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
