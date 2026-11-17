@@ -61,7 +61,7 @@ A `dom:beforeRender` pause holds the load. Pause during a navigation, and call `
 | The runtime | With the first head change | About 4.6 KB |
 | The dev check | In development, after hydration | None in production |
 
-A renderer that adds prefetch hints for dynamic imports downloads the runtime at once. Read [Lazy Head Integration](/docs/nuxt/head/guides/framework-integration/lazy-head#turn-off-prefetch-hints) to turn the hints off.
+A renderer that adds prefetch hints for dynamic imports downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
 
 ## Dev warning
 
