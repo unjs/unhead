@@ -74,9 +74,9 @@ describe('renderPerfReport sections', () => {
         { id: 'detached', name: 'CSR detached elements', kind: 'count', category: 'memory', value: 0 },
       ] },
     )
-    const [cpu, memory] = report.split('## ⚡ Perf - memory')
+    const [cpu, memory] = report.split('### ⚡ Perf - Memory')
 
-    expect(cpu).toContain('## ⚡ Perf - CPU')
+    expect(cpu).toContain('### ⚡ Perf - CPU')
     expect(cpu).toContain('1 slower')
     expect(cpu).toContain('SSR CPU time')
     expect(cpu).toContain('CSR DOM mutations')
@@ -96,7 +96,7 @@ describe('renderPerfReport sections', () => {
       benches: [{ id: 'heap', name: 'Retained heap', kind: 'memory', value: 1024, informational: true }],
     })
 
-    expect(report).toContain('Perf - memory')
+    expect(report).toContain('Perf - Memory')
     expect(report).not.toContain('Perf - CPU')
   })
 
@@ -106,7 +106,7 @@ describe('renderPerfReport sections', () => {
     })
 
     expect(report).toContain('Perf - CPU')
-    expect(report).not.toContain('Perf - memory')
+    expect(report).not.toContain('Perf - Memory')
     expect(report).not.toContain('jsdom')
   })
 })
@@ -119,10 +119,24 @@ describe('renderPerfReport allocation noise gate', () => {
     )
 
     expect(report).toContain('| Benchmark | Base | PR |')
-    expect(report).toContain('| CSR retained heap | 2000 KiB | 100 KiB |')
+    expect(report).toContain('| CSR retained heap | 1.95 MiB | 100 KiB |')
     expect(report).toContain('ℹ️ -95.0%')
     expect(report).toContain('No significant change')
-    expect(report).toContain('RSS includes runtime overhead.')
+    const details = report.match(/<details>[\s\S]*?<\/details>/)?.[0]
+    expect(details).toContain('RSS includes runtime overhead.')
+  })
+
+  it.each([
+    { value: 2048, expected: 'ℹ️ +2 KiB' },
+    { value: -2_097_152, expected: 'ℹ️ -2 MiB' },
+  ])('shows an absolute memory change from zero: $expected', ({ value, expected }) => {
+    const report = renderPerfReport(
+      { benches: [{ id: 'heap', name: 'Retained heap', kind: 'memory', value: 0, informational: true }] },
+      { benches: [{ id: 'heap', name: 'Retained heap', kind: 'memory', value, informational: true }] },
+    )
+
+    expect(report).toContain(expected)
+    expect(report).not.toContain('-0.0%')
   })
 
   it('keeps allocation changes within the combined RME out of the verdict', () => {

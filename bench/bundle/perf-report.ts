@@ -103,11 +103,12 @@ function fmtValue(b: PerfBench): string {
     return `${b.value.toFixed(3)} ms`
   if (b.kind === 'count')
     return `${Math.round(b.value * 10) / 10}`
-  const kib = Math.round((b.value / 1024) * 10) / 10
-  return `${kib} KiB`
+  return fmtBytes(b.value)
 }
 
-function fmtKib(bytes: number): string {
+function fmtBytes(bytes: number): string {
+  if (Math.abs(bytes) >= 1024 ** 2)
+    return `${Math.round(bytes / 1024 ** 2 * 100) / 100} MiB`
   return `${Math.round((bytes / 1024) * 10) / 10} KiB`
 }
 
@@ -148,17 +149,25 @@ function deltaCell(row: Row): string {
   if (row.status === 'new')
     return '🆕 new'
   // informational metrics report their delta neutrally, never as slower/faster
-  if (row.bench.informational)
-    return row.status === 'same' ? '~ noise' : `ℹ️ ${fmtPct(row.deltaPct)}`
+  if (row.bench.informational) {
+    if (row.status === 'same')
+      return '~ noise'
+    if (row.base?.value === 0) {
+      const delta = row.bench.value - row.base.value
+      return `ℹ️ ${delta > 0 ? '+' : ''}${fmtValue({ ...row.bench, value: delta })}`
+    }
+    return `ℹ️ ${fmtPct(row.deltaPct)}`
+  }
   if (row.status === 'same')
     return '~ noise'
   const emoji = row.status === 'slower' ? '🔴' : '🟢'
   if (row.bench.kind === 'time')
     return `${emoji} ${fmtPct(row.deltaPct)}`
   const delta = row.bench.value - (row.base?.value ?? 0)
+  const percentage = row.base?.value === 0 ? '' : ` (${fmtPct(row.deltaPct)})`
   if (row.bench.kind === 'count')
-    return `${emoji} ${delta > 0 ? '+' : ''}${Math.round(delta * 10) / 10} (${fmtPct(row.deltaPct)})`
-  return `${emoji} ${delta > 0 ? '+' : '-'}${fmtKib(Math.abs(delta))} (${fmtPct(row.deltaPct)})`
+    return `${emoji} ${delta > 0 ? '+' : ''}${Math.round(delta * 10) / 10}${percentage}`
+  return `${emoji} ${delta > 0 ? '+' : '-'}${fmtBytes(Math.abs(delta))}${percentage}`
 }
 
 function renderSection(category: Category, rows: Row[]): string {
@@ -169,13 +178,13 @@ function renderSection(category: Category, rows: Row[]): string {
   const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
   const slower = changed.filter(r => r.status === 'slower')
 
-  const out: string[] = [`## ⚡ Perf - ${category === 'cpu' ? 'CPU' : 'memory'} _(directional)_`, '']
+  const out: string[] = [`### ⚡ Perf - ${category === 'cpu' ? 'CPU' : 'Memory'}`, '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} ${category === 'cpu' ? 'slower' : 'higher'}** · past the per-metric noise gate`)
+    out.push(`⚠️ **${slower.length} ${category === 'cpu' ? 'slower' : 'higher'}**`)
   else if (changed.length)
     out.push(`🟢 **${changed.length} ${category === 'cpu' ? 'faster' : 'lower'}**`)
   else
-    out.push('✅ **No significant change** _(within CI noise)_')
+    out.push('✅ **No significant change**')
 
   if (changed.length) {
     out.push('', '| Benchmark | base → PR | Δ |', '|---|---|---|')
@@ -189,12 +198,14 @@ function renderSection(category: Category, rows: Row[]): string {
     const rme = row.bench.rme != null ? `±${row.bench.rme.toFixed(1)}%` : '—'
     out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
-  out.push('', '</details>')
+  if (category === 'cpu')
+    out.push('', 'Timing results are directional measurements from a shared CI runner.')
   if (rows.some(row => row.bench.kind === 'alloc'))
     out.push('', 'Allocation rows show bytes allocated per operation.')
   if (rows.some(row => row.bench.kind === 'memory')) {
     out.push('', 'Process memory measurements run after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
   }
+  out.push('', '</details>')
 
   return out.join('\n')
 }
