@@ -14,8 +14,10 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.hooks = hooks
   head.dirty = !!head.dirty
   head.render = () => render(head)
+  // Every change marks the head dirty first.
   // Render here because an async hook listener could break batching.
   function notify() {
+    head.dirty = true
     hooks.callHook('entries:updated', head)
     if (!head._b)
       head.render()
@@ -23,7 +25,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.invalidate = () => {
     for (const entry of head.entries.values())
       delete entry._tags
-    head.dirty = true
     notify()
   }
   head.push = (input: T, entryOptions?: HeadEntryOptions) => {
@@ -34,13 +35,11 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     const entry = core.entries.get(active._i)
     if (entry)
       entry._o = input
-    head.dirty = true
     notify()
     return {
       _i: active._i,
       patch(input: T) {
         active.patch(input)
-        head.dirty = true
         notify()
       },
       dispose() {
