@@ -5,6 +5,37 @@ import { minifyCSS, minifyJS, minifyJSON } from '../../src/minify'
 
 describe('minifyJS', () => {
   it.each([
+    ' ',
+    '\t',
+    '\v',
+    '\f',
+    '\n',
+    '\r',
+    '\u00A0',
+    '\u1680',
+    '\u2000',
+    '\u2001',
+    '\u2002',
+    '\u2003',
+    '\u2004',
+    '\u2005',
+    '\u2006',
+    '\u2007',
+    '\u2008',
+    '\u2009',
+    '\u200A',
+    '\u2028',
+    '\u2029',
+    '\u202F',
+    '\u205F',
+    '\u3000',
+    '\uFEFF',
+  ])('preserves execution with whitespace: %j', (character) => {
+    const input = `var${character}value${character}=${character}2; return value`
+    expect(compileFunction(minifyJS(input))()).toBe(2)
+  })
+
+  it.each([
     ['var r = /[//]/; return r.test("/")', true],
     ['var r = /["\']/; return r.test("\'")', true],
     ['let ü = 1;  return ü', 1],
@@ -89,6 +120,19 @@ describe('minifyJS', () => {
 })
 
 describe('minifyCSS', () => {
+  it.each(['\uFEFF', '\u00A0', '\u000B', '\u2003'])('preserves non-CSS whitespace in tokens: %j', (character) => {
+    expect(minifyCSS(`a { font-family: foo/**/${character}bar }`)).toBe(`a{font-family:foo/**/${character}bar}`)
+    expect(minifyCSS(`a { font-family: foo${character}/**/bar }`)).toBe(`a{font-family:foo${character}/**/bar}`)
+    expect(minifyCSS(`a { font-family: x${character}0.5 }`)).toBe(`a{font-family:x${character}0.5}`)
+    expect(minifyCSS(`${character}a { color: red }`)).toBe(`${character}a{color:red}`)
+    expect(minifyCSS(`a { color: red }${character}`)).toBe(`a{color:red}${character}`)
+  })
+
+  it.each([' ', '\t', '\n', '\f', '\r'])('collapses CSS whitespace: %j', (character) => {
+    expect(minifyCSS(`${character}a${character}{${character}opacity:${character}0.5;${character}}${character}`)).toBe('a{opacity:.5}')
+    expect(minifyCSS(`a { font-family: foo/**/${character}bar }`)).toBe('a{font-family:foo bar}')
+  })
+
   it.each([
     ['@media screen and (max-width: 600px) { a { color: red } }', '@media screen and (max-width: 600px){a{color:red}}'],
     ['@supports not (display: grid) { a { b: c } }', '@supports not (display: grid){a{b:c}}'],
@@ -110,6 +154,10 @@ describe('minifyCSS', () => {
     expect(minifyCSS('body { /* reset */ margin: 0 }')).not.toContain('reset')
   })
 
+  it('strips whitespace before a trailing comment', () => {
+    expect(minifyCSS('color: red /* comment */')).toBe('color:red')
+  })
+
   it('collapses whitespace', () => {
     expect(minifyCSS('body  {  margin:  0  }')).toBe('body{margin:0}')
   })
@@ -124,6 +172,11 @@ describe('minifyCSS', () => {
 
   it('preserves string literals', () => {
     expect(minifyCSS('body::after { content: "hello /* world */" }')).toContain('"hello /* world */"')
+    expect(minifyCSS('body::after { content: \'hello "world"\' }')).toBe('body::after{content:\'hello "world"\'}')
+  })
+
+  it.each(['a { content: "unclosed ', 'a { color: red; /* unclosed'])('preserves incomplete CSS: %s', (input) => {
+    expect(minifyCSS(input)).toBe(input)
   })
 
   it('preserves spaces in calc expressions where required', () => {

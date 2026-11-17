@@ -24,7 +24,7 @@ export function minifyJS(code: string): string {
   while (i < len) {
     const ch = code[i]!
     // Comments act as token separators. Block comments can also carry ASI.
-    if (/\s/.test(ch) || (ch === '/' && (code[i + 1] === '/' || code[i + 1] === '*'))) {
+    if (isWhitespace(ch) || (ch === '/' && (code[i + 1] === '/' || code[i + 1] === '*'))) {
       let hasNewline = false
       if (ch === '/') {
         const line = code[i + 1] === '/'
@@ -47,7 +47,7 @@ export function minifyJS(code: string): string {
         }
       }
       else {
-        while (i < len && /\s/.test(code[i]!)) {
+        while (i < len && isWhitespace(code[i]!)) {
           hasNewline ||= isLineTerminator(code[i]!)
           i++
         }
@@ -92,6 +92,11 @@ export function minifyJS(code: string): string {
   }
 
   return result.trim()
+}
+
+function isWhitespace(ch: string): boolean {
+  // Most source is ASCII. Keep the full Unicode rule for non-ASCII input.
+  return ch === ' ' || (ch >= '\t' && ch <= '\r') || (ch >= '\u0080' && /\s/.test(ch))
 }
 
 function isLineTerminator(ch: string): boolean {
