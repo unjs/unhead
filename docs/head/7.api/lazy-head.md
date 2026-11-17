@@ -57,7 +57,7 @@ A `dom:beforeRender` pause holds the load. Pause during a navigation, and call `
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The eager entry | With the app | About 2.7 KB with `@unhead/vue` |
+| The eager entry | With the app | About 2.6 KB with `@unhead/vue` |
 | The runtime | With the first head change | About 5 KB |
 | The dev check | In development, after hydration | None in production |
 
