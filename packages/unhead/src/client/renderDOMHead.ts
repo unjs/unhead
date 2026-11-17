@@ -38,21 +38,19 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+  // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
+  // when the same head is rendered into another pre-rendered document.
   for (const entry of head.entries.values()) {
-    if (entry._o !== undefined) {
-      const orig = entry._o as Record<string, any>
-      for (const t of ['bodyAttrs', 'htmlAttrs'] as const) {
-        const cls = orig[t]?.class
-        if (typeof cls === 'string') {
-          const $el = state._e.get(t)!
-          for (const c of cls.split(WHITESPACE_RE)) {
-            if (c)
-              state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
-          }
+    for (const t of ['bodyAttrs', 'htmlAttrs'] as const) {
+      // the pushed input can be null, as a computed input can resolve to
+      const cls = (entry._o as Record<string, any> | null | undefined)?.[t]?.class
+      if (typeof cls === 'string') {
+        const $el = state._e.get(t)!
+        for (const c of cls.split(WHITESPACE_RE)) {
+          if (c)
+            state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
         }
       }
-      // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
-      // when the same head is rendered into another pre-rendered document.
     }
   }
   return state
