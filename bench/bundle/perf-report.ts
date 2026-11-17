@@ -5,14 +5,13 @@
 //           near-deterministic, so a tight gate surfaces gains time can't show.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
-//  - memory: compare byte deltas with byte uncertainty, including near-zero results.
 // Noisy metrics are `informational`: shown for reference but excluded from the verdict.
 // This includes wall time and async heap deltas, where GC/scheduling can false-alarm.
 
 export interface PerfBench {
   id: string
   name: string
-  kind: 'time' | 'alloc' | 'memory' | 'count'
+  kind: 'time' | 'alloc' | 'count'
   value: number
   rme?: number
   runs?: number
@@ -123,18 +122,13 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
     significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
-  else if (pr.kind === 'memory') {
-    // A near-zero heap delta can have a large RME but little absolute uncertainty.
-    const uncertainty = 2 * (Math.abs(base.value) * (base.rme || 0) + Math.abs(pr.value) * (pr.rme || 0)) / 100
-    significant = Math.abs(delta) > Math.max(ALLOC_FLOOR_BYTES, Math.abs(base.value) * ALLOC_FLOOR_PCT / 100, uncertainty)
-  }
   else {
     const threshold = Math.max(ALLOC_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
     significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > threshold)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
-  // Higher is worse for time, allocated bytes, retained heap and detached elements.
+  // higher is worse for time, allocation and DOM-mutation count
   return { bench: pr, base, status: delta > 0 ? 'slower' : 'faster', deltaPct }
 }
 
@@ -176,10 +170,10 @@ export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
   }
 
   out.push('', `<details><summary>All benchmarks (${rows.length})</summary>`, '')
-  out.push('| Benchmark | Base | PR | Δ | RME |', '|---|---|---|---|---|')
+  out.push('| Benchmark | PR | Δ | RME |', '|---|---|---|---|')
   for (const row of rows) {
     const rme = row.bench.rme != null ? `±${row.bench.rme.toFixed(1)}%` : '—'
-    out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
+    out.push(`| ${row.bench.name} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
   out.push('', '</details>')
 
