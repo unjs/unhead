@@ -99,31 +99,20 @@ export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any
   return walkResolver(input, resolve)
 }
 
-function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['attrs'] | string): HeadTag | HeadTag[] {
+// pushes onto `tags`: an array `content` expands to one tag per value
+function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag['attrs'] | string) {
   const input = typeof _input === 'object' && typeof _input !== 'function'
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
+  // normalizeProps already stringifies an object `innerHTML` of a JSON script and drops any other
   const tag = normalizeProps({ tag: tagName, attrs: {} }, input)
   if (tag.key && DupeableTags.has(tag.tag))
     tag.attrs['data-hid'] = tag._h = tag.key
-  if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
-    tag.innerHTML = JSON.stringify(tag.innerHTML)
-    tag.attrs.type = tag.attrs.type || 'application/json'
-  }
   if (Array.isArray(tag.attrs.content)) {
-    const tags: HeadTag[] = []
     for (const content of tag.attrs.content) {
       const attrs = { ...tag.attrs, content }
       tags.push({ ...tag, attrs, props: attrs })
     }
-    return tags
-  }
-  return tag
-}
-
-function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
-  if (Array.isArray(tag)) {
-    for (const t of tag) tags.push(t)
   }
   else {
     tags.push(tag)
@@ -143,10 +132,10 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     const value = input[key]
     if (value !== undefined) {
       if (Array.isArray(value)) {
-        for (const v of value) pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, v))
+        for (const v of value) normalizeTag(tags, key as keyof ResolvableHead, v)
       }
       else {
-        pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, value))
+        normalizeTag(tags, key as keyof ResolvableHead, value)
       }
     }
   }

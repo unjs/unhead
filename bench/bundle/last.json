@@ -1,53 +1,53 @@
 {
   "client": {
-    "size": 13753,
-    "gz": 5498,
-    "br": 4982
+    "size": 13145,
+    "gz": 5364,
+    "br": 4863
   },
   "clientFull": {
-    "size": 25891,
-    "gz": 9964,
-    "br": 9030
+    "size": 25512,
+    "gz": 9919,
+    "br": 8985
   },
   "server": {
-    "size": 12586,
-    "gz": 5001,
-    "br": 4524
+    "size": 12378,
+    "gz": 4988,
+    "br": 4517
   },
   "vueClient": {
-    "size": 14851,
-    "gz": 6011,
-    "br": 5445
+    "size": 14243,
+    "gz": 5877,
+    "br": 5317
   },
   "vueClientFull": {
-    "size": 28745,
-    "gz": 11043,
-    "br": 9991
+    "size": 28520,
+    "gz": 11070,
+    "br": 9994
   },
   "vueServer": {
-    "size": 13629,
-    "gz": 5478,
-    "br": 4945
+    "size": 13421,
+    "gz": 5460,
+    "br": 4938
   },
   "reactClient": {
-    "size": 14942,
-    "gz": 5981,
-    "br": 5433
+    "size": 14334,
+    "gz": 5862,
+    "br": 5301
   },
   "reactClientFull": {
-    "size": 29142,
-    "gz": 11105,
-    "br": 10058
+    "size": 28763,
+    "gz": 11066,
+    "br": 10030
   },
   "reactServer": {
-    "size": 13276,
-    "gz": 5285,
-    "br": 4777
+    "size": 13068,
+    "gz": 5273,
+    "br": 4764
   },
   "schemaOrg": {
-    "size": 40055,
-    "gz": 13759,
-    "br": 12351
+    "size": 39665,
+    "gz": 13657,
+    "br": 12267
   },
   "schemaOrgImports": {
     "size": 98,
@@ -60,13 +60,13 @@
     "br": 407
   },
   "clientSelfContained": {
-    "size": 14518,
-    "gz": 5850,
-    "br": 5267
+    "size": 13921,
+    "gz": 5731,
+    "br": 5170
   },
   "serverSelfContained": {
-    "size": 13285,
-    "gz": 5334,
-    "br": 4798
+    "size": 13078,
+    "gz": 5325,
+    "br": 4768
   }
 }

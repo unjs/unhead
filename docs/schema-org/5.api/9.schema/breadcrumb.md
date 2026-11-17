@@ -1,7 +1,48 @@
 ---
-title: Breadcrumb Schema
-description: Use defineBreadcrumb() to add BreadcrumbList structured data that describes a page's position in the site hierarchy.
+title: "Breadcrumb Schema: BreadcrumbList JSON-LD Example"
+description: Add breadcrumb schema with defineBreadcrumb(). See the BreadcrumbList JSON-LD that Unhead renders, the required itemListElement, and positions.
+navigation:
+  title: Breadcrumb
 ---
+
+[Breadcrumb structured data](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb) uses a `BreadcrumbList` to describe the position of a page in the site hierarchy. Google uses breadcrumb markup to categorize the page in search results.
+
+For step-by-step setup with a matching visible navigation and a second trail, see the [breadcrumbs recipe](/docs/schema-org/guides/recipes/breadcrumbs).
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for the [minimal example](#minimal). It converts relative paths to absolute URLs and adds the `position` of each item.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/blog/my-article#breadcrumb",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "name": "Home",
+          "item": "https://example.com",
+          "position": 1
+        },
+        {
+          "@type": "ListItem",
+          "name": "Blog",
+          "item": "https://example.com/blog",
+          "position": 2
+        },
+        {
+          "@type": "ListItem",
+          "name": "My Article",
+          "position": 3
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Schema.org Breadcrumb
 

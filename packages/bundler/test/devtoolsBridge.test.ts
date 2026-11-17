@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
+import type { UnheadDevtoolsState } from '../src/devtools/rpc/types'
 import { afterEach, expect, it, vi } from 'vitest'
+import { createHead } from '../../unhead/src/client'
+import { useScript } from '../../unhead/src/scripts'
 
 const channel = vi.hoisted(() => ({
   create: vi.fn(),
@@ -66,4 +69,58 @@ it('keeps the published state structured-cloneable when tag props hold functions
   const { initialValue } = getSharedState.mock.calls[0]![1]
   expect(() => structuredClone(initialValue)).not.toThrow()
   expect(initialValue.tags[0].props).toEqual({ src: '/a.js', onload: 'ƒ track()' })
+})
+
+it('keeps script events mutable after initial and updated snapshots are frozen', async () => {
+  vi.useFakeTimers()
+  const snapshots: UnheadDevtoolsState[] = []
+  function publish(state: UnheadDevtoolsState) {
+    // Shared state freezes nested values when accepting a snapshot.
+    for (const script of state.scripts) {
+      script.events.forEach(event => Object.freeze(event))
+      Object.freeze(script.events)
+      Object.freeze(script)
+    }
+    Object.freeze(state.scripts)
+    snapshots.push(Object.freeze(state))
+  }
+  channel.create.mockReturnValue({
+    sharedState: {
+      get: async (_key: string, { initialValue }: { initialValue: UnheadDevtoolsState }) => {
+        publish(initialValue)
+        return {
+          mutate(update: (draft: UnheadDevtoolsState) => void) {
+            const draft = { ...snapshots.at(-1)! }
+            update(draft)
+            publish(draft)
+          },
+        }
+      },
+    },
+  })
+  const head = createHead({ document })
+  const script = useScript(head, '/devtools-script.js', { trigger: 'manual' })
+  ;(window as any).__unhead_devtools__ = head
+  const { default: setupUnheadPageScript } = await import('../src/devtools/bridge')
+  setupUnheadPageScript()
+  await vi.advanceTimersByTimeAsync(0)
+
+  const loading = script.load()
+  expect(script.status).toBe('loading')
+  head.render()
+  expect(snapshots.at(-1)!.scripts[0]!.events.map(event => event.type)).toEqual(['loading'])
+  // Event records must also belong to the snapshot, not the live runtime.
+  const runtimeEvents = head._scripts![script.id]._events as { type: string, timestamp: number }[]
+  expect(Object.isFrozen(runtimeEvents[0])).toBe(false)
+
+  document.querySelector<HTMLScriptElement>('script[src="/devtools-script.js"]')!.dispatchEvent(new Event('load'))
+  await vi.advanceTimersByTimeAsync(500)
+  await expect(loading).resolves.toEqual({})
+  expect(snapshots.at(-1)!.scripts[0]!.status).toBe('loaded')
+  expect(snapshots.at(-1)!.scripts[0]!.events.map(event => event.type)).toEqual(['loading', 'loaded'])
+  expect(snapshots[0]!.scripts[0]!.events).toEqual([])
+  expect(runtimeEvents.map(event => event.type)).toEqual(['loading', 'loaded'])
+  script.remove()
+  head.render()
+  expect(script.status).toBe('removed')
 })

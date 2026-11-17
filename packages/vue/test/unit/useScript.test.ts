@@ -2,12 +2,69 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createApp, h, ref, watch } from 'vue'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
+import { createApp, effectScope, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it.each(['promise', 'callback'] as const)('keeps another consumer\'s %s trigger when a manual consumer stops', async (kind) => {
+    const head = createHead({ document })
+    const owner = effectScope()
+    const manualOwner = effectScope()
+    const pending = Promise.withResolvers<void>()
+    let load!: () => void
+    const script = owner.run(() => useScript('/shared-trigger.js', {
+      head,
+      trigger: kind === 'promise'
+        ? pending.promise
+        : (start) => {
+            load = start
+            return () => {
+              load = () => {}
+            }
+          },
+    }))!
+    manualOwner.run(() => useScript('/shared-trigger.js', { head, trigger: 'manual' }))
+    try {
+      manualOwner.stop()
+      if (kind === 'promise')
+        pending.resolve()
+      else
+        load()
+      await vi.waitFor(() => expect(script.status.value).toBe('loading'))
+    }
+    finally {
+      owner.stop()
+      manualOwner.stop()
+      script.remove()
+    }
+  })
+
+  it.each(['standalone', 'app context'] as const)('disposes a consumer in an %s effect scope without component warnings', (context) => {
+    const head = createHead({ document })
+    const scope = effectScope()
+    const app = createApp({})
+    app.use(head)
+    const warn = vi.spyOn(console, 'warn')
+    const createConsumer = () => scope.run(() => useScript('/effect-scope.js', {
+      ...(context === 'standalone' ? { head } : {}),
+      scope: true,
+    }))!
+    const script = context === 'standalone' ? createConsumer() : app.runWithContext(createConsumer)
+    try {
+      expect(script.signal.aborted).toBe(false)
+      scope.stop()
+      expect(script.signal.aborted).toBe(true)
+      expect(warn).not.toHaveBeenCalled()
+    }
+    finally {
+      scope.stop()
+      script.script.remove()
+      warn.mockRestore()
+    }
+  })
+
   it('loads a source-less SDK', async () => {
     const head = createHead()
     const api = { ready: true as const }

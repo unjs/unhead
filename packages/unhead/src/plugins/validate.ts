@@ -70,6 +70,9 @@ export interface ValidatePluginOptions {
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
+// Mirrors the token syntax TemplateParamsPlugin substitutes (`%siteName`,
+// `%site.name`); a trailing `%` is not part of the syntax.
+const TEMPLATE_PARAM_TOKEN_RE = /%\w+(?:\.\w+)?/
 const AT_PREFIX_RE = /^at\s+/
 // Data blocks, import maps, and speculation rules must stay inline.
 const JAVASCRIPT_TYPES = new Set([
@@ -659,8 +662,23 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Missing TemplateParamsPlugin (silent breakage — %params appear literally)
           if (!head.plugins.has('template-params')) {
             const tpTag = tags.find((t: HeadTag) => t.tag === 'templateParams')
-            if (tpTag)
+            if (tpTag) {
               report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tpTag)
+            }
+            else {
+              const tokenTag = tags.find((t: HeadTag) => {
+                if (t.tag === 'title' || t.tag === 'titleTemplate')
+                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.textContent ?? ''))
+                if (t.tag === 'meta')
+                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.props.content ?? ''))
+                return false
+              })
+              if (tokenTag) {
+                const text = String(tokenTag.tag === 'meta' ? tokenTag.props.content : tokenTag.textContent)
+                const token = TEMPLATE_PARAM_TOKEN_RE.exec(text!)![0]
+                report('missing-template-params-plugin', `A template param "${token}" is used but TemplateParamsPlugin is not registered, so it renders literally. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tokenTag)
+              }
+            }
           }
 
           // Missing AliasSortingPlugin (silent breakage — before:/after: priorities ignored)

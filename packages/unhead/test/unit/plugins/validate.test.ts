@@ -1339,6 +1339,43 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
     })
 
+    it('warns when title tokens are used without TemplateParamsPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        title: 'Home',
+        titleTemplate: '%s %separator %siteName',
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('warns when meta content tokens are used without TemplateParamsPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [{ name: 'description', content: 'Welcome to %siteName' }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('does not warn about title tokens when TemplateParamsPlugin is registered', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          TemplateParamsPlugin,
+          ValidatePlugin({ onReport: r => results.push(...r) }),
+        ],
+      })
+      head.push({
+        title: 'Home',
+        titleTemplate: '%s %separator %siteName',
+        templateParams: { siteName: 'My Site', separator: '|' },
+      } as any)
+      renderSSRHead(head)
+      expect(results.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
+    })
+
     it('does not warn about templateParams when TemplateParamsPlugin is registered', () => {
       const results: HeadValidationRule[] = []
       const head = createHead({
