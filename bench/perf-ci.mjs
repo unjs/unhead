@@ -6,8 +6,9 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
+import { execFileSync } from 'node:child_process'
 import { Session } from 'node:inspector/promises'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // resolve built dist from the repo root (cwd) so this harness can run from anywhere
 // (e.g. /tmp during the base-branch measurement) without a relative path back to packages/
@@ -394,6 +395,11 @@ const alloc = await measureAlloc(renderMediumSsrHead)
 const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
 const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
 const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
+// Isolate retained heap from the allocation profiler and timing benchmark state.
+// The same TypeScript harness runs against both built refs, including from /tmp.
+const csrMemory = JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)),
+], { encoding: 'utf8' }))
 
 const result = {
   benches: [
@@ -405,6 +411,7 @@ const result = {
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
+    ...csrMemory.benches,
   ],
 }
 
