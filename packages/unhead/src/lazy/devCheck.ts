@@ -30,7 +30,7 @@ function saveWarned(view: Window | null, warned: Set<string>) {
   }
 }
 
-const FIX = `It applies on the first head change. Push the same input on the server and the client, set load: 'idle', or call head.load().`
+const FIX = `It applies on the first head change. Push the same input on the server and the client, or call head.load().`
 
 function attr(value: unknown): string | undefined {
   if (value === false || value == null || typeof value === 'function')

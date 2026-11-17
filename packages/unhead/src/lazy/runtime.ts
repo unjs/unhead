@@ -31,32 +31,15 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, adoptionEntries: () => HeadEntry<T>[][], fail: (error: unknown) => void, sameInput: (a: unknown, b: unknown) => boolean): Promise<HeadRenderer<any>> {
+export async function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, useLazyPlugins: () => Promise<void>, hydrated: () => HeadEntry<T>[]): Promise<HeadRenderer<any>> {
   await useLazyPlugins()
   head.resolvedOptions._tagWeight = tagWeight
   const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
-  let rendered = false
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
-  // Adoption waits for the first render that creates the DOM state, so a change after the
-  // load, in the debounce or during a pause, still adopts. `dirty` means changed since hydration.
+  // The first render that creates the DOM state adopts first, so a change after the load,
+  // in the debounce or during a pause, still adopts. A pause holds both.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    try {
-      // A getter or a shared object can give another value than the server rendered, with no change.
-      // So the runtime also adopts when a hydrated copy differs from its live input.
-      if (!head._dom && (head.dirty || adoptionEntries()[0].some(e => !sameInput(e.input, head.entries.get(e._i)?.input)))) {
-        // Each pass keeps the cleanups of the pass before it. So the next render removes every
-        // element and attribute that any view of the server document has and the live entries lack.
-        if (!adoptionEntries().every(entries => adoptHydratedEntries(head, entries)))
-          return
-      }
-      rendered = renderDom(head) || rendered
-    }
-    catch (error) {
-      // The first render runs in a timer after the load resolved. So its failure takes the
-      // load failure path, which restores the lazy head and lets a later change retry.
-      if (rendered)
-        throw error
-      fail(error)
-    }
+    if (head._dom || adoptHydratedEntries(head, hydrated()))
+      renderDom(head)
   }, fn => setTimeout(fn, 0))
 }

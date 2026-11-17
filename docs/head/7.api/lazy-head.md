@@ -10,7 +10,7 @@ const head = createHead()
 app.use(head)
 ```
 
-The [lazy head](/docs/vue/head/guides/core-concepts/lazy-head) is a client head for a server rendered page. It stores entries without touching the document. It loads the standard DOM runtime on the first head change, at idle with `load: 'idle'`, or when `load()` runs.
+The [lazy head](/docs/vue/head/guides/core-concepts/lazy-head) is a client head for a server rendered page. It stores entries without touching the document. It loads the standard DOM runtime on the first head change, or when `load()` runs.
 
 ::note
 The lazy head is experimental. Its API may change in a minor release.
@@ -37,9 +37,8 @@ function createHead(options?: LazyHeadOptions): LazyVueHead
 
 | Option | Type | Description |
 | --- | --- | --- |
-| `load` | `'change' \| 'idle'` | When the runtime loads after hydration. `'change'`, the default, loads on the first head change. `'idle'` loads at browser idle. |
 | `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager chunk. |
-| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk fails to load or its first render throws. The default logs with `console.error`. |
+| `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk fails to load. The default logs with `console.error`. |
 
 A custom `render` option owns the document. With it, every change loads the runtime.
 
@@ -49,15 +48,16 @@ The head has the methods of the client head, plus these:
 
 | Method | Description |
 | --- | --- |
-| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. The default renderer renders first after `load()` resolves. If that render throws, `onLoadError` receives the error, and a later change or `load()` tries again. |
-| `blockLoad()` | Blocks the load during a navigation. The next `render()` releases it. A direct `load()` still runs. An idle load renders only after the release. |
-| `render()` | Before the runtime loads, it marks the end of hydration and releases a load block. If entries changed, it loads the runtime at once, unless a `dom:beforeRender` pause blocks it. After the runtime loads, it renders. |
+| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. A failed load resets, so a later change or `load()` tries again. Call it at once for a page with no server render, or for a head created after hydration. |
+| `render()` | Before the runtime loads, the first call marks the end of hydration. A later call loads the runtime if entries changed, unless a `dom:beforeRender` pause holds it. After the runtime loads, it renders. |
+
+A `dom:beforeRender` pause holds the load. Pause during a navigation, and call `render()` when it ends.
 
 ## Chunks
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The eager entry | With the app | About 2.8 KB with `@unhead/vue` |
+| The eager entry | With the app | About 2.7 KB with `@unhead/vue` |
 | The runtime | With the first head change | About 5 KB |
 | The dev check | In development, after hydration | None in production |
 
@@ -65,7 +65,7 @@ A renderer that adds prefetch hints for dynamic imports downloads the runtime at
 
 ## Dev warning
 
-In development, the first `render()` checks the tags the client would render against the server head in the document. It warns once per tag and source for the browser tab. It does not run with `load: 'idle'`. Read [Dev warning](/docs/vue/head/guides/core-concepts/lazy-head#dev-warning) for the message and the fix.
+In development, the first `render()` checks the tags the client would render against the server head in the document. It warns once per tag and source for the browser tab. It does not run if the runtime already loads. Read [Dev warning](/docs/vue/head/guides/core-concepts/lazy-head#dev-warning) for the message and the fix.
 
 The check reads `process.env.NODE_ENV`. A production build replaces it with `'production'` and drops the check.
 

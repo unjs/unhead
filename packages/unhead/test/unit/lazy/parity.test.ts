@@ -23,22 +23,34 @@ function html(dom: JSDOM) {
   return { title: doc.title, html: doc.documentElement.getAttributeNames().map(n => `${n}=${doc.documentElement.getAttribute(n)}`), body: doc.body.getAttributeNames().map(n => `${n}=${doc.body.getAttribute(n)}`), head: tags(doc.head), bodyTags: tags(doc.body) }
 }
 
-type Step = (head: any, entries: any[]) => void
+type Step = (head: any, entries: any[], pause: () => void) => void
 
 // Runs the same pushes on the default client head and on the lazy head, from the same server HTML.
+// A step can pause both heads, as Nuxt does from `page:loading:start` to `page:loading:end`.
+// The pause lifts before the render that ends the step.
 async function both(plugins: HeadPluginInput[], server: ResolvableHead[], steps: Step[]) {
   const offDom = ssrDom(plugins, ...server)
   const off = createClientHead({ document: offDom.window.document, plugins })
   const lazyDom = ssrDom(plugins, ...server)
   const lazy = createLazyHead({ document: lazyDom.window.document, lazyPlugins: async () => plugins })
+  let paused = false
+  const pause = () => {
+    paused = true
+  }
+  for (const head of [off, lazy]) {
+    head.hooks.hook('dom:beforeRender', (ctx: { shouldRender: boolean }) => {
+      ctx.shouldRender = !paused
+    })
+  }
   const load = vi.spyOn(lazy, 'load')
   const offEntries = server.map(input => off.push(input))
   const lazyEntries = server.map(input => lazy.push(input))
   off.render()
   lazy.render()
   for (const step of steps) {
-    step(off, offEntries)
-    step(lazy, lazyEntries)
+    step(off, offEntries, pause)
+    step(lazy, lazyEntries, pause)
+    paused = false
     off.render()
     lazy.render()
     await settle()
@@ -62,8 +74,8 @@ function page(name: string): ResolvableHead {
 
 // a navigation: the old page entry goes, the new one comes, and the next render ends it
 function navigate(name: string): Step {
-  return (head, entries) => {
-    head.blockLoad?.()
+  return (head, entries, pause) => {
+    pause()
     entries.pop()!.dispose()
     entries.push(head.push(page(name)))
   }
@@ -140,17 +152,17 @@ describe('lazy head parity with the default head', () => {
   ])('removes the prev and next links of a disposed page %s', async (_, before) => {
     const guide: ResolvableHead = { title: 'Guide', link: [{ rel: 'prev', href: '/a', key: 'prev' }, { rel: 'next', href: '/b', key: 'next' }] }
     const steps: Step[] = [
-      ...before.map(name => (head: any, entries: any[]) => {
-        head.blockLoad?.()
+      ...before.map(name => (head: any, entries: any[], pause: () => void) => {
+        pause()
         entries.push(head.push({ title: name }))
       }),
-      (head, entries) => {
-        head.blockLoad?.()
+      (head, entries, pause) => {
+        pause()
         entries.splice(1).forEach(e => e.dispose())
         entries.push(head.push({ title: 'Home' }))
       },
-      (head) => {
-        head.blockLoad?.()
+      (_, __, pause) => {
+        pause()
       },
     ]
     const { lazyDom, off, lazy, load } = await both([], [{ titleTemplate: '%s | Site' }, guide], steps)
@@ -159,45 +171,9 @@ describe('lazy head parity with the default head', () => {
     expect(lazy).toEqual(off)
   })
 
-  // Nuxt pauses DOM updates from the first page:start. A hydrating page can push or patch its
-  // entries after the head marked the end of hydration, while the pause still holds. The
-  // Nuxt `<Head>` component pushes an empty entry and patches it once it renders.
-  it.each(['push', 'patch', 'mutation'])('removes server links of an entry that a %s adds during the pause after hydration, once it is disposed', async (how) => {
-    const links: ResolvableHead = { link: [{ rel: 'prev', href: '/a', key: 'prev' }, { rel: 'next', href: '/b', key: 'next' }] }
-    const dom = ssrDom([], { title: 'Guide' }, links)
-    const doc = dom.window.document
-    let paused = false
-    const head = createLazyHead({ document: doc })
-    head.hooks.hook('dom:beforeRender', (ctx) => {
-      ctx.shouldRender = !paused
-    })
-    const page = head.push({ title: 'Guide' })
-    // the mutation case edits one input object in place and patches with it, as a reactive object does
-    const input: any = {}
-    const early = how === 'push' ? undefined : head.push(input)
-    head.render()
-    paused = true
-    const late = early || head.push(links)
-    if (how === 'mutation')
-      early!.patch(Object.assign(input, links))
-    else
-      early?.patch(links)
-    await settle()
-    head.blockLoad()
-    if (how === 'mutation')
-      input.link = input.link.map(() => null)
-    late.dispose()
-    page.dispose()
-    head.push({ title: 'Home', link: [{ rel: 'stylesheet', href: '/home.css' }] })
-    paused = false
-    head.render()
-    await vi.waitFor(() => expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull())
-    expect(doc.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0)
-  })
-
-  // The entry copy that the head keeps for a change before the load overrides the hydrated entry.
-  // The runtime must still remove what the server rendered for the hydrated entry.
-  describe.each([['with no load block', false], ['under a load block', true]])('a change before the load, %s', (_, block) => {
+  // A change before the load leaves the server tags of the hydrated entry in the document.
+  // The runtime must still remove them.
+  describe('a change before the load', () => {
     it.each<[string, ResolvableHead, Step]>([
       ['a patch shortens a list of tags', { meta: tags(3) }, patchPage({ meta: tags(1) })],
       ['a patch shortens a list of tags and changes its values', { meta: tags(3) }, patchPage({ meta: tags(1, 'new') })],
@@ -205,21 +181,16 @@ describe('lazy head parity with the default head', () => {
       ['a navigation shortens a list of tags', { meta: tags(3) }, replacePage({ meta: tags(2, 'new') })],
       ['a navigation removes an attribute', inferred, replacePage({ meta: [{ property: 'og:title', content: 'B' }] })],
     ])('matches the default head when %s', async (_, server, change) => {
-      const { offDom, lazyDom, load } = await both([], [{ title: 'Site' }, server], [(head, entries) => {
-        if (block)
-          head.blockLoad?.()
-        change(head, entries)
-      }])
+      const { offDom, lazyDom, load } = await both([], [{ title: 'Site' }, server], [change])
       expect(load).toHaveBeenCalled()
       await vi.waitFor(() => expect(html(lazyDom)).toEqual(html(offDom)))
     })
   })
 
   // The server rendered this late entry too, so its tags are the ones in the document.
-  it.each([
-    ['a longer list of tags', tags(2, 'page'), tags(4, 'late')],
-    ['a shorter list of tags', tags(4, 'page'), tags(2, 'late')],
-  ])('restores the hydrated tags that an entry pushed during the pause after hydration overrode with %s, once it is disposed', async (_, page, late) => {
+  it('restores the hydrated tags that an entry pushed during the pause after hydration overrode with a shorter list, once it is disposed', async () => {
+    const page = tags(4, 'page')
+    const late = tags(2, 'late')
     const doc = ssrDom([], { meta: page }, { meta: late }).window.document
     let paused = false
     const head = createLazyHead({ document: doc })
@@ -231,7 +202,6 @@ describe('lazy head parity with the default head', () => {
     paused = true
     const entry = head.push({ meta: late })
     await settle()
-    head.blockLoad()
     entry.dispose()
     head.push({ link: [{ rel: 'stylesheet', href: '/home.css' }] })
     paused = false

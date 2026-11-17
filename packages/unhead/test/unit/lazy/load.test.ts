@@ -30,12 +30,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('load option', () => {
+describe('loading', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'production')
   })
 
-  it('applies a client only value on the first change by default', async () => {
+  it('applies a client only value on the first change', async () => {
     const dom = ssrDom(page)
     const doc = dom.window.document
     const head = createHead({ document: doc })
@@ -47,30 +47,6 @@ describe('load option', () => {
     head.push({ title: 'Next' })
     await vi.waitFor(() => expect(doc.title).toBe('Next'))
     expect(themeColor(doc)).toBe('#000')
-  })
-
-  it('applies a client only value at idle with load: idle', async () => {
-    const dom = ssrDom(page)
-    const doc = dom.window.document
-    const head = createHead({ document: doc, load: 'idle' })
-    head.push(clientOnly)
-    head.render()
-    await vi.waitFor(() => expect(themeColor(doc)).toBe('#000'))
-    expect(doc.title).toBe('Page')
-  })
-
-  it('holds an idle load during a load block until the block ends', async () => {
-    const dom = ssrDom(page)
-    const doc = dom.window.document
-    const head = createHead({ document: doc, load: 'idle' })
-    head.push(clientOnly)
-    head.render()
-    head.blockLoad()
-    await settle()
-    expect(themeColor(doc)).toBe('#fff')
-
-    head.render()
-    await vi.waitFor(() => expect(themeColor(doc)).toBe('#000'))
   })
 
   it('loads the runtime when useScript adds its script during hydration', async () => {
@@ -113,7 +89,7 @@ describe('dev warning', () => {
     expect(messages.find(m => m.includes('<meta name="color-scheme">'))).toContain('is missing from the server head')
     for (const message of messages) {
       expect(message).toContain('Pushed by app.vue.')
-      expect(message).toContain(`set load: 'idle', or call head.load()`)
+      expect(message).toContain('Push the same input on the server and the client, or call head.load().')
     }
   })
 
@@ -167,9 +143,14 @@ describe('dev warning', () => {
     expect(dom.serialize()).toBe(before)
   })
 
-  it('is silent with load: idle', async () => {
-    const { messages } = await warningsAfterHydration([page], [{ ...page, title: 'Client' }], { load: 'idle' })
-    expect(messages).toEqual([])
+  it('is silent when the app loads the runtime as hydration ends', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const head = createHead({ document: ssrDom(page).window.document })
+    head.push({ ...page, title: 'Client' })
+    head.render()
+    head.load()
+    await settle()
+    expect(warn).not.toHaveBeenCalled()
   })
 
   it('resolves template params from lazy plugins before it compares', async () => {

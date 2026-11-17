@@ -10,17 +10,11 @@ import { copyInput, sameInput } from './same'
  */
 export interface LazyHeadOptions extends CreateClientHeadOptions {
   /**
-   * When the client runtime loads on a server rendered page.
-   * - `'change'`: on the first head change after hydration. The default.
-   * - `'idle'`: at browser idle after hydration, so client only tags apply without a change.
-   */
-  load?: 'change' | 'idle'
-  /**
    * Plugins that load with the runtime, so their code stays out of the eager chunk.
    */
   lazyPlugins?: () => Promise<HeadPluginInput[]>
   /**
-   * Called when the runtime fails to load or its first render throws. The default logs with `console.error`.
+   * Called when the runtime fails to load. The default logs with `console.error`.
    * A later change or `load()` tries again, but a browser may keep a failed `import()`
    * for this page. Use this to recover, for example with a reload on the next navigation.
    */
@@ -51,24 +45,11 @@ export interface LazyUnhead<T = ResolvableHead> extends ClientUnhead<T> {
   /**
    * Loads the runtime now. Safe to call more than once.
    * Resolves `false` if the load failed, and `onLoadError` receives the error.
-   * The default renderer renders first after this resolves. If that render throws,
-   * `onLoadError` receives the error, and a later change or `load()` tries again.
    */
   load: () => Promise<boolean>
-  /**
-   * Blocks the load while the user changes page.
-   * The next `head.render()` releases it, and loads at once if entries changed.
-   * So call `head.render()` when the navigation ends, even if it aborted.
-   * A direct `load()` still runs. A load already in flight finishes, and its first render
-   * waits for that next `head.render()`. An idle load during the block waits the same way.
-   */
-  blockLoad: () => void
 }
 
 type HookFn = (...args: any[]) => any
-
-// the id offset of a late entry copy: far above any entry id, within the 21 bits a tag position leaves
-const LATE_ID = 1 << 20
 
 function runHooks(hooks: HookFn[], args: any[], start: number): any {
   for (let i = start; i < hooks.length; i++) {
@@ -118,7 +99,7 @@ function createHookStore(initial?: Record<string, any>) {
 /**
  * Creates the lazy head, for a server rendered page. It keeps entries
  * without touching the document. It loads the v3 DOM runtime on the first head change,
- * at idle with `load: 'idle'`, or when `load()` runs.
+ * or when `load()` runs.
  *
  * Use `createHead` from `unhead/client` for a page with no server rendered head.
  *
@@ -131,18 +112,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   const hooks = createHookStore(options.hooks)
   // Keep server inputs separate from live entries throughout hydration.
   const hydrationEntries = new Map<number, HeadEntry<T>>()
-  // Each version of an entry pushed or patched after hydration and before the load. A hydrating
-  // page can push or patch while a pause holds, so the server may have rendered any of those versions.
-  // The runtime adopts these as well, under ids of their own, so the hydrated entries stay.
-  // A copy can also hold a change the document does not show yet, and it overrides a hydrated
-  // entry with the same tags. So the runtime adopts the document twice: with the copies, then without.
-  const late: HeadEntry<T>[] = []
   let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
-  let blocked = false
-  // blockLoad ran while a load was in flight, so its first render waits for the release
-  let held = false
   let render: HeadRenderer<any>
   let plugins: Promise<void> | undefined
   const sources: Record<number, string | undefined> = {}
@@ -164,29 +136,19 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     if (!hydrated) {
       hydrated = [...hydrationEntries.values()]
       head.dirty = hydrationChanged
-      if (document && !loading) {
-        if (options.load === 'idle') {
-          const view = document.defaultView as (Window & typeof globalThis) | null
-          ;(view?.requestIdleCallback || setTimeout)(() => {
-            // During a load block, the idle load renders first at the release, as a load in flight does
-            if (!loading)
-              held = blocked
-            head.load()
-          })
-        }
-        // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
-        // eslint-disable-next-line node/prefer-global/process
-        else if (process.env.NODE_ENV !== 'production') {
-          import('./devCheck')
-            .then(m => m.checkHydratedHead(head, document, useLazyPlugins, sources, () => !!loading))
-            // the check is advisory: its failure, such as a failing lazy plugin loader, must not reject unhandled
-            .catch(error => console.warn('[unhead] The lazy head dev check failed.', error))
-        }
+      // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
+      // eslint-disable-next-line node/prefer-global/process
+      if (process.env.NODE_ENV !== 'production' && document && !loading) {
+        import('./devCheck')
+          .then(m => m.checkHydratedHead(head, document, useLazyPlugins, sources, () => !!loading))
+          // the check is advisory: its failure, such as a failing lazy plugin loader, must not reject unhandled
+          .catch(error => console.warn('[unhead] The lazy head dev check failed.', error))
       }
     }
   }
 
-  // the documented pause for DOM updates also blocks the load: nothing could render yet
+  // The documented pause for DOM updates also holds the load: nothing could render yet.
+  // A framework pauses during a navigation, so the load waits for the next page.
   const isPaused = () => {
     const ctx = { shouldRender: true, tags: [] }
     hooks.callHook('dom:beforeRender', ctx)
@@ -195,12 +157,12 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
 
   // During hydration a push is a page entry the server rendered, unless the adapter says
   // otherwise. A patch or dispose means the client already differs from the server. Both
-  // need the runtime now. After hydration, every change loads unless a load block or pause stops it.
+  // need the runtime now. After hydration, every change loads unless a pause holds it.
   let pushing = false
   const onChange = () => {
     if (!hydrated && !pushing)
       hydrationChanged = true
-    if (hydrated ? !blocked && !isPaused() : !pushing)
+    if (hydrated ? !isPaused() : !pushing)
       head.load()
   }
   const push = head.push
@@ -225,17 +187,11 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     let last = copyInput(input)
     if (!hydrated && serverRendered && !hydrationEntries.has(active._i)) {
       const entry = head.entries.get(active._i)
-      // the hydrated entry takes the same copy, so a getter in the input runs once
+      // the hydrated entry reuses the copy when the entry holds the pushed input
       if (entry)
         hydrationEntries.set(active._i, { ...entry, input: entry.input === input ? last : copyInput(entry.input) })
     }
     const patch = active.patch
-    const keepLate = () => {
-      const entry = head.entries.get(active._i)
-      if (entry && hydrated && !loading)
-        late.push({ ...entry, _i: LATE_ID + late.length, input: last, _pending: undefined, _tags: undefined })
-    }
-    keepLate()
     let lastRef = input
     let queued = false
     active.patch = (next) => {
@@ -247,7 +203,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
         lastRef = next
         if (!sameInput(last, next)) {
           last = copyInput(next)
-          keepLate()
           patch(next)
         }
         else {
@@ -271,13 +226,10 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
           last = copyInput(next)
           const entry = hydrationEntries.get(active._i)
           // During hydration, a component that builds its input in place renders what the server rendered
-          if (!hydrated && !loading && entry) {
+          if (!hydrated && !loading && entry)
             entry.input = last
-          }
-          else {
-            keepLate()
+          else
             patch(next)
-          }
         })
       }
     }
@@ -286,62 +238,32 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
 
   // Frameworks call this when hydration ends, and again when a paused page is ready.
   // After hydration the server head is correct, so only a change loads the runtime.
-  const lazyRender: HeadRenderer<any> = () => {
-    blocked = held = false
+  render = () => {
     if (hydrated && head.dirty)
       onChange()
     else
       markHydrated()
     return false
   }
-  render = lazyRender
 
-  // a failed first render takes the same path as a failed import, so a later change or load retries
-  const fail = (error: unknown) => {
-    loading = plugins = undefined
-    // the first render threw after the upgrade began, so restore the lazy head
-    if (!head._b) {
-      head._b = true
-      render = lazyRender
-      hooks.hook('entries:updated', onChange)
-    }
-    ;(options.onLoadError || console.error)(error)
-    return false
-  }
-
-  // The comparison passes to the runtime, so the eager and runtime chunks share no module.
   head.load = () => loading ||= import('./runtime')
-    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => {
-      const server = [...(hydrated || hydrationEntries.values())]
-      return late.length ? [[...server, ...late], server] : [server]
-    }, fail, sameInput))
+    .then(runtime => runtime.upgradeHead(head, options, useLazyPlugins, () => hydrated!))
     .then((renderer) => {
-      // the runtime adopts these at its first render
+      // the runtime adopts these at its first render, which runs after this
       hydrated ||= [...hydrationEntries.values()]
       hydrationEntries.clear()
       hooks.removeHook('entries:updated', onChange)
-      // While held, the head keeps batching, so a change waits for the render that releases it.
-      render = held
-        ? (h) => {
-            held = false
-            render = renderer
-            head._b = false
-            return renderer(h)
-          }
-        : renderer
-      if (!held) {
-        head._b = false
-        head.render()
-      }
+      render = renderer
+      head._b = false
+      head.render()
       return true
     })
-    .catch(fail)
-
-  head.blockLoad = () => {
-    markHydrated()
-    blocked = true
-    held = !!loading && !!head._b
-  }
+    // a failed load resets, so a later change or `load()` retries
+    .catch((error) => {
+      loading = plugins = undefined
+      ;(options.onLoadError || console.error)(error)
+      return false
+    })
 
   hooks.hook('entries:updated', onChange)
   // `useScript` writes its script only once the runtime renders it

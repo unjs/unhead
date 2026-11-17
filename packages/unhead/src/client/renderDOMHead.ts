@@ -28,8 +28,8 @@ export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDom
 }
 
 // Internal lazy-runtime adoption. Record cleanup without replaying historical DOM writes.
-export function adoptDOMHead(head: Unhead<any>, title?: string): boolean {
-  return _renderDOMHead(head, {}, { title })
+export function adoptDOMHead(head: Unhead<any>): boolean {
+  return _renderDOMHead(head, {}, true)
 }
 
 function hasPendingEntries<T extends Unhead<any>>(head: T) {
@@ -62,7 +62,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adoption?: { title?: string }): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adoption?: boolean): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
@@ -88,8 +88,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     if (!state) {
       state = createDomState(head, dom)
-      if (adoption?.title !== undefined)
-        state._t = adoption.title
     }
     else {
       // hand the previous render's side effects to _p (cleanup pool) by reference; track()
@@ -260,13 +258,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    if (adoption) {
-      Object.assign(renderState._s, previous)
-    }
-    else {
-      for (const k in previous)
-        previous[k]()
-    }
+    for (const k in previous)
+      previous[k]()
     head._dom = renderState
     didRender = true
     if (!adoption)

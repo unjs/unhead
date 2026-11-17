@@ -24,7 +24,7 @@ function _entrySource() {
 
 /**
  * The lazy head for a server rendered Vue app. It loads the DOM runtime only when a
- * change needs it, or at idle with `load: 'idle'`.
+ * change needs it, or when `load()` runs.
  *
  * @experimental The lazy head API may change in a future minor release.
  */

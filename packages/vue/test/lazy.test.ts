@@ -23,6 +23,23 @@ function hydrate(component: ReturnType<typeof defineComponent>) {
   return { app, head }
 }
 
+// A navigation pause, as Nuxt holds one from `page:loading:start` to `page:loading:end`
+function pausable(head: ReturnType<typeof createLazyHead>) {
+  let paused = false
+  head.hooks.hook('dom:beforeRender', (ctx) => {
+    ctx.shouldRender = !paused
+  })
+  return {
+    pause: () => {
+      paused = true
+    },
+    resume: () => {
+      paused = false
+      head.render()
+    },
+  }
+}
+
 // the production path: the dev warning has its own test
 beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'production')
@@ -65,7 +82,6 @@ describe('vue lazy head', () => {
     const nodes = [...document.head.children]
     const { head } = hydrate(App)
     head.render()
-    head.blockLoad()
     expect(document.title).toBe('Home')
     expect(head.entries.size).toBe(1)
 
@@ -125,11 +141,12 @@ describe('vue lazy head', () => {
     await serverRender(App)
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const { head } = hydrate(App)
+    const navigation = pausable(head)
     head.render()
-    head.blockLoad()
+    navigation.pause()
     show.value = false
     await nextTick()
-    head.render()
+    navigation.resume()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
@@ -171,14 +188,15 @@ describe('vue lazy head', () => {
     })
     await serverRender(App)
     const { head } = hydrate(App)
+    const navigation = pausable(head)
     head.render()
     await settle()
     expect(renders).toBeLessThan(10)
     expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(2)
-    head.blockLoad()
+    navigation.pause()
     show.value = false
     await nextTick()
-    head.render()
+    navigation.resume()
     await vi.waitFor(() => expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0))
   })
 
@@ -250,35 +268,6 @@ describe('vue lazy head', () => {
       await vi.waitFor(() => expect(document.title).toBe('Mounted'))
     })
 
-    it('a new page after blockLoad does not load before the pause starts', async () => {
-      const Page = defineComponent({
-        setup() {
-          useHead({ title: 'Next page' })
-          return () => h('span', 'next')
-        },
-      })
-      const page = ref(false)
-      const App = defineComponent({
-        setup() {
-          useHead({ title: 'First page' })
-          return () => h('div', page.value ? h(Page) : 'first')
-        },
-      })
-      await serverRender(App)
-      const head = createLazyHead()
-      createSSRApp(App).use(head).mount('#app')
-      head.blockLoad()
-      const load = vi.spyOn(head, 'load')
-      page.value = true
-      await nextTick()
-      await settle()
-      expect(load).not.toHaveBeenCalled()
-
-      head.render()
-      expect(load).toHaveBeenCalledTimes(1)
-      await vi.waitFor(() => expect(document.title).toBe('Next page'))
-    })
-
     it('a new page during a navigation pause does not load until the pause lifts', async () => {
       const Page = defineComponent({
         setup() {
@@ -297,16 +286,11 @@ describe('vue lazy head', () => {
         },
       })
       await serverRender(App)
-      let paused = false
-      const head = createLazyHead()
-      head.hooks.hook('dom:beforeRender', (ctx) => {
-        ctx.shouldRender = !paused
-      })
-      createSSRApp(App).use(head).mount('#app')
+      const { head } = hydrate(App)
+      const navigation = pausable(head)
       head.render()
-      head.blockLoad()
 
-      paused = true
+      navigation.pause()
       const load = vi.spyOn(head, 'load')
       page.value = true
       await nextTick()
@@ -314,8 +298,7 @@ describe('vue lazy head', () => {
       expect(load).not.toHaveBeenCalled()
       expect(document.title).toBe('First page')
 
-      paused = false
-      head.render()
+      navigation.resume()
       expect(load).toHaveBeenCalledTimes(1)
       await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
     })
