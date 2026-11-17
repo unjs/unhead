@@ -102,7 +102,7 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   /**
    * @deprecated Use `attrs`. Removed in v5.
    */
-  props?: Record<string, string>
+  props: Record<string, string>
   processTemplateParams?: boolean
   innerHTML?: string
   textContent?: string
@@ -135,3 +135,8 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]
+
+export type HeadTagInput = Omit<HeadTag, 'attrs' | 'props'> & (
+  | { attrs: HeadTag['attrs'], props?: HeadTag['props'] }
+  | { attrs?: HeadTag['attrs'], props: HeadTag['props'] }
+)

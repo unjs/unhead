@@ -240,30 +240,22 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   valuesToTags(ctx, hasFlatMeta)
   // snapshot the alias refs before tags:* hooks run so the reconcile pass
   // below can tell which side a hook reassigned
-  let preHookRefs: Map<HeadTag, unknown> | undefined
+  let preHookRefs: Set<HeadTag['attrs']> | undefined
   if (hasTagMutatingHooks) {
-    preHookRefs = new Map()
+    preHookRefs = new Set()
     for (const t of ctx.tags)
-      preHookRefs.set(t, t.attrs)
+      preHookRefs.add(t.attrs)
   }
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
-  // A hook may desync the `props`/`attrs` alias, or push tags in a shape
-  // without the deprecated `props` field. Reconcile both ways: the canonical
-  // `attrs` is authoritative unless the deprecated `props` was itself
-  // reassigned, and an absent `props` joins the alias without touching attrs.
+  // Hooks may insert legacy tags or replace either attribute field.
+  // A copied baseline attrs reference lets immutable props replacements work.
+  // When both fields are new, the explicit canonical attrs wins.
   for (const t of ctx.tags) {
-    if (t.props === undefined)
-      t.props = t.attrs
-    // Replaced tags have no baseline identity. Their `attrs` field is
-    // canonical, because a stale `props` reference may have been copied with
-    // the rest of the tag. Only a known original tag can establish that props
-    // was reassigned during a hook.
-    else if (t.props !== t.attrs && preHookRefs?.has(t) && t.props !== preHookRefs.get(t))
-      t.attrs = t.props!
-    else if (t.props !== t.attrs)
-      t.props = t.attrs
+    if (t.attrs === undefined || (t.props !== undefined && t.props !== t.attrs && preHookRefs?.has(t.attrs)))
+      t.attrs = t.props ?? {}
+    t.props = t.attrs
   }
   return sanitizeTagsInPlace(ctx.tags)
 }

@@ -1,8 +1,76 @@
+import { createHead, renderSSRHead, tagToString } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { createHead, renderSSRHead } from '../../../src/server'
 import { resolveTags } from '../../../src/utils/resolve'
 
 describe('tag.props / tag.attrs alias', () => {
+  it.each(['script', 'meta'] as const)('renders legacy props-only %s tags inserted by a plugin', (tag) => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          tags.push((tag === 'script'
+            ? { tag, props: { type: 'application/ld+json' }, innerHTML: '{}' }
+            : { tag, props: { name: 'description', content: 'legacy' } }) as any)
+        },
+      },
+    })
+
+    expect(renderSSRHead(head).headTags).toBe(tag === 'script'
+      ? '<script type="application/ld+json">{}</script>'
+      : '<meta name="description" content="legacy">')
+  })
+
+  it('renders immutable props replacements from a plugin', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': (ctx) => {
+          ctx.tags = ctx.tags.map(tag => ({ ...tag, props: { name: 'description', content: 'replacement' } }))
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'original' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="replacement">')
+  })
+
+  it('keeps explicit attrs authoritative on new plugin objects', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          tags.push({ tag: 'meta', attrs: { name: 'description', content: 'canonical' }, props: { content: 'legacy' } })
+        },
+      },
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="canonical">')
+  })
+
+  it('serializes attributes from a legacy props-only tag', () => {
+    expect(tagToString({ tag: 'meta', props: { name: 'description', content: 'legacy' } }))
+      .toBe('<meta name="description" content="legacy">')
+  })
+
+  it('supports typed legacy and attrs hooks together', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          for (const tag of tags)
+            tag.props.content = `${tag.props.content} legacy`
+        },
+        'tags:afterResolve': ({ tags }) => {
+          for (const tag of tags)
+            tag.attrs.content = `${tag.attrs.content} attrs`
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'original' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="original legacy attrs">')
+  })
+
   it('a tags:resolve hook reading tag.props sees the same values as tag.attrs', async () => {
     const seenViaProps: unknown[] = []
     const head = createHead({

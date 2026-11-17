@@ -1,4 +1,4 @@
-import type { HeadTag, PropResolver, ResolvableHead } from '../types'
+import type { HeadTag, HeadTagInput, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
@@ -36,9 +36,10 @@ function normalizeStyleClassProps(
   return store
 }
 
-export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
+export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any>): HeadTag {
   // attrs is the canonical field; props is a deprecated alias for the same object
-  tag.attrs = tag.props = tag.attrs || tag.props || {}
+  const attrs = inputTag.attrs || inputTag.props || {}
+  const tag = Object.assign(inputTag, { attrs, props: attrs })
   if (!input)
     return tag
   if (tag.tag === 'templateParams') {
