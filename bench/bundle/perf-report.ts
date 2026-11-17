@@ -91,18 +91,21 @@ const COUNT_FLOOR_UNITS = 0.5
 
 type Status = 'new' | 'slower' | 'faster' | 'same'
 
-interface Row {
+type Row = {
   bench: PerfBench
-  base?: PerfBench
-  status: Status
   deltaPct: number
-}
+} & (
+  | { status: 'new', base?: undefined }
+  | { status: Exclude<Status, 'new'>, base: PerfBench }
+)
 
 function fmtValue(b: PerfBench): string {
   if (b.kind === 'time')
     return `${b.value.toFixed(3)} ms`
-  if (b.kind === 'count')
-    return `${Math.round(b.value * 10) / 10}`
+  if (b.kind === 'count') {
+    const precision = b.informational ? 1000 : 10
+    return `${Math.round(b.value * precision) / precision}`
+  }
   return fmtBytes(b.value)
 }
 
@@ -128,7 +131,9 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
   }
   else if (pr.kind === 'count') {
     // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
-    significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
+    significant = pr.informational
+      ? delta !== 0
+      : Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
   else if (pr.kind === 'memory') {
     // A near-zero heap delta can have a large RME but little absolute uncertainty.
@@ -152,7 +157,7 @@ function deltaCell(row: Row): string {
   if (row.bench.informational) {
     if (row.status === 'same')
       return '~ noise'
-    if (row.base?.value === 0) {
+    if (row.bench.kind === 'count' || row.base?.value === 0) {
       const delta = row.bench.value - row.base.value
       return `ℹ️ ${delta > 0 ? '+' : ''}${fmtValue({ ...row.bench, value: delta })}`
     }
