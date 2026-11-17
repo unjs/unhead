@@ -30,7 +30,7 @@ export function joinURL(base: string, input: string) {
 }
 
 export function withBase(input: string, base: string) {
-  if (!base || base === '/' || hasProtocol(input))
+  if (!base || base === '/' || input.startsWith('//') || hasProtocol(input))
     return input
   const normalizedBase = withoutTrailingSlash(base)
   if (input.startsWith(normalizedBase)) {
