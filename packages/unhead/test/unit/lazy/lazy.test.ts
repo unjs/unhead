@@ -166,6 +166,7 @@ describe('lazy head createHead', () => {
   it('renders an in-place edit during hydration that follows an equal patch', async () => {
     const dom = ssrDom({ title: 'Edited' })
     const head = createLazyHead({ document: dom.window.document })
+    const load = vi.spyOn(head, 'load')
     const entry = head.push({ title: 'Server' })
     // a reactive input resolves to an equal object, then the app edits that object in place
     const input = { title: 'Server' }
@@ -174,6 +175,8 @@ describe('lazy head createHead', () => {
     entry.patch(input)
     await Promise.resolve()
     head.render()
+    // an input built in place during hydration is what the server rendered, as with Nuxt's `<Link>`
+    expect(load).not.toHaveBeenCalled()
     expect(head.entries.get(entry._i)?.input).toBe(input)
     expect(await head.load()).toBe(true)
     await settle(30)
