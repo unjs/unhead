@@ -154,8 +154,9 @@ describe('minifyCSS', () => {
     expect(minifyCSS('body { /* reset */ margin: 0 }')).not.toContain('reset')
   })
 
-  it('strips whitespace before a trailing comment', () => {
-    expect(minifyCSS('color: red /* comment */')).toBe('color:red')
+  it.each(['/* comment */', '/* first */ /* second */'])('strips whitespace before trailing comments: %s', (comments) => {
+    expect(minifyCSS(`color: red ${comments}`)).toBe('color:red')
+    expect(minifyCSS(`font-family: foo\uFEFF ${comments}`)).toBe('font-family:foo\uFEFF')
   })
 
   it('collapses whitespace', () => {

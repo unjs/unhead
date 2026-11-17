@@ -104,8 +104,14 @@ export function minifyCSS(code: string): string {
     }
   }
 
-  // Only a collapsed space before a trailing comment can remain.
-  return last === ' ' ? result.slice(0, -1) : result
+  // Only collapsed spaces before trailing comments can remain.
+  if (last === ' ') {
+    let end = result.length - 1
+    while (result[end - 1] === ' ')
+      end--
+    return result.slice(0, end)
+  }
+  return result
 }
 
 function isCSSWhitespace(ch: string): boolean {
