@@ -215,13 +215,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
+      const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
         const trackedKey = `${key}:el`
-        if (!$el.isConnected && renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined)
+        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !$el.isConnected)
           renderState._e.delete(key)
+        else
+          tracked.add($el)
       }
-      const tracked = new Set(renderState._e.values())
       for (const el of [...dom.body.children, ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))

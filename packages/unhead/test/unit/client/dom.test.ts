@@ -83,6 +83,30 @@ describe('dom', () => {
     expect(el.getAttribute('content')).toBe('updated')
   })
 
+  it('skips connectivity reads for managed elements when another tag is missing', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ name: 'description', content: 'initial' }] })
+    const el = document.querySelector('meta[name="description"]')!
+    const connected = Object.getOwnPropertyDescriptor(document.defaultView!.Node.prototype, 'isConnected')!.get!
+    let reads = 0
+    Object.defineProperty(el, 'isConnected', {
+      get(this: Element) {
+        reads++
+        return connected.call(this)
+      },
+    })
+
+    entry.patch({
+      meta: [{ name: 'description', content: 'updated' }],
+      link: [{ rel: 'preload', as: 'image', href: '/hero.png' }],
+    })
+
+    expect(document.querySelector('meta[name="description"]')).toBe(el)
+    expect(el.getAttribute('content')).toBe('updated')
+    expect(reads).toBe(0)
+  })
+
   it('basic', async () => {
     const head = useDOMHead()
 
