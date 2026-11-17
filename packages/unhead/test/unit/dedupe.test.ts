@@ -1,4 +1,11 @@
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey } from 'unhead/utils'
+
+it('derives identities from canonical attributes without a resolved props alias', () => {
+  const tag = { tag: 'meta' as const, attrs: { name: 'description', content: 'Home' } }
+
+  expect(dedupeKey(tag)).toBe('meta:description')
+  expect(hashTag(tag)).toBe('meta:content:Home,name:description')
+})
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {

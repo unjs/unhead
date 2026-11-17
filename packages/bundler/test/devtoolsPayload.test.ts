@@ -2,6 +2,7 @@ import type { HeadValidationRule } from 'unhead/plugins'
 import { JSDOM } from 'jsdom'
 import { ValidatePlugin } from 'unhead/plugins'
 import { createHead, renderSSRHead } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 import { devtoolsPlugin } from '../src'
 
@@ -32,8 +33,9 @@ describe('devtools SSR payload', () => {
   })
 
   it('does not add diagnostics to supplied resolved tags across renders', () => {
-    const head = createHead({ plugins: [devtoolsPlugin()] })
-    const resolvedTags = [{ tag: 'title' as const, attrs: {}, textContent: 'Home' }]
+    const head = createHead({ disableDefaults: true, plugins: [devtoolsPlugin()] })
+    head.push({ title: 'Home' })
+    const resolvedTags = resolveTags(head)
     for (let i = 0; i < 2; i++) {
       const payload = readPayload(renderSSRHead(head, { resolvedTags }).headTags)
       expect(payload.tags.map((tag: any) => tag.tag)).toEqual(['title'])

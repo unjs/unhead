@@ -16,7 +16,7 @@ export function isMetaArrayDupeKey(v: string) {
     || key.startsWith('twitter:image:')
 }
 
-export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
+export function dedupeKey<T extends Omit<HeadTag, 'props'>>(tag: T): string | undefined {
   const { attrs, tag: t, key } = tag
   if (UniqueTags.has(t))
     return t
@@ -46,7 +46,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
-export function hashTag(tag: HeadTag): string {
+export function hashTag<T extends Omit<HeadTag, 'props'>>(tag: T): string {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   // stringify: a number/boolean textContent is not a valid string key (#1006)
   if (identity)
