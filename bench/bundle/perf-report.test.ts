@@ -57,6 +57,18 @@ describe('parseVitestBenchmarks', () => {
 })
 
 describe('renderPerfReport allocation noise gate', () => {
+  it('shows both retained heap values even when the metric is informational', () => {
+    const report = renderPerfReport(
+      { benches: [{ id: 'heap', name: 'CSR retained heap', kind: 'memory', value: 2_048_000, rme: 5, informational: true }] },
+      { benches: [{ id: 'heap', name: 'CSR retained heap', kind: 'memory', value: 102_400, rme: 100, informational: true }] },
+    )
+
+    expect(report).toContain('| Benchmark | Base | PR |')
+    expect(report).toContain('| CSR retained heap | 2000 KiB | 100 KiB |')
+    expect(report).toContain('ℹ️ -95.0%')
+    expect(report).toContain('No significant change')
+  })
+
   it('keeps allocation changes within the combined RME out of the verdict', () => {
     const report = renderPerfReport(
       {
