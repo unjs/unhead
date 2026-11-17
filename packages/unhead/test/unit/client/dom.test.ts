@@ -38,6 +38,75 @@ describe('dom', () => {
     expect(renderDOMHead(head, { document })).toBe(false)
   })
 
+  it('releases removed untracked elements from the dom cache', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+
+    const el = document.createElement('link')
+    el.setAttribute('rel', 'prefetch')
+    el.setAttribute('href', '/hint.txt')
+    document.head.appendChild(el)
+
+    head.push({ link: [{ rel: 'preload', as: 'image', href: '/hero.png' }] })
+    renderDOMHead(head, { document })
+
+    el.remove()
+    head.push({ meta: [{ name: 'x', content: 'y' }] })
+    renderDOMHead(head, { document })
+
+    expect([...head._dom!._e.values()].includes(el)).toBe(false)
+  })
+
+  it('keeps detached managed elements in the cache while pruning scanned ones', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+
+    const scanned = document.createElement('link')
+    scanned.setAttribute('rel', 'prefetch')
+    scanned.setAttribute('href', '/hint.txt')
+    document.head.appendChild(scanned)
+
+    const entry = head.push({ meta: [{ name: 'description', content: 'initial' }] })
+    const el = document.querySelector('meta[name="description"]')!
+    expect([...head._dom!._e.values()].includes(scanned)).toBe(true)
+
+    el.remove()
+    scanned.remove()
+
+    head.push({ link: [{ rel: 'preload', as: 'image', href: '/hero.png' }] })
+    renderDOMHead(head, { document })
+
+    expect([...head._dom!._e.values()].includes(scanned)).toBe(false)
+    expect([...head._dom!._e.values()].includes(el)).toBe(true)
+
+    entry.patch({ meta: [{ name: 'description', content: 'updated' }] })
+    expect(el.getAttribute('content')).toBe('updated')
+  })
+
+  it('skips connectivity reads for managed elements when another tag is missing', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ name: 'description', content: 'initial' }] })
+    const el = document.querySelector('meta[name="description"]')!
+    const connected = Object.getOwnPropertyDescriptor(document.defaultView!.Node.prototype, 'isConnected')!.get!
+    let reads = 0
+    Object.defineProperty(el, 'isConnected', {
+      get(this: Element) {
+        reads++
+        return connected.call(this)
+      },
+    })
+
+    entry.patch({
+      meta: [{ name: 'description', content: 'updated' }],
+      link: [{ rel: 'preload', as: 'image', href: '/hero.png' }],
+    })
+
+    expect(document.querySelector('meta[name="description"]')).toBe(el)
+    expect(el.getAttribute('content')).toBe('updated')
+    expect(reads).toBe(0)
+  })
+
   it('basic', async () => {
     const head = useDOMHead()
 
