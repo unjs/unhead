@@ -30,32 +30,47 @@ export function renderProductPage(createHead: typeof CreateServerHead, renderSSR
   return renderSSRHead(head, { omitLineBreaks: true })
 }
 
+export type NavigationProfile = 'managed' | 'router-hints' | 'large-app'
+
 // One persistent SPA head, optionally including externally managed router hints.
-export function createNavigationSession(createHead: typeof CreateHead, document: Document, routerHints = true) {
+export function createNavigationSession(createHead: typeof CreateHead, document: Document, profile: NavigationProfile = 'router-hints') {
   const head = createHead({ document })
+  const hintsPerNavigation = profile === 'managed' ? 0 : profile === 'large-app' ? 24 : 8
+  if (profile === 'large-app') {
+    // Shared application chunks and styles stay mounted while route chunks change.
+    head.push({
+      link: [
+        ...Array.from({ length: 48 }, (_, chunk) => ({ rel: 'modulepreload' as const, href: `/_nuxt/shared-${chunk}.js` })),
+        ...Array.from({ length: 16 }, (_, chunk) => ({ rel: 'stylesheet' as const, href: `/_nuxt/shared-${chunk}.css` })),
+      ],
+    })
+  }
   const entry = head.push(pageHead(0))
   let page = 0
 
+  function navigateSync(count: number) {
+    for (let i = 0; i < count; i++) {
+      page++
+      // A router inserts hints before the page renders, then removes them after loading.
+      const hints = Array.from({ length: hintsPerNavigation }, (_, chunk) => {
+        const link = document.createElement('link')
+        link.rel = 'prefetch'
+        link.href = `/_nuxt/product-${page}-${chunk}.js`
+        document.head.appendChild(link)
+        return link
+      })
+      entry.patch(pageHead(page))
+      for (const hint of hints)
+        hint.remove()
+      // Async page content adds a new image preload, causing another head scan.
+      entry.patch(pageHead(page, true))
+    }
+  }
+
   return {
+    navigateSync,
     async navigate(count: number) {
-      for (let i = 0; i < count; i++) {
-        page++
-        // A router inserts hints before the page renders, then removes them after loading.
-        const hints = routerHints
-          ? Array.from({ length: 8 }, (_, chunk) => {
-              const link = document.createElement('link')
-              link.rel = 'prefetch'
-              link.href = `/_nuxt/product-${page}-${chunk}.js`
-              document.head.appendChild(link)
-              return link
-            })
-          : []
-        entry.patch(pageHead(page))
-        for (const hint of hints)
-          hint.remove()
-        // Async page content adds a new image preload, causing another head scan.
-        entry.patch(pageHead(page, true))
-      }
+      navigateSync(count)
       // Let jsdom release mutation records before measuring retained memory.
       await setImmediate()
     },
@@ -70,19 +85,21 @@ function stats(samples: number[]) {
   return { value, rme: value === 0 ? 0 : error / Math.abs(value) * 100 }
 }
 
-async function measureCsrMemory(scenario: 'csr' | 'router-hints'): Promise<PerfRun> {
+async function measureCsrMemory(scenario: 'csr' | 'router-hints' | 'large-app'): Promise<PerfRun> {
   // CI copies this script to /tmp. Resolve dependencies and shipped code from cwd.
   const require = createRequire(`${process.cwd()}/package.json`)
   const { JSDOM } = require('jsdom') as typeof import('jsdom')
   const { createHead } = await import(pathToFileURL(`${process.cwd()}/packages/unhead/dist/client.mjs`).href) as typeof import('unhead/client')
   const samples = []
   const detached: number[] = []
-  const navigations = 200
+  const navigations = scenario === 'large-app' ? 1000 : 200
+  const label = scenario === 'large-app' ? 'CSR large app, 24 hints' : scenario === 'router-hints' ? 'CSR router hints' : 'CSR managed'
+  const id = scenario === 'large-app' ? 'csr-large' : scenario === 'router-hints' ? 'csr-nav' : 'csr-managed'
 
   for (let rep = 0; rep < 5; rep++) {
     const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
     try {
-      const session = createNavigationSession(createHead, dom.window.document, scenario === 'router-hints')
+      const session = createNavigationSession(createHead, dom.window.document, scenario === 'csr' ? 'managed' : scenario)
       await session.navigate(30)
       const beforeDetached = session.detachedElements()
       samples.push(await sampleMemory(() => session.navigate(navigations), {
@@ -101,8 +118,8 @@ async function measureCsrMemory(scenario: 'csr' | 'router-hints'): Promise<PerfR
 
   return {
     benches: [
-      ...summarizeMemory(scenario === 'router-hints' ? 'csr-nav' : 'csr-managed', scenario === 'router-hints' ? 'CSR router hints' : 'CSR managed', navigations, samples, 'navs (jsdom)'),
-      ...(scenario === 'router-hints' ? [{ id: 'csr-nav-detached-elements', name: 'CSR router hints detached cached elements / 200 navs', kind: 'count' as const, category: 'memory' as const, ...stats(detached) }] : []),
+      ...summarizeMemory(id, label, navigations, samples, 'navs (jsdom)'),
+      ...(scenario !== 'csr' ? [{ id: `${id}-detached-elements`, name: `${label} detached cached elements / ${navigations} navs`, kind: 'count' as const, category: 'memory' as const, ...stats(detached) }] : []),
     ],
   }
 }
@@ -130,8 +147,8 @@ if (import.meta.main) {
   if (typeof globalThis.gc !== 'function')
     throw new TypeError('Run with node --expose-gc to measure retained heap.')
   const scenario = process.argv[2] ?? 'router-hints'
-  if (scenario !== 'ssr' && scenario !== 'csr' && scenario !== 'router-hints')
-    throw new TypeError('Choose ssr, csr or router-hints for the memory workload.')
+  if (scenario !== 'ssr' && scenario !== 'csr' && scenario !== 'router-hints' && scenario !== 'large-app')
+    throw new TypeError('Choose ssr, csr, router-hints or large-app for the memory workload.')
   // eslint-disable-next-line antfu/no-top-level-await -- standalone Node benchmark entry point
   const result = await (scenario === 'ssr' ? measureSsrMemory() : measureCsrMemory(scenario))
   // eslint-disable-next-line no-console -- stdout is the CI report protocol

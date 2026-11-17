@@ -57,6 +57,29 @@ describe('parseVitestBenchmarks', () => {
 })
 
 describe('renderPerfReport sections', () => {
+  it.each([
+    { before: 0, after: 12, delta: '+12' },
+    { before: 128, after: 129, delta: '+1' },
+    { before: 128, after: 128.025, delta: '+0.025' },
+    { before: 131, after: 2, delta: '-129' },
+  ])('surfaces DOM reads changing from $before to $after even when timing stays within noise', ({ before, after, delta }) => {
+    const report = renderPerfReport(
+      { benches: [
+        { id: 'cpu', name: 'Navigation CPU', kind: 'time', value: 1, rme: 5 },
+        { id: 'reads', name: 'Connectivity reads', kind: 'count', category: 'cpu', value: before, informational: true },
+      ] },
+      { benches: [
+        { id: 'cpu', name: 'Navigation CPU', kind: 'time', value: 1.01, rme: 5 },
+        { id: 'reads', name: 'Connectivity reads', kind: 'count', category: 'cpu', value: after, informational: true },
+      ] },
+    )
+
+    const visible = report.split('<details>')[0]
+    expect(visible).toContain('No significant timing change')
+    expect(visible).toContain(`| **Connectivity reads** | ${before} → ${after} | ℹ️ ${delta} |`)
+    expect(visible).not.toContain('slower')
+  })
+
   it('gives CPU work and memory measurements separate verdicts and tables', () => {
     const report = renderPerfReport(
       { benches: [
