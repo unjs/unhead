@@ -2,10 +2,10 @@
 // The copy holds no plain object of the input, so the same object on both sides is one the copy
 // shares, such as a promise. It may have changed in place, so it counts as a change. A getter can
 // return another value on each call, so it counts as a change too.
-// A `titleTemplate` or an event handler is a value.
+// A `titleTemplate`, an event handler, or a schema.org node resolver is a value.
 export function sameInput(a: any, b: any, key?: string): boolean {
   if (a === b)
-    return typeof a === 'function' ? key === 'titleTemplate' || !!key?.startsWith('on') : !a || typeof a !== 'object'
+    return typeof a === 'function' ? key === 'titleTemplate' || !!key?.startsWith('on') : !a || typeof a !== 'object' || key === '_resolver'
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || a.constructor !== b.constructor || (a.constructor !== Object && !Array.isArray(a)))
     return false
   const keys = Object.keys(a)

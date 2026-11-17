@@ -209,6 +209,21 @@ describe('lazy head createHead', () => {
     expect(load).not.toHaveBeenCalled()
   })
 
+  // a schema.org node holds its resolver, one shared definition object, as `_resolver`
+  it('loads nothing for a patch with the same schema.org node resolver', async () => {
+    const dom = ssrDom(titled)
+    const head = createLazyHead({ document: dom.window.document })
+    const _resolver = { defaults: { '@type': 'WebPage' }, resolve: (node: unknown) => node }
+    const input = (): ResolvableHead => ({ script: [{ type: 'application/ld+json', key: 'schema-org-graph', nodes: [{ name: 'Home', _resolver }] } as any] })
+    const entry = head.push(input())
+    const load = vi.spyOn(head, 'load')
+    entry.patch(input())
+    head.render()
+    entry.patch(input())
+    await settle()
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('loads for a patch after an in-place edit deep inside JSON-LD', async () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
