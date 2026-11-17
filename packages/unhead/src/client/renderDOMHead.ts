@@ -9,8 +9,9 @@ const WHITESPACE_RE = /\s+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
-// [target, type, source, boundHandler, cleanup] — tuple over object to keep the renderer small
-type DomEventSideEffect = [EventTarget, string, DomEventHandler, EventListener, () => void]
+// [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
+// The event type needs no slot: the key holds the prop name it comes from.
+type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => void]
 
 type DomStateInternal = DomState & {
   _d: Document
@@ -104,23 +105,23 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
       const key = `${id}:event:${k}`
       const prev = renderState._l.get(key)
-      // same target/type/source: keep the existing listener, just re-track its cleanup
-      if (prev && prev[0] === target && prev[1] === ev && prev[2] === source) {
-        track(key, prev[4])
+      // same target/source: keep the existing listener, just re-track its cleanup
+      if (prev && prev[0] === target && prev[1] === source) {
+        track(key, prev[3])
         return
       }
-      prev?.[4]()
+      prev?.[3]()
       const dk = `data-${k}`
       const handler = ((e: Event) => source.call($el, e)) as EventListener
       const cleanup = () => {
         target.removeEventListener(ev, handler)
         if ($el.getAttribute(dk) === '')
           $el.removeAttribute(dk)
-        if (renderState._l.get(key)?.[3] === handler)
+        if (renderState._l.get(key)?.[2] === handler)
           renderState._l.delete(key)
       }
       target.addEventListener(ev, handler)
-      renderState._l.set(key, [target, ev, source, handler, cleanup])
+      renderState._l.set(key, [target, source, handler, cleanup])
       $el.setAttribute(dk, '')
       // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
       track(key, cleanup, true)
@@ -192,7 +193,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const pending: DomRenderTagContext[] = []
     const frag: Partial<Record<string, DocumentFragment>> = {}
     head.dirty = false
-    const rawTags = resolveTags(head, options.tagWeight ? { tagWeight: options.tagWeight } : undefined)
+    const rawTags = resolveTags(head, options)
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
