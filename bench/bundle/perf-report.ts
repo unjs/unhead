@@ -1,24 +1,30 @@
-// Renders the directional Performance section. A change is only surfaced past a gate:
+// Renders separate directional CPU and memory sections. A change is surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
 //  - alloc: |Δ| > max(2%, 1 KiB). Synchronous bytes allocated per render is
 //           near-deterministic, so a tight gate surfaces gains time can't show.
-//  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
+//  - count: |Δ| > max(2%, 0.5). DOM mutations or detached elements; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
 //  - memory: compare byte deltas with byte uncertainty, including near-zero results.
 // Noisy metrics are `informational`: shown for reference but excluded from the verdict.
 // This includes wall time and async heap deltas, where GC/scheduling can false-alarm.
 
-export interface PerfBench {
+type Category = 'cpu' | 'memory'
+
+interface Measurement {
   id: string
   name: string
-  kind: 'time' | 'alloc' | 'memory' | 'count'
   value: number
   rme?: number
   runs?: number
   // reported for reference but excluded from the verdict (e.g. wall time or async allocation)
   informational?: boolean
 }
+
+export type PerfBench = Measurement & (
+  | { kind: 'time' | 'alloc' | 'memory' }
+  | { kind: 'count', category: Category }
+)
 
 export interface PerfRun {
   benches: PerfBench[]
@@ -155,17 +161,19 @@ function deltaCell(row: Row): string {
   return `${emoji} ${delta > 0 ? '+' : '-'}${fmtKib(Math.abs(delta))} (${fmtPct(row.deltaPct)})`
 }
 
-export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
-  const rows = pr.benches.map(b => classify(b, base?.benches?.find(x => x.id === b.id)))
+function renderSection(category: Category, rows: Row[]): string {
+  if (!rows.length)
+    return ''
+
   // informational benches are shown in the details but never drive the verdict
   const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
   const slower = changed.filter(r => r.status === 'slower')
 
-  const out: string[] = ['## ⚡ Performance _(directional)_', '']
+  const out: string[] = [`## ⚡ Perf - ${category === 'cpu' ? 'CPU' : 'memory'} _(directional)_`, '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} slower** · past the per-metric noise gate`)
+    out.push(`⚠️ **${slower.length} ${category === 'cpu' ? 'slower' : 'higher'}** · past the per-metric noise gate`)
   else if (changed.length)
-    out.push(`🟢 **${changed.length} faster**`)
+    out.push(`🟢 **${changed.length} ${category === 'cpu' ? 'faster' : 'lower'}**`)
   else
     out.push('✅ **No significant change** _(within CI noise)_')
 
@@ -182,9 +190,22 @@ export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
     out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
   out.push('', '</details>')
+  if (rows.some(row => row.bench.kind === 'alloc'))
+    out.push('', 'Allocation rows show bytes allocated per operation.')
   if (rows.some(row => row.bench.kind === 'memory')) {
-    out.push('', 'Memory rows show process measurements after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
+    out.push('', 'Process memory measurements run after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
   }
 
   return out.join('\n')
+}
+
+export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
+  const sections: Record<Category, Row[]> = { cpu: [], memory: [] }
+  for (const bench of pr.benches) {
+    const category = bench.kind === 'count' ? bench.category : bench.kind === 'time' ? 'cpu' : 'memory'
+    sections[category].push(classify(bench, base?.benches.find(candidate => candidate.id === bench.id)))
+  }
+  return [renderSection('cpu', sections.cpu), renderSection('memory', sections.memory)]
+    .filter(Boolean)
+    .join('\n\n---\n\n')
 }

@@ -102,7 +102,7 @@ async function measureCsrMemory(scenario: 'csr' | 'router-hints'): Promise<PerfR
   return {
     benches: [
       ...summarizeMemory(scenario === 'router-hints' ? 'csr-nav' : 'csr-managed', scenario === 'router-hints' ? 'CSR router hints' : 'CSR managed', navigations, samples, 'navs (jsdom)'),
-      ...(scenario === 'router-hints' ? [{ id: 'csr-nav-detached-elements', name: 'CSR router hints detached cached elements / 200 navs', kind: 'count' as const, ...stats(detached) }] : []),
+      ...(scenario === 'router-hints' ? [{ id: 'csr-nav-detached-elements', name: 'CSR router hints detached cached elements / 200 navs', kind: 'count' as const, category: 'memory' as const, ...stats(detached) }] : []),
     ],
   }
 }

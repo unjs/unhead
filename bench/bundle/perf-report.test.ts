@@ -56,6 +56,61 @@ describe('parseVitestBenchmarks', () => {
   })
 })
 
+describe('renderPerfReport sections', () => {
+  it('gives CPU work and memory measurements separate verdicts and tables', () => {
+    const report = renderPerfReport(
+      { benches: [
+        { id: 'cpu', name: 'SSR CPU time', kind: 'time', value: 1 },
+        { id: 'alloc', name: 'SSR allocated bytes', kind: 'alloc', value: 10_000 },
+        { id: 'heap', name: 'CSR retained heap', kind: 'memory', value: 20_000, informational: true },
+        { id: 'mutations', name: 'CSR DOM mutations', kind: 'count', category: 'cpu', value: 38 },
+        { id: 'detached', name: 'CSR detached elements', kind: 'count', category: 'memory', value: 10 },
+      ] },
+      { benches: [
+        { id: 'cpu', name: 'SSR CPU time', kind: 'time', value: 2 },
+        { id: 'alloc', name: 'SSR allocated bytes', kind: 'alloc', value: 5000 },
+        { id: 'heap', name: 'CSR retained heap', kind: 'memory', value: 10_000, informational: true },
+        { id: 'mutations', name: 'CSR DOM mutations', kind: 'count', category: 'cpu', value: 38 },
+        { id: 'detached', name: 'CSR detached elements', kind: 'count', category: 'memory', value: 0 },
+      ] },
+    )
+    const [cpu, memory] = report.split('## ⚡ Perf - memory')
+
+    expect(cpu).toContain('## ⚡ Perf - CPU')
+    expect(cpu).toContain('1 slower')
+    expect(cpu).toContain('SSR CPU time')
+    expect(cpu).toContain('CSR DOM mutations')
+    expect(cpu).not.toContain('SSR allocated bytes')
+    expect(cpu).not.toContain('CSR detached elements')
+    expect(cpu).not.toContain('CSR retained heap')
+    expect(memory).toContain('2 lower')
+    expect(memory).toContain('SSR allocated bytes')
+    expect(memory).toContain('CSR detached elements')
+    expect(memory).toContain('CSR retained heap')
+    expect(memory).not.toContain('SSR CPU time')
+    expect(memory).not.toContain('CSR DOM mutations')
+  })
+
+  it('does not add an empty CPU section to a memory-only report', () => {
+    const report = renderPerfReport(null, {
+      benches: [{ id: 'heap', name: 'Retained heap', kind: 'memory', value: 1024, informational: true }],
+    })
+
+    expect(report).toContain('Perf - memory')
+    expect(report).not.toContain('Perf - CPU')
+  })
+
+  it('does not add memory notes to a CPU-only report', () => {
+    const report = renderPerfReport(null, {
+      benches: [{ id: 'cpu', name: 'CPU time', kind: 'time', value: 1 }],
+    })
+
+    expect(report).toContain('Perf - CPU')
+    expect(report).not.toContain('Perf - memory')
+    expect(report).not.toContain('jsdom')
+  })
+})
+
 describe('renderPerfReport allocation noise gate', () => {
   it('shows both retained heap values even when the metric is informational', () => {
     const report = renderPerfReport(
@@ -103,7 +158,7 @@ describe('renderPerfReport allocation noise gate', () => {
       },
     )
 
-    expect(report).toContain('1 slower')
+    expect(report).toContain('1 higher')
     expect(report).toContain('+9.8 KiB (+10.0%)')
   })
 })

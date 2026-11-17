@@ -384,7 +384,7 @@ async function csrBenches() {
 
   const t = measureTimes(nav, { warmup: 50, reps: 30, runs: 60 })
   return [
-    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', value: muts / N },
+    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', category: 'cpu', value: muts / N },
     { id: 'csr-nav-cpu', name: 'CSR re-render (CPU)', kind: 'time', value: t.cpu.value, rme: t.cpu.rme },
     { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme, informational: true },
   ]
