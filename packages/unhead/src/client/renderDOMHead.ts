@@ -27,9 +27,10 @@ export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDom
   return _renderDOMHead(head, options)
 }
 
-// Internal lazy-runtime adoption. Record cleanup without replaying historical DOM writes.
-export function adoptDOMHead(head: Unhead<any>): boolean {
-  return _renderDOMHead(head, {}, true)
+// Internal: the lazy runtime renders through this. An adoption render records the cleanups
+// of server elements without replaying historical DOM writes.
+export function renderLazyDOMHead(head: Unhead<any>, adoption?: boolean): boolean {
+  return _renderDOMHead(head, {}, adoption)
 }
 
 function hasPendingEntries<T extends Unhead<any>>(head: T) {

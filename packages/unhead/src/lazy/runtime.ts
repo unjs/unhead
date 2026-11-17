@@ -1,7 +1,7 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { HeadEntry, HeadRenderer } from '../types'
 import type { LazyHeadOptions } from './index'
-import { adoptDOMHead, createDomRenderer } from '../client/renderDOMHead'
+import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
 import { createDebouncedFn } from '../client/util'
 
@@ -20,7 +20,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   adoption.has = id => has.call(adoption, id) || live.has(id)
   head.entries = adoption
   try {
-    return adoptDOMHead(head)
+    return renderLazyDOMHead(head, true)
   }
   finally {
     head.entries = live
@@ -30,13 +30,12 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
 
 export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[]): HeadRenderer<any> {
   head.resolvedOptions._tagWeight = tagWeight
-  const renderDom = createDomRenderer({ document: head.resolvedOptions.document })
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
   // The first render that creates the DOM state adopts first, so a change after the load,
   // in the debounce or during a pause, still adopts. A pause holds both. With no hydrated
   // entries there is no server head to adopt.
   return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
     if (head._dom || !hydrated().length || adoptHydratedEntries(head, hydrated()))
-      renderDom(head)
+      renderLazyDOMHead(head)
   }, fn => setTimeout(fn, 0))
 }
