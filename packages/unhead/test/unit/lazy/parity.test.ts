@@ -210,6 +210,24 @@ describe('lazy head parity with the default head', () => {
     expect([...doc.querySelectorAll('meta[property="article:tag"]')].map(el => el.getAttribute('content'))).toEqual(page.map(tag => tag.content))
   })
 
+  // The renderer seeds html and body class cleanups from the live input of each entry. An edit
+  // in place makes that input differ from the hydrated copy that the adoption renders.
+  it.each([
+    ['swaps a class', 'a c'],
+    ['drops a class', 'a'],
+    ['drops every class', ''],
+  ])('matches the default head when a paused step %s in place', async (_, next) => {
+    const input = { title: 'Site', htmlAttrs: { class: 'a b' }, bodyAttrs: { class: 'a b' } }
+    const { off, lazy, load } = await both([], [input], [(__, entries, pause) => {
+      pause()
+      input.htmlAttrs.class = next
+      input.bodyAttrs.class = next
+      entries[0].patch(input)
+    }])
+    expect(load).toHaveBeenCalled()
+    expect(lazy).toEqual(off)
+  })
+
   it('restores the server title as the base of a later runtime render', async () => {
     const { off, lazy } = await both([], [{ title: 'A' }], [
       (_, entries) => entries[0].patch({ title: 'B' }),
