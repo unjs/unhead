@@ -50,12 +50,14 @@ function onTabChange(value: string | number) {
           variant="link"
           color="neutral"
           :content="false"
-          :ui="{ root: 'min-w-0', list: 'border-none gap-5', leadingIcon: 'size-3.5 opacity-50 group-data-[state=open]:opacity-90 transition-opacity' }"
+          :ui="{ root: 'min-w-0', list: 'border-none gap-5 max-[960px]:gap-3', label: 'max-[960px]:sr-only', leadingIcon: 'size-3.5 opacity-50 group-data-[state=open]:opacity-90 transition-opacity' }"
           @update:model-value="onTabChange"
         >
           <template #trailing="{ item }">
-            <span v-if="item.errors" class="size-1.5 rounded-full bg-red-500" />
-            <span v-else-if="item.warnings" class="size-1.5 rounded-full bg-amber-500" />
+            <span v-if="item.errors" class="size-1.5 rounded-full bg-red-500" aria-hidden="true" />
+            <span v-else-if="item.warnings" class="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+            <span v-if="item.errors" class="sr-only">, {{ item.errors }} {{ item.errors === 1 ? 'error' : 'errors' }}</span>
+            <span v-else-if="item.warnings" class="sr-only">, {{ item.warnings }} {{ item.warnings === 1 ? 'warning' : 'warnings' }}</span>
           </template>
         </UTabs>
       </div>

@@ -43,6 +43,8 @@ export interface SerializedScript {
   crossorigin?: string
   defer?: boolean
   async?: boolean
+  /** Encoded body size from Resource Timing; absent when the host hides it (no Timing-Allow-Origin). */
+  size?: number
 }
 
 export interface SerializedValidationRule {
@@ -59,12 +61,9 @@ export interface SerializedValidationRule {
 export interface LintMessage {
   ruleId: string | null
   message: string
-  severity: 'error' | 'warn'
+  severity: 'error' | 'warn' | 'info'
   line?: number
   column?: number
-  endLine?: number
-  endColumn?: number
-  fixable: boolean
 }
 
 export interface LintFileResult {
@@ -72,20 +71,20 @@ export interface LintFileResult {
   relativePath: string
   errorCount: number
   warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
   messages: LintMessage[]
-  fixed?: boolean
+  /** `migrate` rewrote this file, or would with `dryRun`. */
+  fixed: boolean
+  /** Fingerprint of the source and proposed migration. */
+  fingerprint?: string
 }
 
 export interface LintRunResult {
   available: true
   mode: 'audit' | 'migrate'
+  dryRun: boolean
   files: LintFileResult[]
   errorCount: number
   warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
   filesFixed: number
   durationMs: number
 }
@@ -97,8 +96,16 @@ export interface LintUnavailableResult {
 
 export type LintResponse = LintRunResult | LintUnavailableResult
 
-export interface UnheadDevtoolsState {
+export interface UnheadDevtoolsConfig {
+  cwd: string
+  mode: 'dev' | 'build'
+  /** Installed `unhead` version; empty when it cannot be resolved. */
   version: string
+}
+
+export interface UnheadDevtoolsState {
+  /** The host page URL. Relative head URLs resolve against it. */
+  url: string
   entries: SerializedEntry[]
   tags: SerializedTag[]
   plugins: string[]
@@ -116,7 +123,7 @@ export interface UnheadDevtoolsState {
 }
 
 const defaultState: UnheadDevtoolsState = {
-  version: '',
+  url: '',
   entries: [],
   tags: [],
   plugins: [],
@@ -134,7 +141,37 @@ const defaultState: UnheadDevtoolsState = {
 }
 
 export const state = ref<UnheadDevtoolsState>({ ...defaultState })
-export const isConnected = ref(false)
+/**
+ * `waiting`: the page script has not answered within the grace period. The
+ * channel keeps retrying, so a late page script still connects.
+ */
+export type ConnectionStatus = 'connecting' | 'waiting' | 'connected'
+export const connectionStatus = ref<ConnectionStatus>('connecting')
+export const unheadVersion = ref('')
+
+/**
+ * Resolve a URL from the page's head against the page itself. The panel lives
+ * under `/__unhead/`, so a relative URL would otherwise resolve against the panel.
+ */
+export function resolvePageUrl(url: string): string {
+  try {
+    return new URL(url, state.value.url || location.href).href
+  }
+  catch {
+    // Not a parseable URL; show it as written.
+    return url
+  }
+}
+
+/** The host page's hostname, for previews when no canonical URL is set. */
+export function pageHost(): string {
+  try {
+    return new URL(state.value.url).hostname
+  }
+  catch {
+    return ''
+  }
+}
 
 export function syncState(newState: UnheadDevtoolsState) {
   if (!newState)

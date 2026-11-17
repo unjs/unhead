@@ -12,16 +12,16 @@ import {
   IdentityId,
   idReference,
   isHomePage,
+  isSiteIdentityId,
   prefixId,
   resolvableDateToIso,
-  resolveAsGraphKey,
   resolveDefaultType,
   resolveWithBase,
   setIfEmpty,
   withBase,
 } from '../../utils'
 import { definedRegionResolver } from '../DefinedRegion'
-import { imageResolver, isImageObject } from '../Image'
+import { imageResolver } from '../Image'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { monetaryAmountResolver, quantitativeValueResolver } from '../MonetaryAmount'
 import { unitPriceSpecificationResolver } from '../Offer'
@@ -381,9 +381,6 @@ export const organizationResolver
       '@type': 'Organization',
     },
     idPrefix: ['host', IdentityId],
-    inheritMeta: [
-      { meta: 'host', key: 'url' },
-    ],
     resolve(node, ctx) {
       resolveDefaultType(node, 'Organization')
       node.address = resolveRelation(node.address, ctx, addressResolver)
@@ -404,11 +401,26 @@ export const organizationResolver
       node.numberOfEmployees = resolveRelation(node.numberOfEmployees, ctx, quantitativeValueResolver)
       if (node.url)
         node.url = resolveWithBase(ctx.meta.host, node.url)
+      // The identity also carries the host as its url when embedded in a relation
+      // resolved without `root: true` (e.g. a JobPosting hiringOrganization), as
+      // those never reach resolveRootNode. Only the site's own identity qualifies:
+      // an external `@id` such as `https://partner.example/#identity` reduces to
+      // the same graph key but must not inherit this site's host url.
+      if (isSiteIdentityId(node['@id'], ctx.meta.host))
+        setIfEmpty(node, 'url', ctx.meta.host)
       return node
     },
     resolveRootNode(node, ctx) {
-      const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
+      // Host-aware: an external `@id` like `https://partner.example/#identity`
+      // reduces to the same `#identity` graph key, but only this site's own
+      // identity may inherit the host url (and the related webSite/webPage wiring).
+      const isIdentity = isSiteIdentityId(node['@id'], ctx.meta.host)
       const webPage = ctx.find(PrimaryWebPageId)
+      // The site identity carries the host as its url; organizations elsewhere in
+      // the graph (an event organizer, a publisher on someone else's site) must
+      // not inherit it, only `createSchemaOrgIdentity()` marks the identity.
+      if (isIdentity)
+        setIfEmpty(node, 'url', ctx.meta.host)
       if (node.logo && isIdentity) {
         const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
         // Google expects a single logo, so use the first configured image.
@@ -423,37 +435,10 @@ export const organizationResolver
         if (webPage && logoNode)
           setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
 
-        if (node['@type'] === 'Organization') {
-          node.logo = logoNode
-        }
-        // Specialized organizations retain a compact Organization node for
-        // Google's Organization rich result.
-        // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
-        else if (!ctx.find('#organization')) {
-          const resolvedLogo = logoNode && typeof logoNode === 'object' && logoNode['@id']
-            ? ctx.find(logoNode['@id'], isImageObject)
-            : null
-
-          // push a separate node that will just be used for the Logo rich result
-          ctx.nodes.push({
-            // we want to make a simple node that has the essentials, this will allow parent nodes to inject
-            // as well without inserting invalid data (i.e LocalBusiness operatingHours)
-            '@type': 'Organization',
-            'name': node.name,
-            'url': node.url,
-            'sameAs': node.sameAs,
-            // 'image': idReference(logoNode),
-            'address': node.address,
-            // needs to be a URL
-            'logo': resolvedLogo?.url,
-            '_priority': -1,
-            // Distinct from #identity so the specialized identity node stays the linkable one;
-            // the id is stable so repeat resolves dedupe on the ctx.find('#organization') guard.
-            '@id': prefixId(ctx.meta.host, '#organization'),
-          })
-        }
-        if (node['@type'] !== 'Organization')
-          delete node.logo
+        // Every Organization subtype inherits `logo`, and Google's Organization
+        // guide puts it on the subtype's own node (its OnlineStore example), so
+        // the identity keeps it whatever its type.
+        node.logo = logoNode
       }
 
       // Default the homepage's about relation to the site identity.
@@ -461,7 +446,7 @@ export const organizationResolver
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 
       const webSite = ctx.find(PrimaryWebSiteId)
-      if (webSite)
+      if (webSite && isIdentity)
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },
   })

@@ -163,9 +163,9 @@ export const PrimaryWebPageId = '#webpage'
 export const webPageResolver = defineSchemaOrgResolver<WebPage>({
   defaults({ meta }) {
     // try match the @type for the url
-    const endPath = withoutTrailingSlash(meta.url.substring(meta.url.lastIndexOf('/') + 1))
+    const endPath = withoutTrailingSlash(meta.path.substring(meta.path.lastIndexOf('/') + 1))
     let type: ValidSubTypes = 'WebPage'
-    switch (endPath) {
+    switch (endPath.toLowerCase()) {
       case 'about':
       case 'about-us':
         type = 'AboutPage'

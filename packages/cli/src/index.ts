@@ -22,3 +22,6 @@ export function run(): Promise<void> {
 }
 
 export { audit, migrate, validateHtmlCommand, validateUrlCommand }
+// Programmatic audit, used by the Unhead DevTools Audit tab.
+export { runAudit, summarise } from './oxc/audit'
+export type { AuditFileResult, FileDiagnostic, Mode, RunOptions } from './oxc/audit'

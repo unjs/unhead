@@ -19,7 +19,7 @@ const modeConfig = {
       <UIcon name="i-carbon-chevron-right" class="text-xs transition-transform group-open:rotate-90 shrink-0" />
       <span class="font-mono text-sm">#{{ entry.id }}</span>
       <UBadge variant="subtle" size="xs">
-        {{ entry.tagCount }} tags
+        {{ entry.tagCount }} {{ entry.tagCount === 1 ? 'tag' : 'tags' }}
       </UBadge>
       <UBadge :color="modeConfig[entry.mode]?.color || 'neutral'" variant="subtle" size="xs">
         <UIcon :name="modeConfig[entry.mode]?.icon || 'i-carbon-help'" class="text-xs" />

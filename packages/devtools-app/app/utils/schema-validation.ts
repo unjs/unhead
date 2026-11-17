@@ -292,6 +292,12 @@ export function getNestedProperty(obj: any, path: string): any {
   return current
 }
 
+/** A property counts as present only with a real value: `null` and `''` are missing. */
+export function hasPropertyValue(node: any, path: string): boolean {
+  const value = getNestedProperty(node, path)
+  return value !== undefined && value !== null && value !== ''
+}
+
 export function analyzeNodeProperties(node: any): {
   missingRequired: string[]
   missingRecommended: string[]
@@ -313,23 +319,17 @@ export function analyzeNodeProperties(node: any): {
   const presentProperties: Record<string, any> = {}
 
   requirements.required.forEach((prop) => {
-    const value = getNestedProperty(node, prop)
-    if (value === undefined || value === null || value === '') {
+    if (hasPropertyValue(node, prop))
+      presentProperties[prop] = getNestedProperty(node, prop)
+    else
       missingRequired.push(prop)
-    }
-    else {
-      presentProperties[prop] = value
-    }
   })
 
   requirements.recommended.forEach((prop) => {
-    const value = getNestedProperty(node, prop)
-    if (value === undefined || value === null || value === '') {
+    if (hasPropertyValue(node, prop))
+      presentProperties[prop] = getNestedProperty(node, prop)
+    else
       missingRecommended.push(prop)
-    }
-    else {
-      presentProperties[prop] = value
-    }
   })
 
   return { missingRequired, missingRecommended, presentProperties }

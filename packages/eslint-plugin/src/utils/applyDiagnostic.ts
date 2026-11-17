@@ -64,8 +64,15 @@ function buildFixer(
         return undefined
       return (fixer) => {
         const after = sourceCode.getTokenAfter(prop)
-        if (after && after.value === ',')
-          return fixer.removeRange([prop.range![0], after.range![1]])
+        if (after && after.value === ',') {
+          // Swallow the separator whitespace before the property, otherwise the
+          // removal leaves a double space between the surviving neighbours.
+          const text = sourceCode.text
+          let start = prop.range![0]
+          while (start > 0 && /\s/.test(text[start - 1]!))
+            start--
+          return fixer.removeRange([start, after.range![1]])
+        }
         const before = sourceCode.getTokenBefore(prop)
         if (before && before.value === ',')
           return fixer.removeRange([before.range![0], prop.range![1]])

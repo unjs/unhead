@@ -34,6 +34,8 @@ export interface MetaInput {
 export interface ResolvedMeta extends MetaInput {
   path: string
   url: string
+  /** Base for page `@id` values. Equals `url`, unless `url` points at another host. */
+  idUrl: string
 }
 
 export interface UserConfig extends MetaInput {}

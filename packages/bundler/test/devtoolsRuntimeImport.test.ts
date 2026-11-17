@@ -38,6 +38,32 @@ function resolveFrom(importer: string, specifier: string): string | undefined {
 }
 
 describe('devtools runtime plugin injection', () => {
+  it.each(['client', 'server'])('registers once after repeated configResolved calls for %s', async (consumer) => {
+    const root = process.cwd()
+    const ctx = createHeadTransformContext()
+    const devtools = unheadDevtools({ _ctx: ctx }) as any
+    await devtools.configResolved({ root, devtools: false, plugins: [] })
+    expect(ctx.getRegistrations()).toHaveLength(0)
+    await devtools.configResolved({ root, devtools: { enabled: true }, plugins: [] })
+    await devtools.configResolved({ root, devtools: { enabled: true }, plugins: [] })
+
+    const transform = CreateHeadTransform(ctx) as any
+    transform.configResolved({ root })
+    const result = transform.transform.handler.call(
+      { environment: { config: { consumer } } },
+      RENDERER,
+      join(root, 'renderer.ts'),
+    )
+
+    expect(() => execFileSync(process.execPath, ['--check', '--input-type=module'], {
+      input: result.code,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })).not.toThrow()
+    expect(ctx.getRegistrations()).toHaveLength(1)
+    const statement = consumer === 'server' ? '_h.use(__unhead_devtoolsPlugin())' : 'window.__unhead_devtools__=_h'
+    expect(result.code.split(statement)).toHaveLength(2)
+  })
+
   it('injects a specifier resolvable from the transformed module', async () => {
     const appDir = createIsolatedApp()
     const importer = join(appDir, 'renderer.ts')

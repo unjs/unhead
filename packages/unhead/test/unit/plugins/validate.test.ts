@@ -777,8 +777,8 @@ describe('validatePlugin', () => {
   })
 
   describe('performance hints', () => {
-    it('warns on preload with fetchpriority="low" for non-script assets', () => {
-      const { head, rules } = createValidationHead()
+    it('reports low-priority preloads when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-fetchpriority-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'low' as const }],
       })
@@ -880,8 +880,8 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeFalsy()
     })
 
-    it('warns on preload + async script conflict', () => {
-      const { head, rules } = createValidationHead()
+    it('reports preloaded async scripts when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-async-defer-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const }],
         script: [{ src: '/analytics.js', async: true }],
@@ -890,8 +890,8 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
     })
 
-    it('warns on preload + defer script conflict', () => {
-      const { head, rules } = createValidationHead()
+    it('reports preloaded deferred scripts when explicitly enabled', () => {
+      const { head, rules } = createValidationHead({ rules: { 'preload-async-defer-conflict': 'info' } })
       head.push({
         link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
         script: [{ src: '/app.js', defer: true }],
@@ -1337,6 +1337,43 @@ describe('validatePlugin', () => {
       } as any)
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('warns when title tokens are used without TemplateParamsPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        title: 'Home',
+        titleTemplate: '%s %separator %siteName',
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('warns when meta content tokens are used without TemplateParamsPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [{ name: 'description', content: 'Welcome to %siteName' }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('does not warn about title tokens when TemplateParamsPlugin is registered', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          TemplateParamsPlugin,
+          ValidatePlugin({ onReport: r => results.push(...r) }),
+        ],
+      })
+      head.push({
+        title: 'Home',
+        titleTemplate: '%s %separator %siteName',
+        templateParams: { siteName: 'My Site', separator: '|' },
+      } as any)
+      renderSSRHead(head)
+      expect(results.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
     })
 
     it('does not warn about templateParams when TemplateParamsPlugin is registered', () => {

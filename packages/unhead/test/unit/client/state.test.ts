@@ -59,6 +59,20 @@ describe('state', () => {
     expect(onResize.mock.contexts[0]).toBe(second.window.document.body)
   })
 
+  it('renders when an entry input is null', () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({ document: dom.window.document })
+    head._b = true
+    // a computed input can resolve to null, as `useHead(computed(() => null))` does in Vue
+    head.push(null as any)
+    head.push({ title: 'after null', bodyAttrs: { class: 'ready' } })
+    head._b = false
+
+    expect(() => renderDOMHead(head)).not.toThrow()
+    expect(dom.window.document.title).toBe('after null')
+    expect(dom.window.document.body.classList.contains('ready')).toBe(true)
+  })
+
   it('replays the SSR class-removal baseline across documents', () => {
     const first = useDom({ bodyAttrs: 'class="ssr-class"' })
     const second = useDom({ bodyAttrs: 'class="ssr-class"' })
