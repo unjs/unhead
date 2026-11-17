@@ -34,7 +34,6 @@ describe('defineCourse', () => {
             "@type": "Organization",
             "name": "University of Technology - Eureka",
             "sameAs": "http://www.ut-eureka.edu",
-            "url": "https://example.com/",
           },
         ]
       `)
