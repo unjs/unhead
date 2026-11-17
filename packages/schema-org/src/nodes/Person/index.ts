@@ -104,10 +104,11 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
       const webSite = find(PrimaryWebSiteId)
       if (webSite)
         setIfEmpty(webSite, 'publisher', idReference(node))
+
+      // Default the article's author to the site identity.
+      const article = find(PrimaryArticleId)
+      if (article)
+        setIfEmpty(article, 'author', idReference(node))
     }
-    // add ourselves as the author
-    const article = find(PrimaryArticleId)
-    if (article)
-      setIfEmpty(article, 'author', idReference(node))
   },
 })
