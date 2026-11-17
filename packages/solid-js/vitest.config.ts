@@ -10,12 +10,14 @@ export default defineProject({
     alias: {
       '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),
+      '@unhead/solid-js/lazy': resolve(__dirname, 'src/lazy.ts'),
       '@unhead/solid-js/server': resolve(__dirname, 'src/server.ts'),
       '@unhead/solid-js/client': resolve(__dirname, 'src/client.ts'),
       '@unhead/solid-js': resolve(__dirname, 'src/index.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
       'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
+      'unhead/lazy': resolve(__dirname, '../unhead/src/lazy/index.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/minify': resolve(__dirname, '../unhead/src/minify/index.ts'),
@@ -30,5 +32,8 @@ export default defineProject({
   },
   test: {
     globals: true,
+    // Node would load solid-js/web with its own conditions, and its import of solid-js would
+    // then reach the server build. Inline it, so both resolve to the client build.
+    server: { deps: { inline: [/[\\/]solid-js[\\/]/] } },
   },
 })

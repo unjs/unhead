@@ -30,6 +30,7 @@
       "@unhead/vue/server": ["./packages/vue/src/server"],
       "@unhead/vue/lazy": ["./packages/vue/src/lazy"],
       "@unhead/react/lazy": ["./packages/react/src/lazy"],
+      "@unhead/solid-js/lazy": ["./packages/solid-js/src/lazy"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
       "@unhead/bundler/framework": ["./packages/bundler/src/unplugin/framework"],
