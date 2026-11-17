@@ -27,6 +27,8 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
   { id: 'reactClient', name: 'React Client (Minimal)', category: 'React', file: 'react-client/react-client/minimal.mjs' },
   { id: 'reactClientFull', name: 'React Client (Full)', category: 'React', file: 'react-client-full/react-client/full.mjs' },
+  { id: 'reactClientLazy', name: 'React Client (Lazy head, eager)', category: 'React', file: 'react-client-lazy/react-client/lazy.mjs' },
+  { id: 'reactClientLazyRuntime', name: 'React Client (Lazy head, runtime chunk)', category: 'React', file: 'react-client-lazy/chunks/runtime.mjs' },
   { id: 'reactServer', name: 'React Server (Minimal)', category: 'React', file: 'react-server/react-server/minimal.mjs' },
   { id: 'schemaOrg', name: 'Schema.org (Minimal)', category: 'Schema.org', file: 'schema-org/schema-org/minimal.mjs' },
   { id: 'schemaOrgImports', name: 'Schema.org Imports', category: 'Schema.org', file: 'schema-org/schema-org/imports.mjs' },
