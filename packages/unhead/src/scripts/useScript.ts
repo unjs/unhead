@@ -18,8 +18,8 @@ import type {
   UseScriptScopeReturn,
   WarmupStrategy,
 } from './types'
+import { callHook } from '../utils/callHook'
 import { hasOwn } from '../utils/hasOwn'
-import { callHook } from '../utils/hooks'
 import { createScriptProxy } from './proxy'
 import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'

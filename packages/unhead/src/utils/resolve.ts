@@ -1,7 +1,7 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
+import { callHook } from './callHook'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
 const LT_RE = /</g
