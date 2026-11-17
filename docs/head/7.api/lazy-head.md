@@ -13,7 +13,7 @@ app.mount('#app')
 head.render()
 ```
 
-The [lazy head](/docs/vue/head/guides/core-concepts/lazy-head) is a client head for a server rendered page. It stores entries without touching the document. It loads the DOM runtime on the first head change, or when `load()` runs.
+The lazy head is a client head for a server rendered page. It stores entries without touching the document. It loads the DOM runtime on the first head change, or when `load()` runs.
 
 ::note
 The lazy head is experimental. Its API may change in a minor release.
@@ -21,18 +21,30 @@ The lazy head is experimental. Its API may change in a minor release.
 
 ## Entry points
 
-| Entry point | Exports |
-| --- | --- |
-| `@unhead/vue/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyVueHead` |
-| `unhead/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyUnhead` |
+| Entry point | Exports | Guide |
+| --- | --- | --- |
+| `@unhead/vue/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyVueHead` | [Vue](/docs/vue/head/guides/core-concepts/lazy-head) |
+| `@unhead/react/lazy` | `createHead`, `UnheadProvider` | [React](/docs/react/head/guides/core-concepts/lazy-head) |
+| `@unhead/solid-js/lazy` | `createHead`, `UnheadContext` | [Solid](/docs/solid-js/head/guides/core-concepts/lazy-head) |
+| `@unhead/svelte/lazy` | `createHead`, `UnheadContextKey` | [Svelte](/docs/svelte/head/guides/core-concepts/lazy-head) |
+| `unhead/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyUnhead` | None |
 
-The Vue export adds the Vue plugin install. During hydration, a call from a mounted component loads the runtime at once. An example is `useHead()` in `onMounted()`. A call from a component that the server did not render loads it at once too. It also names components in the dev warning. Use `unhead/lazy` only to build an adapter for another framework.
+The framework exports add what only that framework knows:
+
+- Vue adds the Vue plugin install. During hydration, a call from a mounted component loads the runtime at once. An example is `useHead()` in `onMounted()`. A call from a component that the server did not render loads it at once too. Vue also names components in the dev warning.
+- React adds an `UnheadProvider` that calls `render()` when hydration ends.
+- Before `render()`, Solid loads the runtime at once for a push from a component that is not hydrating.
+- Svelte adds nothing to `unhead/lazy`. It exports the context key, so the client entry imports one module.
+
+Use `unhead/lazy` only to build an adapter for another framework.
 
 ## API Reference
 
 ```ts
-function createHead(options?: LazyHeadOptions): LazyVueHead
+function createHead(options?: LazyHeadOptions): LazyUnhead
 ```
+
+The Vue export returns `LazyVueHead`, which adds the Vue plugin install.
 
 ### Options
 
@@ -62,8 +74,8 @@ After hydration, a `dom:beforeRender` pause holds the load. Pause during a navig
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The lazy head code in the eager bundle | With the app | About 2.3 KB with `@unhead/vue` |
-| The runtime | With the first head change | About 4.6 KB |
+| The lazy head code in the eager bundle | With the app | About 2.3 KB with `@unhead/vue`, 1.9 KB with `@unhead/react` |
+| The runtime | With the first head change | About 4.6 KB with `@unhead/vue`, 4.8 KB with `@unhead/react` |
 | The dev check | In development, after hydration | None in production |
 
 If your server adds prefetch hints for dynamic imports, the browser downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
