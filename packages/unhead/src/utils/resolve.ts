@@ -252,10 +252,16 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   // Hooks may insert legacy tags or replace either attribute field.
   // A copied baseline attrs reference lets immutable props replacements work.
   // When both fields are new, the explicit canonical attrs wins.
-  for (const t of ctx.tags) {
-    if (t.attrs === undefined || (t.props !== undefined && t.props !== t.attrs && preHookRefs?.has(t.attrs)))
-      t.attrs = t.props ?? {}
-    t.props = t.attrs
+  for (let i = 0; i < ctx.tags.length; i++) {
+    const t = ctx.tags[i]
+    if (t.attrs !== undefined && t.props === t.attrs)
+      continue
+    const attrs = t.attrs === undefined || (t.props !== undefined && preHookRefs?.has(t.attrs))
+      ? t.props ?? {}
+      : t.attrs
+    // Prepared tags may be frozen and shared across requests. Only copy tags
+    // whose aliases differ, without writing to the source or its entry cache.
+    ctx.tags[i] = { ...t, attrs, props: attrs }
   }
   return sanitizeTagsInPlace(ctx.tags)
 }
