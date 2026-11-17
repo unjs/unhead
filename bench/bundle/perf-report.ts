@@ -182,6 +182,9 @@ export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
     out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
   out.push('', '</details>')
+  if (rows.some(row => row.bench.kind === 'memory')) {
+    out.push('', 'Memory rows show process measurements after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
+  }
 
   return out.join('\n')
 }

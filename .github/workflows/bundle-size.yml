@@ -42,6 +42,7 @@ jobs:
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
           cp bench/csr-memory.ts /tmp/csr-memory.ts
+          cp bench/memory.ts /tmp/memory.ts
           cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
           cp bench/unplugin-transform.bench.ts /tmp/unplugin-transform.bench.ts
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing

@@ -67,6 +67,7 @@ describe('renderPerfReport allocation noise gate', () => {
     expect(report).toContain('| CSR retained heap | 2000 KiB | 100 KiB |')
     expect(report).toContain('ℹ️ -95.0%')
     expect(report).toContain('No significant change')
+    expect(report).toContain('RSS includes runtime overhead.')
   })
 
   it('keeps allocation changes within the combined RME out of the verdict', () => {

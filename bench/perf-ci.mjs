@@ -397,9 +397,9 @@ const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs:
 const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
 // Isolate retained heap from the allocation profiler and timing benchmark state.
 // The same TypeScript harness runs against both built refs, including from /tmp.
-const csrMemory = JSON.parse(execFileSync(process.execPath, [
-  '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)),
-], { encoding: 'utf8' }))
+const memoryBenches = ['ssr', 'csr', 'router-hints'].flatMap(scenario => JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)), scenario,
+], { encoding: 'utf8' })).benches)
 
 const result = {
   benches: [
@@ -411,7 +411,7 @@ const result = {
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
-    ...csrMemory.benches,
+    ...memoryBenches,
   ],
 }
 
