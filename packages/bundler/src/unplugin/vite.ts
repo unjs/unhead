@@ -7,7 +7,7 @@ import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
-export type { VitePluginOptions }
+export type { InternalFrameworkContext, VitePluginOptions }
 
 /**
  * Vite plugin factory that composes the core Unhead build-time transforms

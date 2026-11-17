@@ -4,6 +4,7 @@ import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
+import { isEmptyProps } from '../utils/resolve'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
@@ -40,30 +41,71 @@ const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
   { _static: true },
 )
 
-let defaultInitTags: HeadTag[] | undefined
+// normalized tags per entry index (`_i`), computed lazily once per process
+let defaultInitTags: HeadTag[][] | undefined
+let preparedInputs: WeakMap<object, HeadTag[][]> | undefined
+
+// resolveTags asks this for an entry's precomputed shared tags (default and prepared init
+// entries, prepared templates). They are valid only while nothing can observe or alter
+// normalization for this entry: no per-resolve tagWeight override (the array was weighted
+// with capoTagWeight, the head's weight whenever this is set), no entries:normalize hook (it
+// must see every entry's tags, e.g. the legacy DeprecationsPlugin), no entries:resolve hook
+// (its listeners may reach and mutate `_tags`, and this array is SHARED across head
+// instances), and no entry options (they get assigned onto each tag). The array is
+// deliberately NOT cached on `e._tags`, so a hook registered between renders takes the
+// normalize path instead of reaching the shared array.
+const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e, weightFn, hooks) => {
+  if (e._precomputedTags
+    && weightFn === capoTagWeight
+    && !hooks['entries:normalize']?.length
+    && !hooks['entries:resolve']?.length
+    && (!e.options || isEmptyProps(e.options))) {
+    return e._precomputedTags
+  }
+}
 
 /**
- * Normalized tags for {@link DEFAULT_INIT}, computed lazily once per process.
+ * Normalizes entry input into resolved tags for the entry at `entryIndex`,
+ * weighted with `capoTagWeight`.
  *
- * Mirrors the first-resolve normalization in `utils/resolve.ts` exactly:
- * the default entry is always the first push (`_i === 1`), it has no `on*`
- * handlers so the server prop resolver is a no-op, and weights use the
- * default `capoTagWeight`. Any deviation from those assumptions must skip
- * attaching the precomputed array (see guards in `createHead`).
+ * @internal
  */
-function getDefaultInitTags(): HeadTag[] {
-  if (!defaultInitTags) {
-    defaultInitTags = normalizeEntryToTags(DEFAULT_INIT, [])
-    for (let i = 0; i < defaultInitTags.length; i++) {
-      const t = defaultInitTags[i]
-      t._w = capoTagWeight(t)
-      t._p = (1 << 10) + i
-      t._d = dedupeKey(t)
-      if (!t._d)
-        t._h = hashTag(t)
-    }
+export function precomputeEntryTags(input: any, entryIndex: number, propResolvers: PropResolver[]): HeadTag[] {
+  const tags = normalizeEntryToTags(input, propResolvers)
+  for (let i = 0; i < tags.length; i++) {
+    const t = tags[i]
+    t._w = capoTagWeight(t)
+    t._p = (entryIndex << 10) + i
+    t._d = dedupeKey(t)
+    if (!t._d)
+      t._h = hashTag(t)
   }
-  return defaultInitTags
+  return tags
+}
+
+/**
+ * Marks static head input so server heads that receive it through `init`
+ * normalize it once per process instead of once per request.
+ *
+ * The input is resolved once and the resulting tags are shared across heads,
+ * so it must be plain data that is not mutated afterwards. Keep it at process
+ * scope. Heads with entry hooks, a custom tag weight or non-static prop
+ * resolvers normalize it per request as usual.
+ *
+ * @experimental The prepared-input API may change in a future minor release.
+ *
+ * @example
+ * ```ts
+ * const appHead = prepareHeadInput({ htmlAttrs: { lang: 'en' }, title: 'My App' })
+ * // per request
+ * const head = createHead({ init: [appHead] })
+ * ```
+ */
+export function prepareHeadInput<T extends object>(input: T): T {
+  const prepared = preparedInputs ||= new WeakMap()
+  if (!prepared.has(input))
+    prepared.set(input, [])
+  return input
 }
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -71,6 +113,8 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   const tagWeight = options.tagWeight || capoTagWeight
   const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
     _tagWeight: tagWeight,
+    // precomputed tags carry capo weights, so another weight never uses them
+    _precomputed: tagWeight === capoTagWeight ? precomputedTags : undefined,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,
@@ -84,17 +128,17 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     ],
   })
 
-  // fast path: skip re-normalizing the default init entry per request.
-  // Only when the entry is byte-for-byte the precomputed one: default tag
-  // weights (capo) and every custom propResolver marked `_static`, i.e.
-  // identity for the entry's plain static values (e.g. VueResolver; the
-  // built-in server resolver is also a no-op as the entry has no `on*`
-  // handlers).
-  if (!options.disableDefaults && !options.tagWeight && !options.propResolvers?.some(r => !r._static)) {
-    // the default entry is the first init push, so `_i === 1`
-    const defaultEntry = core.entries.get(1)
-    if (defaultEntry)
-      defaultEntry._precomputedTags = getDefaultInitTags()
+  // fast path: skip re-normalizing the default and prepared init entries per
+  // request. Only when the entry is byte-for-byte the precomputed one: default
+  // tag weights (capo) and every custom propResolver marked `_static`, i.e.
+  // identity for the entry's plain static values (e.g. VueResolver).
+  if (tagWeight === capoTagWeight && !options.propResolvers?.some(r => !r._static)) {
+    for (const entry of core.entries.values()) {
+      const input = entry.input as object
+      const cache = input === DEFAULT_INIT ? (defaultInitTags ||= []) : preparedInputs?.get(input)
+      if (cache)
+        entry._precomputedTags = cache[entry._i] ||= precomputeEntryTags(input, entry._i, core.resolvedOptions.propResolvers!)
+    }
   }
 
   core.hooks = createHooks<ServerHeadHooks>(options.hooks)

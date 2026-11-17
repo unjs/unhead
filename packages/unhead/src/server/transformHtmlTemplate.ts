@@ -1,8 +1,7 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { HeadTag, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
-import { dedupeKey, hashTag } from '../utils/dedupe'
-import { normalizeEntryToTags } from '../utils/normalize'
+import { precomputeEntryTags } from './createHead'
 import { capoTagWeight } from './sort'
 
 interface ExtractedTemplateCache {
@@ -45,19 +44,6 @@ function hasHooks(head: Unhead<any>): boolean {
   return false
 }
 
-function precomputeExtractedTags(input: PreparedHtmlTemplateWithIndexes['input']): HeadTag[] {
-  const tags = normalizeEntryToTags(input, [])
-  for (let i = 0; i < tags.length; i++) {
-    const tag = tags[i]
-    tag._w = capoTagWeight(tag)
-    tag._p = i
-    tag._d = dedupeKey(tag)
-    if (!tag._d)
-      tag._h = hashTag(tag)
-  }
-  return tags
-}
-
 function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateCache {
   const cache = extractedTemplates ||= new WeakMap()
   let extracted = cache.get(prepared)
@@ -66,7 +52,7 @@ function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateC
     freezeExtractedInput(template.input)
     Object.freeze(template.indexes)
     Object.freeze(template)
-    const tags = precomputeExtractedTags(template.input)
+    const tags = precomputeEntryTags(template.input, 0, [])
     freezeExtractedInput(tags)
     extracted = Object.freeze({
       template,
