@@ -62,8 +62,8 @@ After hydration, a `dom:beforeRender` pause holds the load. Pause during a navig
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The lazy head code in the eager bundle | With the app | About 2.2 KB with `@unhead/vue` |
-| The runtime | With the first head change | About 4.5 KB |
+| The lazy head code in the eager bundle | With the app | About 2.3 KB with `@unhead/vue` |
+| The runtime | With the first head change | About 4.6 KB |
 | The dev check | In development, after hydration | None in production |
 
 If your server adds prefetch hints for dynamic imports, the browser downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
