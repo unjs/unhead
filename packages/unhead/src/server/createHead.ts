@@ -4,6 +4,7 @@ import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
+import { isEmptyProps } from '../utils/resolve'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
@@ -47,6 +48,26 @@ const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
 // normalized tags per entry index (`_i`), computed lazily once per process
 let defaultInitTags: HeadTag[][] | undefined
 let preparedInputs: WeakMap<object, HeadTag[][]> | undefined
+
+// resolveTags asks this for an entry's precomputed shared tags (default and prepared init
+// entries, prepared templates). They are valid only while nothing can observe or alter
+// normalization for this entry: no per-resolve tagWeight override (the array was weighted
+// with capoTagWeight, the head's weight whenever this is set), no entries:normalize hook (it
+// must see every entry's tags, e.g. the legacy DeprecationsPlugin), no entries:resolve hook
+// (its listeners may reach and mutate `_tags`, and this array is SHARED across head
+// instances), and no entry options (they get assigned onto each tag). The array is
+// deliberately NOT cached on `e._tags`, so a hook registered between renders takes the
+// normalize path instead of reaching the shared array.
+const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e, weightFn, hooks) => {
+  if (e._precomputedTags
+    && weightFn === capoTagWeight
+    && !hooks['entries:normalize']?.length
+    && !hooks['entries:resolve']?.length
+    && !hooks['tag:normalise']?.length
+    && (!e.options || isEmptyProps(e.options))) {
+    return e._precomputedTags
+  }
+}
 
 /**
  * Normalizes entry input into resolved tags for the entry at `entryIndex`,
@@ -101,6 +122,8 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions<
   const tagWeight = options.tagWeight || capoTagWeight
   const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
     _tagWeight: tagWeight,
+    // precomputed tags carry capo weights, so another weight never uses them
+    _precomputed: tagWeight === capoTagWeight ? precomputedTags : undefined,
     // @ts-expect-error server heads do not have a document
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,

@@ -1,5 +1,5 @@
 import type { PropResolver } from 'unhead/types'
-import { isRef, toValue } from 'vue'
+import { isRef, unref } from 'vue'
 
 const refResolvers = new WeakMap<object, unknown>()
 
@@ -13,7 +13,7 @@ export const VueResolver: PropResolver = /* @__PURE__ */ Object.assign(
     if (!isRef(value))
       return value
 
-    const resolved = toValue(value)
+    const resolved = unref(value)
     const resolver = (value as typeof value & { _resolver?: unknown })._resolver || refResolvers.get(value)
     if (resolver && resolved && typeof resolved === 'object') {
       return {

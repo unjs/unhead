@@ -11,12 +11,6 @@ const SupportedAttrs: Partial<Record<string, string>> = {
 
 const contentAttrs: (keyof Pick<HeadTag, 'innerHTML' | 'textContent'>)[] = ['innerHTML', 'textContent']
 
-function processIfNeeded(value: string, params: TemplateParams, separator: string, isJson = false) {
-  return typeof value === 'string' && value.includes('%')
-    ? processTemplateParams(value, params, separator, isJson)
-    : value
-}
-
 export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
   return {
     key: 'template-params',
@@ -28,7 +22,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, Ren
         const sep = params.separator || '|'
         delete params.separator
         // pre-process title
-        params.pageTitle = processIfNeeded(
+        params.pageTitle = processTemplateParams(
           // find templateParams
           params.pageTitle as string || head._title || '',
           params,
@@ -40,13 +34,13 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, Ren
           }
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.props[v] === 'string') {
-            tag.props[v] = processIfNeeded(tag.props[v], params, sep)
+            tag.props[v] = processTemplateParams(tag.props[v], params, sep)
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
             for (const p of contentAttrs) {
               if (typeof tag[p] === 'string')
-                tag[p] = processIfNeeded(tag[p], params, sep, tag.tag === 'script' && typeof tag.props.type === 'string' && tag.props.type.endsWith('json'))
+                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && String(tag.props.type).endsWith('json'))
             }
           }
         }
@@ -58,7 +52,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin(<Input, Ren
         // we need to re-process in case then user had a function as the titleTemplate
         const title: HeadTag | undefined = tagMap.get('title')
         if (typeof title?.textContent === 'string' && title.processTemplateParams !== false) {
-          title.textContent = processIfNeeded(title.textContent, head._templateParams!, head._separator!)
+          title.textContent = processTemplateParams(title.textContent, head._templateParams!, head._separator!)
         }
       },
     },
