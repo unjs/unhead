@@ -109,8 +109,8 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   const adapter = options as LazyHeadAdapterOptions
   const document = options.document || (typeof window !== 'undefined' ? window.document : undefined)
   const hooks = createHookStore(options.hooks)
-  // Keep server inputs separate from live entries throughout hydration.
-  const hydrationEntries = new Map<number, HeadEntry<T>>()
+  // Copies of the server rendered entries, kept apart from live entries throughout hydration
+  let serverEntries: HeadEntry<T>[] = []
   let hydrationChanged = false
   let hydrated: HeadEntry<T>[] | undefined
   let loading: Promise<boolean> | undefined
@@ -174,8 +174,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
     // The check compares with a copy, because an app can edit the input object in place and patch with it.
     let last = copyInput(input)
-    if (serverRendered)
-      hydrationEntries.set(_i, { ...entry, input: last })
+    const server = serverRendered ? { ...entry, input: last } : undefined
+    if (server)
+      serverEntries.push(server)
     // eslint-disable-next-line node/prefer-global/process
     if (process.env.NODE_ENV !== 'production' && adapter._entrySource)
       sources[_i] ||= adapter._entrySource()
@@ -219,7 +220,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
             if (next !== lastRef || !head.entries.has(_i) || sameInput(last, next))
               return
             last = copyInput(next)
-            const server = hydrationEntries.get(_i)
             // During hydration, a component that builds its input in place renders what the server rendered
             if (!hydrated && !loading && server)
               server.input = last
@@ -246,7 +246,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
         change()
     }
     else {
-      hydrated = [...hydrationEntries.values()]
+      hydrated = serverEntries
       head.dirty = hydrationChanged
       // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
       // eslint-disable-next-line node/prefer-global/process
@@ -264,17 +264,14 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // A load before hydration ends that no change started means no server head applies: a page
     // with no server render, or a head created after hydration. Nothing is left to adopt, so the
     // first render takes the entries as they are then, as the default client head does.
-    if (!hydrated && !loading && !hydrationChanged) {
-      hydrated = []
-      hydrationEntries.clear()
-    }
+    if (!hydrated && !loading && !hydrationChanged)
+      hydrated = serverEntries = []
     // The runtime and the lazy plugins load together, so the first change waits one round trip.
     return loading ||= Promise.all([import('./runtime'), useLazyPlugins()])
       .then(([runtime]) => {
         render = runtime.upgradeHead(head, options, () => hydrated!)
         // the runtime adopts these at its first render, which runs after this
-        hydrated ||= [...hydrationEntries.values()]
-        hydrationEntries.clear()
+        hydrated ||= serverEntries
         head._b = false
         head.render()
         return true
