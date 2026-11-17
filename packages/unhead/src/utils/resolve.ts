@@ -1,8 +1,9 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
-import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { isTagMerge, mergeTagProps } from './tagMerge'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -83,16 +84,8 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
       ctx.tagMap.set(k, next)
       continue
     }
-    const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
-    if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
-      }
-      ctx.tagMap.set(k, { ...next, props })
+    if (isTagMerge(next, prev)) {
+      ctx.tagMap.set(k, { ...next, props: mergeTagProps(prev.props, next.props) })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
