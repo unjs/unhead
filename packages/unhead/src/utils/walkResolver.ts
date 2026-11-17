@@ -4,7 +4,7 @@ import { isUnsafeKey } from './unsafeKey'
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
   if (key === '_resolver')
     return val
-  if (typeof val === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on'))))
+  if (typeof val === 'function' && key !== 'titleTemplate' && !key?.startsWith('on'))
     val = val()
   const v = resolve ? resolve(key, val) : val
   // Structural sharing: only allocate a new array/object when a child actually
@@ -16,14 +16,11 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
     let out: any[] | undefined
     for (let i = 0; i < v.length; i++) {
       const r = walkResolver(v[i], resolve)
-      if (out) {
-        out[i] = r
-      }
-      else if (r !== v[i]) {
-        // first changed element: lazily clone the prefix we already passed
+      // first changed element: lazily clone the prefix we already passed
+      if (!out && r !== v[i])
         out = v.slice(0, i)
+      if (out)
         out[i] = r
-      }
     }
     return out || v
   }
