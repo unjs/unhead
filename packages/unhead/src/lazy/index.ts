@@ -125,7 +125,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     _entryCount: 1,
     _h: 0,
     plugins: new Map(),
-    resolvedOptions: { document, propResolvers: options.propResolvers, init: [] },
+    resolvedOptions: { document, propResolvers: options.propResolvers },
     ssr: false,
     entries,
     hooks: hooks as unknown as HookableCore<ClientHeadHooks>,
@@ -156,6 +156,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   }
   // Render here because an async hook listener could break batching.
   const notify = (changed?: boolean) => {
+    head.dirty = true
     hooks.callHook('entries:updated', head)
     if (!head._b)
       head.render()
@@ -165,7 +166,6 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   head.invalidate = () => {
     for (const entry of head.entries.values())
       delete entry._tags
-    head.dirty = true
     notify(true)
   }
 
@@ -189,13 +189,11 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // eslint-disable-next-line node/prefer-global/process
     if (process.env.NODE_ENV !== 'production' && adapter._entrySource)
       sources[_i] ||= adapter._entrySource()
-    head.dirty = true
     notify(!serverRendered)
     const update = (next: T) => {
       entry._pending = next
-      if (!entries.has(_i))
-        entries.set(_i, entry)
-      head.dirty = true
+      // a patch after dispose adds the entry again
+      entries.set(_i, entry)
       notify(true)
     }
     let lastRef = input
