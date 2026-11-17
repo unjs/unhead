@@ -161,20 +161,24 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "unplugin": "catalog:",
     "vite": ">=6.4.2"
   },
   "peerDependenciesMeta": {
+    "unplugin": {
+      "optional": true
+    },
     "vite": {
       "optional": true
     }
   },
   "dependencies": {
-    "hookable": "catalog:",
-    "unplugin": "catalog:"
+    "hookable": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
     "rollup": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:"
   }
 }
