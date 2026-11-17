@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactElement } from 'react'
-import { act, StrictMode, useEffect, useState } from 'react'
+import { act, StrictMode, Suspense, useEffect, useState } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -106,6 +106,30 @@ describe('react lazy head', () => {
     await settle()
     expect(document.title).toBe('Home')
     expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
+  })
+
+  // React hydrates a boundary after the shell commits, so its entries arrive after the provider effect
+  it('useHead() inside <Suspense> loads the runtime after hydration and keeps one copy of each tag', async () => {
+    function Page() {
+      useHead({ title: 'Page', meta: [{ name: 'description', content: 'desc' }] })
+      return <div id="page">page</div>
+    }
+    function Shell() {
+      useHead({ meta: [{ name: 'shell', content: 'yes' }] })
+      return <Suspense fallback={null}><Page /></Suspense>
+    }
+    serverRender(<Shell />)
+    const element = document.getElementById('page')
+    const head = createLazyHead()
+    const load = vi.spyOn(head, 'load')
+    await hydrate(<Shell />, head)
+    expect(load).toHaveBeenCalled()
+    await settle()
+    expect(document.getElementById('page')).toBe(element)
+    expect(document.title).toBe('Page')
+    expect(document.querySelectorAll('title')).toHaveLength(1)
+    expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
+    expect(document.querySelectorAll('meta[name="shell"]')).toHaveLength(1)
   })
 
   it('a re-render with an equal input loads nothing', async () => {
