@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { ClientUnhead } from '../client/adapter'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
-import { createUnhead } from '../unhead'
+import { registerPlugin } from '../unhead'
 import { copyInput, sameInput } from './same'
 
 /**
@@ -118,14 +118,23 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   let plugins: Promise<void> | undefined
   const sources: Record<number, string | undefined> = {}
 
-  // The client head of `createClientHeadAdapter`, built in place: each change then tells
-  // the lazy head at once whether it needs the runtime, with no hook listener or second wrapper.
-  const head = createUnhead<T, boolean>(h => render(h), { document, propResolvers: options.propResolvers, init: [] }) as LazyUnhead<T>
-  head.ssr = false
-  head.hooks = hooks as unknown as HookableCore<ClientHeadHooks>
-  head.dirty = false
-  // the runtime renders each change after the load, unless batching
-  head._b = true
+  // The head of `createUnhead` and `createClientHeadAdapter`, built in place: one push wrapper
+  // tells the lazy head at once whether a change needs the runtime. Keep the two in step.
+  const entries = new Map<number, HeadEntry<T>>()
+  const head = {
+    _entryCount: 1,
+    _h: 0,
+    plugins: new Map(),
+    resolvedOptions: { document, propResolvers: options.propResolvers, init: [] },
+    ssr: false,
+    entries,
+    hooks: hooks as unknown as HookableCore<ClientHeadHooks>,
+    dirty: false,
+    // the runtime renders each change after the load, unless batching
+    _b: true,
+    render: () => render(head),
+    use: (p: HeadPluginInput) => registerPlugin(head, p),
+  } as unknown as LazyUnhead<T>
 
   // the lazy plugins register once, for the runtime or the dev check, whichever runs first
   const useLazyPlugins = () => plugins ||= Promise.resolve(options.lazyPlugins?.()).then((list) => {
@@ -160,16 +169,16 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     notify(true)
   }
 
-  const corePush = head.push
   head.push = (input, entryOptions) => {
     const unhook = entryOptions?.onRendered
       ? hooks.hook('dom:rendered', entryOptions.onRendered as any)
       : undefined
     // During hydration a push is a page entry the server rendered, unless the adapter says otherwise.
     const serverRendered = !hydrated && !adapter._isClientOnlyPush?.()
-    const { _i, patch, dispose } = corePush(input, entryOptions)
-    const entry = head.entries.get(_i)!
-    entry._o = input
+    const _i = entryOptions?._index ?? head._entryCount++
+    const { head: _head, onRendered: _onRendered, _index, ...entryOpts } = entryOptions || {}
+    const entry: HeadEntry<T> = { _i, input, options: entryOpts, _o: input }
+    entries.set(_i, entry)
     // A reactive input resolves again on any dependency change, such as the route that the router
     // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
     // The check compares with a copy, because an app can edit the input object in place and patch with it.
@@ -183,7 +192,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     head.dirty = true
     notify(!serverRendered)
     const update = (next: T) => {
-      patch(next)
+      entry._pending = next
+      if (!entries.has(_i))
+        entries.set(_i, entry)
       head.dirty = true
       notify(true)
     }
@@ -231,7 +242,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       dispose() {
         unhook?.()
         if (head.entries.has(_i)) {
-          dispose()
+          entries.delete(_i)
           head.invalidate()
         }
       },
