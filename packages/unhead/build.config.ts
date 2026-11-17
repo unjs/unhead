@@ -150,12 +150,7 @@ export default defineBuildConfig([{
   clean: false,
   declaration: true,
   hooks: {
-    'rollup:options': (ctx, options) => {
-      // No entry of this build adopts a server rendered head, so rollup can drop the adoption
-      // branches of the DOM renderer. They sit in a try block, which rollup keeps whole by default.
-      options.treeshake = { ...(typeof options.treeshake === 'object' ? options.treeshake : {}), tryCatchDeoptimization: false }
-      failOnSideEffects(ctx, options)
-    },
+    'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {
       const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
