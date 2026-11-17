@@ -1,9 +1,9 @@
 import type { HeadTag, Unhead } from '../types'
+import { tagWeight } from '../client/tagWeight'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
-import { tagWeight } from './runtime'
 
 // Only dev builds load this module. It compares the tags the client would render with the
 // server head in the document, and names each one that waits for the first head change.

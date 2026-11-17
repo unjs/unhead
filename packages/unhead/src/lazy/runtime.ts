@@ -1,12 +1,9 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { HeadEntry, HeadRenderer, HeadTag } from '../types'
+import type { HeadEntry, HeadRenderer } from '../types'
 import type { LazyHeadOptions } from './index'
 import { adoptDOMHead, createDomRenderer } from '../client/renderDOMHead'
+import { tagWeight } from '../client/tagWeight'
 import { createDebouncedFn } from '../client/util'
-import { TagPriorityAliases } from '../utils/const'
-
-// the weight of v3 `createHead` from `unhead/client`
-export const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
 // element unknown to the renderer. Adopt only existing elements without replaying
