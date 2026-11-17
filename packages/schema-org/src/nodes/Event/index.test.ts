@@ -240,6 +240,59 @@ describe('defineEvent', () => {
     })
   })
 
+  it('resolves relative location urls against the host', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Hybrid event',
+          location: [
+            definePlace({
+              name: 'Venue',
+              url: '/venues/1',
+              address: { addressLocality: 'Springfield', addressCountry: 'US' },
+            }),
+            { '@type': 'VirtualLocation', 'url': '/live' },
+          ],
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+      expect(event.location).toMatchObject([
+        { '@type': 'Place', 'url': 'https://example.com/venues/1' },
+        { '@type': 'VirtualLocation', 'url': 'https://example.com/live' },
+      ])
+    })
+  })
+
+  it.each([
+    ['//locations.example/room', '//locations.example/room'],
+    ['https://locations.example/room', 'https://locations.example/room'],
+    ['#room', 'https://example.com/#room'],
+    ['room', 'room'],
+  ])('resolves location URL forms: %s', async (url, expected) => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Hybrid event',
+          location: [
+            definePlace({
+              name: 'Venue',
+              url,
+              address: { addressLocality: 'Springfield', addressCountry: 'US' },
+            }),
+            { '@type': 'VirtualLocation', url },
+          ],
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+      expect(event.location).toMatchObject([
+        { '@type': 'Place', 'url': expected },
+        { '@type': 'VirtualLocation', 'url': expected },
+      ])
+    })
+  })
+
   it('detects plain physical locations', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
