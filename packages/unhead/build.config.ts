@@ -100,6 +100,23 @@ async function buildIifeFromSource(rootDir: string) {
   return chunk.code
 }
 
+const WALK_RESOLVER = resolve(__dirname, 'src/utils/walkResolver.ts')
+
+// Framework `useHead` composables import `walkResolver` from `unhead/utils`, so it is in the
+// eager chunk of an app. The lazy build imports it from there too, so the runtime chunk of
+// the app reuses that copy.
+function shareWalkResolver(_: unknown, options: RollupOptions) {
+  (options.plugins as any[]).unshift({
+    name: 'unhead:lazy-share-walk-resolver',
+    async resolveId(this: any, source: string, importer?: string) {
+      if (!importer || !source.endsWith('/walkResolver'))
+        return null
+      const resolved = await this.resolve(source, importer, { skipSelf: true })
+      return resolved?.id === WALK_RESOLVER ? { id: 'unhead/utils', external: true } : null
+    },
+  })
+}
+
 function failOnSideEffects(_: unknown, options: RollupOptions) {
   options.experimentalLogSideEffects = true
   const onwarn = options.onwarn
@@ -115,12 +132,16 @@ function failOnSideEffects(_: unknown, options: RollupOptions) {
 export default defineBuildConfig([{
   // The lazy head builds first and alone, so it shares no dist file with the other entries
   // and leaves their dist as it was. Its runtime chunk holds its own copy of the resolve
-  // pipeline. The package exports of the next build do not exist yet, so warnings pass here.
+  // pipeline, apart from `walkResolver`. The package exports of the next build do not exist
+  // yet, so warnings pass here.
   clean: true,
   declaration: true,
   failOnWarn: false,
   hooks: {
-    'rollup:options': failOnSideEffects,
+    'rollup:options': (ctx, options) => {
+      shareWalkResolver(ctx, options)
+      failOnSideEffects(ctx, options)
+    },
   },
   entries: [
     { input: 'src/lazy/index', name: 'lazy' },
