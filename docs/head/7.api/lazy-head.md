@@ -48,7 +48,7 @@ The head has the methods of the client head, plus these:
 
 | Method | Description |
 | --- | --- |
-| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. A failed load resets, so a later change or `load()` tries again. Call it at once for a page with no server render, or for a head created after hydration. |
+| `load()` | Loads the runtime now. Safe to call more than once. Resolves `true` on success and `false` on failure. A failed load resets, so a later change or `load()` tries again. Call it at once for a page with no server render, or for a head created after hydration. Before hydration ends, a load that no change started means no server head applies, so the head adopts nothing. |
 | `render()` | Before the runtime loads, the first call marks the end of hydration. A later call loads the runtime if entries changed, unless a `dom:beforeRender` pause holds it. After the runtime loads, it renders. |
 
 A `dom:beforeRender` pause holds the load. Pause during a navigation, and call `render()` when it ends.
