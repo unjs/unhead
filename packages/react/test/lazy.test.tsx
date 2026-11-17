@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactElement } from 'react'
-import { act, useEffect, useState } from 'react'
+import { act, StrictMode, useEffect, useState } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -21,9 +21,9 @@ function serverRender(app: ReactElement) {
 
 let roots: { unmount: () => void }[] = []
 
-async function hydrate(app: ReactElement, head = createLazyHead()) {
+async function hydrate(app: ReactElement, head = createLazyHead(), wrap = (root: ReactElement) => root) {
   await act(async () => {
-    roots.push(hydrateRoot(document.getElementById('app')!, <UnheadProvider value={head}>{app}</UnheadProvider>))
+    roots.push(hydrateRoot(document.getElementById('app')!, wrap(<UnheadProvider value={head}>{app}</UnheadProvider>)))
   })
   return head
 }
@@ -89,6 +89,23 @@ describe('react lazy head', () => {
     await head.load()
     await settle()
     expect([...document.head.children]).toEqual(nodes)
+  })
+
+  // StrictMode reruns each effect in development, so the dispose of the first run is a change
+  it('in development, StrictMode loads the runtime after hydration and keeps the server head', async () => {
+    function Home() {
+      useHead({ title: 'Home', meta: [{ name: 'description', content: 'desc' }] })
+      return <div id="home">home</div>
+    }
+    serverRender(<Home />)
+    const head = createLazyHead()
+    const load = vi.spyOn(head, 'load')
+    // as the installation guide wraps the provider
+    await hydrate(<Home />, head, root => <StrictMode>{root}</StrictMode>)
+    expect(load).toHaveBeenCalled()
+    await settle()
+    expect(document.title).toBe('Home')
+    expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
   })
 
   it('a re-render with an equal input loads nothing', async () => {
