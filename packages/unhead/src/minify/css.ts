@@ -111,7 +111,8 @@ export function minifyCSS(code: string): string {
       end--
     return result.slice(0, end)
   }
-  return result
+  // Copy the output so quoted slices cannot retain the entire source.
+  return `${result} `.slice(0, -1)
 }
 
 function isCSSWhitespace(ch: string): boolean {
