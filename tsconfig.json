@@ -39,6 +39,7 @@
       "@unhead/schema-org/vue": ["./packages/schema-org/src/vue/index"],
       "@unhead/schema-org/vue/meta": ["./packages/schema-org/src/vue/meta"],
       "@unhead/svelte/types": ["./packages/svelte/src/types"],
+      "@unhead/svelte/lazy": ["./packages/svelte/src/lazy"],
       "@unhead/angular": ["./packages/angular/src/index"],
       "@unhead/angular/client": ["./packages/angular/client/src/index"],
       "@unhead/angular/server": ["./packages/angular/server/src/index"]
