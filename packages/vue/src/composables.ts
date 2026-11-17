@@ -15,19 +15,21 @@ import {
   onDeactivated,
   onScopeDispose,
   ref,
+  unref,
   watchEffect,
 } from 'vue'
 import { injectHead } from './install'
-import { VueResolver } from './resolver'
 
 export { injectHead } from './install'
 
+// VueResolver without its `_static` marker, which only server heads read
+const resolveRefs = (_?: string, value?: any) => unref(value)
+
 export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
   const head = (options.head || injectHead()) as Unhead<I>
-  return head.ssr ? head.push((input || {}) as I, options as HeadEntryOptions) : clientUseHead(head, input as I, options as HeadEntryOptions)
-}
+  if (head.ssr)
+    return head.push((input || {}) as I, options as HeadEntryOptions)
 
-function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   const scope = getCurrentScope()
 
   // Dead scope (e.g. setup resuming after an await once a Suspense/KeepAlive
@@ -47,12 +49,12 @@ function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: He
 
   let entry: ActiveHeadEntry<I>
   watchEffect(() => {
-    const i = deactivated.value ? {} : walkResolver(input, VueResolver)
+    const i = deactivated.value ? {} : walkResolver(input, resolveRefs)
     if (entry) {
       entry.patch(i)
     }
     else {
-      entry = head.push(i, options)
+      entry = head.push(i as I, options as HeadEntryOptions)
     }
   })
 

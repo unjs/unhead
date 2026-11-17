@@ -6,8 +6,9 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
+import { execFileSync } from 'node:child_process'
 import { Session } from 'node:inspector/promises'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // resolve built dist from the repo root (cwd) so this harness can run from anywhere
 // (e.g. /tmp during the base-branch measurement) without a relative path back to packages/
@@ -383,7 +384,7 @@ async function csrBenches() {
 
   const t = measureTimes(nav, { warmup: 50, reps: 30, runs: 60 })
   return [
-    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', value: muts / N },
+    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', category: 'cpu', value: muts / N },
     { id: 'csr-nav-cpu', name: 'CSR re-render (CPU)', kind: 'time', value: t.cpu.value, rme: t.cpu.rme },
     { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme, informational: true },
   ]
@@ -394,6 +395,11 @@ const alloc = await measureAlloc(renderMediumSsrHead)
 const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
 const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
 const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
+// Isolate retained heap from the allocation profiler and timing benchmark state.
+// The same TypeScript harness runs against both built refs, including from /tmp.
+const memoryBenches = ['ssr', 'csr', 'router-hints'].flatMap(scenario => JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)), scenario,
+], { encoding: 'utf8' })).benches)
 
 const result = {
   benches: [
@@ -405,6 +411,7 @@ const result = {
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
+    ...memoryBenches,
   ],
 }
 
