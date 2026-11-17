@@ -3,7 +3,6 @@ import type { HeadEntry, HeadRenderer } from '../types'
 import type { LazyHeadOptions } from './index'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
-import { createDebouncedFn } from '../client/util'
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
 // element unknown to the renderer. Adopt only existing elements without replaying
@@ -30,12 +29,17 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
 
 export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[]): HeadRenderer<any> {
   head.resolvedOptions._tagWeight = tagWeight
+  let renderId = 0
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
+  // The default one batches the changes of a task into one render, as the Vue client head does.
   // The first render that creates the DOM state adopts first, so a change after the load,
   // in the debounce or during a pause, still adopts. A pause holds both. With no hydrated
   // entries there is no server head to adopt.
-  return (options.render as HeadRenderer<any>) || createDebouncedFn(() => {
-    if (head._dom || !hydrated().length || adoptHydratedEntries(head, hydrated()))
-      renderLazyDOMHead(head)
-  }, fn => setTimeout(fn, 0))
+  return (options.render as HeadRenderer<any>) || (() => {
+    const id = ++renderId
+    setTimeout(() => {
+      if (id === renderId && (head._dom || !hydrated().length || adoptHydratedEntries(head, hydrated())))
+        renderLazyDOMHead(head)
+    })
+  })
 }
