@@ -25,7 +25,7 @@ export const virtualLocationResolver = defineSchemaOrgResolver<VirtualLocation, 
     '@type': 'VirtualLocation',
   },
   resolve(node, ctx) {
-    if (node.url)
+    if (node.url && !node.url.startsWith('//'))
       node.url = resolveWithBase(ctx.meta.host, node.url)
     return node
   },
