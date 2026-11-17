@@ -26,7 +26,7 @@ The lazy head is experimental. Its API may change in a minor release.
 | `@unhead/vue/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyVueHead` |
 | `unhead/lazy` | `createHead`, and the types `LazyHeadOptions` and `LazyUnhead` |
 
-The Vue export adds the Vue plugin install. During hydration, it loads the runtime at once for a call the server never ran. An example is `useHead()` in `onMounted()`. It also names components in the dev warning. Use `unhead/lazy` only to build an adapter for another framework.
+The Vue export adds the Vue plugin install. During hydration, a call from a mounted component loads the runtime at once. An example is `useHead()` in `onMounted()`. A call from a component that the server did not render loads it at once too. It also names components in the dev warning. Use `unhead/lazy` only to build an adapter for another framework.
 
 ## API Reference
 
@@ -40,7 +40,7 @@ function createHead(options?: LazyHeadOptions): LazyVueHead
 
 | Option | Type | Description |
 | --- | --- | --- |
-| `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager chunk. |
+| `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager bundle. |
 | `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk or the `lazyPlugins` loader fails. It also receives the error when a custom `render` throws during the load. The default logs with `console.error`. |
 
 A custom `render` option owns the document. The runtime never adopts the server head. After the load, each change calls your `render`.
@@ -62,7 +62,7 @@ After hydration, a `dom:beforeRender` pause holds the load. Pause during a navig
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The eager entry | With the app | About 2.2 KB with `@unhead/vue` |
+| The lazy head code in the eager bundle | With the app | About 2.2 KB with `@unhead/vue` |
 | The runtime | With the first head change | About 4.5 KB |
 | The dev check | In development, after hydration | None in production |
 
@@ -76,4 +76,4 @@ The check reads `process.env.NODE_ENV`. A production build replaces it with `'pr
 
 ## Template params
 
-Pass `TemplateParamsPlugin` in `plugins`, as on the client head. To keep its code out of the eager chunk, pass it in `lazyPlugins`, so it loads with the runtime.
+Pass `TemplateParamsPlugin` in `plugins`, as on the client head. To keep its code out of the eager bundle, pass it in `lazyPlugins`, so it loads with the runtime.
