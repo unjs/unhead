@@ -15,12 +15,15 @@ import {
   onDeactivated,
   onScopeDispose,
   ref,
+  unref,
   watchEffect,
 } from 'vue'
 import { injectHead } from './install'
-import { VueResolver } from './resolver'
 
 export { injectHead } from './install'
+
+// VueResolver without its `_static` marker, which only server heads read
+const resolveRefs = (_?: string, value?: any) => unref(value)
 
 export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
   const head = (options.head || injectHead()) as Unhead<I>
@@ -46,7 +49,7 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 
   let entry: ActiveHeadEntry<I>
   watchEffect(() => {
-    const i = deactivated.value ? {} : walkResolver(input, VueResolver)
+    const i = deactivated.value ? {} : walkResolver(input, resolveRefs)
     if (entry) {
       entry.patch(i)
     }
