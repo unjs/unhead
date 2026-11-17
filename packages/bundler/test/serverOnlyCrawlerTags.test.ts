@@ -1,3 +1,4 @@
+import { isCrawlerTag, normalizeEntryToTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 import { createFrameworkPlugin } from '../src/unplugin/framework'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from '../src/unplugin/ServerOnlyCrawlerTags'
@@ -113,6 +114,72 @@ describe('serverOnlyCrawlerTags', () => {
   it('drops a tag type whose tags are all crawler tags', async () => {
     const code = await transform(`useHead({ title: 'Home', meta: [{ name: 'description', content: 'Desc' }], link: [{ rel: 'canonical', href: '/' },] })`)
     expect(calls(code)).toEqual([{ name: 'useHead', input: { title: 'Home' } }])
+  })
+
+  it.each([
+    ['script', `{ src: '/suppressed.js' }`, `{ type: 'application/ld+json', innerHTML: '{}' }`],
+    ['meta', `{ name: 'theme-color', content: '#fff' }`, `{ name: 'description', content: 'Desc' }`],
+    ['link', `{ rel: 'stylesheet', href: '/suppressed.css' }`, `{ rel: 'canonical', href: '/' }`],
+  ])('keeps the empty %s override over spread and duplicate defaults', async (key, browserTag, crawlerTag) => {
+    const code = await transform(`const base = { ${key}: [${browserTag}] }
+      useHead({ ...base, ${key}: [${crawlerTag}] })
+      useHead({ ${key}: [${browserTag}], ${key}: [${crawlerTag}] })
+      const key = '${key}'
+      useHead(() => ({ [key]: [${browserTag}], ${key}: [${crawlerTag}], }))`)
+    expect(calls(code)).toEqual(Array.from({ length: 3 }, () => ({ name: 'useHead', input: { [key]: [] } })))
+  })
+
+  it('keeps several empty overrides and evaluates spread getters once', async () => {
+    const code = await transform(`let reads = 0
+      const base = {
+        get script() { reads++; return [{ src: '/suppressed.js' }] },
+        meta: [{ name: 'theme-color', content: '#fff' }],
+        link: [{ rel: 'stylesheet', href: '/suppressed.css' }],
+      }
+      useHeadSafe(() => ({
+        ...base,
+        script: [{ type: 'application/ld+json', innerHTML: '{}' },],
+        meta: [{ name: 'description', content: 'Desc' }],
+        link: [{ rel: 'canonical', href: '/' }],
+      }))
+      useHead({ title: String(reads) })`)
+    expect(calls(code)).toEqual([
+      { name: 'useHeadSafe', input: { script: [], meta: [], link: [] } },
+      { name: 'useHead', input: { title: '1' } },
+    ])
+  })
+
+  it('keeps an empty own override when a prototype supplies the tag list', async () => {
+    const code = await transform(`useHead({
+      script: [{ type: 'application/ld+json', innerHTML: '{}' }],
+      __proto__: { script: [{ src: '/suppressed.js' }] },
+    })`)
+    expect(calls(code).map(call => normalizeEntryToTags(call.input, []))).toEqual([[]])
+  })
+
+  it.each([
+    ['script type', 'script', `{ type: 'application/ld+json', TYPE: 'text/javascript', innerHTML: 'boot()' }`, { type: 'text/javascript' }],
+    ['meta name', 'meta', `{ name: 'description', NAME: 'theme-color', content: '#fff' }`, { name: 'theme-color', content: '#fff' }],
+    ['meta property', 'meta', `{ property: 'og:title', PROPERTY: 'browser', content: 'value' }`, { property: 'browser', content: 'value' }],
+    ['meta name fallback', 'meta', `{ property: 'og:title', NAME: 'theme-color', content: '#fff' }`, { property: 'og:title', name: 'theme-color', content: '#fff' }],
+    ['link rel', 'link', `{ rel: 'canonical', REL: 'stylesheet', href: '/a.css' }`, { rel: 'stylesheet', href: '/a.css' }],
+    ['link hreflang', 'link', `{ rel: 'alternate', hreflang: 'en', hrefLang: null, href: '/feed' }`, { rel: 'alternate', hreflang: null, href: '/feed' }],
+    ['inherited script type', 'script', `{ type: 'application/ld+json', __proto__: { TYPE: 'text/javascript' }, innerHTML: 'boot()' }`, { type: 'text/javascript' }],
+  ])('keeps browser tags after normalization of %s', async (_label, key, tag, props) => {
+    const code = await transform(`useHead({ ${key}: [${tag}] })
+      useSeoMeta({ description: 'Remove this crawler tag' })`)
+    const tags = calls(code).flatMap(call => normalizeEntryToTags(call.input, []))
+    expect(tags.map(tag => ({ tag: tag.tag, props: tag.props }))).toEqual([{ tag: key, props }])
+    expect(tags.map(tag => tag.innerHTML)).toEqual([key === 'script' ? 'boot()' : undefined])
+    expect(tags.map(isCrawlerTag)).toEqual([false])
+  })
+
+  it('ignores an undefined attribute while preserving the browser identity', async () => {
+    const code = await transform(`useHead({ meta: [{ name: 'theme-color', NAME: undefined, property: 'og:title', content: '#fff' }] })
+      useSeoMeta({ description: 'Remove this crawler tag' })`)
+    const tags = calls(code).flatMap(call => normalizeEntryToTags(call.input, []))
+    expect(tags.map(tag => tag.props)).toEqual([{ name: 'theme-color', property: 'og:title', content: '#fff' }])
+    expect(tags.map(isCrawlerTag)).toEqual([false])
   })
 
   it('removes crawler tags at the end of a list that has a trailing comma', async () => {

@@ -141,11 +141,16 @@ function isCrawlerTag(type: string, element: any, isDroppableCall: IsDroppableCa
   const node = unwrap(element)
   if (node?.type !== 'ObjectExpression')
     return false
+  const identityKeys = type === 'meta' ? ['name', 'property'] : type === 'link' ? ['rel', 'hreflang'] : ['type']
   const props = new Map<string, any>()
   for (const p of node.properties) {
     const key = staticKey(p)
-    // A spread or computed key could override the identity, so the tag stays.
-    if (key === undefined)
+    // A spread, computed key, or prototype can supply another identity.
+    if (key === undefined || key === '__proto__')
+      return false
+    // Runtime normalization folds attribute keys to lowercase. Keep aliases
+    // because collisions and undefined values depend on input iteration order.
+    if (key !== key.toLowerCase() && identityKeys.includes(key.toLowerCase()))
       return false
     // The head reads a getter on the client, so a tag with one stays.
     // A repeated key still evaluates its earlier value, so every value is checked.
@@ -221,9 +226,15 @@ type StripResult = 'unchanged' | 'stripped' | 'empty'
 /** Strips crawler tags from a `useHead` input object. */
 function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
   const removeProps = new Set<any>()
+  const precedingKeys = new Set<string | undefined>()
+  const hasPrototype = obj.properties.some((p: any) => staticKey(p) === '__proto__')
   let changed = false
   for (const prop of obj.properties) {
     const key = staticKey(prop)
+    // Removing an override can expose earlier properties or inherited tags.
+    // A spread or computed key can provide any tag list.
+    const canExposeTags = hasPrototype || precedingKeys.has(undefined) || precedingKeys.has(key)
+    precedingKeys.add(key)
     if (key !== 'meta' && key !== 'link' && key !== 'script')
       continue
     const arr = unwrap(prop.value)
@@ -234,7 +245,7 @@ function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableC
     if (!removeEls.size)
       continue
     changed = true
-    if (removeEls.size === arr.elements.length)
+    if (removeEls.size === arr.elements.length && !canExposeTags)
       removeProps.add(prop)
     else
       removeListItems(s, arr.elements, removeEls, arr.end - 1)
