@@ -1,6 +1,5 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
-import { registerPlugin } from '../unhead'
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   hooks: HookableCore<ClientHeadHooks>
@@ -14,7 +13,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.ssr = false
   head.hooks = hooks
   head.dirty = !!head.dirty
-  head.use = p => registerPlugin(head, p)
   head.render = () => render(head)
   // Render here because an async hook listener could break batching.
   function notify() {
