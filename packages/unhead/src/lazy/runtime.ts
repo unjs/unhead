@@ -20,7 +20,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   adoption.has = id => !!adoption.get(id)
   head.entries = adoption
   try {
-    return renderLazyDOMHead(head, true)
+    return renderLazyDOMHead(head, {}, true)
   }
   finally {
     head.entries = live
