@@ -89,7 +89,7 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
       for (const p in next.props) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
         props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
+          ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
           : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
       ctx.tagMap.set(k, { ...next, props })
@@ -187,10 +187,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   // entries:resolve array is also part of that hook's contract: listeners
   // may mutate it (push/splice) to change which entries resolve.
   let entries: HeadEntry<any>[] | undefined
-  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length) {
+  // syncEntryHookCache just set `_h` to the count of entries:resolve and entries:normalize listeners
+  if (head._h) {
     entries = [...head.entries.values()]
-    if (hooks['entries:resolve']?.length)
-      callHook(head, 'entries:resolve', { entries, ...ctx })
+    callHook(head, 'entries:resolve', { entries, ...ctx })
   }
   syncEntryHookCache(head, hooks)
   for (const e of entries || head.entries.values()) {
