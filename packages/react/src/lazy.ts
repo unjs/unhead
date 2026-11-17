@@ -11,7 +11,8 @@ import { UnheadContext } from './context'
  * React has no public signal for a component that hydrates, so every push before the
  * provider marks the end of hydration counts as server rendered. If the runtime has not
  * loaded by then, the dev warning names a client only value. In development, StrictMode
- * loads the runtime during hydration, so the warning does not run there.
+ * re-runs effects after the provider marks the end of hydration. The re-run disposes and
+ * pushes entries again, which loads the runtime, so the warning does not run there.
  *
  * @experimental The lazy head API may change in a future minor release.
  */
