@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest'
 import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
-// Streamed Body Tags render at the body-close position in `end`.
+// Streamed body tags render at the body-close position in `end`.
 const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.length }
 
 const GTM = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-1"></iframe>'
 
 describe('noscript registered after the shell', () => {
-  it('writes noscript as a Streamed Body Tag', () => {
+  it('writes noscript as a streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
 
@@ -39,7 +39,7 @@ describe('noscript registered after the shell', () => {
 })
 
 describe('body-positioned tags registered after the shell', () => {
-  it('writes a body-close script as a Streamed Body Tag', () => {
+  it('writes a body-close script as a streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
 
@@ -47,7 +47,7 @@ describe('body-positioned tags registered after the shell', () => {
     expect(renderStreamEnd(head, PARTS)).toContain('<script src="/late.js"')
   })
 
-  it('writes a body-close style as a Streamed Body Tag', () => {
+  it('writes a body-close style as a streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ style: [{ innerHTML: '.a{color:red}', tagPosition: 'bodyClose' }] })
     renderSSRHeadSuspenseChunk(head)
@@ -67,7 +67,7 @@ describe('body-positioned tags registered after the shell', () => {
   })
 })
 
-describe('an entry with patch tags and Streamed Body Tags', () => {
+describe('an entry with patch tags and streamed body tags', () => {
   it('splits each tag into the correct output', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({
@@ -90,8 +90,8 @@ describe('an entry with patch tags and Streamed Body Tags', () => {
 })
 
 describe('a stream that pauses mid-element', () => {
-  // Vue may pause inside `<select>`. Streamed Body Tags remain body children.
-  it('renders Streamed Body Tags outside the open select', async () => {
+  // Vue may pause inside `<select>`. Streamed body tags remain body children.
+  it('renders streamed body tags outside the open select', async () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     const template = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
     const enc = new TextEncoder()
@@ -150,7 +150,7 @@ describe('a tag the shell already served', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 
-  it('writes a different unkeyed Streamed Body Tag', () => {
+  it('writes a different unkeyed streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"a":1}' }] })
     renderShell(head)
@@ -165,7 +165,7 @@ describe('a tag the shell already served', () => {
 describe('a driver that builds the response by hand', () => {
   const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
 
-  it('keeps Streamed Body Tags in the patch until the driver opts in', () => {
+  it('keeps streamed body tags in the patch until the driver opts in', () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD], noscript: [{ innerHTML: '<img src="px.gif">' }] })
@@ -176,7 +176,7 @@ describe('a driver that builds the response by hand', () => {
     expect(chunk).toContain('px.gif')
   })
 
-  it('does not buffer Streamed Body Tags until the driver opts in', () => {
+  it('does not buffer streamed body tags until the driver opts in', () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
@@ -201,7 +201,7 @@ describe('a driver that builds the response by hand', () => {
     expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 
-  it('does not duplicate a Streamed Body Tag after a client patch', async () => {
+  it('does not duplicate a streamed body tag after a client patch', async () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
@@ -219,7 +219,7 @@ describe('a driver that builds the response by hand', () => {
 })
 
 describe('tagPosition given as an entry option', () => {
-  it('writes an entry-positioned Streamed Body Tag', () => {
+  it('writes an entry-positioned streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     renderShell(head)
     head.push({ script: [{ src: '/x.js' }] }, { tagPosition: 'bodyClose' })

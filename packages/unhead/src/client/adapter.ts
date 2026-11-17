@@ -1,6 +1,5 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
-import { registerPlugin } from '../unhead'
 import { callHook } from '../utils/hooks'
 
 type EntryDisposeState
@@ -20,10 +19,11 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.ssr = false
   head.hooks = hooks
   head.dirty = !!head.dirty
-  head.use = p => registerPlugin(head, p)
   head.render = () => render(head)
+  // Every change marks the head dirty first.
   // Render here because an async hook listener could break batching.
   function notify() {
+    head.dirty = true
     hooks.callHook('entries:updated', head)
     if (!head._b)
       head.render()
@@ -31,7 +31,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.invalidate = () => {
     for (const entry of head.entries.values())
       delete entry._tags
-    head.dirty = true
     notify()
   }
   head.push = (input: T, entryOptions?: HeadEntryOptions) => {
@@ -46,7 +45,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     const entry = core.entries.get(active._i)
     if (entry)
       entry._o = input
-    head.dirty = true
     notify()
     let disposeState: EntryDisposeState = { _tag: 'active' }
     const finalizeDispose = () => {
@@ -63,7 +61,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
       _i: active._i,
       patch(input: T) {
         active.patch(input)
-        head.dirty = true
         notify()
       },
       dispose() {

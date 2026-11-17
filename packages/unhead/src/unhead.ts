@@ -40,16 +40,14 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
     render: () => renderer(head),
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions) {
-      const options = _options ? { ..._options } : {}
-      const beforePushCtx = { input, options, shouldPush: true }
+      const beforePushCtx = { input, options: _options ? { ..._options } : {}, shouldPush: true }
       callHook(head, 'entries:beforePush', beforePushCtx)
       if (!beforePushCtx.shouldPush)
         return createNoopEntry<T>()
 
-      const _i = options._index ?? head._entryCount++
-      delete (options as any).head
-      delete (options as any).onRendered
-      delete (options as any)._index
+      // a rest copy rather than `delete`, which would leave the options in slow dictionary mode
+      const { head: _head, onRendered: _onRendered, _index, ...options } = beforePushCtx.options
+      const _i = _index ?? head._entryCount++
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {

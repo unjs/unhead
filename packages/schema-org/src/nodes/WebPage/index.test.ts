@@ -307,6 +307,53 @@ describe('defineWebPage', () => {
     })
   })
 
+  it.each([
+    ['/contact', 'ContactPage'],
+    ['/Contact', 'ContactPage'],
+    ['/en/info/Contact', 'ContactPage'],
+    ['/CONTACT-US', 'ContactPage'],
+    ['/Get-In-Touch', 'ContactPage'],
+    ['/About', 'AboutPage'],
+    ['/our-pages/ABOUT-US', 'AboutPage'],
+    ['/Search', 'SearchResultsPage'],
+    ['/CHECKOUT', 'CheckoutPage'],
+    ['/Faq', 'FAQPage'],
+  ])('infers @type from %s without changing the URL', async (path, type) => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineWebPage()])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage?.['@type']).toEqual(['WebPage', type])
+      expect(webPage?.url).toEqual(`https://example.com${path}`)
+      expect(webPage?.['@id']).toEqual(`https://example.com${path}#webpage`)
+    }, { path })
+  })
+
+  it.each(['/kontakt', '/Unknown', '/Contact/details'])('keeps %s as a WebPage', async (path) => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineWebPage()])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage?.['@type']).toEqual('WebPage')
+    }, { path })
+  })
+
+  it.each<{ type: WebPage['@type'], expected: WebPage['@type'] }>([
+    { type: 'WebPage', expected: 'WebPage' },
+    { type: 'AboutPage', expected: ['WebPage', 'AboutPage'] },
+    { type: ['CollectionPage', 'SearchResultsPage'], expected: ['WebPage', 'CollectionPage', 'SearchResultsPage'] },
+  ])(
+    'preserves explicit @type $type on a matching path',
+    async ({ type, expected }) => {
+      await useSetup(async (head) => {
+        useSchemaOrg(head, [defineWebPage({ '@type': type })])
+
+        const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+        expect(webPage?.['@type']).toEqual(expected)
+      }, { path: '/Contact' })
+    },
+  )
+
   it('supports augmentation with defaults', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
@@ -473,6 +520,40 @@ describe('defineWebPage', () => {
       expect(webPage?.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage?.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
       expect(webPage?.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
+    })
+  })
+
+  it('primaryImageOfPage: false opts out of logo inheritance', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineWebPage({
+          primaryImageOfPage: false,
+        }),
+        defineOrganization({
+          name: 'Harlan Wilton',
+          logo: '/logo.png',
+        }),
+      ])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage).not.toHaveProperty('primaryImageOfPage')
+    })
+  })
+
+  it('primaryImageOfPage: false opts out of logo inheritance when the organization resolves first', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Harlan Wilton',
+          logo: '/logo.png',
+        }),
+        defineWebPage({
+          primaryImageOfPage: false,
+        }),
+      ])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+      expect(webPage).not.toHaveProperty('primaryImageOfPage')
     })
   })
 

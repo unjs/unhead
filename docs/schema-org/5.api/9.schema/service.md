@@ -1,7 +1,43 @@
 ---
-title: Service Schema
-description: Use defineService() to describe a service offering, including pricing, provider, service area, channels, ratings, and reviews.
+title: "Service Schema Markup: JSON-LD Examples and API"
+description: Add service schema markup with defineService(). See Service JSON-LD with a provider, a service area, and a price offer, plus service subtypes.
+navigation:
+  title: Service
 ---
+
+Service structured data describes a service that a person or organization provides, such as web design, plumbing, or consulting. It names the service type, the provider, the area served, and the price.
+
+## JSON-LD Example
+
+Unhead renders this JSON-LD for the [pricing example](#with-pricing). It resolves `offers` to an `Offer` with default availability and price validity.
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://example.com/blog/my-article#service",
+      "@type": "Service",
+      "areaServed": "United States",
+      "description": "Custom website design and development services",
+      "name": "Professional Web Design",
+      "serviceType": "Web Design",
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "price": 5000,
+        "priceCurrency": "USD",
+        "description": "Starting price for basic website",
+        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "Design Studio Inc."
+      }
+    }
+  ]
+}
+```
 
 ## Schema.org Service
 

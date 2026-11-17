@@ -29,9 +29,10 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
-   * Precomputed normalized tags shared across head instances (SSR default init
-   * entry). Only used when no entry hooks, tag weight overrides or entry
-   * options could observe or alter normalization, see `resolveTags`.
+   * Precomputed normalized tags shared across head instances (SSR default and
+   * prepared init entries, prepared templates). Only used when no entry hooks,
+   * tag weight overrides or entry options could observe or alter
+   * normalization, see `resolveTags`.
    *
    * @internal
    */
@@ -80,8 +81,8 @@ export type PropResolver = ((key?: string, value?: any, tag?: HeadTag) => any) &
   /**
    * Marks the resolver as the identity function for plain non-reactive JSON
    * values (strings/numbers/booleans/plain objects/arrays). When every
-   * configured resolver is static, the SSR default init entry can use the
-   * precomputed fast path (see `server/createHead.ts`).
+   * configured resolver is static, SSR init entries can use the precomputed
+   * fast path (see `server/createHead.ts`).
    *
    * @internal
    */
@@ -111,6 +112,12 @@ export interface CreateHeadOptions {
    * @internal
    */
   _tagWeight?: (tag: HeadTag) => number
+  /**
+   * Returns the shared precomputed tags of an entry while they are valid, so the
+   * resolve skips normalizing it. Only the server head sets it.
+   * @internal
+   */
+  _precomputed?: (entry: HeadEntry<any>, tagWeight: (tag: HeadTag) => number, hooks: Record<string, unknown[] | undefined>) => HeadTag[] | undefined
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -167,7 +174,12 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    */
   streamKey?: string
   /**
-   * Set when the driver writes Streamed Body Tags before `</body>`.
+   * Request CSP nonce for the bootstrap and Unhead patch scripts.
+   * Apply the same nonce to application scripts and the response CSP header.
+   */
+  nonce?: string
+  /**
+   * Set when the driver writes streamed body tags before `</body>`.
    *
    * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
    * `wrapStream()` enables this option automatically.
@@ -309,11 +321,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string
   /**
-   * Per-response state for Streamed Body Tags.
+   * Per-response state for shell rendering and streamed body tags.
    *
    * @internal
    */
-  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
+  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
 }
 
 export interface DomState {

@@ -31,6 +31,8 @@ export interface SerializedScript {
   crossorigin?: string
   defer?: boolean
   async?: boolean
+  /** Encoded body size from Resource Timing; absent when the host hides it (no Timing-Allow-Origin). */
+  size?: number
 }
 
 export interface SeoOverview {
@@ -54,12 +56,9 @@ export interface SerializedValidationRule {
 export interface LintMessage {
   ruleId: string | null
   message: string
-  severity: 'error' | 'warn'
+  severity: 'error' | 'warn' | 'info'
   line?: number
   column?: number
-  endLine?: number
-  endColumn?: number
-  fixable: boolean
 }
 
 export interface LintFileResult {
@@ -67,20 +66,20 @@ export interface LintFileResult {
   relativePath: string
   errorCount: number
   warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
   messages: LintMessage[]
-  fixed?: boolean
+  /** `migrate` rewrote this file, or would with `dryRun`. */
+  fixed: boolean
+  /** Fingerprint of the source and proposed migration. */
+  fingerprint?: string
 }
 
 export interface LintRunResult {
   available: true
   mode: 'audit' | 'migrate'
+  dryRun: boolean
   files: LintFileResult[]
   errorCount: number
   warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
   filesFixed: number
   durationMs: number
 }
@@ -92,8 +91,16 @@ export interface LintUnavailableResult {
 
 export type LintResponse = LintRunResult | LintUnavailableResult
 
-export interface UnheadDevtoolsState {
+export interface UnheadDevtoolsConfig {
+  cwd: string
+  mode: 'dev' | 'build'
+  /** Installed `unhead` version; empty when it cannot be resolved. */
   version: string
+}
+
+export interface UnheadDevtoolsState {
+  /** The host page URL. The panel resolves relative head URLs against it. */
+  url: string
   entries: SerializedEntry[]
   tags: SerializedTag[]
   plugins: string[]
