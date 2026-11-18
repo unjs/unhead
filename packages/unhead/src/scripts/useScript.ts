@@ -217,7 +217,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     onerror = null
   }
   input.onload = (e: Event) => {
-    if (lifecycleController.signal.aborted)
+    // the DOM renderer replays a server `onload` on every render, settle once
+    // eslint-disable-next-line ts/no-use-before-define
+    if (lifecycleController.signal.aborted || script.status === 'loaded')
       return
     try {
       syncStatus('loaded')
@@ -289,6 +291,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         _uniqueCbs.delete(uniqueKey)
     }
   }
+  let serverEl: HTMLScriptElement | undefined
   const script = {
     _loadPromise: loadPromise,
     _events,
@@ -305,10 +308,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       const hadEntry = !!script.entry
       lifecycleController.abort()
       releaseEventHandlers()
-      // cancel all pending triggers
-      script._triggerAbortControllers?.forEach(ac => ac.abort())
-      script._triggerAbortControllers?.clear()
-      script._triggerPromises = [] // clear any pending promises
+      cancelTriggers()
+      // the renderer only removes a server script it adopted, which needs a render
+      serverEl?.remove()
       script._warmupEl?.dispose()
       script._warmupEl = undefined
       if (script.entry) {
@@ -354,23 +356,15 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       if (script.status === 'removed')
         return loadPromise
       // cancel all pending triggers as we've started loading
-      script._triggerAbortControllers?.forEach(ac => ac.abort())
-      script._triggerAbortControllers?.clear()
-      script._triggerPromises = [] // clear any pending promises
+      cancelTriggers()
       if (loader && !head.ssr && script.status === 'awaitingLoad') {
         syncStatus('loading')
         resolveLoaded()
       }
       else if (!loader && !script.entry) {
         syncStatus('loading')
-        const defaults: Partial<RawInput<'script'>> = {
-          defer: true,
-          fetchpriority: 'low',
-        }
         // status should get updated from script events
-        script.entry = head.push({
-          script: [{ ...defaults, ...input }],
-        }, entryOptions)
+        pushScript()
       }
       if (cb)
         _registerCb('loaded', cb)
@@ -390,7 +384,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         return noop
       }
       if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
-        script.load()
+        // without a server element (e.g. after a client navigation) load it as a client script
+        if (trigger !== 'server' || !hydrate())
+          script.load()
         return noop
       }
       else if (trigger instanceof Promise) {
@@ -473,6 +469,39 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     },
     _cbs,
   } as any as UseScriptContext<T>
+  function cancelTriggers() {
+    script._triggerAbortControllers?.forEach(ac => ac.abort())
+    script._triggerAbortControllers?.clear()
+    script._triggerPromises = []
+  }
+  function pushScript(key?: string) {
+    script.entry = head.push({
+      script: [{ defer: true, fetchpriority: 'low', ...input, ...(key && { key }) }],
+    }, entryOptions)
+  }
+  // Adopt the server rendered element: its status comes from the `data-on*fired`
+  // flags the server handlers set, so hydration never syncs 'loading'.
+  // A loader input has no `src`, so it never hydrates.
+  function hydrate() {
+    // only an element with the server flag handler can report a load that already happened
+    const el = !head.ssr && !script.entry && input.src && [...(head.resolvedOptions.document?.scripts || [])].find(s =>
+      s.getAttribute(input.key ? 'data-hid' : 'src') === id && s.getAttribute('onload')?.includes('fired'))
+    if (el) {
+      serverEl = el
+      cancelTriggers()
+      // the DOM renderer cannot match an unkeyed server script to its tag, so key both
+      el.setAttribute('data-hid', id)
+      pushScript(id)
+      for (const type of ['load', 'error'] as const) {
+        const handler = input[`on${type}`] as (e: Event) => void
+        if (el.dataset[`on${type}fired`])
+          handler(new Event(type))
+        else
+          el.addEventListener(type, handler)
+      }
+    }
+    return !!el
+  }
   // script is ready
   loadPromise
     .then((api) => {
