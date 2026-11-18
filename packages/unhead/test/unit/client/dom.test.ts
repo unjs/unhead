@@ -347,6 +347,28 @@ describe('reused element drop reconciliation', () => {
     expect(external.getAttribute('data-origin')).toBe('external')
   })
 
+  it.each(['detached', 'moved to another document'])('adopts the live replacement when a cached candidate is %s', (location) => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<meta name="description" content="original">'
+    const original = document.head.querySelector('meta')!
+
+    head.push({ title: 'Page' })
+
+    const replacement = document.createElement('meta')
+    replacement.setAttribute('name', 'description')
+    replacement.setAttribute('content', 'replacement')
+    original.replaceWith(replacement)
+    if (location === 'moved to another document')
+      document.implementation.createHTMLDocument().head.appendChild(original)
+
+    head.push({ meta: [{ name: 'description', content: 'updated' }] })
+
+    expect(document.head.querySelector('meta[name="description"]')).toBe(replacement)
+    expect(replacement.getAttribute('content')).toBe('updated')
+    expect(original.getAttribute('content')).toBe('original')
+  })
+
   it('preserves attributes added after adoption', () => {
     const head = useDOMHead()
     const document = head.resolvedOptions.document!

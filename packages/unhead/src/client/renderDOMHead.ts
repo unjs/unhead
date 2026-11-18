@@ -384,6 +384,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         continue
       }
       ctx.$el = renderState._e.get(id)
+      // Unclaimed scan candidates must still belong to this document before adoption.
+      if (ctx.$el && renderState._a.has(ctx.$el) && !dom.contains(ctx.$el)) {
+        renderState._e.delete(id)
+        ctx.$el = undefined
+      }
       if (ctx.$el)
         trackCtx(ctx as DomRenderTagContext & { $el: Element })
       else if (HasElementTags.has(tag.tag))
@@ -395,7 +400,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
         const trackedKey = `${key}:el`
-        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !$el.isConnected)
+        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !dom.contains($el))
           renderState._e.delete(key)
         else
           tracked.add($el)
