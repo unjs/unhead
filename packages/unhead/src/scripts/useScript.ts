@@ -491,6 +491,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       cancelTriggers()
       // the DOM renderer cannot match an unkeyed server script to its tag, so key both
       el.setAttribute('data-hid', id)
+      // An earlier render cached the element under its unkeyed identity and would skip it.
+      // Drop that entry so the next render finds the element again by its `data-hid`.
+      head._dom?._e.forEach((cached, k, cache) => cached === el && cache.delete(k))
       pushScript(id)
       for (const type of ['load', 'error'] as const) {
         const handler = input[`on${type}`] as (e: Event) => void

@@ -84,6 +84,22 @@ describe('useScript trigger: server hydration', () => {
     expect([...document.querySelectorAll('script')]).toEqual([serverEl])
   })
 
+  it.each(renders)('adopts an unkeyed server script after %s render of another tag', (_, deferred) => {
+    const { document, head, flush, statuses, serverEl } = hydrate(src, deferred)
+    serverEl.dataset.onloadfired = 'true'
+    // the render scans the document and caches the server script before useScript runs
+    head.push({ meta: [{ name: 'description', content: 'client' }] })
+    flush()
+
+    const script = useScript(head, src, { trigger: 'server' })
+    flush()
+
+    expect(script.status).toBe('loaded')
+    expect(statuses).toEqual(['loaded'])
+    expect(document.querySelectorAll('script')).toHaveLength(1)
+    expect(serverEl.isConnected).toBe(true)
+  })
+
   it('adopts a server script that already failed', async () => {
     const { head, flush, statuses, serverEl } = hydrate()
     serverEl.dataset.onerrorfired = 'true'
