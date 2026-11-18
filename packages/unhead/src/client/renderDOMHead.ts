@@ -2,7 +2,7 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps, normalizeStyleClassProps } from '../utils/normalize'
+import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
 const HTML_ASCII_WHITESPACE_RE = /[\t\n\f\r ]+/
@@ -171,12 +171,20 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (k === 'class' || k === 'style') {
           const rawKey = `${id}:raw-attr:${k}`
           if (typeof v === 'string') {
+            // Retire token/property cleanup before replacing the whole attribute.
+            for (const key in previous) {
+              if (key === ck || key.startsWith(`${ck}:`)) {
+                previous[key]()
+                delete previous[key]
+              }
+            }
             if ($el.getAttribute(k) !== v)
               $el.setAttribute(k, v)
             track(rawKey, () => {
               if ($el.getAttribute(k) === v)
                 $el.removeAttribute(k)
             }, true)
+            continue
           }
           else if (previous[rawKey]) {
             previous[rawKey]()
@@ -184,16 +192,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           }
         }
         if (k === 'class') {
-          const classes = typeof v === 'string' ? normalizeStyleClassProps(k, v) : v
           let hasClasses = false
-          for (const c of classes as Iterable<string>) {
+          for (const c of v as Iterable<string>) {
             hasClasses = true
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
-          if (!isAttrsTag && (hasClasses || typeof v === 'string')) {
+          if (!isAttrsTag && hasClasses) {
             track(ck, previous[ck] || (() => {
               if (!$el.classList.length)
                 $el.removeAttribute(k)
@@ -203,23 +210,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         else if (k === 'style') {
           const $style = ($el as HTMLElement).style
           let hasStyles = false
-          if (typeof v === 'string') {
-            for (let i = 0; i < $style.length; i++) {
-              const sk = $style.item(i)
-              hasStyles = true
-              const key = `${ck}:${sk}`
-              track(key, previous[key] || (() => $style.removeProperty(sk)))
-            }
+          for (const [sk, sv] of v as Iterable<[string, string]>) {
+            hasStyles = true
+            const key = `${ck}:${sk}`
+            track(key, previous[key] || (() => $style.removeProperty(sk)))
+            $style.setProperty(sk, sv)
           }
-          else {
-            for (const [sk, sv] of v as Iterable<[string, string]>) {
-              hasStyles = true
-              const key = `${ck}:${sk}`
-              track(key, previous[key] || (() => $style.removeProperty(sk)))
-              $style.setProperty(sk, sv)
-            }
-          }
-          if (!isAttrsTag && (hasStyles || typeof v === 'string')) {
+          if (!isAttrsTag && hasStyles) {
             track(ck, previous[ck] || (() => {
               if (!$style.length)
                 $el.removeAttribute(k)
