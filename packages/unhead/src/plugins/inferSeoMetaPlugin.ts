@@ -1,14 +1,27 @@
-import type { HeadTag } from '../types'
 import { hasContent } from '../utils/const'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const IMAGE_META_KEYS = /* @__PURE__ */ new Set(['og:image', 'og:image:url', 'og:image:secure_url', 'twitter:image', 'twitter:image:src'])
 
-function isImageMeta(tag: HeadTag): boolean {
-  if (tag.tag !== 'meta')
-    return false
-  const content = tag.attrs.content
-  return IMAGE_META_KEYS.has(tag.attrs.property || tag.attrs.name) && !!hasContent(content) && String(content).trim() !== ''
+function hasImageContent(content: unknown): boolean {
+  return !!hasContent(content) && String(content).trim() !== ''
+}
+
+function elementMetaKey(el: Element): string {
+  return el.getAttribute('property') || el.getAttribute('name') || ''
+}
+
+/**
+ * Image meta in the server rendered document. A server only entry adds no client tag:
+ * nuxt-og-image skips og:image while hydrating, and useServerSeoMeta never runs on the client.
+ */
+function serverImageMeta(document: Document | undefined): Element[] {
+  const images: Element[] = []
+  for (const el of document?.head?.querySelectorAll('meta') || []) {
+    if (IMAGE_META_KEYS.has(elementMetaKey(el)) && hasImageContent(el.getAttribute('content')))
+      images.push(el)
+  }
+  return images
 }
 
 export interface InferSeoMetaPluginOptions {
@@ -29,6 +42,7 @@ export interface InferSeoMetaPluginOptions {
    *
    * By default, the card is `summary_large_image` when the resolved head has an `og:image` or `twitter:image`,
    * and `summary` otherwise. A `twitter:card` set elsewhere in the head always wins.
+   * On the client, an image tag the server rendered counts until a client entry sets the same tag.
    *
    * @deprecated Twitter/X renders link previews from Open Graph metadata. Set this to `false` and rely on Open Graph metadata instead.
    */
@@ -37,6 +51,8 @@ export interface InferSeoMetaPluginOptions {
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin((head) => {
+    // read before the push below: a client push renders the document
+    let serverImages = options.twitterCard === undefined && !head.ssr ? serverImageMeta(head.resolvedOptions.document) : []
     if (options.twitterCard !== false) {
       head.push({
         meta: [
@@ -93,13 +109,27 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           let hasImage = false
           for (let i = 0; i < ctx.tags.length; i++) {
             const tag = ctx.tags[i]!
-            if (tag.tag === 'meta' && tag.attrs.name === 'twitter:card' && typeof tag.attrs['data-infer'] !== 'undefined')
+            if (tag.tag !== 'meta')
+              continue
+            if (tag.attrs.name === 'twitter:card' && typeof tag.attrs['data-infer'] !== 'undefined') {
               cardIndex = i
-            else if (!hasImage && isImageMeta(tag))
-              hasImage = true
+              continue
+            }
+            const key = tag.attrs.property || tag.attrs.name
+            if (!IMAGE_META_KEYS.has(key))
+              continue
+            hasImage ||= hasImageContent(tag.attrs.content)
+            // a client tag adopts the server element of the same key and removes it when the entry goes
+            if (serverImages.length)
+              serverImages = serverImages.filter(el => elementMetaKey(el) !== key)
           }
           if (cardIndex === -1)
             return
+          // the server rendered an image that no client entry manages, so the server card stands
+          if (!hasImage && serverImages.length) {
+            serverImages = serverImages.filter(el => el.isConnected)
+            hasImage = serverImages.length > 0
+          }
           const card = ctx.tags[cardIndex]!
           const attrs = { ...card.attrs, content: hasImage ? 'summary_large_image' : 'summary' }
           delete attrs['data-infer']

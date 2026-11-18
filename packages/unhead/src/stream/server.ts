@@ -566,21 +566,23 @@ export function wrapStream(
       const activeReader = reader
       if (!activeReader)
         return
-      const result = await activeReader.read().then(
-        value => ({ ok: true as const, value }),
-        (error: unknown) => ({ ok: false as const, error }),
-      )
-      // cancel() won the race mid-read; it owns the reader teardown and the
-      // cancelled controller must not be touched.
-      if (activeReader !== reader)
-        return
-      if (!result.ok) {
+      let result: ReadableStreamReadResult<Uint8Array>
+      try {
+        // Keep one microtask before flushing so queued head updates can run.
+        result = await activeReader.read().then()
+      }
+      catch (error) {
+        if (activeReader !== reader)
+          return
         reader = undefined
         activeReader.releaseLock()
-        controller.error(result.error)
+        controller.error(error)
         return
       }
-      if (result.value.done) {
+      // Cancel owns teardown once it clears the current reader.
+      if (activeReader !== reader)
+        return
+      if (result.done) {
         reader = undefined
         activeReader.releaseLock()
         const extra = flushChunk?.()
@@ -592,7 +594,7 @@ export function wrapStream(
         controller.close()
         return
       }
-      controller.enqueue(result.value.value)
+      controller.enqueue(result.value)
       const extra = flushChunk?.()
       if (extra)
         controller.enqueue(enc.encode(extra))
