@@ -1,10 +1,12 @@
 import type { MinifyFn } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { it } from 'vitest'
+import { CompileTransform } from '../packages/bundler/src/unplugin/CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from '../packages/bundler/src/unplugin/CreateHeadTransform'
 import { MinifyTransform } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { SSRStaticReplace } from '../packages/bundler/src/unplugin/SSRStaticReplace'
 import { TreeshakeServerComposables } from '../packages/bundler/src/unplugin/TreeshakeServerComposables'
 import { UseSeoMetaTransform } from '../packages/bundler/src/unplugin/UseSeoMetaTransform'
+import { Unhead } from '../packages/bundler/src/unplugin/vite'
 import { unheadReactStreamingPlugin } from '../packages/react/src/stream/plugin'
 import { unheadSolidStreamingPlugin } from '../packages/solid-js/src/stream/plugin'
 
@@ -29,6 +31,30 @@ const seoCode = [
   appleItunesApp: { appId: '${i}', appArgument: 'app-${i}' },
 })`),
 ].join('\n')
+
+// a page module as `<script setup>` compiles it: static, dynamic, and loose head calls
+const pageCode = [
+  `import { useHead, useSeoMeta } from '@unhead/vue'`,
+  `import { computed, ref } from 'vue'`,
+  ...Array.from({ length: 40 }, (_, i) => `export function setup${i}(props) {
+  const title = ref('Page ${i}')
+  useHead({ title, meta: [{ name: 'description', content: () => props.description }], link: [{ rel: 'canonical', href: \`/page/\${props.slug}\` }] })
+  useSeoMeta({ ogTitle: 'Page ${i}', ogImage: { url: '/og-${i}.png', width: 1200, height: 630 }, twitterCard: 'summary_large_image' })
+  useHead(computed(() => ({ title: title.value })))
+}`),
+].join('\n')
+
+const serverContext = { environment: { config: { consumer: 'server' } } }
+
+async function runPipeline(plugins: any[], code: string, id: string, context: any) {
+  for (const plugin of plugins) {
+    if (!plugin.transform || plugin.apply === 'serve')
+      continue
+    const result = await runPluginTransform(plugin, code, id, context)
+    code = result?.code ?? code
+  }
+  return code
+}
 
 const minifyCode = [
   `import { useHead } from 'unhead'`,
@@ -162,6 +188,23 @@ it('unplugin transform CPU', async ({ bench }) => {
         { environment: { config: { consumer: 'client' } } },
       )
       assertTransformResult(result, plugin.name)
+    }),
+    bench('compileTransform page calls', async () => {
+      const plugin = CompileTransform.vite({}) as any
+      const result = await runPluginTransform(plugin, pageCode, '/project/src/page.ts', serverContext)
+      assertTransformResult(result, plugin.name)
+    }),
+    bench('compileTransform skip unrelated code', async () => {
+      const plugin = CompileTransform.vite({}) as any
+      await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts', serverContext)
+    }),
+    bench('core transforms, server page, compile off', async () => {
+      await runPipeline(Unhead({ devtools: false, validate: false, transformInlineScripts: false }, { framework: '@unhead/vue' }), pageCode, '/project/src/page.ts', serverContext)
+    }),
+    bench('core transforms, server page, compile on', async () => {
+      const code = await runPipeline(Unhead({ devtools: false, validate: false, transformInlineScripts: false, compile: true }, { framework: '@unhead/vue' }), pageCode, '/project/src/page.ts', serverContext)
+      if (!code.includes('useCompiledHead'))
+        throw new TypeError('compile on benchmark did not compile its fixture')
     }),
     bench('treeshakeServerComposables skip unrelated code', async () => {
       const plugin = TreeshakeServerComposables.vite({}) as any

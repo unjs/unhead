@@ -1,3 +1,5 @@
+import { useSeoMeta } from 'unhead'
+import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it, vi } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 import { runTransform } from './utils'
@@ -36,6 +38,13 @@ function runTransformed(code: string): { imported: string[], useHead: ReturnType
 }
 
 describe('useSeoMetaTransform', () => {
+  // `readEntry` reports `seoMeta` for the entry, as for the call it replaces
+  it('marks the useHead call as seo meta', async () => {
+    const code = await transform(`import { useSeoMeta } from 'unhead'\nuseSeoMeta({ title: 'T', description: 'D' })\nuseSeoMeta({ description: 'E' }, { tagPriority: 'low' })`)
+    const { useHead } = runTransformed(code!)
+    expect(useHead.mock.calls.map(call => call[1])).toEqual([{ seoMeta: true }, { tagPriority: 'low', seoMeta: true }])
+  })
+
   const couldTransform = [
     'import { useSeoMeta } from \'unhead\'',
     'useSeoMeta({ title: \'Hello\', description: \'World\' })',
@@ -103,7 +112,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })
+      }, { seoMeta: true })
       useSeoMeta(meta, { tagPriority: 10 })"
     `)
   })
@@ -137,7 +146,7 @@ describe('useSeoMetaTransform', () => {
     expect(useHead).toHaveBeenCalledWith({
       title: 'Static',
       meta: [{ name: 'description', content: 'Static desc' }],
-    })
+    }, { seoMeta: true })
     expect(useSeoMeta).toHaveBeenCalledTimes(1)
     expect(useSeoMeta).toHaveBeenCalledWith({ description: 'dynamic' }, { tagPriority: 10 })
   })
@@ -157,13 +166,13 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })
+      }, { seoMeta: true })
       useHead({
         title: 'Hello 2',
         meta: [
           { name: 'description', content: 'World 2' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -184,7 +193,7 @@ describe('useSeoMetaTransform', () => {
           { name: 'description', content: () => someValue.value },
           { property: 'og:title', content: ref('test') },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -221,7 +230,7 @@ describe('useSeoMetaTransform', () => {
           { name: 'twitter:image', content: '/t.png' },
           { name: 'twitter:image:alt', content: 'hi' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -237,7 +246,7 @@ describe('useSeoMetaTransform', () => {
           { property: 'og:image', content: '/og.png' },
           { property: 'og:image:secure_url', content: '/s.png' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -274,7 +283,7 @@ describe('useSeoMetaTransform', () => {
       "import { useHead, useSeoMeta as usm } from 'unhead'
       useHead({
         title: 'Static',
-      })
+      }, { seoMeta: true })
       usm({ ogImage: og })"
     `)
   })
@@ -324,7 +333,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { charset: 'utf-8' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -348,7 +357,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { charset: 'utf-8' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -387,7 +396,7 @@ describe('useSeoMetaTransform', () => {
           { name: 'twitter:image:height', content: 600 },
           { name: 'twitter:image:alt', content: 'My amazing image' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -404,7 +413,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -422,7 +431,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -438,7 +447,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -454,7 +463,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -473,7 +482,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -488,7 +497,7 @@ describe('useSeoMetaTransform', () => {
         meta: [
           { name: 'description', content: 'World' },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -587,10 +596,10 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
         meta: [
           { name: 'description', content: "Hi, welcome to the %envName v%app.version of %siteName." },
         ]
-      });
+      }, { seoMeta: true });
           useHead({
         title: data.value.page?.title,
-      })
+      }, { seoMeta: true })
           const __returned__ = { route };
           Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
           return __returned__;
@@ -715,7 +724,7 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
         meta: [
           { name: 'description', content: "Hi, welcome to the %envName v%app.version of %siteName." },
         ]
-      });
+      }, { seoMeta: true });
           const __returned__ = { route };
           Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
           return __returned__;
@@ -786,7 +795,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         meta: [
           { name: 'description', content: 'foo' },
         ]
-      });
+      }, { seoMeta: true });
           Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
           return __returned__;
         }
@@ -820,7 +829,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         setup(__props, { expose }) {
           expose();
           useHead({
-      });
+      }, { seoMeta: true });
           Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
           return __returned__;
         }
@@ -837,7 +846,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
       useHead({
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -861,7 +870,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           { property: 'og:image', content: "https://example.com/image.jpg" },
           { name: 'twitter:card', content: "summary_large_image" },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -886,7 +895,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         meta: [
           { name: 'description', content: \`Welcome to \${name}\` },
         ]
-      })
+      }, { seoMeta: true })
       console.log(useSeoMeta)"
     `)
   })
@@ -902,12 +911,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       "import { useHead, useServerHead } from 'unhead'
       useHead({
         title: "Client",
-      })
+      }, { seoMeta: true })
       useServerHead({
         meta: [
           { name: 'description', content: "Server" },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -929,7 +938,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         meta: [
           { name: 'description', content: condition && "Conditional Description" },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -939,16 +948,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       'useSeoMeta({ title: \'Hello\', description: \'World\' }, { head })',
     ])
     expect(code).toBeDefined()
-    expect(code).toContain('{ head }')
-    expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from '@unhead/vue'
-      useHead({
-        title: 'Hello',
-        meta: [
-          { name: 'description', content: 'World' },
-        ]
-      }, { head })"
-    `)
+    expect(code).toContain('{ head, seoMeta: true }')
   })
 
   it('preserves complex second argument', async () => {
@@ -957,7 +957,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       'useSeoMeta({ description: \'Test\' }, { head, tagPriority: \'high\' })',
     ])
     expect(code).toBeDefined()
-    expect(code).toContain('{ head, tagPriority: \'high\' }')
+    expect(code).toContain('{ head, tagPriority: \'high\', seoMeta: true }')
   })
 
   it('handles #import', async () => {
@@ -980,7 +980,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         meta: [
           { name: 'description', content: condition && "Conditional Description" },
         ]
-      })"
+      }, { seoMeta: true })"
     `)
   })
 
@@ -997,5 +997,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     expect(code).not.toContain('import { useHead }')
     // the user-supplied options object must not be mutated
     expect(opts.imports).toBe(false)
+  })
+})
+
+describe('useSeoMetaTransform tag order', () => {
+  // runtime `unpackMeta` puts the tags of list and media object values before the others
+  it.each([
+    ['a list value', `{ ogType: 'article', author: 'Harlan', articleAuthor: ['Harlan'], articleSection: 'Guides' }`],
+    ['a media object', `{ description: 'd', ogImage: { url: '/og.png', width: 800 }, ogTitle: 't' }`],
+    ['a media list', `{ description: 'd', twitterImage: [{ url: '/t.png', alt: 'hi' }], ogTitle: 't' }`],
+  ])('renders %s in the runtime order', async (_, input) => {
+    const code = await transform([`import { useSeoMeta } from 'unhead'`, `useSeoMeta(${input})`])
+    const { useHead } = runTransformed(code!)
+    const built = createHead({ disableDefaults: true })
+    built.push(useHead.mock.calls[0]![0])
+    const runtime = createHead({ disableDefaults: true })
+    // eslint-disable-next-line no-new-func
+    useSeoMeta(runtime, new Function(`return ${input}`)())
+    expect(renderSSRHead(built).headTags).toBe(renderSSRHead(runtime).headTags)
   })
 })

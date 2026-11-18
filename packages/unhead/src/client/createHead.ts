@@ -1,14 +1,12 @@
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadRenderer, HeadTag, ResolvableHead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadRenderer, ResolvableHead } from '../types'
 import type { ClientUnhead } from './adapter'
 import { createUnhead } from '../unhead'
-import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
 import { createClientHeadAdapter } from './adapter'
 import { createDomRenderer } from './renderDOMHead'
+import { tagWeight } from './util'
 
 export type { ClientUnhead } from './adapter'
-
-const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
 
 export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}): ClientUnhead<T> {
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)

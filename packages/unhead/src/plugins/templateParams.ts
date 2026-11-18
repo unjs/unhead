@@ -1,5 +1,5 @@
 import type { HeadTag, TemplateParams } from '../types/tags'
-import { processTemplateParams } from '../utils'
+import { processTemplateParams } from '../utils/templateParams'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const SupportedAttrs: Partial<Record<string, string>> = {

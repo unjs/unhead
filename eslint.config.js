@@ -15,6 +15,8 @@ export default antfu(
       // node benchmark harnesses: run standalone with --expose-gc, so they import
       // built dist, use process/console, and top-level await by design
       'bench/**/*.mjs',
+      // a published Nuxt UI file, kept as released
+      'packages/vue/test/fixtures/nuxt-ui/**',
     ],
   },
   ...harlanzw(),

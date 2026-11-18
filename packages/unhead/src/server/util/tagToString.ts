@@ -1,5 +1,5 @@
 import type { HeadTag } from '../../types'
-import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
+import { SelfClosingTags, TagsWithInnerContent } from '../../utils/const'
 import { propsToString } from './propsToString'
 
 const ESCAPE_HTML_RE = /[&<>"'/]/g

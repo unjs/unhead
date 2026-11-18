@@ -16,6 +16,14 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ::
 
+## Compiler Mode
+
+Experimental APIs for [compiler mode](/docs/vue/head/guides/core-concepts/compiler-mode) and the [lazy head](/docs/vue/head/guides/core-concepts/lazy-head):
+
+- [createLazyHead()](/docs/head/api/compiler-mode/create-lazy-head): A client head that loads its DOM runtime lazily
+- [compileTags()](/docs/head/api/compiler-mode/compile-tags): Compiles static head input to compiled tags, and reads any head entry with `readEntry()`
+- [Compiled Server Head](/docs/head/api/compiler-mode/compiled-server-head): The server head that renders compiled tags, plus `prepareHeadInput()`
+
 ## Plugins
 
 See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `defineHeadPlugin`.

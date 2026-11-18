@@ -1,4 +1,7 @@
-import { fileURLToPath } from 'node:url'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { build } from 'vite'
 import { describe, expect, it, vi } from 'vitest'
 import { transformInlineScriptWithVite } from '../src/unplugin/MinifyTransform'
@@ -8,7 +11,10 @@ const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.ur
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
 const mtsEntry = fileURLToPath(new URL('./fixtures/vite-build/entry.mts', import.meta.url))
 const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.ts', import.meta.url))
+const fullRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/full-runtime.ts', import.meta.url))
+const compiledRuntimeEntry = fileURLToPath(new URL('./fixtures/vite-build/compiled-runtime.ts', import.meta.url))
 const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
+const streamingPageEntry = fileURLToPath(new URL('./fixtures/vite-build/streaming-page.ts', import.meta.url))
 
 function outputCode(result: any): string {
   const outputs = Array.isArray(result) ? result : [result]
@@ -19,7 +25,93 @@ function outputCode(result: any): string {
     .join('\n')
 }
 
+// Builds a runtime chunk of the lazy head as a minified library, with the chunks it imports.
+async function buildRuntime(compile: boolean | { debug?: boolean }, runtimeEntry: string): Promise<string> {
+  const result = await build({
+    root: fixtureDir,
+    configFile: false,
+    logLevel: 'silent',
+    plugins: Unhead({ devtools: false, validate: false, compile, _framework: '@unhead/vue' }) as any,
+    build: {
+      write: false,
+      minify: true,
+      lib: { entry: runtimeEntry, formats: ['es'], fileName: 'runtime' },
+    },
+  })
+  return outputCode(result)
+}
+
+// Builds the full runtime of the lazy head and loads it.
+async function buildFullRuntime(compile: boolean | { debug?: boolean }) {
+  const code = await buildRuntime(compile, fullRuntimeEntry)
+  const file = join(await mkdtemp(join(tmpdir(), 'unhead-full-runtime-')), 'full-runtime.mjs')
+  await writeFile(file, code)
+  const { upgradeHead } = await import(pathToFileURL(file).href)
+  return { code, upgradeHead }
+}
+
+describe('compile debug', () => {
+  // an entry without compiled tags loads the full runtime
+  const loose = { input: { title: 'Loose' } }
+  const lazyHead = () => ({ entries: new Map<number, { input: unknown }>([[1, { input: [] }], [2, loose]]), resolvedOptions: {}, plugins: new Map() }) as any
+
+  it('sets _fullRuntimeReason to the first entry without compiled tags', async () => {
+    const { upgradeHead } = await buildFullRuntime({ debug: true })
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toEqual({ _tag: 'Entry', entry: loose })
+  })
+
+  it.each([true, { debug: false }])('drops the debug code with compile: %j', async (compile) => {
+    const { code, upgradeHead } = await buildFullRuntime(compile)
+    expect(code).not.toContain('_fullRuntimeReason')
+    expect(code).not.toContain('__UNHEAD_COMPILE_DEBUG__')
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toBeUndefined()
+  })
+
+  it.each([[true, false], [{ debug: true }, true]])('keeps the compiled runtime debug code only with debug, compile: %j', async (compile, kept) => {
+    const code = await buildRuntime(compile, compiledRuntimeEntry)
+    expect(code.includes('_fullRuntimeReason')).toBe(kept)
+    expect(code).not.toContain('__UNHEAD_COMPILE_DEBUG__')
+  })
+
+  it('runs without the constant when compile is off', async () => {
+    const { code, upgradeHead } = await buildFullRuntime(false)
+    expect(code).toContain('__UNHEAD_COMPILE_DEBUG__')
+    const head = lazyHead()
+    await upgradeHead(head, {}, () => [])
+    expect(head._fullRuntimeReason).toBeUndefined()
+  })
+})
+
 describe('vite build integration', () => {
+  // the plugin Nuxt adds for `experimental.ssrStreaming`, for the client environment only
+  it.each([[false, 'useCompiledHead'], [true, 'useHead']])('streaming %s: the client build calls %s', async (streaming, call) => {
+    const warnings: string[] = []
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      customLogger: { warn: (message: string) => warnings.push(message), warnOnce: (message: string) => warnings.push(message), info() {}, error() {}, clearScreen() {}, hasErrorLogged: () => false, hasWarned: false } as any,
+      plugins: [
+        ...(streaming ? [{ name: 'nuxt:streaming-iife-chunk', applyToEnvironment: (env: any) => env.name === 'client' }] : []),
+        ...Unhead({ devtools: false, validate: false, compile: true, _framework: '@unhead/vue' }) as any,
+      ],
+      build: {
+        write: false,
+        minify: false,
+        rollupOptions: { external: [/^@unhead\//, /^unhead/] },
+        lib: { entry: streamingPageEntry, formats: ['es'], fileName: 'page' },
+      },
+    })
+    const code = outputCode(result)
+    expect(code).toContain('STREAMING_PAGE')
+    expect(code).toContain(`${call}(`)
+    expect(warnings.filter(w => w.includes('Compiler mode is off'))).toHaveLength(streaming ? 1 : 0)
+  })
+
   it('client build drops server-only composables', async () => {
     const result = await build({
       root: fixtureDir,
@@ -243,5 +335,33 @@ describe('vite inline script transform backend', () => {
       loader: 'js',
       target: modulesTarget,
     })
+  })
+})
+
+describe('compile with a head that vite-ssg creates', () => {
+  it('turns compile off for the build and warns once, naming the file', async () => {
+    const root = fileURLToPath(new URL('./fixtures/vite-ssg', import.meta.url))
+    const warnings: string[] = []
+    const result = await build({
+      root,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false, validate: false, compile: true, _framework: '@unhead/vue' }) as any,
+      build: {
+        write: false,
+        minify: false,
+        lib: { entry: `${root}/page.ts`, formats: ['es'], fileName: 'page' },
+        rollupOptions: {
+          external: [/^@unhead\/vue/],
+          onwarn: warning => warnings.push(warning.message),
+        },
+      },
+    })
+    const code = outputCode(result)
+    expect(code).toContain('PAGE_MARKER')
+    expect(code).not.toContain('useCompiledHead')
+    const compileWarnings = warnings.filter(message => message.includes('Compiler mode is off'))
+    expect(compileWarnings).toEqual([expect.stringContaining(`${root}/package.json`)])
+    expect(compileWarnings[0]).toContain('vite-ssg')
   })
 })

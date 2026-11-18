@@ -24,7 +24,8 @@ export function isEmptyProps(props: Record<string, any>): boolean {
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
-function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
+// not exported from `unhead/utils`: the compiled server head shares it with v3
+export function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
   if (head._h !== count) {
     head._h = count
@@ -56,7 +57,7 @@ function cloneTagsInPlace(tags: HeadTag[]) {
   }
 }
 
-function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+export function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
   // reuse the pre-dedupe array; the map never holds more tags than went in
   const tags = ctx.tags
   let w = 0
