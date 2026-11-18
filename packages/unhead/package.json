@@ -168,7 +168,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "vite": ">=6.4.2"
+    "vite": ">=6.4.6"
   },
   "peerDependenciesMeta": {
     "vite": {
