@@ -38,6 +38,27 @@ describe('wrapStream late entries', () => {
     expect(html.indexOf('__unhead__.push(')).toBeLessThan(html.indexOf('</body>'))
   })
 
+  it('flushes a head update queued as the source closes', async () => {
+    const { head } = createStreamableHead()
+    const { promise: reading, resolve: onPull } = Promise.withResolvers<void>()
+    let close!: () => void
+    const source = new ReadableStream<Uint8Array>({
+      start(controller) {
+        close = () => controller.close()
+      },
+      pull() {
+        onPull()
+      },
+    }, { highWaterMark: 0 })
+
+    const html = new Response(wrapStream(head, source, TEMPLATE)).text()
+    await reading
+    close()
+    queueMicrotask(() => head.push({ title: 'Queued title' }))
+
+    expect(await html).toMatch(/__unhead__\.push\(.*Queued title.*<\/body>/s)
+  })
+
   it('emits nothing when no entries were registered after the shell', async () => {
     const { head } = createStreamableHead()
     head.push({ title: 'Early' })
