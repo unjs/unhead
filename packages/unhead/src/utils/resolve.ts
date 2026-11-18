@@ -3,6 +3,7 @@ import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { callTagHook, syncTagAliases } from './tagHooks'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -209,7 +210,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         // re-read per entry: an earlier listener may have (un)registered hooks
         if (hooks['entries:normalize']?.length) {
           const normalizeCtx = { tags, entry: e }
-          callHook(head, 'entries:normalize', normalizeCtx)
+          callTagHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
         for (let i = 0; i < tags.length; i++) {
@@ -227,41 +228,18 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
-  let hasTagMutatingHooks = false
   for (const name in hooks) {
     if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
       cloneTagsInPlace(ctx.tags)
-      hasTagMutatingHooks = true
       break
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
-  // snapshot the alias refs before tags:* hooks run so the reconcile pass
-  // below can tell which side a hook reassigned
-  let preHookRefs: Set<HeadTag['attrs']> | undefined
-  if (hasTagMutatingHooks) {
-    preHookRefs = new Set()
-    for (const t of ctx.tags)
-      preHookRefs.add(t.attrs)
-  }
-  callHook(head, 'tags:beforeResolve', ctx)
-  callHook(head, 'tags:resolve', ctx)
-  callHook(head, 'tags:afterResolve', ctx)
-  // Hooks may insert legacy tags or replace either attribute field.
-  // A copied baseline attrs reference lets immutable props replacements work.
-  // When both fields are new, the explicit canonical attrs wins.
-  for (let i = 0; i < ctx.tags.length; i++) {
-    const t = ctx.tags[i]
-    if (t.attrs !== undefined && t.props === t.attrs)
-      continue
-    const attrs = t.attrs === undefined || (t.props !== undefined && preHookRefs?.has(t.attrs))
-      ? t.props ?? {}
-      : t.attrs
-    // Prepared tags may be frozen and shared across requests. Only copy tags
-    // whose aliases differ, without writing to the source or its entry cache.
-    ctx.tags[i] = { ...t, attrs, props: attrs }
-  }
+  callTagHook(head, 'tags:beforeResolve', ctx)
+  callTagHook(head, 'tags:resolve', ctx)
+  callTagHook(head, 'tags:afterResolve', ctx)
+  syncTagAliases(ctx.tags)
   return sanitizeTagsInPlace(ctx.tags)
 }

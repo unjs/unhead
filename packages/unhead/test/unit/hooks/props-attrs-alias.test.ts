@@ -1,8 +1,94 @@
+import type { HeadTag } from 'unhead/types'
+import { CanonicalPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead, renderSSRHead, tagToString } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { resolveTags } from '../../../src/utils/resolve'
 
 describe('tag.props / tag.attrs alias', () => {
+  it('preserves replacements for plugins consuming the tag map', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [TemplateParamsPlugin],
+      hooks: {
+        'tags:beforeResolve': ({ tags }) => {
+          for (const tag of tags) {
+            if (tag.tag === 'templateParams')
+              tag.props = { siteName: 'replacement' }
+          }
+        },
+      },
+    })
+    head.push({ title: '%siteName', templateParams: { siteName: 'original' } })
+
+    expect(renderSSRHead(head).headTags).toBe('<title>replacement</title>')
+  })
+
+  it.each(['tags:beforeResolve', 'tags:resolve'] as const)('composes %s props replacements and inserted links with CanonicalPlugin', (hook) => {
+    const head = createHead({ disableDefaults: true })
+    head.hooks.hook(hook, ({ tags }) => {
+      tags[0].props = { rel: 'canonical', href: '/replacement' }
+      tags.push({ tag: 'link', props: { rel: 'alternate', hreflang: 'fr', href: '/fr' } } as any)
+    })
+    head.use(CanonicalPlugin({ canonicalHost: 'https://example.com' }))
+    head.push({ link: [{ rel: 'canonical', href: '/original' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<link rel="canonical" href="https://example.com/replacement">\n<link rel="alternate" hreflang="fr" href="https://example.com/fr">')
+  })
+
+  it.each(['entries:normalize', 'tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render'] as const)('synchronizes replacements between %s listeners', (hook) => {
+    const head = createHead({ disableDefaults: true })
+    head.hooks.hook(hook, (ctx: { tags: HeadTag[] }) => {
+      ctx.tags = ctx.tags.map(tag => ({ ...tag, props: { name: 'description', content: 'legacy' } }))
+    })
+    head.hooks.hook(hook, ({ tags }: { tags: HeadTag[] }) => {
+      for (const tag of tags)
+        tag.attrs = { ...tag.attrs, content: `${tag.attrs.content} canonical` }
+    })
+    head.hooks.hook(hook, ({ tags }: { tags: HeadTag[] }) => {
+      for (const tag of tags)
+        tag.props.content += ' legacy'
+    })
+    head.push({ meta: [{ name: 'description', content: 'original' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="legacy canonical legacy">')
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="legacy canonical legacy">')
+  })
+
+  it('renders props replacements on htmlAttrs and meta tags in ssr:render', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'ssr:render': ({ tags }) => {
+          for (const tag of tags) {
+            tag.props = tag.tag === 'htmlAttrs'
+              ? { lang: 'fr' }
+              : { name: 'description', content: 'replacement' }
+          }
+        },
+      },
+    })
+    head.push({ htmlAttrs: { lang: 'en' }, meta: [{ name: 'description', content: 'original' }] })
+
+    const result = renderSSRHead(head)
+    expect(result.htmlAttrs).toBe(' lang="fr"')
+    expect(result.headTags).toBe('<meta name="description" content="replacement">')
+  })
+
+  it('uses entries:normalize props replacements for dedupe and renders inserted links', () => {
+    const head = createHead({ disableDefaults: true })
+    head.hooks.hook('entries:normalize', ({ tags }) => {
+      for (const tag of tags) {
+        if (tag.attrs.name === 'description')
+          tag.props = { name: 'author', content: 'replacement' }
+      }
+      tags.push({ tag: 'link', props: { rel: 'canonical', href: '/page' } } as any)
+    })
+    head.push({ meta: [{ name: 'author', content: 'original' }] })
+    head.push({ meta: [{ name: 'description', content: 'changed' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="author" content="replacement">\n<link rel="canonical" href="/page">')
+  })
+
   it.each(['script', 'meta'] as const)('renders legacy props-only %s tags inserted by a plugin', (tag) => {
     const head = createHead({
       disableDefaults: true,
