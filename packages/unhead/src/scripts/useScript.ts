@@ -216,6 +216,16 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     onload = null
     onerror = null
   }
+  // A replayed server handler runs inside a render or useScript(). Report a throwing
+  // user handler instead of breaking either.
+  const callHandler = (handler: ((e: Event) => void) | null, e: Event) => {
+    try {
+      handler?.(e)
+    }
+    catch (error) {
+      console.error(error)
+    }
+  }
   input.onload = (e: Event) => {
     // the DOM renderer replays a server `onload` on every render, settle once
     // eslint-disable-next-line ts/no-use-before-define
@@ -224,7 +234,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     try {
       syncStatus('loaded')
       resolveLoaded()
-      onload?.(e)
+      callHandler(onload, e)
     }
     finally {
       releaseEventHandlers()
@@ -237,7 +247,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       lifecycleController.abort()
       syncStatus('error')
       resolveLoad(false)
-      onerror?.(e)
+      callHandler(onerror, e)
     }
     finally {
       releaseEventHandlers()
@@ -480,15 +490,21 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     }, entryOptions)
   }
   // Adopt the server rendered element: its status comes from the `data-on*fired`
-  // flags the server handlers set, so hydration never syncs 'loading'.
+  // flags the server handlers set, or from its next load or error event.
   // A loader input has no `src`, so it never hydrates.
   function hydrate() {
-    // only an element with the server flag handler can report a load that already happened
     const el = !head.ssr && !script.entry && input.src && [...(head.resolvedOptions.document?.scripts || [])].find(s =>
-      s.getAttribute(input.key ? 'data-hid' : 'src') === id && s.getAttribute('onload')?.includes('fired'))
+      (input.key ? s.getAttribute('data-hid') : s.getAttribute('src')) === id
+      // an unkeyed lookup must not take a keyed server script with the same src
+      && (input.key || (s.getAttribute('data-hid') ?? id) === id)
+      // only an element with the server flag handler can report a load that already happened
+      && s.getAttribute('onload')?.includes('fired'))
     if (el) {
       serverEl = el
       cancelTriggers()
+      // Start at the status the server rendered, with no hook event: a framework hydrates
+      // with the same value, and the lazy head loads its runtime only on a 'loading' event.
+      script.status = 'loading'
       // the DOM renderer cannot match an unkeyed server script to its tag, so key both
       el.setAttribute('data-hid', id)
       // An earlier render cached the element under its unkeyed identity and would skip it.
@@ -498,7 +514,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       for (const type of ['load', 'error'] as const) {
         const handler = input[`on${type}`] as (e: Event) => void
         if (el.dataset[`on${type}fired`])
-          handler(new Event(type))
+          // apply a settled server script after hydration, as the first DOM render would
+          setTimeout(() => handler(new Event(type)))
         else
           el.addEventListener(type, handler)
       }
