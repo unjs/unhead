@@ -26,7 +26,7 @@ const withAsyncContext = (vue as unknown as {
 }).withAsyncContext
 
 // In a dead scope the watchEffect is inert, so no entry gets pushed and
-// clientUseHead used to return `entry!` (undefined), crashing on dispose/patch.
+// the client useHead used to return `entry!` (undefined), crashing on dispose/patch.
 // The fix returns a no-op entry, keeping the ActiveHeadEntry contract for every
 // consumer: the unmount hook, the <Head> component's patch, and external callers.
 describe('dispose undefined entry', () => {
@@ -39,7 +39,7 @@ describe('dispose undefined entry', () => {
       setup() {
         // Stop the component's scope before registering head, reproducing the
         // teardown-during-async-setup race. A watchEffect created now is inert,
-        // so `entry` inside clientUseHead stays undefined.
+        // so `entry` inside the client useHead stays undefined.
         getCurrentScope()!.stop()
 
         // pass `head` explicitly so resolution doesn't depend on inject context

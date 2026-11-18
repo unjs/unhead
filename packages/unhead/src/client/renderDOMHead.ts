@@ -41,11 +41,15 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map(), _x: {} }
-  if (dom.documentElement)
+  const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map(), _p: {}, _s: {}, _l: new Map(), _x: {} }
+  if (dom.documentElement) {
+    state._e.set('htmlAttrs', dom.documentElement)
     state._a.add(dom.documentElement)
-  if (dom.body)
+  }
+  if (dom.body) {
+    state._e.set('bodyAttrs', dom.body)
     state._a.add(dom.body)
+  }
   for (const el of [...(dom.body?.children || []), ...dom.head.children]) {
     const tag = el.tagName.toLowerCase() as HeadTag['tag']
     if (!HasElementTags.has(tag))
@@ -387,7 +391,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
-      const tracked = new Set(renderState._e.values())
+      const tracked = new Set<Element>()
+      // managed elements are released through their own `:el` cleanup
+      for (const [key, $el] of renderState._e) {
+        const trackedKey = `${key}:el`
+        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !$el.isConnected)
+          renderState._e.delete(key)
+        else
+          tracked.add($el)
+      }
       for (const el of [...(dom.body?.children || []), ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
