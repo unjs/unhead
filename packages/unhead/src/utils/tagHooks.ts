@@ -24,7 +24,10 @@ export function syncTagAliases(tags: HeadTag[], previous?: Set<HeadTag['attrs']>
 // Reconcile after each listener so the next listener sees replacements and
 // inserted tags through either alias. Keep this helper out of the public barrel.
 export function callTagHook(head: Unhead<any, any>, hook: string, ctx: { tags: HeadTag[] }): void | Promise<void> {
-  const hooks = (head.hooks as any)?._hooks?.[hook] as HookCallback[] | undefined
+  return head.hooks?.callHook(hook as any, ctx)
+}
+
+export function dispatchTagHook(hooks: HookCallback[] | undefined, ctx: { tags: HeadTag[] }): void | Promise<void> {
   if (!hooks?.length)
     return
   syncTagAliases(ctx.tags)
