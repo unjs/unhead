@@ -15,7 +15,11 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRe
     // Fresh per-render options so plugins (e.g. MinifyPlugin) can override
     // render behaviour like `omitLineBreaks` without leaking into the closure.
     const ctx = {
-      tags: options.resolvedTags || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }),
+      // Normalize external inputs before hooks, including when no listeners run.
+      tags: options.resolvedTags?.map((tag) => {
+        const attrs = tag.attrs ?? tag.props ?? {}
+        return { ...tag, attrs, props: attrs }
+      }) || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }),
       options: { ...options },
     }
     callTagHook(head, 'ssr:render', ctx)

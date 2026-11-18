@@ -1,6 +1,6 @@
 import type { ScriptInstance } from '../scripts'
 import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
-import type { HeadTag } from './tags'
+import type { HeadTag, HeadTagInput } from './tags'
 
 export type HookResult = Promise<void> | void
 export type SyncHookResult = void
@@ -15,7 +15,7 @@ export interface SSRHeadPayload {
 
 export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
-  resolvedTags?: HeadTag[]
+  resolvedTags?: HeadTagInput[]
   tagWeight?: (tag: HeadTag) => number
 }
 
