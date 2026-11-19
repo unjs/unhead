@@ -50,6 +50,11 @@ export interface HeadEntry<Input> {
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Filter safe entries before they are streamed.
+   * @internal
+   */
+  _filterStreamInput?: (input: ResolvableHead) => Record<string, unknown> | undefined
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
@@ -325,7 +330,13 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    *
    * @internal
    */
-  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
+  _stream?: {
+    shellRendered?: true
+    bodyTags?: [input: ResolvableHead, safe?: boolean][]
+    seen?: Set<string>
+    writesBodyTags?: boolean
+    nonce?: string
+  }
 }
 
 export interface DomState {
