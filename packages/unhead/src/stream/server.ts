@@ -272,12 +272,6 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
   return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
-function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
-  const content = hashTag(normalized)
-  return { slot: dedupeKey(normalized) || content, content }
-}
-
 function unwrapEntryInput(input: any): any {
   return typeof input === 'function' ? input() : input
 }
@@ -291,67 +285,62 @@ function rememberShellBodyTags(head: Unhead<any>): void {
       if (!isStreamedBodyTag(tag.tag, tag, entryPosition))
         continue
       seen ||= state.seen = new Set<string>()
-      if (tag.textContent || tag.innerHTML)
-        seen.add(String(tag.textContent || tag.innerHTML))
+      const content = tag.textContent || tag.innerHTML
+      if (content)
+        seen.add(String(content))
       seen.add(tag._d || tag._h || hashTag(tag))
     }
   }
 }
 
-function hasStreamedBodyTags(input: any, entryPosition?: string): boolean {
-  if (input && typeof input === 'object') {
-    for (const key in input) {
-      const value = input[key]
-      if (Array.isArray(value)) {
-        for (const tag of value) {
-          if (isStreamedBodyTag(key, tag, entryPosition))
-            return true
-        }
-      }
-    }
-  }
-  return false
-}
+function splitStreamedBodyTags(input: any, entryPosition: string | undefined, previousSeen: Set<string> | undefined, seen?: Set<string>): [patch: any, bodyTags: any, seen: Set<string> | undefined] | undefined {
+  if (!input || typeof input !== 'object')
+    return
 
-function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, bodyTags?: any } {
   let patch: any
   let bodyTags: any
   for (const key in input) {
     const value = input[key]
-    if (!Array.isArray(value) || !value.some(tag => isStreamedBodyTag(key, tag, entryPosition)))
+    if (!Array.isArray(value))
       continue
-    const rest: any[] = []
-    const carried: any[] = []
-    for (const tag of value) {
+    let rest: any[] | undefined
+    let carried: any[] | undefined
+    for (let index = 0; index < value.length; index++) {
+      const tag = value[index]
       if (!isStreamedBodyTag(key, tag, entryPosition)) {
-        rest.push(tag)
+        rest?.push(tag)
         continue
       }
-      const id = streamedBodyTagIdentity(key, tag)
+      rest ||= value.slice(0, index)
+      seen ||= new Set(previousSeen)
+      const normalized = normalizeProps({ tag: key as HeadTag['tag'], props: {} }, tag)
+      const content = hashTag(normalized)
       // The shell already served this exact tag.
-      if (seen.has(id.content))
+      if (seen.has(content))
         continue
       // The shell owns this slot. Keep updates in the client patch.
-      if (seen.has(id.slot)) {
+      const slot = dedupeKey(normalized)
+      if (slot && seen.has(slot)) {
         rest.push(tag)
         continue
       }
-      seen.add(id.content)
+      seen.add(content)
       // The body-open slot already flushed. Use the body-close slot.
+      carried ||= []
       carried.push({ ...tag, tagPosition: 'bodyClose' })
     }
-    patch ||= { ...input }
-    if (rest.length)
-      patch[key] = rest
-    else
-      delete patch[key]
-    if (carried.length)
+    if (!rest)
+      continue
+    (patch ||= { ...input })[key] = rest.length ? rest : undefined
+    if (carried)
       (bodyTags ||= {})[key] = carried
   }
 
+  if (!patch)
+    return
   // No client patch remains when every tag becomes a streamed body tag.
-  const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
-  return { patch: hasPatch ? patch : undefined, bodyTags }
+  const hasPatch = Object.values(patch).some(value => value !== undefined)
+  return [hasPatch ? patch : undefined, bodyTags, seen]
 }
 
 /**
@@ -361,7 +350,8 @@ function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: st
  * `renderStreamEnd()` includes it for template streams.
  */
 export function renderStreamBodyTags(head: Unhead<any>): string {
-  const bodyTagInputs = streamState(head).bodyTags
+  const state = streamState(head)
+  const bodyTagInputs = state.bodyTags
   if (!bodyTagInputs?.length) {
     return ''
   }
@@ -370,11 +360,11 @@ export function renderStreamBodyTags(head: Unhead<any>): string {
   const restore = new Map(head.entries)
   head.entries.clear()
   try {
-    for (const input of bodyTagInputs)
-      head.push(input)
+    for (const [input, safe] of bodyTagInputs)
+      head.push(input, safe ? { _safe: true } : undefined)
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
     // Clear only after a successful render, so failures can retry.
-    streamState(head).bodyTags = undefined
+    state.bodyTags = undefined
     return bodyTags
   }
   finally {
@@ -414,8 +404,6 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
-  let serialized: string
-  let patchCount = 0
   try {
     // Only pay for normalization when something is listening.
     if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
@@ -426,29 +414,39 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
-    let bodyTags: any[] | undefined
+    let bodyTags: typeof state.bodyTags
     for (const entry of head.entries.values()) {
       const normalized = normalizedEntries?.get(entry._i)
-      const input = normalized && normalized.input === entry.input
+      let input = normalized && normalized.input === entry.input
         ? normalized.resolved
         : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
-      const entryPosition = (entry.options as any)?.tagPosition
-      if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
+      // Streamed patches are replayed without the server head's plugins.
+      const options = entry.options
+      const safe = options?._safe
+      if (safe) {
+        input = head.plugins.get('safe')?._filterStreamInput?.(input)
+        if (!input)
+          continue
+      }
+      const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
+      if (!split) {
         inputs.push(input)
         continue
       }
-      const split = splitStreamedBodyTags(input, nextSeen ||= new Set(state.seen), entryPosition)
-      if (split.patch)
-        inputs.push(split.patch)
-      if (split.bodyTags)
-        (bodyTags ||= []).push(split.bodyTags)
+      const [patch, buffered, seen] = split
+      nextSeen = seen
+      if (patch)
+        inputs.push(patch)
+      if (buffered)
+        (bodyTags ||= []).push([buffered, safe])
     }
-    serialized = safeJsonStringify(inputs)
-    patchCount = inputs.length
+    const serialized = safeJsonStringify(inputs)
     if (nextSeen)
       state.seen = nextSeen
     if (bodyTags)
       (state.bodyTags ||= []).push(...bodyTags)
+    head.entries.clear()
+    return inputs.length ? `window.${streamKey}.push(${serialized})` : ''
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -463,11 +461,6 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     }
     throw error
   }
-  head.entries.clear()
-  // No client patch remains when every tag becomes a streamed body tag.
-  if (!patchCount)
-    return ''
-  return `window.${streamKey}.push(${serialized})`
 }
 
 /**
