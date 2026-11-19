@@ -56,6 +56,11 @@ export interface HeadPluginOptions extends CreateHeadOptions {
    * @internal
    */
   _native?: true
+  /**
+   * Filter safe entries before they are streamed.
+   * @internal
+   */
+  _filterStreamInput?: (input: ResolvableHead) => Record<string, unknown> | undefined
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
@@ -118,6 +123,12 @@ export interface CreateHeadOptions {
    * @internal
    */
   _tagWeight?: (tag: HeadTag) => number
+  /**
+   * Returns the shared precomputed tags of an entry while they are valid, so the
+   * resolve skips normalizing it. Only the server head sets it.
+   * @internal
+   */
+  _precomputed?: (entry: HeadEntry<any>, tagWeight: (tag: HeadTag) => number, hooks: Record<string, unknown[] | undefined>) => HeadTag[] | undefined
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -325,7 +336,13 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    *
    * @internal
    */
-  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
+  _stream?: {
+    shellRendered?: true
+    bodyTags?: [input: ResolvableHead, safe?: boolean][]
+    seen?: Set<string>
+    writesBodyTags?: boolean
+    nonce?: string
+  }
 }
 
 export interface DomState {

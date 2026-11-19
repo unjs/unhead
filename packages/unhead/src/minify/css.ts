@@ -3,7 +3,12 @@
  * Strips comments and collapses whitespace while preserving string literals.
  */
 export function minifyCSS(code: string): string {
-  if (!/[\s/]|;\}|0\.\d/.test(code))
+  // URLs, escapes and custom property token streams need a full CSS lexer.
+  // Preserve the whole input rather than rewrite their contents.
+  if (/url\(|\\|--/i.test(code))
+    return code
+
+  if (!/[ \t\n\f\r/]|;\}|0\.\d/.test(code))
     return code
 
   let result = ''
@@ -21,23 +26,25 @@ export function minifyCSS(code: string): string {
     const ch = code[i]
     // string literals - preserve as-is
     if (ch === '\'' || ch === '"') {
-      const quote = ch
-      append(ch)
-      i++
-      while (i < len && code[i] !== quote) {
-        if (code[i] === '\\' && i + 1 < len)
-          append(code[i++]!)
-        append(code[i++]!)
-      }
-      if (i < len)
-        append(code[i++]!)
+      // The whole-input escape guard makes the next quote the closing quote.
+      const end = code.indexOf(ch, i + 1)
+      if (end === -1)
+        return code
+      result += code.slice(i, end + 1)
+      last = ch
+      i = end + 1
     }
     // comments
     else if (ch === '/' && code[i + 1] === '*') {
-      i += 2
-      while (i < len && !(code[i] === '*' && code[i + 1] === '/'))
-        i++
-      i += 2
+      const end = code.indexOf('*/', i + 2)
+      if (end === -1)
+        return code
+      i = end + 2
+      // An empty comment keeps adjacent tokens separate without a combinator.
+      if (last && !isCSSWhitespace(last) && code[i] && !isCSSWhitespace(code[i])) {
+        result += '/**/'
+        last = '/'
+      }
     }
     // track paren depth for calc()/min()/max()/clamp()/var()
     else if (ch === '(') {
@@ -51,27 +58,26 @@ export function minifyCSS(code: string): string {
       i++
     }
     // whitespace - collapse to single space, remove around punctuation
-    else if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
-      while (i < len && (code[i] === ' ' || code[i] === '\t' || code[i] === '\n' || code[i] === '\r'))
+    else if (isCSSWhitespace(ch!)) {
+      while (i < len && isCSSWhitespace(code[i]))
         i++
       const next = code[i]
       // strip space before ! for !important
       if (next === '!')
         continue
       if (parenDepth > 0) {
-        // inside parens (calc/min/max/clamp/var): strip around * and / (safe per spec),
-        // preserve around + and - (required by spec), strip around base punctuation
-        if (last && next && !isCSSCalcPunctuation(last) && !isCSSCalcPunctuation(next))
+        // Function arguments can contain selectors as well as calculations.
+        if (last && next && last !== '(' && next !== ')' && last !== ',' && next !== ',')
           append(' ')
       }
-      else if (last && next && !isCSSPunctuation(last) && !isCSSPunctuation(next)) {
+      else if (last && next && !isCSSPunctuation(last) && last !== ':' && last !== '(' && !isCSSPunctuation(next)) {
         append(' ')
       }
     }
     // trailing semicolon before } is optional
     else if (ch === ';') {
       let j = i + 1
-      while (j < len && (code[j] === ' ' || code[j] === '\t' || code[j] === '\n' || code[j] === '\r'))
+      while (j < len && isCSSWhitespace(code[j]))
         j++
       if (code[j] === '}') {
         i++ // skip the semicolon
@@ -83,8 +89,8 @@ export function minifyCSS(code: string): string {
     }
     // leading zero: 0.x → .x
     else if (ch === '0' && code[i + 1] === '.' && code[i + 2] >= '0' && code[i + 2] <= '9') {
-      // only strip if prev is not a digit (avoid turning 10.5 into 1.5)
-      if (last && last >= '0' && last <= '9') {
+      // Only rewrite a number at a value boundary, never an identifier.
+      if (last && last !== ':' && last !== '(' && last !== ',' && !isCSSWhitespace(last)) {
         append(ch)
         i++
       }
@@ -98,13 +104,21 @@ export function minifyCSS(code: string): string {
     }
   }
 
-  return result.trim()
+  // Only collapsed spaces before trailing comments can remain.
+  if (last === ' ') {
+    let end = result.length - 1
+    while (result[end - 1] === ' ')
+      end--
+    return result.slice(0, end)
+  }
+  // Copy the output so quoted slices cannot retain the entire source.
+  return `${result} `.slice(0, -1)
+}
+
+function isCSSWhitespace(ch: string): boolean {
+  return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\f' || ch === '\r'
 }
 
 function isCSSPunctuation(ch: string): boolean {
-  return ch === '{' || ch === '}' || ch === ';' || ch === ':' || ch === ',' || ch === '>' || ch === '~' || ch === '+' || ch === '(' || ch === ')'
-}
-
-function isCSSCalcPunctuation(ch: string): boolean {
-  return ch === '*' || ch === '/' || ch === '(' || ch === ')' || ch === ','
+  return ch === '{' || ch === '}' || ch === ';' || ch === ',' || ch === '>' || ch === '~' || ch === '+'
 }

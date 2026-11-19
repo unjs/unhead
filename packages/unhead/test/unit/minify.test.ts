@@ -1,8 +1,69 @@
+import { compileFunction } from 'node:vm'
 import { fc, it as fcIt } from '@fast-check/vitest'
 import { describe, expect, it } from 'vitest'
 import { minifyCSS, minifyJS, minifyJSON } from '../../src/minify'
 
 describe('minifyJS', () => {
+  it.each([
+    ' ',
+    '\t',
+    '\v',
+    '\f',
+    '\n',
+    '\r',
+    '\u00A0',
+    '\u1680',
+    '\u2000',
+    '\u2001',
+    '\u2002',
+    '\u2003',
+    '\u2004',
+    '\u2005',
+    '\u2006',
+    '\u2007',
+    '\u2008',
+    '\u2009',
+    '\u200A',
+    '\u2028',
+    '\u2029',
+    '\u202F',
+    '\u205F',
+    '\u3000',
+    '\uFEFF',
+  ])('preserves execution with whitespace: %j', (character) => {
+    const input = `var${character}value${character}=${character}2; return value`
+    expect(compileFunction(minifyJS(input))()).toBe(2)
+  })
+
+  it.each([
+    ['var r = /[//]/; return r.test("/")', true],
+    ['var r = /["\']/; return r.test("\'")', true],
+    ['let ü = 1;  return ü', 1],
+    ['var n = 1 .toString(); return n', '1'],
+    ['let/* separator */value = 2; return value', 2],
+    ['function f() { return/*\n*/1 }; return f()', undefined],
+    ['function f() { return\r1 }; return f()', undefined],
+    ['function f() { return\u20281 }; return f()', undefined],
+    ['let x = 1; let y = 2; x\n++y; return [x, y]', [1, 3]],
+    ['return 2 / /[//]/.source.length', 0.5],
+    // eslint-disable-next-line no-template-curly-in-string -- Literal source for the minifier.
+    ['return `outer ${`inner ${1 + 2}`} tail`', 'outer inner 3 tail'],
+    ['let \\u00fc = 3; return ü', 3],
+    ['let x = 2; return 1 < !--x', false],
+  ])('preserves execution of %s', (input, expected) => {
+    expect(compileFunction(minifyJS(input))()).toEqual(expected)
+  })
+
+  it.each([
+    'if (ok) /[//]/.test(value);',
+    'const r = /[\\/"\']/v;  consume(r);',
+    // eslint-disable-next-line no-template-curly-in-string -- Literal source for the minifier.
+    'const result = `a ${`b ${value}`} c`; ',
+    'const value = left / right; ',
+  ])('keeps uncertain syntax unchanged: %s', (input) => {
+    expect(minifyJS(input)).toBe(input)
+  })
+
   it('strips single-line comments', () => {
     const result = minifyJS('var x = 1 // comment\nvar y = 2')
     expect(result).toContain('var x=1')
@@ -59,8 +120,43 @@ describe('minifyJS', () => {
 })
 
 describe('minifyCSS', () => {
+  it.each(['\uFEFF', '\u00A0', '\u000B', '\u2003'])('preserves non-CSS whitespace in tokens: %j', (character) => {
+    expect(minifyCSS(`a { font-family: foo/**/${character}bar }`)).toBe(`a{font-family:foo/**/${character}bar}`)
+    expect(minifyCSS(`a { font-family: foo${character}/**/bar }`)).toBe(`a{font-family:foo${character}/**/bar}`)
+    expect(minifyCSS(`a { font-family: x${character}0.5 }`)).toBe(`a{font-family:x${character}0.5}`)
+    expect(minifyCSS(`${character}a { color: red }`)).toBe(`${character}a{color:red}`)
+    expect(minifyCSS(`a { color: red }${character}`)).toBe(`a{color:red}${character}`)
+  })
+
+  it.each([' ', '\t', '\n', '\f', '\r'])('collapses CSS whitespace: %j', (character) => {
+    expect(minifyCSS(`${character}a${character}{${character}opacity:${character}0.5;${character}}${character}`)).toBe('a{opacity:.5}')
+    expect(minifyCSS(`a { font-family: foo/**/${character}bar }`)).toBe('a{font-family:foo bar}')
+  })
+
+  it.each([
+    ['@media screen and (max-width: 600px) { a { color: red } }', '@media screen and (max-width: 600px){a{color:red}}'],
+    ['@supports not (display: grid) { a { b: c } }', '@supports not (display: grid){a{b:c}}'],
+    ['div :first-child { color: red }', 'div :first-child{color:red}'],
+    ['a { background: url(img/a-0.5x.png) }', 'a { background: url(img/a-0.5x.png) }'],
+    ['a { background: URL(data:image/svg+xml,a-0.5) }', 'a { background: URL(data:image/svg+xml,a-0.5) }'],
+    ['.a-0.5x { color: red }', '.a-0.5x{color:red}'],
+    ['a { --tokens: 0.5x + 1; color: red }', 'a { --tokens: 0.5x + 1; color: red }'],
+    [String.raw`a\:b :hover { color: red }`, String.raw`a\:b :hover { color: red }`],
+    ['a/**/b { color: red }', 'a/**/b{color:red}'],
+    ['@supports ((display: grid) and (color: red)) { a { color: red } }', '@supports ((display: grid) and (color: red)){a{color:red}}'],
+    ['@supports selector(div * :hover) { a { color: red } }', '@supports selector(div * :hover){a{color:red}}'],
+    [':is(a) :hover { color: red }', ':is(a) :hover{color:red}'],
+  ])('preserves CSS tokens: %s', (input, expected) => {
+    expect(minifyCSS(input)).toBe(expected)
+  })
+
   it('strips comments', () => {
     expect(minifyCSS('body { /* reset */ margin: 0 }')).not.toContain('reset')
+  })
+
+  it.each(['/* comment */', '/* first */ /* second */'])('strips whitespace before trailing comments: %s', (comments) => {
+    expect(minifyCSS(`color: red ${comments}`)).toBe('color:red')
+    expect(minifyCSS(`font-family: foo\uFEFF ${comments}`)).toBe('font-family:foo\uFEFF')
   })
 
   it('collapses whitespace', () => {
@@ -77,6 +173,11 @@ describe('minifyCSS', () => {
 
   it('preserves string literals', () => {
     expect(minifyCSS('body::after { content: "hello /* world */" }')).toContain('"hello /* world */"')
+    expect(minifyCSS('body::after { content: \'hello "world"\' }')).toBe('body::after{content:\'hello "world"\'}')
+  })
+
+  it.each(['a { content: "unclosed ', 'a { color: red; /* unclosed'])('preserves incomplete CSS: %s', (input) => {
+    expect(minifyCSS(input)).toBe(input)
   })
 
   it('preserves spaces in calc expressions where required', () => {
@@ -160,27 +261,15 @@ describe('minifyJSON', () => {
   })
 })
 
-describe('large input performance', () => {
+// Measure performance in bench/minify.bench.ts. Unit tests assert output without clock noise.
+describe.each([32_768, 262_144])('large input (%i bytes)', (size) => {
   it.each([
-    ['JavaScript', minifyJS, 'const   item   =   { key: "value", count: 1 }; // comment\n'],
-    ['CSS', minifyCSS, '.item   { color: red; padding: calc(1rem + 2px); } /* comment */\n'],
-  ] as const)('keeps %s minification near linear', (_, minify, unit) => {
-    const small = unit.repeat(Math.ceil(32_768 / unit.length))
-    const large = unit.repeat(Math.ceil(262_144 / unit.length))
-    const fastestDuration = (input: string, attempts: number) => {
-      let fastest = Number.POSITIVE_INFINITY
-      for (let i = 0; i < attempts; i++) {
-        const start = performance.now()
-        minify(input)
-        fastest = Math.min(fastest, performance.now() - start)
-      }
-      return fastest
-    }
+    ['JavaScript', minifyJS, 'var   item   =   { key: "value", count: 1 }; // comment\n', 'var item={key:"value",count:1};\n'],
+    ['CSS', minifyCSS, '.item   { color: red; padding: calc(1rem + 2px); } /* comment */\n', '.item{color:red;padding:calc(1rem + 2px)}'],
+  ] as const)('minifies %s without losing content', (_, minify, unit, expected) => {
+    const repetitions = Math.ceil(size / unit.length)
+    const input = unit.repeat(repetitions)
 
-    minify(small)
-    const smallDuration = fastestDuration(small, 5)
-    const largeDuration = fastestDuration(large, 3)
-
-    expect(largeDuration).toBeLessThan(smallDuration * 20)
+    expect(minify(input)).toBe(expected.repeat(repetitions).trimEnd())
   })
 })
