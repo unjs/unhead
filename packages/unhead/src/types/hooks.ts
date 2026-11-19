@@ -32,12 +32,26 @@ export interface DomRenderTagContext {
 }
 export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
-interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
+// Listeners receive resolved tags. Dispatch normalizes inserted inputs before
+// the next listener runs, so insertion accepts either attribute alias.
+interface HookTags extends Array<HeadTag> {
+  push: (...items: HeadTagInput[]) => number
+  unshift: (...items: HeadTagInput[]) => number
+  splice: (start: number, deleteCount?: number, ...items: HeadTagInput[]) => HeadTag[]
+  fill: (value: HeadTagInput, start?: number, end?: number) => this
+}
+
+interface TagHookContext {
+  get tags(): HookTags
+  set tags(tags: HeadTagInput[])
+}
+
+interface TagResolveContext extends TagHookContext { tagMap: Map<string, HeadTag> }
 
 export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
-  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
+  'entries:normalize': (ctx: TagHookContext & { entry: HeadEntry<any> }) => SyncHookResult
   'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
   'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
@@ -69,7 +83,7 @@ export interface SSRHeadHooks {
    */
   'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => SyncHookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
-  'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
+  'ssr:render': (ctx: TagHookContext & { options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }
 

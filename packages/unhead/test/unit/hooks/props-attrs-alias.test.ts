@@ -1,10 +1,59 @@
-import type { HeadTag } from 'unhead/types'
+import type { HeadHooks, HeadPlugin, HeadTag } from 'unhead/types'
 import { CanonicalPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead, renderSSRHead, tagToString } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
-import { resolveTags } from '../../../src/utils/resolve'
 
 describe('tag.props / tag.attrs alias', () => {
+  it.each(['entries:normalize', 'tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render'] as const)('accepts typed legacy and canonical tag insertions in %s', (hook) => {
+    const plugin: HeadPlugin = {
+      key: 'insert-links',
+      hooks: {
+        [hook]: ({ tags }: Parameters<HeadHooks[typeof hook]>[0]) => {
+          tags.push({ tag: 'link', props: { rel: 'canonical', href: '/legacy' } })
+          tags.push({ tag: 'link', attrs: { rel: 'alternate', href: '/canonical' } })
+        },
+      },
+    }
+    const resolved: HeadTag[] = []
+    const head = createHead({ disableDefaults: true, plugins: [plugin] })
+    head.hooks.hook('ssr:render', ({ tags }) => {
+      resolved.push(...tags.filter(tag => tag.tag === 'link'))
+    })
+    head.push({ title: 'home' })
+
+    const html = renderSSRHead(head).headTags
+
+    expect(html).toContain('<link rel="canonical" href="/legacy">')
+    expect(html).toContain('<link rel="alternate" href="/canonical">')
+    expect(resolved.map(tag => tag.attrs.href)).toEqual(['/legacy', '/canonical'])
+    for (const tag of resolved)
+      expect(tag.attrs).toBe(tag.props)
+  })
+
+  it.each(['unshift', 'splice', 'fill', 'replace'] as const)('normalizes typed tag inputs written through %s', (method) => {
+    const head = createHead({ disableDefaults: true })
+    head.hooks.hook('tags:resolve', (ctx) => {
+      if (method === 'unshift')
+        ctx.tags.unshift({ tag: 'link', props: { href: '/legacy' } })
+      else if (method === 'splice')
+        ctx.tags.splice(0, 1, { tag: 'link', attrs: { href: '/canonical' } })
+      else if (method === 'fill')
+        ctx.tags.fill({ tag: 'link', props: { href: '/legacy' } })
+      else
+        ctx.tags = [{ tag: 'link', props: { href: '/legacy' } }, { tag: 'link', attrs: { href: '/canonical' } }]
+    })
+    head.push({ title: 'home' })
+
+    const tags = resolveTags(head).filter(tag => tag.tag === 'link')
+
+    expect(tags.map(tag => tag.attrs.href)).toEqual(method === 'replace'
+      ? ['/legacy', '/canonical']
+      : [method === 'splice' ? '/canonical' : '/legacy'])
+    for (const tag of tags)
+      expect(tag.attrs).toBe(tag.props)
+  })
+
   it('preserves replacements for plugins consuming the tag map', () => {
     const head = createHead({
       disableDefaults: true,
@@ -27,7 +76,7 @@ describe('tag.props / tag.attrs alias', () => {
     const head = createHead({ disableDefaults: true })
     head.hooks.hook(hook, ({ tags }) => {
       tags[0].props = { rel: 'canonical', href: '/replacement' }
-      tags.push({ tag: 'link', props: { rel: 'alternate', hreflang: 'fr', href: '/fr' } } as any)
+      tags.push({ tag: 'link', props: { rel: 'alternate', hreflang: 'fr', href: '/fr' } })
     })
     head.use(CanonicalPlugin({ canonicalHost: 'https://example.com' }))
     head.push({ link: [{ rel: 'canonical', href: '/original' }] })
@@ -81,7 +130,7 @@ describe('tag.props / tag.attrs alias', () => {
         if (tag.attrs.name === 'description')
           tag.props = { name: 'author', content: 'replacement' }
       }
-      tags.push({ tag: 'link', props: { rel: 'canonical', href: '/page' } } as any)
+      tags.push({ tag: 'link', props: { rel: 'canonical', href: '/page' } })
     })
     head.push({ meta: [{ name: 'author', content: 'original' }] })
     head.push({ meta: [{ name: 'description', content: 'changed' }] })
@@ -94,9 +143,9 @@ describe('tag.props / tag.attrs alias', () => {
       disableDefaults: true,
       hooks: {
         'tags:resolve': ({ tags }) => {
-          tags.push((tag === 'script'
+          tags.push(tag === 'script'
             ? { tag, props: { type: 'application/ld+json' }, innerHTML: '{}' }
-            : { tag, props: { name: 'description', content: 'legacy' } }) as any)
+            : { tag, props: { name: 'description', content: 'legacy' } })
         },
       },
     })
@@ -264,7 +313,7 @@ describe('tag.props / tag.attrs alias', () => {
             tag: 'script',
             attrs: { type: 'application/ld+json' },
             innerHTML: JSON.stringify({ '@type': 'thing' }),
-          } as any)
+          })
         },
       },
     })
