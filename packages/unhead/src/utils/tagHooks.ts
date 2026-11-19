@@ -1,23 +1,41 @@
 import type { HookCallback } from 'hookable'
-import type { ResolvedHeadTag as HeadTag, Unhead } from '../types'
+import type { ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from '../types'
 
-export function syncTagAliases(tags: HeadTag[], previous?: Set<HeadTag['attrs']>) {
-  for (let i = 0; i < tags.length; i++) {
-    const tag = tags[i]
-    if (tag.attrs !== undefined && tag.attrs === tag.props)
-      continue
-    const attrs = tag.attrs === undefined || (tag.props !== undefined && previous?.has(tag.attrs))
-      ? tag.props ?? {}
-      : tag.attrs
-    // Keep hook-owned tag references shared with tagMap. Copy external or
-    // frozen tags so prepared input and entry caches remain untouched.
-    if (previous && !Object.isFrozen(tag)) {
-      tag.attrs = attrs
-      tag.props = attrs
-    }
-    else {
-      tags[i] = { ...tag, attrs, props: attrs }
-    }
+function syncTag(tag: HeadTagInput, previous?: Set<HeadTag['attrs']>): HeadTag {
+  if (tag.attrs !== undefined && tag.attrs === tag.props)
+    return tag as HeadTag
+  const attrs = tag.attrs === undefined || (tag.props !== undefined && previous?.has(tag.attrs))
+    ? tag.props ?? {}
+    : tag.attrs
+  // Keep hook-owned tag references shared with tagMap. Copy external or
+  // frozen tags so prepared input and entry caches remain untouched.
+  if (previous && !Object.isFrozen(tag)) {
+    tag.attrs = attrs
+    tag.props = attrs
+    return tag as HeadTag
+  }
+  return { ...tag, attrs, props: attrs }
+}
+
+export function syncTagAliases(tags: HeadTagInput[], previous?: Set<HeadTag['attrs']>): asserts tags is HeadTag[] {
+  for (let i = 0; i < tags.length; i++)
+    tags[i] = syncTag(tags[i], previous)
+}
+
+interface TagHookContext {
+  tags: HeadTag[]
+  tagMap?: Map<string, HeadTag>
+}
+
+function syncContext(ctx: TagHookContext, previous?: Set<HeadTag['attrs']>) {
+  syncTagAliases(ctx.tags, previous)
+  for (const [key, tag] of ctx.tagMap || []) {
+    // Array-valued duplicate meta entries also carry tag metadata.
+    if (Array.isArray(tag))
+      syncTagAliases(tag, previous)
+    const resolved = syncTag(tag, previous)
+    if (resolved !== tag)
+      ctx.tagMap!.set(key, resolved)
   }
 }
 
@@ -27,20 +45,22 @@ export function callTagHook(head: Unhead<any, any>, hook: string, ctx: { tags: H
   return head.hooks?.callHook(hook as any, ctx)
 }
 
-export function dispatchTagHook(hooks: HookCallback[] | undefined, ctx: { tags: HeadTag[] }): void | Promise<void> {
+export function dispatchTagHook(hooks: HookCallback[] | undefined, ctx: TagHookContext): void | Promise<void> {
   if (!hooks?.length)
     return
-  syncTagAliases(ctx.tags)
+  syncContext(ctx)
   const callNext = (start: number): void | Promise<void> => {
     for (let i = start; i < hooks.length; i++) {
       const previous = new Set(ctx.tags.map(tag => tag.attrs))
+      for (const tag of ctx.tagMap?.values() || [])
+        previous.add(tag.attrs)
       // Match HookableCore's synchronous dispatch and promise continuation.
       try {
         const result = hooks[i](ctx)
-        syncTagAliases(ctx.tags, previous)
+        syncContext(ctx, previous)
         if (result && typeof result.then === 'function') {
           return Promise.resolve(result).then(() => {
-            syncTagAliases(ctx.tags, previous)
+            syncContext(ctx, previous)
             return callNext(i + 1)
           })
         }

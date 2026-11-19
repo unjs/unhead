@@ -1,4 +1,4 @@
-import type { ResolvedHeadTag as HeadTag } from '../types'
+import type { HeadTagInput } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
@@ -16,8 +16,9 @@ export function isMetaArrayDupeKey(v: string) {
     || key.startsWith('twitter:image:')
 }
 
-export function dedupeKey<T extends Omit<HeadTag, 'props'>>(tag: T): string | undefined {
-  const { attrs, tag: t, key } = tag
+export function dedupeKey<T extends HeadTagInput>(tag: T): string | undefined {
+  const { tag: t, key } = tag
+  const attrs = tag.attrs ?? tag.props!
   if (UniqueTags.has(t))
     return t
   // semantic link singletons; must win over an explicit `key`
@@ -46,17 +47,18 @@ export function dedupeKey<T extends Omit<HeadTag, 'props'>>(tag: T): string | un
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
-export function hashTag<T extends Omit<HeadTag, 'props'>>(tag: T): string {
+export function hashTag<T extends HeadTagInput>(tag: T): string {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   // stringify: a number/boolean textContent is not a valid string key (#1006)
   if (identity)
     return String(identity)
   // sort so the hash is stable across differing prop insertion orders (#823)
-  const keys = Object.keys(tag.attrs).sort()
+  const attrs = tag.attrs ?? tag.props!
+  const keys = Object.keys(attrs).sort()
   let hash = `${tag.tag}:`
   let separator = ''
   for (const key of keys) {
-    hash += `${separator}${key}:${String(tag.attrs[key])}`
+    hash += `${separator}${key}:${String(attrs[key])}`
     separator = ','
   }
   return hash

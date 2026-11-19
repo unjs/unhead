@@ -1,4 +1,4 @@
-import type { HeadEntry, ResolvedHeadTag as HeadTag, Unhead } from '../types'
+import type { HeadEntry, ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
@@ -165,8 +165,10 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
 }
 
 // public contract: returns a new array and leaves the input untouched
-export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  return sanitizeTagsInPlace([...tags])
+export function sanitizeTags(tags: HeadTagInput[]): HeadTag[] {
+  const resolved = [...tags]
+  syncTagAliases(resolved)
+  return sanitizeTagsInPlace(resolved)
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {

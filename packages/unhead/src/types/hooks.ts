@@ -35,12 +35,13 @@ export interface SSRRenderContext { tags: ResolvedHeadTag[], html: SSRHeadPayloa
 // Listeners receive resolved tags. Dispatch normalizes inserted inputs before
 // the next listener runs, so insertion accepts either attribute alias.
 // Index reads use HeadTag because listeners can assign legacy tags directly.
-type HookTags = Omit<ResolvedHeadTag[], number | 'push' | 'unshift' | 'splice' | 'fill'> & {
+type HookTags = Omit<ResolvedHeadTag[], number | 'push' | 'unshift' | 'splice' | 'fill' | 'concat'> & {
   [index: number]: HeadTag
   push: (...items: HeadTagInput[]) => number
   unshift: (...items: HeadTagInput[]) => number
   splice: (start: number, deleteCount?: number, ...items: HeadTagInput[]) => ResolvedHeadTag[]
   fill: (value: HeadTagInput, start?: number, end?: number) => HookTags
+  concat: (...items: (HeadTagInput | ConcatArray<HeadTagInput>)[]) => HeadTagInput[]
 }
 
 interface TagHookContext {
@@ -48,7 +49,11 @@ interface TagHookContext {
   set tags(tags: HeadTagInput[])
 }
 
-interface TagResolveContext extends TagHookContext { tagMap: Map<string, ResolvedHeadTag> }
+interface HookTagMap extends Map<string, ResolvedHeadTag> {
+  set: (key: string, value: HeadTagInput) => this
+}
+
+interface TagResolveContext extends TagHookContext { tagMap: HookTagMap }
 
 export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
