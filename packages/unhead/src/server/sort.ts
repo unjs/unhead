@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { ResolvedHeadTag as HeadTag } from '../types'
 import { TagPriorityAliases } from '../utils/const'
 
 // Capo.js tag weights for optimal head ordering

@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
-import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
+import type { ResolvedHeadTag as HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
 /**
  * Side effects are mapped with a key and their cleanup function.

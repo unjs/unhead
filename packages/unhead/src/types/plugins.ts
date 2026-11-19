@@ -1,4 +1,4 @@
-import type { HeadTag } from './tags'
+import type { ResolvedHeadTag as HeadTag } from './tags'
 
 export interface RenderDomHeadOptions {
   /**

@@ -1,4 +1,4 @@
-import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
+import type { HeadPlugin, ResolvedHeadTag as HeadTag, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'

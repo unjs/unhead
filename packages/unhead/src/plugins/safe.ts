@@ -1,5 +1,5 @@
 import type { ResolvableHead } from '../types/schema'
-import type { HeadTag } from '../types/tags'
+import type { ResolvedHeadTag as HeadTag } from '../types/tags'
 import { hasContent, HasElementTags, ValidHeadTags } from '../utils/const'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { isUnsafeKey } from '../utils/unsafeKey'

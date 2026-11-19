@@ -1,4 +1,4 @@
-import type { HeadEntry, HeadTag, Unhead } from '../types'
+import type { HeadEntry, ResolvedHeadTag as HeadTag, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'

@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { ResolvedHeadTag as HeadTag } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/

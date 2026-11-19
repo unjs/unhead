@@ -1,10 +1,29 @@
-import type { HeadHooks, HeadPlugin, HeadTag } from 'unhead/types'
+import type { HeadHooks, HeadPlugin, HeadTag, ResolvedHeadTag } from 'unhead/types'
 import { CanonicalPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead, renderSSRHead, tagToString } from 'unhead/server'
 import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('tag.props / tag.attrs alias', () => {
+  it('accepts HeadTag annotations, plugin factories and hook index assignments', () => {
+    const legacyTag: HeadTag = { tag: 'meta', props: { name: 'description', content: 'legacy factory' } }
+    const makeTag = (): HeadTag => legacyTag
+    const plugin: HeadPlugin = {
+      key: 'legacy-factory',
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          tags[0] = makeTag()
+        },
+      },
+    }
+    const head = createHead({ disableDefaults: true, plugins: [plugin] })
+    head.push({ title: 'original' })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="legacy factory">')
+    const [tag] = resolveTags(head)
+    expect(tag.attrs).toBe(tag.props)
+  })
+
   it.each(['entries:normalize', 'tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render'] as const)('accepts typed legacy and canonical tag insertions in %s', (hook) => {
     const plugin: HeadPlugin = {
       key: 'insert-links',
@@ -15,7 +34,7 @@ describe('tag.props / tag.attrs alias', () => {
         },
       },
     }
-    const resolved: HeadTag[] = []
+    const resolved: ResolvedHeadTag[] = []
     const head = createHead({ disableDefaults: true, plugins: [plugin] })
     head.hooks.hook('ssr:render', ({ tags }) => {
       resolved.push(...tags.filter(tag => tag.tag === 'link'))
@@ -91,7 +110,7 @@ describe('tag.props / tag.attrs alias', () => {
     })
     head.hooks.hook(hook, ({ tags }: { tags: HeadTag[] }) => {
       for (const tag of tags)
-        tag.attrs = { ...tag.attrs, content: `${tag.attrs.content} canonical` }
+        tag.attrs = { ...tag.attrs, content: `${tag.attrs?.content} canonical` }
     })
     head.hooks.hook(hook, ({ tags }: { tags: HeadTag[] }) => {
       for (const tag of tags)

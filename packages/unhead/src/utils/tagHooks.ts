@@ -1,5 +1,5 @@
 import type { HookCallback } from 'hookable'
-import type { HeadTag, Unhead } from '../types'
+import type { ResolvedHeadTag as HeadTag, Unhead } from '../types'
 
 export function syncTagAliases(tags: HeadTag[], previous?: Set<HeadTag['attrs']>) {
   for (let i = 0; i < tags.length; i++) {

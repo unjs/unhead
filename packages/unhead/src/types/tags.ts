@@ -98,7 +98,7 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   /**
    * Attributes for the tag, e.g. `{ rel: 'canonical', href: '/' }` for a `<link>`.
    */
-  attrs: Record<string, string>
+  attrs?: Record<string, string>
   /**
    * @deprecated Use `attrs`. Removed in v5.
    */
@@ -136,7 +136,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
 
 export type HeadTagKeys = (keyof HeadTag)[]
 
+export interface ResolvedHeadTag extends HeadTag {
+  attrs: Record<string, string>
+}
+
 export type HeadTagInput = Omit<HeadTag, 'attrs' | 'props'> & (
-  | { attrs: HeadTag['attrs'], props?: HeadTag['props'] }
-  | { attrs?: HeadTag['attrs'], props: HeadTag['props'] }
+  | { attrs: ResolvedHeadTag['attrs'], props?: HeadTag['props'] }
+  | { attrs?: ResolvedHeadTag['attrs'], props: HeadTag['props'] }
 )

@@ -1,4 +1,4 @@
-import type { HeadTag, HeadTagInput, RenderSSRHeadOptions } from '../../types'
+import type { ResolvedHeadTag as HeadTag, HeadTagInput, RenderSSRHeadOptions } from '../../types'
 import { propsToString } from './propsToString'
 import { tagToString } from './tagToString'
 

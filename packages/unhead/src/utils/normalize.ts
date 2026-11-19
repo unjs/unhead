@@ -1,4 +1,4 @@
-import type { HeadTag, HeadTagInput, PropResolver, ResolvableHead } from '../types'
+import type { ResolvedHeadTag as HeadTag, HeadTagInput, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'

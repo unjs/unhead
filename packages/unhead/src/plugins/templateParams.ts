@@ -1,4 +1,4 @@
-import type { HeadTag, TemplateParams } from '../types/tags'
+import type { ResolvedHeadTag as HeadTag, TemplateParams } from '../types/tags'
 import { processTemplateParams } from '../utils'
 import { defineHeadPlugin } from './defineHeadPlugin'
 

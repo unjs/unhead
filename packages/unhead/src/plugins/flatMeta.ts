@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { ResolvedHeadTag as HeadTag } from '../types'
 import { unpackMeta } from '../utils/meta'
 import { defineHeadPlugin } from './defineHeadPlugin'
 

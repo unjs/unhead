@@ -1,4 +1,4 @@
-import type { HeadTag, PropResolver, Unhead } from '../types'
+import type { ResolvedHeadTag as HeadTag, PropResolver, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
 import { unpackMeta } from '../utils/meta'
 import {
