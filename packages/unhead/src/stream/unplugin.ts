@@ -135,7 +135,7 @@ function buildClientStub(framework: string, streamKey: string, warnOnMissing: bo
   const warnBranch = warnOnMissing
     ? `else{console.warn('[unhead] streaming client loaded but window['+${key}+'] is undefined; did the server call wrapStream()/renderSSRHeadShell()?')}`
     : ''
-  return `import{createHead}from'${framework}/client'
+  return `import{createHead}from${JSON.stringify(`${framework}/client`)}
 import{attachStreamHead}from'${VIRTUAL_QUEUE_ID}'
 const s=window[${key}];if(s){if(!s._head){const h=createHead({document});h._wrapped=!0;attachStreamHead(s,h)}}${warnBranch}`
 }
