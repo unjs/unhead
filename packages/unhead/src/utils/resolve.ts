@@ -3,7 +3,7 @@ import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
-import { callTagHook, syncTagAliases } from './tagHooks'
+import { bindTagAliases, callTagHook, syncTagAliases } from './tagHooks'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -158,7 +158,9 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
         t.textContent = escape(t.textContent) as typeof t.textContent
       t._d = dedupeKey(t)
     }
-    tags[w++] = t
+    // Bind the public output after all sanitization copies. Copy cache tags,
+    // while preserving the identity of tags already exposed to listeners.
+    tags[w++] = bindTagAliases(t, true)
   }
   tags.length = w
   return tags

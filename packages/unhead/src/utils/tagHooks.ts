@@ -27,15 +27,22 @@ interface TagHookContext {
   tagMap?: Map<string, HeadTag>
 }
 
-function bindTagAliases(tag: HeadTag): HeadTag {
-  if (Object.isFrozen(tag))
+function getTagAttrs(this: HeadTag) {
+  return this.attrs
+}
+
+export function bindTagAliases(tag: HeadTag, copy = false): HeadTag {
+  const frozen = Object.isFrozen(tag)
+  if (!frozen && Object.getOwnPropertyDescriptor(tag, 'props')?.get === getTagAttrs)
+    return tag
+  if (copy || frozen)
     tag = { ...tag }
   // Live tags share one attribute bag even during a listener. Keep the alias
   // enumerable so object spreads and serialized wire formats still include it.
   Object.defineProperty(tag, 'props', {
     configurable: true,
     enumerable: true,
-    get() { return this.attrs },
+    get: getTagAttrs,
     set(attrs) { this.attrs = attrs },
   })
   return tag

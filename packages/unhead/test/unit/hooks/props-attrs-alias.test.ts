@@ -5,6 +5,19 @@ import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('tag.props / tag.attrs alias', () => {
+  it('accepts legacy tags in hook array lookups', () => {
+    const legacyTag: HeadTag = { tag: 'link', props: { href: '/legacy' } }
+    const head = createHead({ disableDefaults: true })
+    const lookups: (boolean | number)[] = []
+    head.hooks.hook('tags:resolve', ({ tags }) => {
+      tags.push(legacyTag)
+      lookups.push(tags.includes(legacyTag), tags.indexOf(legacyTag), tags.lastIndexOf(legacyTag))
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<link href="/legacy">')
+    expect(lookups).toEqual([true, 0, 0])
+  })
+
   it('accepts legacy callback annotations and array helpers', () => {
     const serialize = (tags: HeadTag[]) => tags.map(tagToString).join('')
     const head = createHead({ disableDefaults: true })

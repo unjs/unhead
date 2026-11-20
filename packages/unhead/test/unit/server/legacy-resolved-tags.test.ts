@@ -1,8 +1,39 @@
 import type { HeadTagInput } from 'unhead/types'
 import { createHead, renderSSRHead, ssrRenderTags } from 'unhead/server'
+import { resolveTags, sanitizeTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('ssr resolved attribute inputs', () => {
+  it.each(['props', 'attrs'] as const)('renders %s replacements on resolved links without tag hooks', (alias) => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ link: [{ rel: 'canonical', href: '/original' }] })
+    const tags = resolveTags(head)
+    tags[0][alias] = { rel: 'canonical', href: '/replacement' }
+
+    expect(renderSSRHead(head, { resolvedTags: tags }).headTags)
+      .toBe('<link rel="canonical" href="/replacement">')
+    expect(renderSSRHead(head).headTags).toBe('<link rel="canonical" href="/original">')
+  })
+
+  it.each([false, true])('renders legacy replacements after script sanitization with tag hooks: %s', (withHook) => {
+    const head = createHead({ disableDefaults: true })
+    if (withHook)
+      head.hooks.hook('tags:resolve', () => {})
+    head.push({ script: [{ type: 'application/json', innerHTML: '{"value":"<"}' }] })
+    const tags = resolveTags(head)
+    tags[0].props = { type: 'application/ld+json', id: 'replacement' }
+
+    expect(renderSSRHead(head, { resolvedTags: tags }).headTags)
+      .toBe('<script type="application/ld+json" id="replacement">{"value":"\\u003C"}</script>')
+  })
+
+  it('keeps legacy replacements live on public sanitizer output', () => {
+    const tags = sanitizeTags([{ tag: 'link', attrs: { rel: 'canonical', href: '/original' } }])
+    tags[0].props = { rel: 'canonical', href: '/replacement' }
+
+    expect(ssrRenderTags(tags).headTags).toBe('<link rel="canonical" href="/replacement">')
+  })
+
   const renderers = {
     ssrRenderTags,
     renderSSRHead: (tags: HeadTagInput[]) => renderSSRHead(createHead({ disableDefaults: true }), { resolvedTags: tags }),
