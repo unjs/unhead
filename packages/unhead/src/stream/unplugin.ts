@@ -39,7 +39,7 @@ export interface StreamingPluginOptions {
    *   module; in production emitted as a real asset chunk via `emitFile`.
    * - 'inline': Inline the IIFE directly in HTML. Largest HTML, smallest TTFB,
    *   always safe in production. Recommended for streaming SSR.
-   * - 'module': ES module dynamic import of the client bootstrap. Vite rewrites the
+   * - 'module': ES module import of the client bootstrap. Vite rewrites the
    *   import path through its module graph so it survives production builds.
    * @default 'async'
    */
@@ -290,7 +290,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
       if (!state.isVite)
         return
       // In dev, `module` mode never needs the iife asset: its descriptor is
-      // a dynamic import resolved through the virtual client module, and a
+      // resolved through the virtual client module, and a
       // manifest pass (`transformIndexHtml(undefined, ctx)`) only happens
       // at build time.
       if (mode === 'module' && !state.isBuild)
@@ -300,7 +300,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
       // `async` mode always ships the iife as a real asset chunk in
       // production so `<script async src="...">` points at a file that
       // ships with the build. `module` mode emits it too, purely as a
-      // fallback for the manifest pass, where its usual dynamic-import
+      // fallback for the manifest pass, where its usual module
       // descriptor can't work (see the `module`-mode branch below). In dev
       // / other bundlers the virtual module path is resolved on-the-fly.
       if ((mode === 'async' || mode === 'module') && state.isBuild && typeof (this as any).emitFile === 'function') {
@@ -450,10 +450,11 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             }]
           }
 
+          const clientSrc = state.isBuild ? `/${VIRTUAL_CLIENT_ID}` : joinBase(VIRTUAL_CLIENT_ID)
           return [{
             tag: 'script',
             attrs: { ...nonceAttr, type: 'module' },
-            children: `import("${state.isBuild ? `/${VIRTUAL_CLIENT_ID}` : joinBase(VIRTUAL_CLIENT_ID)}")`,
+            children: `import ${JSON.stringify(clientSrc)}`,
             injectTo: 'head-prepend',
           }]
         },
