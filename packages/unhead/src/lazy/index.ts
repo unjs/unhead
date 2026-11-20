@@ -182,7 +182,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // A reactive input resolves again on any dependency change, such as the route that the router
     // sets during hydration. Before a load, a patch to the same input changes nothing, so it loads nothing.
     // The check compares with a copy, because an app can edit the input object in place and patch with it.
-    let last = copyInput(input)
+    let last = copyInput(input, serverRendered && !options.render)
     const server = serverRendered ? { ...entry, input: last } : undefined
     if (server)
       serverEntries.push(server)
@@ -228,10 +228,11 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
             // a patch with another object since then is newer, so this edit must not overwrite it
             if (next !== lastRef || !head.entries.has(_i) || sameInput(last, next))
               return
-            last = copyInput(next)
             // During hydration, a component that builds its input in place renders what the server rendered
-            if (!hydrated && !loading && server)
-              server.input = last
+            const inPlaceServerEntry = !hydrated && !loading && server
+            last = copyInput(next, !!inPlaceServerEntry && !options.render)
+            if (inPlaceServerEntry)
+              inPlaceServerEntry.input = last
             else
               update(next)
           })

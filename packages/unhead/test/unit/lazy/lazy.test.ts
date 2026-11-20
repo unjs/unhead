@@ -365,6 +365,24 @@ describe('lazy head createHead', () => {
     })
   })
 
+  it('removes the original SSR stylesheet when a getter changes before load', async () => {
+    let href = '/server.css'
+    const input: ResolvableHead = { link: [{ rel: 'stylesheet', href: () => href }] }
+    const dom = ssrDom({ link: [{ rel: 'stylesheet', href: '/layout.css' }] }, input)
+    const doc = dom.window.document
+    const head = createLazyHead({ document: doc })
+    const entry = head.push(input)
+    head.render()
+
+    href = '/client.css'
+    entry.patch(input)
+
+    await vi.waitFor(() => {
+      const links = doc.querySelectorAll('link[rel="stylesheet"]')
+      expect([...links].map(link => link.getAttribute('href'))).toEqual(['/layout.css', '/client.css'])
+    })
+  })
+
   it('leaves the error of a getter that throws to the render', () => {
     const dom = ssrDom(titled)
     const head = createLazyHead({ document: dom.window.document })
