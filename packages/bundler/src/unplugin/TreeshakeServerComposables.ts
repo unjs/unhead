@@ -99,9 +99,9 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         walk(ast.program, {
           scopeTracker,
           enter(node: any, parent: any) {
-            // Only remove statement-level calls: `useServerHead(...)` as its
-            // own expression statement. Nested usage (assignments, arguments)
-            // is left untouched.
+            // Replace standalone calls with an empty statement. Required
+            // bodies (if, loops, labels) must not consume the next statement.
+            // Nested usage (assignments, arguments) is left untouched.
             if (
               parent?.type !== 'ExpressionStatement'
               || node.type !== 'CallExpression'
@@ -120,7 +120,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
                 && functionNames.has(decl.node.imported.name)
                 && isUnheadPackage(decl.importNode.source.value)
               ) {
-                s.remove(parent.start, parent.end)
+                s.overwrite(parent.start, parent.end, ';')
               }
               return
             }
@@ -133,7 +133,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
             // No declaration in scope: treat a known name as an auto-import
             // (e.g. Nuxt) and remove it.
             if (functionNames.has(node.callee.name))
-              s.remove(parent.start, parent.end)
+              s.overwrite(parent.start, parent.end, ';')
           },
         })
 

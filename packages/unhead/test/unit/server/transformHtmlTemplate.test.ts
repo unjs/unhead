@@ -30,15 +30,13 @@ describe('transformHtmlTemplate edge cases', () => {
   })
 
   describe('malformed HTML', () => {
-    it('handles unclosed tags', async () => {
+    it('preserves an unclosed title without inserting managed markup', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Test Title' })
 
       const html = '<html><head><title>Original</head><body>Content'
       const result = await transformHtmlTemplate(head, html)
-      expect(result).toContain('<title>Test Title</title>')
-      // The parser extracts existing title "Original" from the template
-      expect(result).toContain('Original')
+      expect(result).toBe(html)
     })
 
     it('handles mismatched tags', async () => {
@@ -144,6 +142,124 @@ describe('transformHtmlTemplate edge cases', () => {
       const result = await transformHtmlTemplate(head, html)
       expect(result).toContain('<title>Test Title</title>')
       expect(result).toContain('Content')
+    })
+
+    it('ends script and style content at the first closing tag with unbalanced quotes', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>
+// don't flash the wrong theme
+document.documentElement.dataset.theme = 'dark'
+</script><style>/* it's dark */ body { color: white }</style></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>
+// don't flash the wrong theme
+document.documentElement.dataset.theme = 'dark'
+</script>
+<style>/* it's dark */ body { color: white }</style></head><body>Content</body></html>`)
+    })
+
+    it('does not merge separate scripts when quotes are balanced across them', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>// it's first</script><script src="/a.js"></script><script>// it's last</script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>// it's first</script>
+<script src="/a.js"></script>
+<script>// it's last</script></head><body>Content</body></html>`)
+    })
+
+    it('keeps a closing tag inside a commented nested script as script text', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- document.write('<script src="/a.js"></script>') --></script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- document.write('<script src="/a.js"><\\/script>') --></script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends a commented script at the first closing tag when no nested script is open', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- <script> --></script><script><!-- </script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- <script> --></script>
+<script><!-- </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends a script at a closing tag in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script>a</SCRIPT><script>b</script/><script>c</script\f><script><!-- d </ScRiPt><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script>a</script>
+<script>b</script>
+<script>c</script>
+<script><!-- d </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('detects a commented nested script in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- document.write('<SCRIPT src="/a.js"></script>') --></script><script><!-- document.write('<script/></script>') --></script><script><!-- document.write('<script\f></script>') --></script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- document.write('<SCRIPT src="/a.js"><\\/script>') --></script>
+<script><!-- document.write('<script/><\\/script>') --></script>
+<script><!-- document.write('<script\f><\\/script>') --></script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('preserves source scripts that depend on mixed-case or delimited raw closing tags', () => {
+      const scripts = [
+        '<script type="text/plain"><!-- <script></SCRIPT>a</script>',
+        '<script type="text/plain"><!-- <script></script/>b</script>',
+        '<script type="text/plain"><!-- <script></script\f>c</script>',
+      ].join('')
+      const html = `<html><head>${scripts}</head><body>Content</body></html>`
+      const head = createServerHeadWithContext()
+      head.push({ title: 'Page title' })
+
+      expect(transformHtmlTemplate(head, html)).toBe(`<html><head>${scripts}<title>Page title</title></head><body>Content</body></html>`)
+    })
+
+    it('does not treat other tag names after <!-- as a nested script', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><script><!-- <scripts> </script><script><!-- <SCRIPTS> </script><script src="/b.js"></script></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><script><!-- <scripts> </script>
+<script><!-- <SCRIPTS> </script>
+<script src="/b.js"></script></head><body>Content</body></html>`)
+    })
+
+    it('ends style content at a closing tag in any letter case or followed by a slash or form feed', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><style>a{}</STYLE><style>b{}</style/><style>c{}</style\f><style>d{}</style></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><style>a{}</style>
+<style>b{}</style>
+<style>c{}</style>
+<style>d{}</style></head><body>Content</body></html>`)
+    })
+
+    it('ends title content only at a complete closing tag in any letter case', async () => {
+      const head = createServerHeadWithContext()
+
+      const html = `<html><head><title>a</titles> b</TITLE></head><body>Content</body></html>`
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toBe(`<html><head><title>a&lt;&#x2F;titles&gt; b</title></head><body>Content</body></html>`)
     })
 
     it('handles style tags with complex CSS', async () => {

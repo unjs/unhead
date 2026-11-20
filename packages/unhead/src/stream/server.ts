@@ -1,6 +1,5 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { ExtractedTemplateCache } from '../server/transformHtmlTemplate'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 import { createHead } from '../server/createHead'
@@ -8,18 +7,18 @@ import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/t
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
+import { isEmptyProps } from '../utils/resolve'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
 
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
-const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
-let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
+let preparedStreamingLayouts: WeakMap<PreparedHtmlTemplateWithIndexes, StreamingTemplateLayout | null> | undefined
 
 /**
  * Base context with just the head instance.
@@ -178,8 +177,9 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
  * ```
  */
 export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
-  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-  const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
+  const ssr = head.render() as SSRHeadPayload
+  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template, ssr.bodyTags ? 'body-close' : 'body-open') : template
+  const result = applyShellToTemplate(head, ssr, parsed)
   rememberShellBodyTags(head)
   // Keep entries when template rendering fails, so the caller can retry.
   head.entries.clear()
@@ -274,12 +274,6 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
   return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
-function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
-  const content = hashTag(normalized)
-  return { slot: dedupeKey(normalized) || content, content }
-}
-
 function unwrapEntryInput(input: any): any {
   return typeof input === 'function' ? input() : input
 }
@@ -293,67 +287,62 @@ function rememberShellBodyTags(head: Unhead<any>): void {
       if (!isStreamedBodyTag(tag.tag, tag, entryPosition))
         continue
       seen ||= state.seen = new Set<string>()
-      if (tag.textContent || tag.innerHTML)
-        seen.add(String(tag.textContent || tag.innerHTML))
+      const content = tag.textContent || tag.innerHTML
+      if (content)
+        seen.add(String(content))
       seen.add(tag._d || tag._h || hashTag(tag))
     }
   }
 }
 
-function hasStreamedBodyTags(input: any, entryPosition?: string): boolean {
-  if (input && typeof input === 'object') {
-    for (const key in input) {
-      const value = input[key]
-      if (Array.isArray(value)) {
-        for (const tag of value) {
-          if (isStreamedBodyTag(key, tag, entryPosition))
-            return true
-        }
-      }
-    }
-  }
-  return false
-}
+function splitStreamedBodyTags(input: any, entryPosition: string | undefined, previousSeen: Set<string> | undefined, seen?: Set<string>): [patch: any, bodyTags: any, seen: Set<string> | undefined] | undefined {
+  if (!input || typeof input !== 'object')
+    return
 
-function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, bodyTags?: any } {
   let patch: any
   let bodyTags: any
   for (const key in input) {
     const value = input[key]
-    if (!Array.isArray(value) || !value.some(tag => isStreamedBodyTag(key, tag, entryPosition)))
+    if (!Array.isArray(value))
       continue
-    const rest: any[] = []
-    const carried: any[] = []
-    for (const tag of value) {
+    let rest: any[] | undefined
+    let carried: any[] | undefined
+    for (let index = 0; index < value.length; index++) {
+      const tag = value[index]
       if (!isStreamedBodyTag(key, tag, entryPosition)) {
-        rest.push(tag)
+        rest?.push(tag)
         continue
       }
-      const id = streamedBodyTagIdentity(key, tag)
+      rest ||= value.slice(0, index)
+      seen ||= new Set(previousSeen)
+      const normalized = normalizeProps({ tag: key as HeadTag['tag'], props: {} }, tag)
+      const content = hashTag(normalized)
       // The shell already served this exact tag.
-      if (seen.has(id.content))
+      if (seen.has(content))
         continue
       // The shell owns this slot. Keep updates in the client patch.
-      if (seen.has(id.slot)) {
+      const slot = dedupeKey(normalized)
+      if (slot && seen.has(slot)) {
         rest.push(tag)
         continue
       }
-      seen.add(id.content)
+      seen.add(content)
       // The body-open slot already flushed. Use the body-close slot.
+      carried ||= []
       carried.push({ ...tag, tagPosition: 'bodyClose' })
     }
-    patch ||= { ...input }
-    if (rest.length)
-      patch[key] = rest
-    else
-      delete patch[key]
-    if (carried.length)
+    if (!rest)
+      continue
+    (patch ||= { ...input })[key] = rest.length ? rest : undefined
+    if (carried)
       (bodyTags ||= {})[key] = carried
   }
 
+  if (!patch)
+    return
   // No client patch remains when every tag becomes a streamed body tag.
-  const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
-  return { patch: hasPatch ? patch : undefined, bodyTags }
+  const hasPatch = Object.values(patch).some(value => value !== undefined)
+  return [hasPatch ? patch : undefined, bodyTags, seen]
 }
 
 /**
@@ -363,7 +352,8 @@ function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: st
  * `renderStreamEnd()` includes it for template streams.
  */
 export function renderStreamBodyTags(head: Unhead<any>): string {
-  const bodyTagInputs = streamState(head).bodyTags
+  const state = streamState(head)
+  const bodyTagInputs = state.bodyTags
   if (!bodyTagInputs?.length) {
     return ''
   }
@@ -372,11 +362,11 @@ export function renderStreamBodyTags(head: Unhead<any>): string {
   const restore = new Map(head.entries)
   head.entries.clear()
   try {
-    for (const input of bodyTagInputs)
-      head.push(input)
+    for (const [input, safe] of bodyTagInputs)
+      head.push(input, safe ? { _safe: true } : undefined)
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
     // Clear only after a successful render, so failures can retry.
-    streamState(head).bodyTags = undefined
+    state.bodyTags = undefined
     return bodyTags
   }
   finally {
@@ -416,8 +406,6 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
-  let serialized: string
-  let patchCount = 0
   try {
     // Only pay for normalization when something is listening.
     if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
@@ -428,29 +416,39 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
-    let bodyTags: any[] | undefined
+    let bodyTags: typeof state.bodyTags
     for (const entry of head.entries.values()) {
       const normalized = normalizedEntries?.get(entry._i)
-      const input = normalized && normalized.input === entry.input
+      let input = normalized && normalized.input === entry.input
         ? normalized.resolved
         : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
-      const entryPosition = (entry.options as any)?.tagPosition
-      if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
+      // Streamed patches are replayed without the server head's plugins.
+      const options = entry.options
+      const safe = options?._safe
+      if (safe) {
+        input = head.plugins.get('safe')?._filterStreamInput?.(input)
+        if (!input)
+          continue
+      }
+      const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
+      if (!split) {
         inputs.push(input)
         continue
       }
-      const split = splitStreamedBodyTags(input, nextSeen ||= new Set(state.seen), entryPosition)
-      if (split.patch)
-        inputs.push(split.patch)
-      if (split.bodyTags)
-        (bodyTags ||= []).push(split.bodyTags)
+      const [patch, buffered, seen] = split
+      nextSeen = seen
+      if (patch)
+        inputs.push(patch)
+      if (buffered)
+        (bodyTags ||= []).push([buffered, safe])
     }
-    serialized = safeJsonStringify(inputs)
-    patchCount = inputs.length
+    const serialized = safeJsonStringify(inputs)
     if (nextSeen)
       state.seen = nextSeen
     if (bodyTags)
       (state.bodyTags ||= []).push(...bodyTags)
+    head.entries.clear()
+    return inputs.length ? `window.${streamKey}.push(${serialized})` : ''
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -465,11 +463,6 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     }
     throw error
   }
-  head.entries.clear()
-  // No client patch remains when every tag becomes a streamed body tag.
-  if (!patchCount)
-    return ''
-  return `window.${streamKey}.push(${serialized})`
 }
 
 /**
@@ -565,21 +558,23 @@ export function wrapStream(
       const activeReader = reader
       if (!activeReader)
         return
-      const result = await activeReader.read().then(
-        value => ({ ok: true as const, value }),
-        (error: unknown) => ({ ok: false as const, error }),
-      )
-      // cancel() won the race mid-read; it owns the reader teardown and the
-      // cancelled controller must not be touched.
-      if (activeReader !== reader)
-        return
-      if (!result.ok) {
+      let result: ReadableStreamReadResult<Uint8Array>
+      try {
+        // Keep one microtask before flushing so queued head updates can run.
+        result = await activeReader.read().then()
+      }
+      catch (error) {
+        if (activeReader !== reader)
+          return
         reader = undefined
         activeReader.releaseLock()
-        controller.error(result.error)
+        controller.error(error)
         return
       }
-      if (result.value.done) {
+      // Cancel owns teardown once it clears the current reader.
+      if (activeReader !== reader)
+        return
+      if (result.done) {
         reader = undefined
         activeReader.releaseLock()
         const extra = flushChunk?.()
@@ -591,7 +586,7 @@ export function wrapStream(
         controller.close()
         return
       }
-      controller.enqueue(result.value.value)
+      controller.enqueue(result.value)
       const extra = flushChunk?.()
       if (extra)
         controller.enqueue(enc.encode(extra))
@@ -640,98 +635,29 @@ interface StreamingTemplateLayout {
   endAfterBodyTags: string
 }
 
-/**
- * The shell index derivation below assumes the template's indexes are the
- * FIRST occurrences of their tags, as `parseHtmlForIndexes` (and the literal
- * re-parse fallback) would find them. Extraction indexes come from a scanner
- * that can differ on malformed templates, e.g. a stray `</body>` before the
- * `<body>` tag or a `<body` hidden inside another tag. When they disagree,
- * the caller must take the re-parse path.
- */
-function indexesAreFirstOccurrences(html: string, indexes: PreparedHtmlTemplateWithIndexes['indexes']): boolean {
-  return html.indexOf('<html') === indexes.htmlTagStart
-    && html.indexOf('</head>') === indexes.headTagEnd
-    && html.indexOf('<body') === indexes.bodyTagStart
-    && html.indexOf('</body>') === indexes.bodyCloseTagStart
-}
-
 function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const html = parsed.html
-  const bodyEnd = parsed.indexes.bodyTagEnd
-  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
-  if (bodyEnd < 0 || bodyCloseStart < 0)
+  const { html, indexes, bodyOutlet } = parsed
+  const { bodyTagEnd, bodyCloseTagStart } = indexes
+  if (bodyTagEnd < 0 || bodyCloseTagStart < bodyTagEnd)
     return
 
-  const bodyInterior = html.substring(bodyEnd, bodyCloseStart)
-  // Prefer splitting at a Vite-style SSR outlet marker so the streamed app
-  // content lands inside the container (e.g. `<div id="app">`) that the
-  // client mounts onto. Falls back to splitting at the <body> tag, which
-  // preserves any static body interior after the stream.
-  const markerMatch = bodyInterior.match(SSR_OUTLET_RE)
-
-  let beforeStream: string
-  let afterStream: string
-  if (markerMatch) {
-    beforeStream = bodyInterior.substring(0, markerMatch.index!)
-    afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
-  }
-  else {
-    beforeStream = ''
-    afterStream = bodyInterior
-  }
-
-  const shellPart = html.substring(0, bodyEnd) + beforeStream
-  const endPart = html.substring(bodyCloseStart)
-
-  // Derive the indexes that parsing the synthetic shell would produce without
-  // re-scanning the template. When `bodyCloseStart >= bodyEnd` (any sane
-  // template), `shellPart` is a prefix of `html`, so a first
-  // occurrence that fits entirely inside it carries over unchanged.
-  let shellTemplate: PreparedHtmlTemplateWithIndexes
-  if (bodyCloseStart >= bodyEnd && indexesAreFirstOccurrences(html, parsed.indexes)) {
-    const shellLen = shellPart.length
-    const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes
-    const shellHtmlTagStart = (htmlTagStart >= 0 && htmlTagStart + 5 <= shellLen) ? htmlTagStart : -1
-    let shellHtmlTagEnd = -1
-    if (shellHtmlTagStart >= 0) {
-      const gt = shellPart.indexOf('>', shellHtmlTagStart)
-      // No '>' before the suffix: the first one is the '>' closing '</body>'.
-      shellHtmlTagEnd = gt >= 0 ? gt + 1 : shellLen + 7
-    }
-    shellTemplate = {
-      html: `${shellPart}</body></html>`,
-      input: parsed.input,
-      indexes: {
-        htmlTagStart: shellHtmlTagStart,
-        htmlTagEnd: shellHtmlTagEnd,
-        headTagEnd: (headTagEnd >= 0 && headTagEnd + 7 <= shellLen) ? headTagEnd : -1,
-        // <body> is always fully inside the prefix in this branch.
-        bodyTagStart,
-        bodyTagEnd: bodyEnd,
-        bodyCloseTagStart: (bodyCloseStart + 7 <= shellLen) ? bodyCloseStart : shellLen,
-      },
-    }
-  }
-  else {
-    // Degenerate template ('</body>' before '<body>'): `substring` swapped
-    // its arguments so `shellPart` is not a prefix of `html`.
-    shellTemplate = parseHtmlForIndexes(`${shellPart}</body></html>`)
-  }
-
+  // The shell is a prefix of the original document, so its offsets still match.
   return {
-    shellTemplate,
-    endBeforeBodyTags: afterStream,
-    endAfterBodyTags: endPart,
+    shellTemplate: {
+      html: html.slice(0, bodyOutlet?.start ?? bodyTagEnd),
+      input: parsed.input,
+      indexes: { ...indexes, bodyCloseTagStart: -1 },
+    },
+    endBeforeBodyTags: html.slice(bodyOutlet?.end ?? bodyTagEnd, bodyCloseTagStart),
+    endAfterBodyTags: html.slice(bodyCloseTagStart),
   }
 }
 
-function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTemplateLayout | undefined {
+function getPreparedStreamingLayout(template: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
   const cache = preparedStreamingLayouts ||= new WeakMap()
   let layout = cache.get(template)
   if (layout === undefined) {
-    // The template's own head tags move to entry 0, so the layout must split
-    // the HTML those tags were lifted out of.
-    layout = createStreamingTemplateLayout(extractPreparedTemplate(template).template) || null
+    layout = createStreamingTemplateLayout(template) || null
     if (layout) {
       Object.freeze(layout.shellTemplate.indexes)
       Object.freeze(layout.shellTemplate)
@@ -751,12 +677,13 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
  * splitting at body tag boundaries when no marker is found.
  *
  * This is the recommended way to handle streaming templates as it:
- * - Uses consistent template parsing (same as transformHtmlTemplateRaw)
+ * - Dedupes template head tags against the current head
  * - Properly injects head content, html/body attrs, and bootstrap script
  * - Injects body tags (scripts at end of body) into the closing part
  *
  * @param head - The Unhead instance
  * @param template - Full HTML template (string or `prepareTemplate()` result)
+ * @param preRenderedState - A rendered payload to insert alongside the template's own tags
  * @returns Object with `shell` (before app) and `end` (after app) parts
  *
  * @example
@@ -772,54 +699,49 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  let cached: ExtractedTemplateCache | undefined
-  let parsed: PreparedHtmlTemplateWithIndexes
-  if (typeof template === 'string') {
-    parsed = preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template)
-  }
-  else if (preRenderedState) {
-    parsed = template
-  }
-  else {
-    cached = extractPreparedTemplate(template)
-    parsed = cached.template
-  }
-
-  // Lift the template's head tags into entry 0 (mirrors transformHtmlTemplate)
-  // so app tags dedupe against them instead of doubling up in the shell.
-  // A pre-rendered payload was rendered before this call without those tags;
-  // pushing entry 0 now would leak them into the stream chunks.
-  if (!preRenderedState)
-    pushExtractedTemplateEntry(head, cached, parsed)
-
-  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
-
-  const layout = typeof template === 'string' || preRenderedState
+  const cached = typeof template !== 'string' && !preRenderedState ? extractPreparedTemplate(template, 'stream') : undefined
+  const parsed = typeof template === 'string'
+    ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template, 'stream'))
+    : cached?.template ?? template
+  const layout = typeof template === 'string'
     ? createStreamingTemplateLayout(parsed)
-    : getPreparedStreamingLayout(template)
+    : getPreparedStreamingLayout(parsed)
 
+  const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
+  const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
+  const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
   let parts: StreamingTemplateParts
-  if (layout) {
-    const shell = applyHeadToHtml(layout.shellTemplate, {
-      htmlAttrs: ssr.htmlAttrs,
-      headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
-      bodyAttrs: ssr.bodyAttrs,
-      bodyTagsOpen: ssr.bodyTagsOpen,
-      bodyTags: '',
-    }).replace('</body></html>', '')
-
-    parts = {
-      shell,
-      end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
-      bodyTagsAt: layout.endBeforeBodyTags.length,
+  try {
+    const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+    if (layout) {
+      const shell = applyHeadToHtml(layout.shellTemplate, {
+        htmlAttrs: ssr.htmlAttrs,
+        headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
+        bodyAttrs: ssr.bodyAttrs,
+        bodyTagsOpen: ssr.bodyTagsOpen,
+        bodyTags: '',
+      })
+      parts = {
+        shell,
+        end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
+        bodyTagsAt: layout.endBeforeBodyTags.length,
+      }
+    }
+    else {
+      parts = {
+        shell: applyShellToTemplate(head, ssr, parsed),
+        end: '',
+      }
     }
   }
-  else {
-    // Can't split, return full template as shell
-    parts = {
-      shell: applyShellToTemplate(head, ssr, parsed),
-      end: '',
+  catch (error) {
+    if (templateEntry && head.entries.get(0) === templateEntry) {
+      if (previousEntry)
+        head.entries.set(0, previousEntry)
+      else
+        head.entries.delete(0)
     }
+    throw error
   }
 
   // Only clear entries once the shell/end parts have been successfully

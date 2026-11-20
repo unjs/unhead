@@ -4,12 +4,12 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
 import { precomputeEntryTags } from './createHead'
 import { capoTagWeight } from './sort'
 
-export interface ExtractedTemplateCache {
+interface ExtractedTemplateCache {
   template: PreparedHtmlTemplateWithIndexes
   tags: HeadTag[]
 }
 
-let extractedTemplates: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
+let extractedTemplates: WeakMap<PreparedTemplate, { document?: ExtractedTemplateCache, stream?: ExtractedTemplateCache }> | undefined
 
 function cloneExtractedInput<T>(value: T): T {
   if (Array.isArray(value))
@@ -49,13 +49,14 @@ function hasHooks(head: Unhead<any>): boolean {
  * HTML into an entry input. Shared by `transformHtmlTemplate` and streaming
  * shells so one template pays for extraction once.
  *
- * Not part of the public API.
+ * @internal
  */
-export function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateCache {
+export function extractPreparedTemplate(prepared: PreparedTemplate, mode: 'document' | 'stream' = 'document'): ExtractedTemplateCache {
   const cache = extractedTemplates ||= new WeakMap()
-  let extracted = cache.get(prepared)
+  const variants = cache.get(prepared)
+  let extracted = variants?.[mode]
   if (!extracted) {
-    const template = parseHtmlForUnheadExtraction(prepared.html)
+    const template = parseHtmlForUnheadExtraction(prepared, mode === 'stream' ? 'stream' : false)
     freezeExtractedInput(template.input)
     Object.freeze(template.indexes)
     Object.freeze(template)
@@ -65,7 +66,7 @@ export function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTe
       template,
       tags,
     })
-    cache.set(prepared, extracted)
+    cache.set(prepared, Object.freeze({ ...variants, [mode]: extracted }))
   }
   return extracted
 }
@@ -74,7 +75,7 @@ export function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTe
  * Pushes a template's extracted head tags as entry 0 so app tags dedupe
  * against them. Shared by `transformHtmlTemplate` and streaming shells.
  *
- * Not part of the public API.
+ * @internal
  */
 export function pushExtractedTemplateEntry(head: Unhead<any>, cached: ExtractedTemplateCache | undefined, template: PreparedHtmlTemplateWithIndexes) {
   // Entry hooks are allowed to mutate their request's input. Never expose the
@@ -86,14 +87,15 @@ export function pushExtractedTemplateEntry(head: Unhead<any>, cached: ExtractedT
     : false
   const input = cached && (hooked || hasDynamicResolver) ? cloneExtractedInput(template.input) : template.input
   head.push(input, { _index: 0 })
-  if (cached
+  const entry = head.entries.get(0)
+  if (entry
+    && cached
     && !hooked
     && head.resolvedOptions._tagWeight === capoTagWeight
     && !hasDynamicResolver) {
-    const entry = head.entries.get(0)
-    if (entry)
-      entry._precomputedTags = cached.tags
+    entry._precomputedTags = cached.tags
   }
+  return entry
 }
 
 /**
@@ -109,7 +111,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
   let cached: ExtractedTemplateCache | undefined
   let template: PreparedHtmlTemplateWithIndexes
   if (typeof html === 'string') {
-    template = parseHtmlForUnheadExtraction(html)
+    template = parseHtmlForUnheadExtraction(html, true)
   }
   else {
     cached = extractPreparedTemplate(html)
@@ -133,7 +135,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function transformHtmlTemplateRaw(head: Unhead<any, SSRHeadPayload>, html: string | PreparedTemplate) {
-  // For raw mode, we only need indexes, not head extraction
-  const template = typeof html === 'string' ? parseHtmlForIndexes(html) : html
-  return applyHeadToHtml(template, head.render())
+  const headHtml = head.render()
+  const template = typeof html === 'string' ? parseHtmlForIndexes(html, headHtml.bodyTags ? 'body-close' : 'body-open') : html
+  return applyHeadToHtml(template, headHtml)
 }

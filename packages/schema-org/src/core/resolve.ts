@@ -163,7 +163,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     node['@id'] = prefixId(idBase(ctx, prefix), node['@id'])
     return node
   }
-  // transform 'host' to https://host.com/#schema/webpage/1
+  // Automatic counters are local to a page; explicit ids keep the resolver prefix.
   let alias = resolver?.alias
   if (!alias) {
     const type = asArray(node['@type'])?.[0] || ''
@@ -171,7 +171,8 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     alias = type.replace(ALIAS_RE, '$1-$2').toLowerCase()
   }
 
-  node['@id'] = prefixId(idBase(ctx, prefix), `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)
+  const base = node['@id'] ? idBase(ctx, prefix) : ctx.meta.idUrl
+  node['@id'] = prefixId(base, `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)
   return node
 }
 

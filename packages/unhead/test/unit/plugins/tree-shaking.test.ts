@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { build } from 'esbuild'
 import { rollup } from 'rollup'
 import ts from 'typescript'
 import { build as viteBuild } from 'vite'
@@ -159,6 +160,21 @@ async function collectFirstSideEffectLogs(input: string) {
 }
 
 describe('plugins tree shaking', () => {
+  it('keeps the safe input plugin out of the standalone stream server', async () => {
+    const { metafile } = await build({
+      absWorkingDir: packageRoot,
+      entryPoints: ['src/stream/server.ts'],
+      platform: 'node',
+      format: 'esm',
+      packages: 'external',
+      bundle: true,
+      write: false,
+      metafile: true,
+    })
+    const inputs = Object.values(metafile.outputs).flatMap(output => Object.entries(output.inputs))
+    expect(inputs.some(([path, input]) => path === 'src/plugins/safe.ts' && input.bytesInOutput > 0)).toBe(false)
+  })
+
   it('removes unused plugin modules from a single plugins barrel import', async () => {
     const code = await bundlePluginConsumer('defineHeadPlugin')
 

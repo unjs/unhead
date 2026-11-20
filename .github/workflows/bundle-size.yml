@@ -23,10 +23,10 @@ jobs:
           persist-credentials: false
 
       - name: Install pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
 
       - name: Use Node.js 24.x
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24.x
           registry-url: https://registry.npmjs.org/
@@ -41,6 +41,9 @@ jobs:
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
+          cp bench/csr-memory.ts /tmp/csr-memory.ts
+          cp bench/csr-perf.ts /tmp/csr-perf.ts
+          cp bench/memory.ts /tmp/memory.ts
           cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
           cp bench/unplugin-transform.bench.ts /tmp/unplugin-transform.bench.ts
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
@@ -66,7 +69,7 @@ jobs:
           cp -r bench/bundle/dist /tmp/base-dist
           # measure base perf with the PR's harness against the base-built packages;
           # run from /tmp so the working tree stays clean across the checkout back
-          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
+          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --reporter=json --outputFile=/tmp/base-transform-perf.json
           # the base pnpm install may have rewritten the lockfile; discard before switching back
           git checkout -f -
@@ -80,7 +83,7 @@ jobs:
           pnpm test:vue-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
-          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
+          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --reporter=json --outputFile=/tmp/pr-transform-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2

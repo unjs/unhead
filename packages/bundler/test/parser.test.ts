@@ -1,7 +1,29 @@
 import { describe, expect, it, vi } from 'vitest'
-import { resolveParser, resolveParserOrThrow } from '../src/unplugin/parser'
+import { resolveParser, resolveParserOrThrow, resolveRawTransferParser } from '../src/unplugin/parser'
 
 const parseSync = vi.fn()
+
+describe('resolveRawTransferParser', () => {
+  it('wraps parseSync to enable raw transfer when supported', () => {
+    const parseSync = vi.fn()
+    const load = vi.fn(() => ({
+      _tag: 'ok' as const,
+      module: { parseSync, rawTransferSupported: () => true },
+    }))
+
+    const resolved = resolveRawTransferParser(load)!
+    resolved.parseSync('x.js', 'const x = 1', { lang: 'js' })
+
+    expect(load).toHaveBeenCalledWith('oxc-parser')
+    expect(parseSync).toHaveBeenCalledWith('x.js', 'const x = 1', expect.objectContaining({ lang: 'js', experimentalRawTransfer: true }))
+  })
+
+  it('returns undefined when raw transfer is unavailable', () => {
+    expect(resolveRawTransferParser(() => ({ _tag: 'error' as const, cause: new Error('oxc-parser is not installed') }))).toBeUndefined()
+    expect(resolveRawTransferParser(() => ({ _tag: 'ok' as const, module: { parseSync: vi.fn(), rawTransferSupported: () => false } }))).toBeUndefined()
+    expect(resolveRawTransferParser(() => ({ _tag: 'ok' as const, module: { rawTransferSupported: () => true } }))).toBeUndefined()
+  })
+})
 
 describe('resolveParser', () => {
   it('prefers the parser already shipped by Rolldown', () => {
