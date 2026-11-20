@@ -104,6 +104,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       }
       else {
         // For singleton tags (title, base, etc.)
+        // @ts-expect-error untyped
         input[tagName as keyof UseHeadInput] = data
       }
     }

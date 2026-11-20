@@ -86,30 +86,14 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props: Record<string, any> = { ...prev.props }
-      const encoding = { ...prev._attrEncoding }
+      const props = { ...prev.props }
       for (const p in next.props) {
-        const previous: unknown = prev.props[p]
-        const incoming: unknown = next.props[p]
-        // Literal class/style attributes replace atomically; structured inputs retain token merging.
-        if ((p === 'style' && incoming instanceof Map && (!previous || previous instanceof Map))
-          || (p === 'class' && incoming instanceof Set && (!previous || previous instanceof Set))) {
-          props[p] = p === 'style'
-            ? new Map([...(previous || []) as Iterable<[string, string]>, ...incoming as Map<string, string>])
-            : new Set([...(previous || []) as Iterable<string>, ...incoming as Set<string>])
-        }
-        else {
-          props[p] = incoming
-        }
-        if (next._attrEncoding?.[p])
-          encoding[p] = next._attrEncoding[p]
-        else
-          delete encoding[p]
+        // @ts-expect-error untyped - style is Map, class is Set at runtime
+        props[p] = p === 'style'
+          ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
+          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
-      const merged = { ...next, props }
-      if (prev._attrEncoding || next._attrEncoding)
-        merged._attrEncoding = encoding
-      ctx.tagMap.set(k, merged)
+      ctx.tagMap.set(k, { ...next, props })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -156,7 +140,7 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
     if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (props.content === null && !props['http-equiv'] && !props.charset)
+      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {

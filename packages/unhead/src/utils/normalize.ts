@@ -1,10 +1,12 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
-import { DupeableTags, hasContent, HasElementTags, TagConfigKeys } from './const'
+import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
-export function normalizeStyleClassProps(
+const ASCII_UPPER_RE = /[A-Z]/g
+
+function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
 ): Map<string, string> | Set<string> {
@@ -18,7 +20,7 @@ export function normalizeStyleClassProps(
       i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
     }
     else {
-      v.split(/[\t\n\f\r ]+/).forEach(c => c && store.add(c))
+      v.split(' ').forEach(c => c && store.add(c))
     }
   }
   if (typeof value === 'string') {
@@ -47,13 +49,11 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
 
   for (const prop in input) {
-    if (prop === 'attrs' && input.attrs && typeof input.attrs === 'object')
-      continue
     if (isUnsafeKey(prop))
       continue
     const isData = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
-    const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
+    const key = isHtmlAttr && !isData ? prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase()) : prop
     if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
     const value = input[prop]
@@ -79,24 +79,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
       const str = String(value)
-      const isMeta = tag.tag === 'meta' && key === 'content'
-      tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
-    }
-  }
-  const attrs = input.attrs
-  if (attrs && typeof attrs === 'object') {
-    const encoding = tag._attrEncoding ||= {}
-    for (const name in attrs) {
-      if (!Object.hasOwn(attrs, name))
-        continue
-      const key = name.toLowerCase()
-      if (isUnsafeKey(key) || !key || INVALID_ATTR_NAME_RE.test(key))
-        continue
-      const value = attrs[name]
-      if (value !== undefined) {
-        tag.props[key] = value === null ? false : value === true && (key === 'class' || key === 'style') ? '' : value
-        encoding[key] = 'text'
-      }
+      const preserveString = isData || (tag.tag === 'meta' && key === 'content') || (tag.tag === 'script' && typeof value === 'string' && (key === 'type' || key === 'language'))
+      tag.props[key] = str === 'true' || str === '' ? (preserveString ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }
   }
   return tag
@@ -123,15 +107,11 @@ function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag[
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   // normalizeProps already stringifies an object `innerHTML` of a JSON script and drops any other
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
-  const hasAttrs = input?.attrs && typeof input.attrs === 'object'
-  // Empty author meta input removes an earlier value. Literal attributes may describe marker tags.
-  if (tag.tag === 'meta' && !hasAttrs && !hasContent(tag.props.content) && !tag.props['http-equiv'] && !tag.props.charset)
-    tag.props.content = null as any
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (Array.isArray(tag.props.content)) {
     for (const content of tag.props.content)
-      tags.push({ ...tag, props: { ...tag.props, content: !hasAttrs && !hasContent(content) ? null : content } })
+      tags.push({ ...tag, props: { ...tag.props, content } })
   }
   else {
     tags.push(tag)

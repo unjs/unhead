@@ -1,127 +1,100 @@
 import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
-import { escapeHtml } from '../server/util'
+import { HasElementTags, SelfClosingTags, TagConfigKeys } from '../utils/const'
+import { normalizeProps } from '../utils/normalize'
+import { isUnsafeKey } from '../utils/unsafeKey'
 
 export type { HtmlTagDescriptor }
 
-const KNOWN_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'script', 'style', 'noscript', 'base'])
-const VOID_TAGS = /* @__PURE__ */ new Set(['meta', 'link', 'base'])
+type DescriptorTag = 'base' | 'link' | 'meta' | 'noscript' | 'script' | 'style'
+type HeadInput = Partial<Record<Exclude<DescriptorTag, 'base'>, TagInput[]>> & { base?: TagInput }
+type TagInput = Record<string, string | boolean>
 
-function attrsToProps(attrs?: HtmlTagDescriptor['attrs']): Record<string, string | boolean> {
-  const props: Record<string, string | boolean> = {}
-  if (!attrs)
-    return props
-  for (const key in attrs) {
-    const value = attrs[key]
+const ATTRIBUTE_NAME_RE = /^[a-z_][\w.:-]*$/i
+const CHARACTER_REFERENCE_RE = /&(?:#|[a-z][a-z\d]*(?:;|(?=[^a-z\d=]|$)))/i
+
+function unsupported(tag: string, reason: string): never {
+  throw new TypeError(`[unhead/vite] Cannot convert <${tag}> with ${reason}. Use the framework HTML transform.`)
+}
+
+function convertTag(tag: DescriptorTag, descriptor: HtmlTagDescriptor): TagInput {
+  const input: TagInput = {}
+  for (const [name, value] of Object.entries(descriptor.attrs || {})) {
     if (value === false || value === undefined)
       continue
-    props[key] = value
-  }
-  return props
-}
 
-function normalizeBaseAttrs(attrs: Record<string, string | boolean>): Record<string, string | boolean> {
-  const normalized: Record<string, string | boolean> = {}
-  for (const key in attrs) {
-    const normalizedKey = key.toLowerCase()
-    if (normalizedKey === 'href' || normalizedKey === 'target') {
-      if (normalized[normalizedKey] === undefined)
-        normalized[normalizedKey] = attrs[key]
+    const key = name.toLowerCase()
+    if (!ATTRIBUTE_NAME_RE.test(name) || isUnsafeKey(key) || key === '_resolver' || key === 'data-hid'
+      || TagConfigKeys.has(name) || TagConfigKeys.has(key) || Object.hasOwn(input, key)
+      || (typeof value === 'string' && (CHARACTER_REFERENCE_RE.test(value) || value.includes('\r') || value.includes('\0')))) {
+      unsupported(tag, `attribute "${name}"`)
     }
-    else {
-      normalized[key] = attrs[key]
-    }
+    input[key] = value === true ? '' : value
   }
-  return normalized
-}
 
-function renderTagToHtml(tag: HtmlTagDescriptor): string {
-  const props = attrsToProps(tag.attrs)
-  const attrString = Object.entries(props)
-    .map(([key, value]) => value === true ? key : `${key}="${escapeHtml(String(value))}"`)
-    .join(' ')
-  const open = attrString ? `<${tag.tag} ${attrString}>` : `<${tag.tag}>`
-  if (VOID_TAGS.has(tag.tag))
-    return open
-  const inner = typeof tag.children === 'string'
-    ? tag.children
-    : Array.isArray(tag.children)
-      ? tag.children.map(renderTagToHtml).join('')
-      : ''
-  return `${open}${inner}</${tag.tag}>`
-}
-
-function vitePositionOrder(tag: HtmlTagDescriptor): number {
-  switch (tag.injectTo) {
-    case 'head': return 1
-    case 'body-prepend': return 2
-    case 'body': return 3
-    default: return 0
+  const { props } = normalizeProps({ tag, props: {} }, input)
+  for (const [name, value] of Object.entries(input)) {
+    if (props[name] !== value && !(value === '' && props[name] === true))
+      unsupported(tag, `attribute "${name}"`)
   }
-}
+  if (tag === 'meta' && !props.content && !props.charset && !props['http-equiv'])
+    unsupported(tag, 'empty or missing meta content')
 
-// Mirrors Vite's own `transformIndexHtml` switch (packages/vite/src/node/plugins/html.ts):
-// only 'body' and 'body-prepend' get their own branch, explicit 'head' is appended as-is,
-// and everything else -- including an omitted `injectTo` -- is treated as 'head-prepend'.
-function positionProps(injectTo: HtmlTagDescriptor['injectTo']): { tagPosition?: 'head' | 'bodyOpen' | 'bodyClose', tagPriority?: 'high' } {
-  switch (injectTo) {
-    case 'head':
-      return {}
+  if (!SelfClosingTags.has(tag)) {
+    if (typeof descriptor.children === 'string')
+      input.innerHTML = descriptor.children
+    else if (descriptor.children?.length)
+      unsupported(tag, 'nested descriptors')
+  }
+  if (!Object.keys(props).length && !input.innerHTML)
+    unsupported(tag, 'no attributes or content')
+
+  input.processTemplateParams = false
+  switch (descriptor.injectTo) {
     case 'body-prepend':
-      return { tagPosition: 'bodyOpen' }
+      input.tagPosition = 'bodyOpen'
+      break
     case 'body':
-      return { tagPosition: 'bodyClose' }
-    case 'head-prepend':
+      input.tagPosition = 'bodyClose'
+      break
+    case 'head':
+      break
     default:
-      return { tagPosition: 'head', tagPriority: 'high' }
+      input.tagPriority = 'high'
   }
+  return input
 }
 
 /**
- * Converts Vite's `HtmlTagDescriptor[]` (the return shape of `transformIndexHtml`)
- * into an Unhead `SerializableHead`, so SSR frameworks can push tags a Vite
- * plugin declared through `useHead()` / `head.push()`.
- *
- * An omitted `injectTo` is treated as `'head-prepend'`, matching Vite's own default.
- * Unsupported tags and base body placement throw so frameworks can retain their HTML fallback.
- * Titles require the framework HTML transform to preserve character reference semantics.
+ * Converts flat Vite descriptors into input for Unhead's SSR renderer.
+ * Throws when a descriptor needs the framework HTML transform.
  */
-export function htmlTagsToHead(tags: HtmlTagDescriptor[]): SerializableHead {
-  const head: Record<string, any> = {}
+export function htmlTagsToHead(tags: readonly HtmlTagDescriptor[]): SerializableHead {
+  const head: HeadInput = {}
+  const base: TagInput[] = []
+  for (const descriptor of tags) {
+    if (!HasElementTags.has(descriptor.tag))
+      unsupported(descriptor.tag, 'an unsupported tag name')
 
-  for (const tag of [...tags].sort((a, b) => vitePositionOrder(a) - vitePositionOrder(b))) {
-    if (!KNOWN_TAGS.has(tag.tag))
-      throw new TypeError(`[unhead/vite] Unsupported tag "${tag.tag}". Keep it in the framework HTML transform.`)
-    if (tag.tag === 'base' && (tag.injectTo === 'body' || tag.injectTo === 'body-prepend'))
-      throw new TypeError(`[unhead/vite] Unsupported base placement "${tag.injectTo}". Keep it in the framework HTML transform.`)
-
-    const props = attrsToProps(tag.attrs)
-    const position = positionProps(tag.injectTo)
-
-    if (tag.tag === 'base') {
-      const baseProps = normalizeBaseAttrs(props)
-      if (!head.base) {
-        const basePosition = position.tagPriority ? { tagPriority: position.tagPriority } : {}
-        head.base = { ...basePosition, attrs: baseProps }
-      }
-      else {
-        for (const key of ['href', 'target'] as const) {
-          if (head.base.attrs[key] === undefined && baseProps[key] !== undefined) {
-            head.base.attrs[key] = baseProps[key]
-          }
-        }
-      }
-      continue
+    const tag = descriptor.tag as DescriptorTag
+    const input = convertTag(tag, descriptor)
+    if (tag === 'base') {
+      if (input.tagPosition)
+        unsupported(tag, 'a body position')
+      base.push(input)
     }
-
-    const entry: Record<string, unknown> = { ...position, attrs: props }
-    if (typeof tag.children === 'string')
-      entry.innerHTML = tag.children
-    else if (Array.isArray(tag.children) && tag.children.length)
-      entry.innerHTML = tag.children.map(renderTagToHtml).join('')
-
-    ;(head[tag.tag] ||= []).push(entry)
+    else {
+      (head[tag] ||= []).push(input)
+    }
   }
 
+  base.sort((a, b) => Number(b.tagPriority === 'high') - Number(a.tagPriority === 'high'))
+  for (const input of base) {
+    head.base ||= input
+    for (const name of ['href', 'target']) {
+      if (input[name] !== undefined)
+        head.base[name] ??= input[name]
+    }
+  }
   return head as SerializableHead
 }

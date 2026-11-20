@@ -565,3 +565,70 @@ describe('inferSeoMetaPlugin twitter:card', () => {
     expect([...card()].map(el => el.outerHTML)).toEqual(['<meta name="twitter:card" content="summary">'])
   })
 })
+
+describe('inferSeoMetaPlugin twitter:card hydration', () => {
+  const shared = { title: 'Title', meta: [{ name: 'description', content: 'Description' }] }
+  // server only, like nuxt-og-image, which skips og:image while the client hydrates
+  const image = { meta: [{ property: 'og:image', content: 'https://example.com/og.png' }] }
+
+  function serverDocument(serverOnly?: typeof image) {
+    const server = createHead({ disableDefaults: true, plugins: [InferSeoMetaPlugin()] })
+    server.push(shared)
+    if (serverOnly)
+      server.push(serverOnly)
+    const document = useDom(renderSSRHead(server)).window.document
+    const cards = () => [...document.querySelectorAll('meta[name="twitter:card"]')].map(el => el.getAttribute('content'))
+    return { document, cards }
+  }
+
+  // the client hydrates the server HTML with the shared entry only
+  function hydrate(serverOnly?: typeof image) {
+    const { document, cards } = serverDocument(serverOnly)
+    const serverCards = cards()
+    const head = createClientHeadWithContext({ document, plugins: [InferSeoMetaPlugin()] })
+    head.push(shared)
+    const render = () => renderDOMHead(head, { document })
+    render()
+    return { head, render, cards, serverCards }
+  }
+
+  it('keeps the server card when og:image exists only on the server', () => {
+    const { cards, serverCards } = hydrate(image)
+    expect(serverCards).toEqual(['summary_large_image'])
+    expect(cards()).toEqual(['summary_large_image'])
+  })
+
+  it('keeps the server card on a later client render', () => {
+    const { head, render, cards } = hydrate(image)
+    head.push({ title: 'Next' })
+    render()
+    expect(cards()).toEqual(['summary_large_image'])
+  })
+
+  it('keeps the server card when the plugin is added to a head that already rendered', () => {
+    const { document, cards } = serverDocument(image)
+    const head = createClientHeadWithContext({ document })
+    head.push(shared)
+    renderDOMHead(head, { document })
+    head.use(InferSeoMetaPlugin())
+    head.push({ title: 'Next' })
+    renderDOMHead(head, { document })
+    expect(cards()).toEqual(['summary_large_image'])
+  })
+
+  it('uses summary once the client takes over the server image and drops it', () => {
+    const { head, render, cards } = hydrate(image)
+    const entry = head.push({ meta: [{ property: 'og:image', content: 'https://example.com/next.png' }] })
+    render()
+    expect(cards()).toEqual(['summary_large_image'])
+    entry.dispose()
+    render()
+    expect(cards()).toEqual(['summary'])
+  })
+
+  it('keeps summary when the server rendered no image', () => {
+    const { cards, serverCards } = hydrate()
+    expect(serverCards).toEqual(['summary'])
+    expect(cards()).toEqual(['summary'])
+  })
+})
