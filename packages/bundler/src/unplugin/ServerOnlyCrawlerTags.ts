@@ -472,9 +472,12 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
           if (!factory)
             return false
           const spec = decl.node
-          return member === undefined
-            ? spec.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === factory
-            : spec.type === 'ImportNamespaceSpecifier' && member === factory
+          if (member !== undefined)
+            return spec.type === 'ImportNamespaceSpecifier' && member === factory
+          if (spec.type !== 'ImportSpecifier')
+            return false
+          const imported = spec.imported
+          return (imported.type === 'Identifier' ? imported.name : imported.value) === factory
         }
 
         function isClientHeadFactory(callee: any): boolean {
