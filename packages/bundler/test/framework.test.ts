@@ -54,6 +54,15 @@ function names(plugins: any[]): string[] {
   return plugins.map(plugin => plugin?.name).filter(Boolean)
 }
 
+describe('createFrameworkPlugin crawler tags', () => {
+  it.each([
+    { streaming: true, serverOnlyCrawlerTags: true },
+    { streaming: { mode: 'module' }, serverOnlyCrawlerTags: { importPaths: ['#imports'] } },
+  ])('rejects crawler tag stripping with streaming SSR', (options) => {
+    expect(() => Unhead(options)).toThrow('Set serverOnlyCrawlerTags to false when streaming is enabled.')
+  })
+})
+
 describe('createFrameworkPlugin devtools loading', () => {
   it('exposes concrete plugin types for every bundler', () => {
     const plugin = Unhead()
