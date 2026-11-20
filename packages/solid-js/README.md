@@ -12,19 +12,19 @@
 - 🔄 Reactive titles, meta tags, and other head elements
 - 🔍 SEO-friendly head control
 - 🖥️ Server-side rendering support
-- 📦 Lightweight with zero dependencies (except for SolidJS & unhead)
+- 📦 Built for Solid 2 and `@solidjs/web`
 
 ## Installation
 
 ```bash
 # npm
-npm install @unhead/solid-js
+npm install @unhead/solid-js solid-js@^2 @solidjs/web@^2
 
 # yarn
-yarn add @unhead/solid-js
+yarn add @unhead/solid-js solid-js@^2 @solidjs/web@^2
 
 # pnpm
-pnpm add @unhead/solid-js
+pnpm add @unhead/solid-js solid-js@^2 @solidjs/web@^2
 ```
 
 ## Usage
@@ -37,15 +37,15 @@ pnpm add @unhead/solid-js
 import { UnheadContext } from '@unhead/solid-js'
 import { createHead } from '@unhead/solid-js/client'
 // main.jsx
-import { render } from 'solid-js/web'
+import { render } from '@solidjs/web'
 import App from './App'
 
 const head = createHead({ /* config */ })
 
 render(() => (
-  <UnheadContext.Provider value={head}>
+  <UnheadContext value={head}>
     <App />
-  </UnheadContext.Provider>
+  </UnheadContext>
 ), document.getElementById('root'))
 ```
 
@@ -55,15 +55,15 @@ render(() => (
 import { UnheadContext } from '@unhead/solid-js'
 import { createHead } from '@unhead/solid-js/server'
 // entry-server.jsx
-import { renderToString } from 'solid-js/web'
+import { renderToString } from '@solidjs/web'
 import App from './App'
 
 export function render(url) {
   const head = createHead()
   const html = renderToString(() => (
-    <UnheadContext.Provider value={head}>
+    <UnheadContext value={head}>
       <App />
-    </UnheadContext.Provider>
+    </UnheadContext>
   ))
   return { html, head }
 }
@@ -73,15 +73,15 @@ export function render(url) {
 import { UnheadContext } from '@unhead/solid-js'
 import { createHead } from '@unhead/solid-js/client'
 // entry-client.jsx (for hydration)
-import { hydrate } from 'solid-js/web'
+import { hydrate } from '@solidjs/web'
 import App from './App'
 
 const head = createHead({ /* config */ })
 
 hydrate(() => (
-  <UnheadContext.Provider value={head}>
+  <UnheadContext value={head}>
     <App />
-  </UnheadContext.Provider>
+  </UnheadContext>
 ), document.getElementById('root'))
 ```
 
@@ -139,16 +139,18 @@ import { createEffect, createSignal } from 'solid-js'
 function Profile() {
   const [userName, setUserName] = createSignal('User')
 
-  // SolidJS automatically tracks reactive changes in useHead
-  useHead(() => ({
-    title: `${userName()} - Profile`, // Reactive title
+  const input = (name) => ({
+    title: `${name} - Profile`,
     meta: [
       {
         name: 'description',
-        content: `${userName()}'s profile page`, // Reactive description
+        content: `${name}'s profile page`,
       },
     ],
-  }))
+  })
+  const entry = useHead(input('User'))
+
+  createEffect(userName, name => entry.patch(input(name)))
 
   return (
     <div>

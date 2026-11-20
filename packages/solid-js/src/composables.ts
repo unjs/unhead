@@ -10,15 +10,15 @@ import type {
   UseScriptOptions,
   UseSeoMetaInput,
 } from 'unhead/types'
-import { createEffect, createSignal, getOwner, onCleanup, onMount, runWithOwner, useContext } from 'solid-js'
-import { isServer } from 'solid-js/web'
+import { isServer } from '@solidjs/web'
+import { getOwner, onCleanup, onSettled, runWithOwner, useContext } from 'solid-js'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
 import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadContext } from './context'
 
 export function useUnhead(): Unhead {
   // fallback to solid-js context
-  const instance = useContext<Unhead | null>(UnheadContext)
+  const instance = getOwner() && useContext(UnheadContext)
   if (!instance) {
     throw new Error('useHead() was called without provide context.')
   }
@@ -36,16 +36,8 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
     }
   }
   const entry = fn(unhead, input, options) as T
-  // On client, set up reactive updates and cleanup
-  if (!isServer) {
-    const [entrySignal] = createSignal<T>(entry)
-    createEffect(() => {
-      entrySignal().patch(input)
-    })
-    // createEffect does not treat a returned function as cleanup, so the entry
-    // was never disposed; onCleanup runs when the owning root is disposed
+  if (!isServer)
     onCleanup(() => entry.dispose())
-  }
   return entry
 }
 
@@ -69,7 +61,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   const mountCbs: (() => void)[] = []
   let isMounted = false
-  onMount(() => {
+  onSettled(() => {
     isMounted = true
     // drain so callbacks registered before mount run exactly once
     mountCbs.splice(0).forEach(i => i())

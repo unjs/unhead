@@ -1,4 +1,4 @@
-import { createResource } from 'solid-js'
+import { createMemo, Show } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
 const DATA = { user: 'John Doe', cartCount: 3 }
@@ -8,13 +8,23 @@ const fetchData = async () => {
   return DATA
 }
 
-export default function Header() {
-  const [data] = createResource(fetchData)
+export default function Header(props: { showProgress?: boolean }) {
+  const data = createMemo(fetchData)
 
+  return (
+    <Show when={data()} keyed>
+      {data => <HeaderContent data={data} showProgress={props.showProgress} />}
+    </Show>
+  )
+}
+
+function HeaderContent(props: { data: typeof DATA; showProgress?: boolean }) {
   useHead({
-    title: 'StreamShop 1/11 - Loading...',
     meta: [{ name: 'user-status', content: 'logged-in' }],
-    style: [{ key: 'progress', innerHTML: '.stream-progress::after{width:9%}' }],
+    ...(props.showProgress !== false && {
+      title: 'StreamShop 1/11 - Loading...',
+      style: [{ key: 'progress', innerHTML: '.stream-progress::after{width:9%}' }],
+    }),
   })
 
   return (
@@ -27,8 +37,8 @@ export default function Header() {
         <a href="#">Deals</a>
       </nav>
       <div class="user-area">
-        <span class="cart">🛒 {data()?.cartCount}</span>
-        <span class="user">👤 {data()?.user}</span>
+        <span class="cart">🛒 {props.data.cartCount}</span>
+        <span class="user">👤 {props.data.user}</span>
       </div>
     </header>
   )

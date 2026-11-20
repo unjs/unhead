@@ -1,8 +1,8 @@
 import type { ServerUnhead } from 'unhead/server'
 import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
+import { ssr } from '@solidjs/web'
 import { useContext } from 'solid-js'
-import { ssr } from 'solid-js/web'
 import { escapeHtml } from 'unhead/server'
 import {
   createStreamableHead as _createStreamableHead,
@@ -52,12 +52,12 @@ export interface SolidStreamableHeadContext {
  * const { head, onCompleteShell, wrapStream } = createStreamableHead()
  *
  * const stream = renderToStream(() => (
- *   <UnheadContext.Provider value={head}>
+ *   <UnheadContext value={head}>
  *     <App />
- *   </UnheadContext.Provider>
+ *   </UnheadContext>
  * ), { onCompleteShell })
  *
- * return wrapStream(stream, template)
+ * return wrapStream(stream.readable, template)
  * ```
  */
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): SolidStreamableHeadContext {
