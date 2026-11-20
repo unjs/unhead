@@ -14,6 +14,9 @@
   createHead: function
   renderDOMHead: function
   UnheadContextKey: symbol
+./lazy:
+  createHead: function
+  UnheadContextKey: symbol
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function

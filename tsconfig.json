@@ -29,6 +29,8 @@
       "@unhead/vue/client": ["./packages/vue/src/client"],
       "@unhead/vue/server": ["./packages/vue/src/server"],
       "@unhead/vue/lazy": ["./packages/vue/src/lazy"],
+      "@unhead/react/lazy": ["./packages/react/src/lazy"],
+      "@unhead/solid-js/lazy": ["./packages/solid-js/src/lazy"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
       "@unhead/bundler/framework": ["./packages/bundler/src/unplugin/framework"],
@@ -37,6 +39,7 @@
       "@unhead/schema-org/vue": ["./packages/schema-org/src/vue/index"],
       "@unhead/schema-org/vue/meta": ["./packages/schema-org/src/vue/meta"],
       "@unhead/svelte/types": ["./packages/svelte/src/types"],
+      "@unhead/svelte/lazy": ["./packages/svelte/src/lazy"],
       "@unhead/angular": ["./packages/angular/src/index"],
       "@unhead/angular/client": ["./packages/angular/client/src/index"],
       "@unhead/angular/server": ["./packages/angular/server/src/index"]
