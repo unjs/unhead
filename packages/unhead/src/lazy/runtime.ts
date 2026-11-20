@@ -1,8 +1,10 @@
 import type { ClientUnhead } from '../client/adapter'
+import type { StreamingGlobal } from '../stream/types'
 import type { HeadEntry, HeadRenderer } from '../types'
 import type { LazyHeadOptions } from './index'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
+import { attachStreamHead } from '../stream/queue'
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
 // element unknown to the renderer. Adopt only existing elements without replaying
@@ -28,8 +30,15 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[]): HeadRenderer<any> {
+export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[], stream?: StreamingGlobal): HeadRenderer<any> {
   head.resolvedOptions._tagWeight = tagWeight
+  if (stream && stream._head !== head) {
+    if (stream._head)
+      throw new Error('[unhead] This stream already has a client head.')
+    // Reserve earlier entry positions so late SSR patches cannot override live client entries.
+    let index = -(1 << 20)
+    attachStreamHead(stream, head, input => head.push(input as T, { _index: index++ })._i)
+  }
   let renderId = 0
   // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
   // The default one batches the changes of a task into one render, as the Vue client head does.

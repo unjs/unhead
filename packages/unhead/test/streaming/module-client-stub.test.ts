@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { createHead } from 'unhead/client'
-import { createStreamableHead } from 'unhead/stream/client'
+import { attachStreamHead, createStreamableHead } from 'unhead/stream/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createStreamingPlugin, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
 
@@ -44,7 +44,7 @@ function runStub(streamKey = '__unhead__') {
   const loaded = typeof hook === 'function' ? hook.call({}, RESOLVED_CLIENT_ID) : hook.handler.call({}, RESOLVED_CLIENT_ID)
   const body = loaded.code.split('\n').filter((line: string) => !line.startsWith('import')).join('\n')
   // eslint-disable-next-line no-new-func
-  return new Function('createHead', 'window', 'document', 'console', body)(createHead, globalThis.window, globalThis.document, console)
+  return new Function('createHead', 'attachStreamHead', 'window', 'document', 'console', body)(createHead, attachStreamHead, globalThis.window, globalThis.document, console)
 }
 
 describe('module-mode client stub', () => {

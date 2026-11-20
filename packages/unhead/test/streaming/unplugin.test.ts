@@ -389,6 +389,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
 
     const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', { bundle: {} })
 
+    expect(result[0].attrs.type).toBe('module')
     expect(result[0].children).toBe(`import("/${VIRTUAL_CLIENT_ID}")`)
     expect(result[0].attrs.src).toBeUndefined()
   })

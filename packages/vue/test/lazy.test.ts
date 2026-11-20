@@ -65,10 +65,11 @@ describe('vue lazy head', () => {
     document.head.innerHTML = '<meta name="theme-color" content="#fff">'
     const client = hydrate(ColorMode)
     client.head.render()
-    await settle(100)
-    expect(warn.mock.calls.map(call => String(call[0]))).toEqual([
-      expect.stringContaining('<meta name="theme-color"> differs from the server head in content. Pushed by ColorMode.'),
-    ])
+    await vi.waitFor(() => {
+      expect(warn.mock.calls.map(call => String(call[0]))).toEqual([
+        expect.stringContaining('<meta name="theme-color"> differs from the server head in content. Pushed by ColorMode.'),
+      ])
+    })
   })
 
   it('leaves the server head alone during hydration, then adopts it', async () => {

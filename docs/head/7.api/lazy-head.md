@@ -40,6 +40,7 @@ function createHead(options?: LazyHeadOptions): LazyVueHead
 
 | Option | Type | Description |
 | --- | --- | --- |
+| `streamKey` | `string` | Connects to the matching SSR stream queue. Call `load()` to start applying streamed tags. |
 | `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Plugins that load with the runtime. Their code stays out of the eager bundle. |
 | `onLoadError` | `(error: unknown) => void` | Receives the error when the runtime chunk or the `lazyPlugins` loader fails. It also receives the error when a custom `render` throws during the load. The default logs with `console.error`. |
 
@@ -58,19 +59,21 @@ Call `load()` at once for a page with no server render, or for a head created af
 
 After hydration, a `dom:beforeRender` pause holds the load. Pause during a navigation, and call `render()` when it ends. Before hydration ends, a change loads the runtime at once. A `load()` call and a `useScript()` load skip the pause, but the runtime renders nothing until the pause lifts.
 
+With `streamKey`, the framework controls activation. Streamed patches and client head changes wait for `load()`. After a load failure, call `load()` again. See [Streaming SSR](/docs/vue/head/guides/core-concepts/lazy-head#streaming-ssr).
+
 ## Chunks
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The lazy head code in the eager bundle | With the app | About 2.3 KB with `@unhead/vue` |
-| The runtime | With the first head change | About 4.6 KB |
+| The lazy head code in the eager bundle | With the app | About 2.5 KB with `@unhead/vue` |
+| The runtime | On the first head change or when the app calls `load()` | About 4.8 KB |
 | The dev check | In development, after hydration | None in production |
 
 If your server adds prefetch hints for dynamic imports, the browser downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.
 
 ## Dev warning
 
-In development, the first `render()` checks the tags the client would render against the server head in the document. It warns once per tag and source for the browser tab. It does not run if the runtime already loads. Read [Dev warning](/docs/vue/head/guides/core-concepts/lazy-head#dev-warning) for the message and the fix.
+In development, the first `render()` checks the tags the client would render against the server head in the document. It warns once per tag and source for the browser tab. It runs on buffered SSR pages while the runtime is still unloaded. Read [Dev warning](/docs/vue/head/guides/core-concepts/lazy-head#dev-warning) for the message and the fix.
 
 The check reads `process.env.NODE_ENV`. A production build replaces it with `'production'` and drops the check.
 
