@@ -2,7 +2,7 @@ import type { EnvironmentInjector } from '@angular/core'
 import type { Unhead } from 'unhead/types'
 import { DOCUMENT } from '@angular/common'
 import { createEnvironmentInjector, Injector } from '@angular/core'
-import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
+import { BEFORE_APP_SERIALIZED, ɵDominoAdapter as DominoAdapter } from '@angular/platform-server'
 import { UnheadInjectionToken } from '@unhead/angular'
 import { afterEach, describe, expect, it } from 'vitest'
 import { provideServerHead } from './server'
@@ -16,8 +16,7 @@ interface SSRRequest {
 
 const injectors: EnvironmentInjector[] = []
 
-function createRequest(): SSRRequest {
-  const requestDocument = document.implementation.createHTMLDocument()
+function createRequest(requestDocument = document.implementation.createHTMLDocument()): SSRRequest {
   requestDocument.body.innerHTML = '<main>SSR app</main>'
 
   const injector = createEnvironmentInjector([
@@ -55,6 +54,23 @@ describe('provideServerHead', () => {
   afterEach(() => {
     while (injectors.length)
       injectors.pop()!.destroy()
+  })
+
+  it('applies root attribute names and values to the Angular server document', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.document.documentElement.setAttribute('xml:lang', 'en')
+    request.document.body.setAttribute('data-template', 'A & B')
+    request.head.push({
+      bodyAttrs: { 'data-label': 'A "quoted" value' },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('xml:lang')).toBe('en')
+    expect(request.document.documentElement.getAttribute('xml')).toBeNull()
+    expect(request.document.documentElement.getAttribute('lang')).toBeNull()
+    expect(request.document.body.getAttribute('data-label')).toBe('A "quoted" value')
+    expect(request.document.body.getAttribute('data-template')).toBe('A & B')
   })
 
   it('creates an isolated head for each sequential server injector render', async () => {
