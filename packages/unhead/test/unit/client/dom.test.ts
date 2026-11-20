@@ -353,7 +353,7 @@ describe('reused element drop reconciliation', () => {
     document.head.innerHTML = '<meta name="description" content="original">'
     const original = document.head.querySelector('meta')!
 
-    head.push({ title: 'Page' })
+    head.push({ meta: [{ name: 'application-name', content: 'Page' }] })
 
     const replacement = document.createElement('meta')
     replacement.setAttribute('name', 'description')

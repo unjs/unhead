@@ -83,10 +83,10 @@ describe('issue 881 - style claims across renders', () => {
     entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
 
     expect(style.getPropertyValue('margin-top')).toBe('5px')
-    expect(style.getPropertyValue('margin-left')).toBe('10px')
+    expect(style.getPropertyValue('margin-left')).toBe('')
   })
 
-  it('keeps preserved longhands when an identical style claim re-renders', () => {
+  it('keeps only the claimed longhand when the same style re-renders', () => {
     const dom = useDom()
     const document = dom.window.document
     const style = withLonghandStyle(document.body, {})
@@ -97,9 +97,9 @@ describe('issue 881 - style claims across renders', () => {
     entry.patch({ bodyAttrs: { style: { 'margin-top': '5px' } } })
 
     expect(style.getPropertyValue('margin-top')).toBe('5px')
-    expect(style.getPropertyValue('margin-right')).toBe('10px')
-    expect(style.getPropertyValue('margin-bottom')).toBe('10px')
-    expect(style.getPropertyValue('margin-left')).toBe('10px')
+    expect(style.getPropertyValue('margin-right')).toBe('')
+    expect(style.getPropertyValue('margin-bottom')).toBe('')
+    expect(style.getPropertyValue('margin-left')).toBe('')
   })
 
   it('removes prior shorthand longhands when the style is dropped later', () => {
@@ -158,6 +158,30 @@ describe('issue 881 - document without a body', () => {
 })
 
 describe('issue 881 - pre-hydration external attributes on html/body', () => {
+  it('removes styles and attributes from all original entries when no bodyAttrs resolve', () => {
+    const document = useDom().window.document
+    document.body.id = 'ssr-modal'
+    document.body.setAttribute('style', 'overflow: hidden; margin: 10px; --Theme: dark; color: red')
+
+    let ready = false
+    const head = createClientHeadWithContext({
+      document,
+      hooks: { 'dom:beforeRender': (ctx) => { ctx.shouldRender = ready } },
+    })
+    const first = head.push({ bodyAttrs: { id: 'ssr-modal', style: { 'overflow': 'hidden', '--Theme': 'dark' } } })
+    const second = head.push({ bodyAttrs: { style: 'margin: 10px' } })
+    first.patch({ title: 'First' })
+    second.patch({ title: 'Second' })
+    ready = true
+    head.render()
+
+    expect(document.body.hasAttribute('id')).toBe(false)
+    expect(document.body.style.overflow).toBe('')
+    expect(document.body.style.margin).toBe('')
+    expect(document.body.style.getPropertyValue('--Theme')).toBe('')
+    expect(document.body.style.color).toBe('red')
+  })
+
   it('keeps externally added classes and attributes on html when only the baseline is claimed', () => {
     const document = useDom().window.document
     document.documentElement.classList.add('dark')
