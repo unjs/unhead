@@ -2,6 +2,18 @@ import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
+const SCRIPT_START_RE = /<script[\t\n\f\r />]/i
+
+function canCloseScript(content: string): boolean {
+  if (!content.includes('<!--'))
+    return true
+
+  // After closing sequences have been escaped, a comment end resets script data.
+  const reset = content.lastIndexOf('-->')
+  const opener = content.indexOf('<!--', reset < 0 ? 0 : reset + 3)
+  return opener < 0 || !SCRIPT_START_RE.test(content.slice(opener + 4))
+}
+
 /* @__PURE__ */
 export function escapeHtml(str: string) {
   return str.replace(/[&<>"'/]/g, (char) => {
@@ -35,5 +47,7 @@ export function tagToString<T extends HeadTag>(tag: T) {
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent ?? tag.innerHTML ?? '')
   content = tag.tag === 'title' ? escapeHtml(content) : content.replace(new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  if (tag.tag === 'script' && !canCloseScript(content))
+    content = ''
   return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }
