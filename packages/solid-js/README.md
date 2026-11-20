@@ -34,8 +34,7 @@ pnpm add @unhead/solid-js solid-js@^2 @solidjs/web@^2
 #### Client-side (SPA)
 
 ```jsx
-import { UnheadContext } from '@unhead/solid-js'
-import { createHead } from '@unhead/solid-js/client'
+import { createHead, UnheadContext } from '@unhead/solid-js/client'
 // main.jsx
 import { render } from '@solidjs/web'
 import App from './App'
@@ -52,8 +51,7 @@ render(() => (
 #### Server-side (SSR)
 
 ```jsx
-import { UnheadContext } from '@unhead/solid-js'
-import { createHead } from '@unhead/solid-js/server'
+import { createHead, UnheadContext } from '@unhead/solid-js/server'
 // entry-server.jsx
 import { renderToString } from '@solidjs/web'
 import App from './App'
@@ -70,8 +68,7 @@ export function render(url) {
 ```
 
 ```jsx
-import { UnheadContext } from '@unhead/solid-js'
-import { createHead } from '@unhead/solid-js/client'
+import { createHead, UnheadContext } from '@unhead/solid-js/client'
 // entry-client.jsx (for hydration)
 import { hydrate } from '@solidjs/web'
 import App from './App'

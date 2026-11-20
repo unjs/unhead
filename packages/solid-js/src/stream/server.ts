@@ -1,3 +1,4 @@
+import type { ServerErrorContext } from '@solidjs/web'
 import type { ServerUnhead } from 'unhead/server'
 import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
@@ -38,24 +39,31 @@ export interface SolidStreamableHeadContext {
    */
   onCompleteShell: () => void
   /**
+   * Callback to pass to renderToStream's onError option.
+   * This forwards fatal render errors that occur before the shell is ready.
+   */
+  onError: (error: unknown, context: ServerErrorContext) => void
+  /**
    * Wrap a web ReadableStream to handle head injection automatically.
-   * Must be called after onCompleteShell has fired.
+   * Buffers the app stream until Solid completes the shell.
    */
   wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => ReadableStream<Uint8Array>
 }
+
+type ShellResult = { _tag: 'Ready', state: SSRHeadPayload } | { _tag: 'Failed', error: unknown }
 
 /**
  * Creates a head instance configured for Solid-js streaming SSR.
  *
  * @example
  * ```tsx
- * const { head, onCompleteShell, wrapStream } = createStreamableHead()
+ * const { head, onCompleteShell, onError, wrapStream } = createStreamableHead()
  *
  * const stream = renderToStream(() => (
  *   <UnheadContext value={head}>
  *     <App />
  *   </UnheadContext>
- * ), { onCompleteShell })
+ * ), { onCompleteShell, onError })
  *
  * return wrapStream(stream.readable, template)
  * ```
@@ -63,10 +71,9 @@ export interface SolidStreamableHeadContext {
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): SolidStreamableHeadContext {
   const { head } = _createStreamableHead(options)
 
-  // Promise that resolves when shell is ready with captured state
-  let resolveShellReady: (state: SSRHeadPayload) => void
-  const shellReady = new Promise<SSRHeadPayload>((resolve) => {
-    resolveShellReady = resolve
+  let resolveShell: (result: ShellResult) => void
+  const shellResult = new Promise<ShellResult>((resolve) => {
+    resolveShell = resolve
   })
 
   // Track shell completion for HeadStream to know when to start streaming
@@ -80,7 +87,11 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       const shellState = renderShell(head)
       // @ts-expect-error - custom property for SolidJS streaming
       head._solidShellComplete = true
-      resolveShellReady(shellState)
+      resolveShell({ _tag: 'Ready', state: shellState })
+    },
+    onError(error, context) {
+      if (context.kind === 'render' && context.handling === 'failed')
+        resolveShell({ _tag: 'Failed', error })
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
       // `renderStreamEnd()` writes streamed body tags.
@@ -260,13 +271,15 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
 
           void (async () => {
             try {
-              const ready = await Promise.race([
-                shellReady.then(state => ({ state })),
-                stoppedSignal.then(() => undefined),
-              ])
-              if (!ready)
+              const result = await Promise.race([shellResult, stoppedSignal])
+              if (!result)
                 return
-              shellState = ready.state
+              if (result._tag === 'Failed') {
+                fail(result.error)
+                void cancelInner(result.error)
+                return
+              }
+              shellState = result.state
               shellResolved = true
               flushShellAndChunks()
             }

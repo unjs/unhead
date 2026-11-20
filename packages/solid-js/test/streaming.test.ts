@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { renderToStream, ssr } from '@solidjs/web'
+import { createComponent, createMemo, Errored } from 'solid-js'
 import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
@@ -45,6 +47,36 @@ describe('solid-js streaming SSR', () => {
   })
 
   describe('wrapStream', () => {
+    it('rejects when Solid fails before completing the shell', async () => {
+      const { onCompleteShell, onError, wrapStream } = createStreamableHead()
+      const error = new Error('Solid shell render failed')
+      const stream = renderToStream(() => {
+        const data = createMemo(async () => {
+          throw error
+        })
+        return ssr(['<main>', '</main>'], () => data())
+      }, { onCompleteShell, onError })
+
+      const reader = wrapStream(stream.readable, STREAM_TEMPLATE).getReader()
+
+      await expect(withTimeout(reader.read(), 'failed Solid render did not reject')).rejects.toBe(error)
+      expect(stream.readable.locked).toBe(false)
+    })
+
+    it('streams the fallback when a Solid boundary handles the error', async () => {
+      const { onCompleteShell, onError, wrapStream } = createStreamableHead()
+      const stream = renderToStream(() => createComponent(Errored, {
+        fallback: 'Fallback content',
+        get children(): never {
+          throw new Error('Handled render error')
+        },
+      }), { onCompleteShell, onError })
+
+      const html = new Response(wrapStream(stream.readable, STREAM_TEMPLATE)).text()
+
+      await expect(withTimeout(html, 'Solid fallback did not stream')).resolves.toContain('Fallback content')
+    })
+
     it('rejects when the inner stream errors before shell is ready', async () => {
       const { wrapStream } = createStreamableHead()
       const error = new Error('pre-shell stream failure')
