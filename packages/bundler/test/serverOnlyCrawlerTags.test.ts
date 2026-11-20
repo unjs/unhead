@@ -52,6 +52,10 @@ function runtimeCalls(code: string) {
   // eslint-disable-next-line no-new-func
   new Function('modules', out)({
     'unhead/client': { createHead: (o: any) => received.push(o) },
+    'unhead/stream/client': { createStreamableHead: (o: unknown) => received.push(o) },
+    '@unhead/react/stream/client': { createStreamableHead: (o: unknown) => received.push(o) },
+    '@unhead/solid-js/stream/client': { createStreamableHead: (o: unknown) => received.push(o) },
+    '@unhead/svelte/stream/client': { createStreamableHead: (o: unknown) => received.push(o) },
     'unhead/plugins': { ServerOnlyCrawlerTagsPlugin: 'crawler' },
     'other': { createHead: (o: any) => received.push(o) },
   })
@@ -389,6 +393,11 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
   it('adds the crawler tag plugin to createHead() called through a namespace import', async () => {
     expect(await runRuntime(`import * as unhead from 'unhead/client'\nunhead.createHead({ document: 1 })`))
       .toEqual([{ document: 1, plugins: ['crawler'] }])
+  })
+
+  it.each(['unhead', '@unhead/react', '@unhead/solid-js', '@unhead/svelte'])('installs the filter on the %s stream client', async (framework) => {
+    expect(await runRuntime(`import { createStreamableHead as createHead } from '${framework}/stream/client'
+createHead({ streamKey: 'custom' })`)).toEqual([{ streamKey: 'custom', plugins: ['crawler'] }])
   })
 
   it('keeps the input of a local function that shadows the imported createHead()', async () => {

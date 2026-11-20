@@ -146,7 +146,7 @@ function buildClientStub(framework: string, streamKey: string, warnOnMissing: bo
   // client head; without it `createStreamableHead` wraps it a second time and
   // every client push renders twice.
   return `import{createHead}from'${framework}/client'
-const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});h._wrapped=!0;const p=b=>{for(const e of b){const a=h.push(e),t=h.entries.get(a._i);if(t)t._streamed=!0}};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
+const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});h._wrapped=!0;const p=b=>{for(const e of b){const a=h.push(e,{_streamed:!0}),t=h.entries.get(a._i);if(t)t._streamed=!0}};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
 }
 
 /**

@@ -21,7 +21,7 @@ export interface FrameworkPluginConfig<S> {
 }
 
 export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
-  /** Enable streaming SSR support. Requires `serverOnlyCrawlerTags` to be disabled. */
+  /** Enable streaming SSR support. */
   streaming?: true | S | false
   /**
    * Inject the runtime `ValidatePlugin`. **Vite-only**: ignored by `.webpack()`,
@@ -142,9 +142,6 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
     const { streaming, validate, devtools, ...coreOpts } = options
-    if (streaming && coreOpts.serverOnlyCrawlerTags)
-      throw new Error('[unhead] Set serverOnlyCrawlerTags to false when streaming is enabled.')
-
     const defs = resolveCoreDefs(coreOpts)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming

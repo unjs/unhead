@@ -427,15 +427,20 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
   }
 })
 
-const CREATE_HEAD_RE = /\bcreateHead\b/
-const CLIENT_SOURCE = 'unhead/client'
+const HEAD_FACTORY_RE = /\b(?:createHead|createStreamableHead)\b/
+const HEAD_FACTORIES = new Map([
+  ['unhead/client', 'createHead'],
+  ['unhead/stream/client', 'createStreamableHead'],
+  ['@unhead/react/stream/client', 'createStreamableHead'],
+  ['@unhead/solid-js/stream/client', 'createStreamableHead'],
+  ['@unhead/svelte/stream/client', 'createStreamableHead'],
+])
+const HEAD_FACTORY_SOURCES = [...HEAD_FACTORIES.keys()]
 const PLUGIN_LOCAL = '__unheadServerOnlyCrawlerTags'
 
 /**
- * Registers `ServerOnlyCrawlerTagsPlugin` on every client head: it wraps the
- * options of each `createHead()` call imported from `unhead/client`. The
- * plugin covers tags the transform cannot read, such as `head.push()` input
- * and modules that add tags at runtime.
+ * Registers `ServerOnlyCrawlerTagsPlugin` on ordinary and streamed client heads.
+ * The plugin covers tags the transform cannot read, such as `head.push()` input.
  *
  * Framework packages call `createHead()` from `unhead/client`, so this reads
  * `node_modules` too. Builds without the option never import the plugin, so
@@ -448,40 +453,44 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
     enforce: 'post',
     transform: {
       filter: {
-        code: { include: [CREATE_HEAD_RE], exclude: [new RegExp(PLUGIN_LOCAL)] },
+        code: { include: [HEAD_FACTORY_RE], exclude: [new RegExp(PLUGIN_LOCAL)] },
         id: { include: [JS_VUE_RE] },
       },
       handler(code, id) {
-        if (resolveBuildConsumer(this, resolveCompilerConsumer(meta) ?? fallbackConsumer) !== 'client' || !code.includes(CLIENT_SOURCE))
+        if (resolveBuildConsumer(this, resolveCompilerConsumer(meta) ?? fallbackConsumer) !== 'client' || !HEAD_FACTORY_SOURCES.some(source => code.includes(source)))
           return
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
         scopeTracker.freeze()
 
-        /** The `unhead/client` import specifier `local` refers to at this point of the walk. */
-        function clientImport(local: string): any {
+        function isHeadFactory(local: string, member?: string): boolean {
           const decl = scopeTracker.getDeclaration(local)
-          if (decl instanceof ScopeTrackerImport && decl.importNode.source.value === CLIENT_SOURCE)
-            return decl.node
+          if (!(decl instanceof ScopeTrackerImport))
+            return false
+          const factory = HEAD_FACTORIES.get(decl.importNode.source.value as string)
+          if (!factory)
+            return false
+          const spec = decl.node
+          return member === undefined
+            ? spec.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === factory
+            : spec.type === 'ImportNamespaceSpecifier' && member === factory
         }
 
-        /** Whether `callee` is `createHead` from `unhead/client`: a named import or a namespace member. */
-        function isClientCreateHead(callee: any): boolean {
-          if (callee.type === 'Identifier') {
-            const spec = clientImport(callee.name)
-            return spec?.type === 'ImportSpecifier' && (spec.imported.name ?? spec.imported.value) === 'createHead'
-          }
+        function isClientHeadFactory(callee: any): boolean {
+          if (callee.type === 'Identifier')
+            return isHeadFactory(callee.name)
+          const property = callee.computed ? callee.property?.value : callee.property?.name
           return callee.type === 'MemberExpression'
             && callee.object.type === 'Identifier'
-            && clientImport(callee.object.name)?.type === 'ImportNamespaceSpecifier'
-            && (callee.computed ? callee.property.value : callee.property.name) === 'createHead'
+            && typeof property === 'string'
+            && isHeadFactory(callee.object.name, property)
         }
 
         walk(ast.program, {
           scopeTracker,
           enter(node: any) {
-            if (node.type !== 'CallExpression' || !isClientCreateHead(node.callee))
+            if (node.type !== 'CallExpression' || !isClientHeadFactory(node.callee))
               return
             const [arg] = node.arguments
             if (!arg) {
