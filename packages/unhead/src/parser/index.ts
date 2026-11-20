@@ -48,6 +48,7 @@ export interface PreparedHtmlTemplateWithIndexes {
     bodyCloseTagStart: number
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
+  headCharsetAt?: number
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -374,6 +375,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const parts: string[] = []
   let cursor = 0
   let removed = 0
+  let headCharsetAt: number | undefined
 
   function replace(start: number, end: number, replacement = '') {
     parts.push(html.slice(cursor, start), replacement)
@@ -435,13 +437,20 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           replace(start, endTag.endOffset)
           break
         }
-        case 'meta':
-          // Moving a template CSP after the streaming bootstrap can change which scripts it governs.
-          if (mode === 'stream' && node.attrs.some(({ name, value }) => name === 'http-equiv' && value.toLowerCase() === 'content-security-policy'))
-            continue
-          (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
+        case 'meta': {
+          const attrs = readAttributes(node, startTag)
+          if (mode === 'stream') {
+            // The positions of CSP and encoding declarations can affect how the browser reads the shell.
+            const directive = attrs['http-equiv']?.toLowerCase()
+            if (directive === 'content-security-policy' || directive === 'content-type')
+              continue
+            if (hasOwn(attrs, 'charset'))
+              headCharsetAt ??= start - removed
+          }
+          (input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.endOffset)
           break
+        }
         case 'link':
           (input.link ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['link']>[number])
           replace(start, startTag.endOffset)
@@ -476,6 +485,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   }
   if (bodyOutlet)
     result.bodyOutlet = Object.freeze({ start: bodyOutlet.start - removed, end: bodyOutlet.end - removed })
+  if (headCharsetAt !== undefined)
+    result.headCharsetAt = headCharsetAt
   return result
 }
 
@@ -548,6 +559,19 @@ function findBodyOutlet(
   return first
 }
 
+const LEADING_CHARSET_RE = /^<meta charset="[^"]*">/
+
+function findRenderedCharset(html: string) {
+  const leading = LEADING_CHARSET_RE.exec(html)
+  if (leading)
+    return { startOffset: 0, endOffset: leading[0].length }
+  const { head } = parseTemplateDocument(html)
+  for (const child of head?.childNodes ?? []) {
+    if (defaultTreeAdapter.isElementNode(child) && child.tagName === 'meta' && child.attrs.some(attr => attr.name === 'charset'))
+      return child.sourceCodeLocation?.startTag
+  }
+}
+
 /**
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
@@ -556,6 +580,7 @@ function findBodyOutlet(
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },
+  headPrefix = '',
 ): string {
   const { html, indexes } = template
   const parts: string[] = []
@@ -570,8 +595,17 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
-    parts.push(html.substring(lastIndex, indexes.headTagEnd))
-    parts.push(headHtml.headTags)
+    let { headTags } = headHtml
+    const { headCharsetAt } = template
+    if (headCharsetAt !== undefined && headTags) {
+      const charset = findRenderedCharset(headTags)
+      if (charset) {
+        parts.push(html.substring(lastIndex, headCharsetAt), headTags.slice(charset.startOffset, charset.endOffset))
+        lastIndex = headCharsetAt
+        headTags = headTags.slice(0, charset.startOffset) + headTags.slice(charset.endOffset)
+      }
+    }
+    parts.push(html.substring(lastIndex, indexes.headTagEnd), headPrefix, headTags)
     lastIndex = indexes.headTagEnd
   }
 

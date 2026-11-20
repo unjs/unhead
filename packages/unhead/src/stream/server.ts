@@ -187,18 +187,8 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
   return result
 }
 
-/**
- * Injects the bootstrap script and full head payload into a whole template.
- * Shared by renderSSRHeadShell and prepareStreamingTemplate's no-split fallback.
- */
-function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
-  return applyHeadToHtml(parsed, {
-    htmlAttrs: ssr.htmlAttrs,
-    headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
-    bodyAttrs: ssr.bodyAttrs,
-    bodyTagsOpen: ssr.bodyTagsOpen,
-    bodyTags: ssr.bodyTags,
-  })
+function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: PreparedHtmlTemplateWithIndexes): string {
+  return applyHeadToHtml(parsed, ssr, createBootstrapScript(getStreamKey(head), head._stream?.nonce))
 }
 
 /**
@@ -636,7 +626,7 @@ interface StreamingTemplateLayout {
 }
 
 function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const { html, indexes, bodyOutlet } = parsed
+  const { html, indexes, bodyOutlet, headCharsetAt } = parsed
   const { bodyTagEnd, bodyCloseTagStart } = indexes
   if (bodyTagEnd < 0 || bodyCloseTagStart < bodyTagEnd)
     return
@@ -647,6 +637,7 @@ function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes):
       html: html.slice(0, bodyOutlet?.start ?? bodyTagEnd),
       input: parsed.input,
       indexes: { ...indexes, bodyCloseTagStart: -1 },
+      headCharsetAt,
     },
     endBeforeBodyTags: html.slice(bodyOutlet?.end ?? bodyTagEnd, bodyCloseTagStart),
     endAfterBodyTags: html.slice(bodyCloseTagStart),
@@ -700,12 +691,9 @@ export function prepareStreamingTemplate(
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
   const cached = typeof template !== 'string' && !preRenderedState ? extractPreparedTemplate(template, 'stream') : undefined
-  const parsed = typeof template === 'string'
+  let parsed = typeof template === 'string'
     ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template, 'stream'))
     : cached?.template ?? template
-  const layout = typeof template === 'string'
-    ? createStreamingTemplateLayout(parsed)
-    : getPreparedStreamingLayout(parsed)
 
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
   const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
@@ -713,14 +701,14 @@ export function prepareStreamingTemplate(
   let parts: StreamingTemplateParts
   try {
     const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+    // A skipped render returns an empty payload and cannot replace the extracted markup.
+    if (templateEntry && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
+      parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
+    const layout = typeof template === 'string'
+      ? createStreamingTemplateLayout(parsed)
+      : getPreparedStreamingLayout(parsed)
     if (layout) {
-      const shell = applyHeadToHtml(layout.shellTemplate, {
-        htmlAttrs: ssr.htmlAttrs,
-        headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
-        bodyAttrs: ssr.bodyAttrs,
-        bodyTagsOpen: ssr.bodyTagsOpen,
-        bodyTags: '',
-      })
+      const shell = applyShellToTemplate(head, { ...ssr, bodyTags: '' }, layout.shellTemplate)
       parts = {
         shell,
         end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,

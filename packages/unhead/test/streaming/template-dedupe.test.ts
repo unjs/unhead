@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { JSDOM } from 'jsdom'
 import { transformHtmlTemplate } from 'unhead/server'
 import { createStreamableHead, prepareStreamingTemplate, prepareTemplate, renderShell, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
@@ -52,6 +53,57 @@ describe.each([
 
     expect(document.title).toBe('Template')
     expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Template')
+  })
+
+  it('retains static metadata when an SSR hook skips rendering', () => {
+    let renders = 0
+    const { head } = createStreamableHead({
+      hooks: {
+        'ssr:beforeRender': (ctx) => {
+          renders++
+          ctx.shouldRender = false
+        },
+      },
+    })
+    head.push({ title: 'App', link: [{ rel: 'canonical', href: '/app' }] })
+    const source = templateWithTags.replace('</head>', '<link rel="icon" href="/icon.svg"></head>')
+
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell + end).window
+
+    expect(document.title).toBe('Template')
+    expect(document.head.querySelector('meta[charset]')?.getAttribute('charset')).toBe('UTF-8')
+    expect(document.head.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/icon.svg')
+    expect(document.head.querySelector('link[rel="canonical"]')).toBeNull()
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    expect(renders).toBe(1)
+  })
+
+  it.each([
+    ['plain', { charset: 'utf-8' }],
+    ['with an ID before the charset attribute', { id: 'app-charset', charset: 'utf-8' }],
+  ] as const)('keeps a %s charset early enough to decode the document', (_, charset) => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    head.push({ meta: [charset] })
+    const source = `<!DOCTYPE html><html><head><meta charset="windows-1252"><!--${'x'.repeat(1200)}--><title>caf\u00E9</title></head><body></body></html>`
+
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(Buffer.from(shell + end)).window
+
+    expect(document.title).toBe('caf\u00E9')
+    expect(Array.from(document.head.querySelectorAll('meta[charset]'), meta => ({ id: meta.id, value: meta.getAttribute('charset') }))).toEqual([
+      { id: 'id' in charset ? charset.id : '', value: 'utf-8' },
+    ])
+  })
+
+  it('retains a legacy encoding declaration at the start of the document', () => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    const source = `<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><!--${'x'.repeat(1200)}--><title>caf\u00E9</title></head><body></body></html>`
+
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(Buffer.from(shell + end)).window
+
+    expect(document.title).toBe('caf\u00E9')
   })
 
   it('keeps the template CSP before the bootstrap script', () => {
