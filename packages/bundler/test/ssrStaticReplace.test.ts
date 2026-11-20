@@ -76,7 +76,7 @@ describe('ssrStaticReplace', () => {
     // SSR and client environments share the same vite dev server. The plugin
     // opts out entirely via apply() so the runtime value of head.ssr is
     // preserved: SSR renders use head.push() while client renders use
-    // clientUseHead().
+    // the client path of useHead().
     const plugin = createPlugin({ isSsrBuild: false, command: 'serve' })
     expect(plugin.applied).toBe(false)
   })

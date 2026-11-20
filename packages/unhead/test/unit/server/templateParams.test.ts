@@ -34,6 +34,21 @@ describe('ssr templateParams', () => {
       .toBe('Before line1\nline2 after')
   })
 
+  it.each([
+    // a fully encoded URL has no tokens
+    ['https://example.com/some%20image.jpg', 'https://example.com/some%20image.jpg'],
+    // a token next to an encoded value resolves, and the encoded value stays
+    ['%siteName https://example.com/some%20image.jpg', 'My Site https://example.com/some%20image.jpg'],
+    // a literal percent sign stays
+    ['100% %siteName', '100% My Site'],
+    // an encoded byte that is not valid UTF-8 stays
+    ['caf%E9 %siteName', 'caf%E9 My Site'],
+    ['caf%E9', 'caf%E9'],
+  ])('resolves tokens in %s and keeps percent-encoded values', (input, expected) => {
+    expect(processTemplateParams(input, { siteName: 'My Site', image: 'wrong' }))
+      .toBe(expected)
+  })
+
   it('basic', async () => {
     const head = createServerHeadWithContext({
       plugins: [TemplateParamsPlugin],

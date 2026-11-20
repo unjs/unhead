@@ -39,7 +39,7 @@ let out = sections.join('\n\n---\n\n')
 
 const baseline = process.env.BASE_LABEL
 if (baseline)
-  out += `\n\n<sub>Baseline: ${baseline} · gzipped is the headline size metric · perf is directional (shared-runner, gated)</sub>`
+  out += `\n\n<sub>Baseline: ${baseline}</sub>`
 
 // eslint-disable-next-line no-console
 console.log(out)

@@ -21,6 +21,7 @@ const templates: Record<string, string> = {
   'empty': '',
   'body close before body open': '<html><head></head></body><body>Content</body></html>',
   'html tag inside body': '<head></head><body>pre <html lang="x">Content</body>',
+  'body start with quoted greater-than sign': '<html><head><!-- Example: <body> --></head><body data-label="a > b">Content</body></html>',
   'fixture': fixtureHtml,
 }
 
@@ -80,6 +81,14 @@ describe('prepareTemplate', () => {
   })
 
   describe('reuse across renders', () => {
+    it('derives the extraction boundary from the HTML when offsets come from a copied template', () => {
+      const html = '<html><head></head><body><p>Content</p></body></html>'
+      const prepared = prepareTemplate(html)
+      const copied = { ...prepared, indexes: { ...prepared.indexes, bodyCloseTagStart: prepared.indexes.bodyTagEnd } }
+
+      expect(transformHtmlTemplate(serverHead(), copied)).toBe(transformHtmlTemplate(serverHead(), html))
+    })
+
     it('produces correct output for each request without internal mutation', () => {
       const template = templates['with ssr outlet marker']
       const prepared = prepareTemplate(template)

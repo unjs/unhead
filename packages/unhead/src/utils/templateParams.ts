@@ -2,43 +2,42 @@ import type { TemplateParams } from '../types'
 
 const LT_RE = /</g
 const TOKEN_RE = /%\w+(?:\.\w+)?/g
+// decodeURI throws on a `%` that two hex digits do not follow, so skip the call for those strings
+const LONE_PERCENT_RE = /%(?![0-9a-f]{2})/i
 
 const SepSub = '%separator'
 
 // for each %<word> token replace it with the corresponding runtime config or an empty value
-function sub(p: TemplateParams, token: string, isJson = false) {
-  let val: string | number | boolean | null | undefined
-  if (token === 's' || token === 'pageTitle') {
-    val = p.pageTitle as string
-  }
-  // support . notation
-  else if (token.includes('.')) {
-    const dotIndex = token.indexOf('.')
-    // @ts-expect-error untyped
-    val = p[token.substring(0, dotIndex)]?.[token.substring(dotIndex + 1)]
-  }
-  else { val = p[token] as string | undefined }
-  if (val !== undefined) {
-    // numbers are kept, including 0, while null and false still render as empty
-    const str = typeof val === 'number' ? String(val) : String(val || '')
-    return isJson
-      ? JSON.stringify(str).slice(1, -1).replace(LT_RE, '\\u003C')
-      : str
-  }
-  return undefined
+function sub(p: TemplateParams, token: string, isJson?: boolean): string | undefined {
+  // TOKEN_RE allows one `.`, for a nested param such as %site.name
+  const [key, nested] = token.split('.') as [string, string | undefined]
+  const val = (token === 's' || token === 'pageTitle')
+    ? p.pageTitle
+    : nested
+      ? (p[key] as Record<string, unknown> | undefined)?.[nested]
+      : p[key]
+  if (val === undefined)
+    return
+  // numbers are kept, including 0, while null and false still render as empty
+  const str = String(typeof val === 'number' ? val : val || '')
+  return isJson
+    ? JSON.stringify(str).slice(1, -1).replace(LT_RE, '\\u003C')
+    : str
 }
 
-export function processTemplateParams(s: string, p: TemplateParams, sep?: string, isJson = false) {
+export function processTemplateParams(s: string, p: TemplateParams, sep?: string, isJson?: boolean) {
   // return early
   if (typeof s !== 'string' || !s.includes('%'))
     return s
   // need to avoid replacing url encoded values
   let decoded = s
-  try {
-    decoded = decodeURI(s)
-  }
-  catch {
-    // Malformed encoded input should fall back to token matching against the original string.
+  if (!LONE_PERCENT_RE.test(s)) {
+    try {
+      decoded = decodeURI(s)
+    }
+    catch {
+      // Malformed encoded input should fall back to token matching against the original string.
+    }
   }
   // find all tokens in decoded
   const tokens = decoded.match(TOKEN_RE)
@@ -54,10 +53,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
       return token
     }
 
-    const re = sub(p, token.slice(1), isJson)
-    return re !== undefined
-      ? re
-      : token
+    return sub(p, token.slice(1), isJson) ?? token
   }).trim()
 
   // we wait to transform the separator as we need to transform all other tokens first
@@ -66,7 +62,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
   if (hasSepSub) {
     s = s.split(SepSub)
       .map(part => part.trim())
-      .filter(part => part !== '')
+      .filter(Boolean)
       .join(sep ? ` ${sep} ` : ' ')
   }
   return s

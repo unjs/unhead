@@ -46,7 +46,7 @@ setHead(createHead(options))`
 
 /** Imports as `const` bindings, so `new Function()` can run a transformed module. */
 function bindImports(code: string) {
-  return code.replace(/import\s*\{([^}]+)\}\s*from\s*'([^']+)';?/g, (_, names: string, source: string) =>
+  return code.replace(/import\s*\{([^}]+)\}\s*from\s*(['"])([^'"]+)\2;?/g, (_, names: string, _quote: string, source: string) =>
     `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
 }
 
