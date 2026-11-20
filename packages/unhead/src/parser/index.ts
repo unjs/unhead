@@ -395,10 +395,6 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   }
 
   if (head && indexes.headTagEnd >= 0) {
-    // Resource movement across any meta CSP can change which policy governs it.
-    const preserveResources = mode === 'stream' && head.childNodes.some(node =>
-      defaultTreeAdapter.isElementNode(node) && node.tagName === 'meta'
-      && node.attrs.some(attr => attr.name === 'http-equiv' && attr.value.toLowerCase() === 'content-security-policy'))
     let whitespaceStart: number | undefined
     for (const node of head.childNodes) {
       if (defaultTreeAdapter.isTextNode(node)) {
@@ -420,7 +416,9 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
         ? precedingText
         : startTag.startOffset
       const { tagName } = node
-      if (preserveResources && (tagName === 'script' || tagName === 'style' || tagName === 'link'))
+      // App policies are appended to the static head. Keep resources before them,
+      // and retain their order relative to policies already in the template.
+      if (mode === 'stream' && (tagName === 'script' || tagName === 'style' || tagName === 'link'))
         continue
       switch (tagName) {
         case 'title':
@@ -451,6 +449,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
             // The positions of CSP and encoding declarations can affect how the browser reads the shell.
             const directive = attrs['http-equiv']?.toLowerCase()
             if (directive === 'content-security-policy' || directive === 'content-type')
+              continue
+            if (attrs.name?.toLowerCase() === 'referrer')
               continue
             if (hasOwn(attrs, 'charset'))
               headCharsetAt ??= start - removed

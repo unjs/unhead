@@ -121,6 +121,36 @@ describe.each([
     expect(document.head.querySelector('script')?.nonce).toBe('shell')
   })
 
+  it('keeps template resources before an app-supplied CSP', () => {
+    const source = '<html><head><script id="config">window.config = true</script><style id="theme">body{color:red}</style><link id="sheet" rel="stylesheet" href="/theme.css"><script id="external" src="/app.js"></script></head><body></body></html>'
+    const { head } = createStreamableHead({ disableDefaults: true, nonce: 'shell' })
+    head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'script-src \'nonce-shell\'; style-src \'nonce-shell\'' }] })
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    const elements = Array.from(document.head.children)
+    const policyAt = elements.findIndex(element => element.getAttribute('http-equiv') === 'content-security-policy')
+    expect(policyAt).toBeGreaterThanOrEqual(0)
+    for (const resource of document.head.querySelectorAll('[id]'))
+      expect(elements.indexOf(resource)).toBeLessThan(policyAt)
+  })
+
+  it.each([false, true])('keeps referrer policies before template resources, CSP: %s', (csp) => {
+    const policy = csp ? '<meta http-equiv="Content-Security-Policy" content="default-src *">' : ''
+    const source = `<html><head>${policy}<meta name="ReFeRrEr" content="no-referrer"><script src="https://assets.example/app.js"></script><link rel="stylesheet" href="https://assets.example/theme.css"><style>body{background:url(https://assets.example/bg.png)}</style></head><body><img src="https://assets.example/image.png"></body></html>`
+    const { head } = createStreamableHead({ disableDefaults: true })
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    const elements = Array.from(document.head.children)
+    const referrerAt = elements.findIndex(element => element.getAttribute('content') === 'no-referrer')
+    expect(referrerAt).toBeGreaterThanOrEqual(0)
+    for (const resource of document.head.querySelectorAll('script[src], link, style'))
+      expect(elements.indexOf(resource)).toBeGreaterThan(referrerAt)
+  })
+
   it('keeps a template base before CSP and relative resources', () => {
     const source = `<html><head><base href="/assets/"><meta http-equiv="Content-Security-Policy" content="base-uri 'none'"><link rel="stylesheet" href="theme.css"><script src="app.js"></script></head><body></body></html>`
     const { head } = createStreamableHead({ disableDefaults: true })
