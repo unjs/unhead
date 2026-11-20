@@ -91,6 +91,28 @@ describe('provideServerHead', () => {
     expect(request.document.body.className).toBe('first second')
   })
 
+  it('updates an existing namespaced root attribute in place', async () => {
+    const request = createRequest()
+    const namespace = 'http://www.w3.org/2000/xmlns/'
+    request.document.documentElement.setAttributeNS(namespace, 'xmlns', 'urn:initial')
+    const htmlAttrs = { xmlns: 'urn:updated', lang: 'en' }
+    request.head.push({ htmlAttrs })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('xmlns')).toBe('urn:updated')
+    expect(request.document.documentElement.getAttributeNS(namespace, 'xmlns')).toBe('urn:updated')
+  })
+
+  it('registers the rendered root ID in the Angular server document', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.head.push({ htmlAttrs: { id: 'root' } })
+
+    await request.render()
+
+    expect(request.document.getElementById('root')).toBe(request.document.documentElement)
+  })
+
   it('creates an isolated head for each sequential server injector render', async () => {
     const requestA = createRequest()
     pushRequestHead(requestA.head, 'A')

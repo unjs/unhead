@@ -26,7 +26,15 @@ function applyAttributes(element: HTMLElement, attrs: string) {
       value.split(HTML_WHITESPACE_RE).filter(Boolean).forEach(className => element.classList.add(className))
     }
     else {
-      element.setAttributeNode(attribute.cloneNode() as Attr)
+      try {
+        element.setAttribute(name, value)
+      }
+      catch (error) {
+        if ((error as DOMException | null)?.name !== 'InvalidCharacterError')
+          throw error
+        // The HTML parser accepts some names that setAttribute rejects.
+        element.setAttributeNode(attribute.cloneNode() as Attr)
+      }
     }
   }
 }
