@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
+import type { CreateClientHeadOptions } from 'unhead/types'
 import { renderToString } from '@vue/server-renderer'
+import { createHead as createCoreClientHead } from 'unhead/client'
 import * as unheadPlugins from 'unhead/plugins'
 import { describe, expect, it } from 'vitest'
 import { createSSRApp, defineComponent, h, nextTick, ref } from 'vue'
@@ -34,7 +36,7 @@ async function build(consumer: 'client' | 'server', serverOnlyCrawlerTags: boole
 }
 
 const CLIENT_ENTRY = `import { createHead } from 'unhead/client'
-setHead(createHead({ document }))`
+setHead(createHead(options))`
 
 /** Imports as `const` bindings, so `new Function()` can run a transformed module. */
 function bindImports(code: string) {
@@ -43,13 +45,13 @@ function bindImports(code: string) {
 }
 
 /** The client head as a build creates it: the option wraps `createHead()` from `unhead/client`. */
-async function createBuiltClientHead(serverOnlyCrawlerTags: boolean): Promise<HeadInstance> {
+async function createBuiltClientHead<T>(serverOnlyCrawlerTags: boolean, options: CreateClientHeadOptions, createHead: (options: CreateClientHeadOptions) => T): Promise<T> {
   const plugin = Unhead({ serverOnlyCrawlerTags, devtools: false, validate: false }).vite().find(p => p.name === 'unhead:server-only-crawler-tags-runtime') as any
   const res = plugin && await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, CLIENT_ENTRY, 'main.ts')
-  const modules = { 'unhead/client': { createHead: createClientHead }, 'unhead/plugins': unheadPlugins }
-  let head: HeadInstance | undefined
+  const modules = { 'unhead/client': { createHead }, 'unhead/plugins': unheadPlugins }
+  let head: T | undefined
   // eslint-disable-next-line no-new-func
-  new Function('modules', 'document', 'setHead', bindImports(res?.code ?? CLIENT_ENTRY))(modules, document, (h: HeadInstance) => head = h)
+  new Function('modules', 'options', 'setHead', bindImports(res?.code ?? CLIENT_ENTRY))(modules, options, (h: T) => head = h)
   return head!
 }
 
@@ -107,7 +109,7 @@ async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
   // hydrate with the client build, then navigate to page B
   const current = ref<Page>('a')
   const clientApp = createApp(await build('client', serverOnlyCrawlerTags), current)
-  const clientHead = await createBuiltClientHead(serverOnlyCrawlerTags)
+  const clientHead = await createBuiltClientHead(serverOnlyCrawlerTags, { document }, createClientHead)
   const runtime = runtimeEntry ? pushRuntimeEntry(clientHead, 'a') : undefined
   clientApp.use(clientHead)
   clientApp.mount('#app')
@@ -178,5 +180,23 @@ describe('serverOnlyCrawlerTags with Vue SSR and hydration', () => {
   it('lets a runtime entry take over crawler tags with the option off', async () => {
     const off = await run(false, true)
     expect(off.navigated.head).toContain('<meta name="description" content="B desc">')
+  })
+
+  it('keeps server crawler tags when a client plugin pushes during setup', async () => {
+    const page = document.implementation.createHTMLDocument()
+    page.head.innerHTML = '<meta name="description" content="From the server">'
+    const head = await createBuiltClientHead(true, {
+      document: page,
+      plugins: [(head) => {
+        head.push({ title: 'Plugin title', meta: [{ name: 'description', content: 'From the plugin' }] })
+        return { key: 'startup-defaults' }
+      }],
+    }, createCoreClientHead)
+
+    expect(page.title).toBe('Plugin title')
+    expect(page.head.querySelector('meta[name=description]')?.getAttribute('content')).toBe('From the server')
+    head.push({ title: 'New title' })
+    expect(page.title).toBe('New title')
+    expect(page.head.querySelector('meta[name=description]')?.getAttribute('content')).toBe('From the server')
   })
 })

@@ -1,4 +1,5 @@
 import type { SourceMapInput } from 'rollup'
+import type { UnpluginContextMeta } from 'unplugin'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
@@ -29,6 +30,24 @@ const FUNCTION_TYPES = new Set(['ArrowFunctionExpression', 'FunctionExpression']
 
 // The core composables take the head first: `useHead(head, input, options)`.
 const CORE_SOURCE = 'unhead'
+const ECMA_TARGET_RE = /^es\d+$/
+
+function resolveCompilerConsumer(meta: UnpluginContextMeta): BuildConsumer | undefined {
+  const compiler = meta.framework === 'webpack'
+    ? meta.webpack.compiler
+    : meta.framework === 'rspack' ? meta.rspack.compiler : undefined
+  if (!compiler)
+    return
+  const { name, target } = compiler.options
+  if (name === 'server')
+    return 'server'
+  // Read the target after the compiler resolves its defaults.
+  const targets = Array.isArray(target) ? target : [target]
+  const browserTarget = (value: unknown) => value === 'web'
+    || (name === 'client' && typeof value === 'string' && (value === 'browserslist' || value.startsWith('browserslist:')))
+  if (targets.some(browserTarget) && targets.every(value => browserTarget(value) || (typeof value === 'string' && ECMA_TARGET_RE.test(value))))
+    return 'client'
+}
 
 export interface ServerOnlyCrawlerTagsOptions extends BaseTransformerTypes {
   /**
@@ -217,7 +236,7 @@ function isInertOptions(arg: any, isDroppableCall: IsDroppableCall): boolean {
   const node = unwrap(arg)
   return node?.type === 'ObjectExpression' && node.properties.every((p: any) => {
     const key = staticKey(p)
-    return key !== undefined && key !== 'onRendered' && p.kind === 'init' && isDroppable(p.value, isDroppableCall)
+    return key !== undefined && key !== 'onRendered' && key !== '__proto__' && p.kind === 'init' && isDroppable(p.value, isDroppableCall)
   })
 }
 
@@ -285,9 +304,9 @@ function inputObject(arg: any): any {
  * -> (client)
  * useSeoMeta({ title: 'Home' })
  */
-export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions, false>((options: ServerOnlyCrawlerTagsOptions = {}) => {
+export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions, false>((options: ServerOnlyCrawlerTagsOptions = {}, meta) => {
   const importPaths = options.importPaths?.length ? new Set(options.importPaths) : undefined
-  // See `TreeshakeServerComposables`: a per-build fallback for bundlers without `this.environment`.
+  // Vite versions without the Environment API expose the build target in apply().
   let fallbackConsumer: BuildConsumer | undefined
 
   function isValidPackage(source: unknown): boolean {
@@ -318,7 +337,7 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
       handler(code, id) {
         // Client builds only: the server must render every tag. An unknown
         // target (plain rollup) keeps the code as written.
-        if (resolveBuildConsumer(this, fallbackConsumer) !== 'client')
+        if (resolveBuildConsumer(this, resolveCompilerConsumer(meta) ?? fallbackConsumer) !== 'client')
           return
         if (!shouldTransformId(id))
           return
@@ -394,9 +413,6 @@ export const ServerOnlyCrawlerTags = createUnplugin<ServerOnlyCrawlerTagsOptions
         }
       },
     },
-    webpack(ctx) {
-      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
-    },
     vite: {
       sharedDuringBuild: true,
       apply(_config: UserConfig, env: ConfigEnv) {
@@ -424,12 +440,8 @@ const PLUGIN_LOCAL = '__unheadServerOnlyCrawlerTags'
  * Framework packages call `createHead()` from `unhead/client`, so this reads
  * `node_modules` too. Builds without the option never import the plugin, so
  * the runtime costs them nothing.
- *
- * createHead({ document })
- * -> (client)
- * createHead(((o) => ({ ...o, plugins: [...(o?.plugins || []), P] }))({ document }))
  */
-export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, false>(() => {
+export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, false>((_, meta) => {
   let fallbackConsumer: BuildConsumer | undefined
   return {
     name: 'unhead:server-only-crawler-tags-runtime',
@@ -440,7 +452,7 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
         id: { include: [JS_VUE_RE] },
       },
       handler(code, id) {
-        if (resolveBuildConsumer(this, fallbackConsumer) !== 'client' || !code.includes(CLIENT_SOURCE))
+        if (resolveBuildConsumer(this, resolveCompilerConsumer(meta) ?? fallbackConsumer) !== 'client' || !code.includes(CLIENT_SOURCE))
           return
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseAndWalkSource(code, id, { scopeTracker })
@@ -478,8 +490,9 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
             }
             if (arg.type === 'SpreadElement')
               return
-            s.prependRight(arg.start, `((o) => ({ ...o, plugins: [...(o?.plugins || []), ${PLUGIN_LOCAL}] }))(`)
-            s.appendLeft(arg.end, ')')
+            // A plugin setup can render synchronously, so the crawler filter must already be active.
+            s.prependRight(arg.start, `(({ plugins, ...o }) => ({ ...o, plugins: [${PLUGIN_LOCAL}, ...(plugins || [])] }))((`)
+            s.appendLeft(arg.end, ') ?? {})')
           },
         })
         if (!s.hasChanged())
@@ -490,9 +503,6 @@ export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, f
           map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
         }
       },
-    },
-    webpack(ctx) {
-      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
     },
     vite: {
       sharedDuringBuild: true,

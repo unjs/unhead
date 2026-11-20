@@ -1,3 +1,4 @@
+import type { RspackCompiler, WebpackCompiler } from 'unplugin'
 import { isCrawlerTag, normalizeEntryToTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 import { createFrameworkPlugin } from '../src/unplugin/framework'
@@ -40,7 +41,11 @@ function calls(code: string | undefined): { name: string, input: unknown }[] {
 /** Runs `code` through the runtime plugin, then evaluates it and returns the inputs each `createHead()` received. */
 async function runRuntime(code: string, consumer: 'client' | 'server' = 'client') {
   const res = await runTransform(ServerOnlyCrawlerTagsRuntime.vite({}) as any, code, 'node_modules/@unhead/vue/dist/client.mjs', env(consumer))
-  const out = (res?.code ?? code)
+  return runtimeCalls(res?.code ?? code)
+}
+
+function runtimeCalls(code: string) {
+  const out = code
     .replace(/import \{([^}]+)\} from '([^']+)';?/g, (_: string, names: string, source: string) => `const {${names.replace(/ as /g, ': ')}} = modules[${JSON.stringify(source)}];`)
     .replace(/import \* as (\w+) from '([^']+)';?/g, (_: string, name: string, source: string) => `const ${name} = modules[${JSON.stringify(source)}];`)
   const received: any[] = []
@@ -219,9 +224,11 @@ describe('serverOnlyCrawlerTags', () => {
     const code = await transform(`const options = {}
     useHead({ meta: [{ property: 'og:title', content: 'x' }] }, { onRendered() {} })
     useSeoMeta({ ogTitle: 'x' }, { onRendered: () => {} })
+    useSeoMeta({ ogTitle: 'x' }, { __proto__: { onRendered() {} } })
     useHead({ link: [{ rel: 'canonical', href: '/' }] }, options)`)
     expect(calls(code)).toEqual([
       { name: 'useHead', input: {} },
+      { name: 'useSeoMeta', input: {} },
       { name: 'useSeoMeta', input: {} },
       { name: 'useHead', input: {} },
     ])
@@ -303,6 +310,43 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
     expect(res).toBeUndefined()
   })
 
+  describe.each(['webpack', 'rspack'] as const)('%s compiler', (framework) => {
+    it.each([
+      { target: 'node', strips: false },
+      { target: 'webworker', strips: false },
+      { target: ['web', 'node'], strips: false },
+      { target: 'browserslist', strips: false },
+      { name: 'server', target: 'web', strips: false },
+      { name: 'client', target: 'browserslist', strips: true },
+      { target: 'web', strips: true },
+      { target: ['web', 'es2020'], strips: true },
+    ])('preserves crawler tags unless $name / $target selects a browser build', async ({ name, target, strips }) => {
+      const source = `useSeoMeta({ title: 'Page', description: 'Server description' })`
+      const clientEntry = `import { createHead } from 'unhead/client'\ncreateHead()`
+      const transformForCompiler = async (factory: typeof ServerOnlyCrawlerTags | typeof ServerOnlyCrawlerTagsRuntime, code: string) => {
+        const options = { name, target }
+        const versions = {}
+        const compiler = { name, options }
+        const plugin = framework === 'webpack'
+          ? factory.raw({}, { framework, versions, webpack: { compiler: compiler as WebpackCompiler } })
+          : factory.raw({}, { framework, versions, rspack: { compiler: compiler as RspackCompiler } })
+        if (framework === 'webpack')
+          plugin.webpack?.(compiler as WebpackCompiler)
+        else
+          plugin.rspack?.(compiler as RspackCompiler)
+        const res = await runTransform(plugin, code, 'page.js')
+        return res?.code ?? code
+      }
+
+      expect(calls(await transformForCompiler(ServerOnlyCrawlerTags, source))).toEqual([{
+        name: 'useSeoMeta',
+        input: strips ? { title: 'Page' } : { title: 'Page', description: 'Server description' },
+      }])
+      expect(runtimeCalls(await transformForCompiler(ServerOnlyCrawlerTagsRuntime, clientEntry)))
+        .toEqual([strips ? { plugins: ['crawler'] } : undefined])
+    })
+  })
+
   it('follows aliased imports and ignores local functions with the same name', async () => {
     const aliased = await transform(`import { useSeoMeta as seo } from '@unhead/vue'\nseo({ title: 'x', ogTitle: 'x' })`)
     expect(aliased).not.toContain('ogTitle')
@@ -337,7 +381,7 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
   it('adds the crawler tag plugin to every client createHead() from unhead/client', async () => {
     expect(await runRuntime(`import { createHead } from 'unhead/client'\ncreateHead()`)).toEqual([{ plugins: ['crawler'] }])
     expect(await runRuntime(`import { createHead as _c } from 'unhead/client'\nconst options = { plugins: ['own'] }\n_c({ render: 1, ...options })`))
-      .toEqual([{ render: 1, plugins: ['own', 'crawler'] }])
+      .toEqual([{ render: 1, plugins: ['crawler', 'own'] }])
     expect(await runRuntime(`import { createHead } from 'unhead/client'\ncreateHead({ document: 1 })`, 'server')).toEqual([{ document: 1 }])
     expect(await runRuntime(`import { createHead } from 'other'\ncreateHead({ document: 1 })`)).toEqual([{ document: 1 }])
   })
