@@ -394,7 +394,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     expect(result[0].attrs.src).toBeUndefined()
   })
 
-  it('module mode prefixes the virtual client import with base during serve', async () => {
+  it('module mode leaves base rewriting to Vite during serve', async () => {
     const plugin = await buildPlugin(
       { framework: '@unhead/test', mode: 'module' },
       { command: 'serve', base: '/docs/', build: { assetsDir: 'assets' } },
@@ -403,7 +403,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
 
     const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', {})
 
-    expect(result[0].children).toBe(`import "/docs/${VIRTUAL_CLIENT_ID}"`)
+    expect(result[0].children).toBe(`import "/${VIRTUAL_CLIENT_ID}"`)
   })
 
   describe.each([

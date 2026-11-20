@@ -450,11 +450,11 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             }]
           }
 
-          const clientSrc = state.isBuild ? `/${VIRTUAL_CLIENT_ID}` : joinBase(VIRTUAL_CLIENT_ID)
+          // Vite adds the configured base when it resolves this static import.
           return [{
             tag: 'script',
             attrs: { ...nonceAttr, type: 'module' },
-            children: `import ${JSON.stringify(clientSrc)}`,
+            children: `import ${JSON.stringify(`/${VIRTUAL_CLIENT_ID}`)}`,
             injectTo: 'head-prepend',
           }]
         },
