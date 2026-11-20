@@ -110,8 +110,8 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type>console.log("empty type")</script>
-      <script type>console.log("true type")</script>
+        "headTags": "<script type="">console.log("empty type")</script>
+      <script type="true">console.log("true type")</script>
       <script type="application/json">{"test": "json"}</script>",
         "htmlAttrs": "",
       }

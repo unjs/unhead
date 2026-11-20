@@ -4,6 +4,8 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
+const ASCII_UPPER_RE = /[A-Z]/g
+
 function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
@@ -68,7 +70,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       continue
     const isDataKey = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
-    const key = isHtmlAttr && !isDataKey ? prop.toLowerCase() : prop
+    const key = isHtmlAttr && !isDataKey ? prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase()) : prop
     if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
     // if the value is a primitive, return early
@@ -108,11 +110,11 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
     // Only for real HTML element tags, not internal virtual tags like _flatMeta
     const strValue = String(value)
-    const isMetaContentKey = tag.tag === 'meta' && key === 'content'
+    const preserveString = isDataKey || (tag.tag === 'meta' && key === 'content') || (tag.tag === 'script' && typeof value === 'string' && (key === 'type' || key === 'language'))
 
     if (strValue === 'true' || strValue === '') {
       // @ts-expect-error untyped
-      tag.props[key] = (isDataKey || isMetaContentKey) ? strValue : true
+      tag.props[key] = preserveString ? strValue : true
     }
     else if (!value && isDataKey && strValue === 'false') {
       tag.props[key] = 'false'

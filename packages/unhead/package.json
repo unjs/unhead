@@ -101,6 +101,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "catalog:"
+    "hookable": "catalog:",
+    "parse5": "catalog:"
   }
 }

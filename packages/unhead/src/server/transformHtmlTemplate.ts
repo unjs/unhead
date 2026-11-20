@@ -9,7 +9,7 @@ import { renderSSRHead } from './renderSSRHead'
  */
 /* @__NO_SIDE_EFFECTS__ */
 export async function transformHtmlTemplate(head: Unhead<any>, html: string, options?: RenderSSRHeadOptions) {
-  const template = parseHtmlForUnheadExtraction(html)
+  const template = parseHtmlForUnheadExtraction(html, true)
   head.push(template.input, { _index: 0 })
   const headHtml = await renderSSRHead(head, options)
   return applyHeadToHtml(template, headHtml)
@@ -27,7 +27,6 @@ export async function transformHtmlTemplate(head: Unhead<any>, html: string, opt
 /* @__NO_SIDE_EFFECTS__ */
 export async function transformHtmlTemplateRaw(head: Unhead<any>, html: string, options?: RenderSSRHeadOptions) {
   const headHtml = await renderSSRHead(head, options)
-  // For raw mode, we only need indexes, not head extraction
-  const template = parseHtmlForIndexes(html)
+  const template = parseHtmlForIndexes(html, Boolean(headHtml.bodyTags))
   return applyHeadToHtml(template, headHtml)
 }

@@ -30,15 +30,13 @@ describe('transformHtmlTemplate edge cases', () => {
   })
 
   describe('malformed HTML', () => {
-    it('handles unclosed tags', async () => {
+    it('preserves an unclosed title without inserting managed markup', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Test Title' })
 
       const html = '<html><head><title>Original</head><body>Content'
       const result = await transformHtmlTemplate(head, html)
-      expect(result).toContain('<title>Test Title</title>')
-      // The parser extracts existing title "Original" from the template
-      expect(result).toContain('Original')
+      expect(result).toBe(html)
     })
 
     it('handles mismatched tags', async () => {

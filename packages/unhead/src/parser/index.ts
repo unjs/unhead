@@ -1,4 +1,6 @@
+import type { DefaultTreeAdapterMap, DefaultTreeAdapterTypes, Token, TreeAdapter } from 'parse5'
 import type { SerializableHead } from '../types'
+import { defaultTreeAdapter, parse, html as parse5Html } from 'parse5'
 import { hasOwn } from '../utils/hasOwn'
 
 const TAG_HTML = 0
@@ -11,15 +13,10 @@ const TAG_STYLE = 53
 const TAG_LINK = 54
 const TAG_BASE = 56
 // Cache frequently used character codes
-const LT_CHAR = 60 // '<'
 const GT_CHAR = 62 // '>'
-const SLASH_CHAR = 47 // '/'
 const EQUALS_CHAR = 61 // '='
 const QUOTE_CHAR = 34 // '"'
 const APOS_CHAR = 39 // '\''
-const EXCLAMATION_CHAR = 33 // '!'
-const BACKSLASH_CHAR = 92 // '\'
-const DASH_CHAR = 45 // '-'
 
 // Map string tag names to numeric constants
 export const TagIdMap = /* @__PURE__ */ {
@@ -59,68 +56,8 @@ function isWhitespace(charCode: number): boolean {
   return charCode === 32 // SPACE_CHAR
     || charCode === 9 // TAB_CHAR
     || charCode === 10 // NEWLINE_CHAR
+    || charCode === 12 // FORM_FEED_CHAR
     || charCode === 13 // CARRIAGE_RETURN_CHAR
-}
-
-/**
- * Process HTML comment or doctype
- */
-function processCommentOrDoctype(htmlChunk: string, position: number): {
-  complete: boolean
-  newPosition: number
-  remainingText: string
-} {
-  let i = position
-  const chunkLength = htmlChunk.length
-
-  // Check for comment start
-  if (i + 3 < chunkLength
-    && htmlChunk.charCodeAt(i + 2) === DASH_CHAR
-    && htmlChunk.charCodeAt(i + 3) === DASH_CHAR) {
-    i += 4 // Skip past '<!--'
-
-    // Look for --> sequence
-    while (i < chunkLength - 2) {
-      if (htmlChunk.charCodeAt(i) === DASH_CHAR
-        && htmlChunk.charCodeAt(i + 1) === DASH_CHAR
-        && htmlChunk.charCodeAt(i + 2) === GT_CHAR) {
-        i += 3
-        return {
-          complete: true,
-          newPosition: i,
-          remainingText: '',
-        }
-      }
-      i++
-    }
-
-    return {
-      complete: false,
-      newPosition: position,
-      remainingText: htmlChunk.substring(position),
-    }
-  }
-  else {
-    i += 2 // Skip past '<!'
-
-    while (i < chunkLength) {
-      if (htmlChunk.charCodeAt(i) === GT_CHAR) {
-        i++
-        return {
-          complete: true,
-          newPosition: i,
-          remainingText: '',
-        }
-      }
-      i++
-    }
-
-    return {
-      complete: false,
-      newPosition: i,
-      remainingText: htmlChunk.substring(position, i),
-    }
-  }
 }
 
 /**
@@ -234,423 +171,255 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   return result
 }
 
-/**
- * Parse HTML to find tag indexes without extracting head elements
- * Used for transformHtmlTemplateRaw where we don't want to extract existing head content
- */
-/* @__PURE__ */
-export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndexes {
-  const indexes = {
-    htmlTagStart: html.indexOf('<html'),
-    htmlTagEnd: -1,
-    headTagEnd: html.indexOf('</head>'),
-    bodyTagStart: html.indexOf('<body'),
-    bodyTagEnd: -1,
-    bodyCloseTagStart: html.indexOf('</body>'),
-  }
-
-  // Find the end of the html tag
-  if (indexes.htmlTagStart >= 0) {
-    const htmlTagEndPos = html.indexOf('>', indexes.htmlTagStart)
-    if (htmlTagEndPos >= 0) {
-      indexes.htmlTagEnd = htmlTagEndPos + 1
-    }
-  }
-
-  // Find the end of the body tag
-  if (indexes.bodyTagStart >= 0) {
-    const bodyTagEndPos = html.indexOf('>', indexes.bodyTagStart)
-    if (bodyTagEndPos >= 0) {
-      indexes.bodyTagEnd = bodyTagEndPos + 1
-    }
-  }
-
-  return { html, input: {}, indexes }
+function getChildElement(parent: DefaultTreeAdapterTypes.ParentNode | undefined, tagName: string) {
+  return parent?.childNodes.find((child): child is DefaultTreeAdapterTypes.Element =>
+    defaultTreeAdapter.isElementNode(child) && child.tagName === tagName)
 }
 
-/* @__PURE__ */
-export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplateWithIndexes {
-  const input = {} as SerializableHead
-  const htmlParts: string[] = []
-  let position = 0
-  let inHead = false
-  let foundBodyStart = false
-  let lastCopyPosition = 0
-  let currentOutputLength = 0
+const BODY_START_RE = /<body[\t\n\f\r />]/gi
 
-  // Track indexes for efficient replacement
-  const indexes = {
-    htmlTagStart: -1,
-    htmlTagEnd: -1,
-    headTagEnd: -1,
-    bodyTagStart: -1,
-    bodyTagEnd: -1,
-    bodyCloseTagStart: -1,
-  }
-
-  // Track which elements we're extracting from head
-  const headElementsToExtract = new Set([TAG_TITLE, TAG_META, TAG_LINK, TAG_SCRIPT, TAG_STYLE, TAG_BASE])
-
-  // Helper function to copy accumulated text and update indexes
-  function copyAccumulatedText() {
-    if (lastCopyPosition < position) {
-      const textToAdd = html.substring(lastCopyPosition, position)
-      htmlParts.push(textToAdd)
-      currentOutputLength += textToAdd.length
-      lastCopyPosition = position
+function findBodyStartEnd(html: string, start: number) {
+  let quote = 0
+  for (let i = start + 5; i < html.length; i++) {
+    const code = html.charCodeAt(i)
+    if (quote) {
+      if (code === quote)
+        quote = 0
     }
-  }
-
-  // Helper function to add text and update index tracking
-  function addText(text: string) {
-    htmlParts.push(text)
-    currentOutputLength += text.length
-  }
-
-  while (position < html.length && !foundBodyStart) {
-    const currentCharCode = html.charCodeAt(position)
-
-    if (currentCharCode !== LT_CHAR) {
-      position++
-      continue
+    else if (code === GT_CHAR) {
+      return i + 1
     }
-
-    // Look ahead to determine tag type
-    if (position + 1 >= html.length) {
-      copyAccumulatedText()
-      addText(html[position])
+    else if (code === QUOTE_CHAR || code === APOS_CHAR) {
+      quote = code
+    }
+    else if (html[i] === '<') {
       break
     }
-
-    const nextCharCode = html.charCodeAt(position + 1)
-
-    // Handle comments and doctype - pass through
-    if (nextCharCode === EXCLAMATION_CHAR) {
-      const result = processCommentOrDoctype(html, position)
-      if (result.complete) {
-        copyAccumulatedText()
-        addText(html.substring(position, result.newPosition))
-        position = result.newPosition
-        lastCopyPosition = position
-      }
-      else {
-        copyAccumulatedText()
-        addText(html.substring(position))
-        break
-      }
-      continue
-    }
-
-    // Handle closing tags
-    if (nextCharCode === SLASH_CHAR) {
-      let tagEnd = position + 2
-      while (tagEnd < html.length && html.charCodeAt(tagEnd) !== GT_CHAR) {
-        tagEnd++
-      }
-
-      if (tagEnd >= html.length) {
-        copyAccumulatedText()
-        addText(html.substring(position))
-        break
-      }
-
-      const tagName = html.substring(position + 2, tagEnd).toLowerCase().trim()
-      const tagId = TagIdMap[tagName as keyof typeof TagIdMap] ?? -1
-
-      if (tagId === TAG_HEAD) {
-        inHead = false
-        // Track the end of head tag for injection point
-        copyAccumulatedText()
-        const headCloseStart = currentOutputLength
-        addText(html.substring(position, tagEnd + 1))
-        indexes.headTagEnd = headCloseStart
-      }
-      else {
-        // Always include other closing tags in output
-        copyAccumulatedText()
-        addText(html.substring(position, tagEnd + 1))
-      }
-      position = tagEnd + 1
-      lastCopyPosition = position
-      continue
-    }
-
-    // Handle opening tags
-    const tagStart = position + 1
-    let tagNameEnd = tagStart
-
-    // Find end of tag name
-    while (tagNameEnd < html.length) {
-      const c = html.charCodeAt(tagNameEnd)
-      if (isWhitespace(c) || c === SLASH_CHAR || c === GT_CHAR) {
-        break
-      }
-      tagNameEnd++
-    }
-
-    if (tagNameEnd >= html.length) {
-      copyAccumulatedText()
-      addText(html.substring(position))
-      break
-    }
-
-    const tagName = html.substring(tagStart, tagNameEnd).toLowerCase()
-    const tagId = TagIdMap[tagName as keyof typeof TagIdMap] ?? -1
-
-    // Find the end of the complete tag (including attributes and '>')
-    let tagEnd = tagNameEnd
-    let inQuote = false
-    let quoteChar = 0
-    let foundEnd = false
-    let isSelfClosing = false
-
-    while (tagEnd < html.length && !foundEnd) {
-      const c = html.charCodeAt(tagEnd)
-
-      if (inQuote) {
-        if (c === quoteChar) {
-          inQuote = false
-        }
-      }
-      else if (c === QUOTE_CHAR || c === APOS_CHAR) {
-        inQuote = true
-        quoteChar = c
-      }
-      else if (c === SLASH_CHAR && tagEnd + 1 < html.length && html.charCodeAt(tagEnd + 1) === GT_CHAR) {
-        isSelfClosing = true
-        tagEnd += 2
-        foundEnd = true
-        continue
-      }
-      else if (c === GT_CHAR) {
-        tagEnd++
-        foundEnd = true
-        continue
-      }
-      tagEnd++
-    }
-
-    if (!foundEnd) {
-      copyAccumulatedText()
-      addText(html.substring(position))
-      break
-    }
-
-    // Extract attributes from the tag
-    const attributesStr = html.substring(tagNameEnd, tagEnd - (isSelfClosing ? 2 : 1)).trim()
-    const attributes = parseAttributes(attributesStr)
-
-    // Handle specific tags
-    if (tagId === TAG_HTML) {
-      copyAccumulatedText()
-      indexes.htmlTagStart = currentOutputLength
-      if (Object.keys(attributes).length > 0) {
-        input.htmlAttrs = attributes
-        // Remove attributes from HTML tag
-        addText(`<${tagName}>`)
-      }
-      else {
-        addText(html.substring(position, tagEnd))
-      }
-      indexes.htmlTagEnd = currentOutputLength
-    }
-    else if (tagId === TAG_BODY) {
-      copyAccumulatedText()
-      indexes.bodyTagStart = currentOutputLength
-      if (Object.keys(attributes).length > 0) {
-        input.bodyAttrs = attributes
-        addText(`<${tagName}>`)
-      }
-      else {
-        addText(html.substring(position, tagEnd))
-      }
-      indexes.bodyTagEnd = currentOutputLength
-      foundBodyStart = true
-      position = tagEnd
-      lastCopyPosition = position
-      break
-    }
-    else if (tagId === TAG_HEAD) {
-      inHead = true
-      copyAccumulatedText()
-      addText(html.substring(position, tagEnd))
-    }
-    else if (inHead && headElementsToExtract.has(tagId)) {
-      // Extract head elements and don't include them in output
-      if (tagId === TAG_TITLE) {
-        // Extract title content if not self-closing
-        if (!isSelfClosing) {
-          const titleEnd = findClosingTag(html, tagEnd, tagName)
-          if (titleEnd !== -1) {
-            const titleContent = html.substring(tagEnd, titleEnd).trim()
-            if (titleContent && !input.title) {
-              input.title = titleContent
-            }
-            position = findTagEnd(html, titleEnd, tagName)
-            lastCopyPosition = position
-            continue
-          }
-        }
-      }
-      else if (tagId === TAG_SCRIPT) {
-        const scriptAttrs = { ...attributes }
-        if (!isSelfClosing) {
-          const scriptEnd = findClosingTag(html, tagEnd, tagName)
-          if (scriptEnd !== -1) {
-            const scriptContent = html.substring(tagEnd, scriptEnd)
-            scriptAttrs.innerHTML = scriptContent || ''
-            position = findTagEnd(html, scriptEnd, tagName)
-          }
-          else {
-            scriptAttrs.innerHTML = ''
-            position = tagEnd
-          }
-        }
-        else {
-          scriptAttrs.innerHTML = ''
-          position = tagEnd
-        }
-        lastCopyPosition = position
-        ;(input.script ||= []).push(scriptAttrs)
-        continue
-      }
-      else if (tagId === TAG_STYLE) {
-        const styleAttrs = { ...attributes }
-        if (!isSelfClosing) {
-          const styleEnd = findClosingTag(html, tagEnd, tagName)
-          if (styleEnd !== -1) {
-            const styleContent = html.substring(tagEnd, styleEnd)
-            styleAttrs.textContent = styleContent || ''
-            position = findTagEnd(html, styleEnd, tagName)
-          }
-          else {
-            styleAttrs.textContent = ''
-            position = tagEnd
-          }
-        }
-        else {
-          styleAttrs.textContent = ''
-          position = tagEnd
-        }
-        lastCopyPosition = position
-        ;(input.style ||= []).push(styleAttrs)
-        continue
-      }
-      else if (tagId === TAG_META) {
-        ;(input.meta ||= []).push(attributes)
-        position = tagEnd
-        lastCopyPosition = position
-        continue
-      }
-      else if (tagId === TAG_LINK) {
-        ;(input.link ||= []).push(attributes)
-        position = tagEnd
-        lastCopyPosition = position
-        continue
-      }
-      else if (tagId === TAG_BASE && !input.base) {
-        input.base = attributes
-        position = tagEnd
-        lastCopyPosition = position
-        continue
-      }
-    }
-    else {
-      // Include all other tags in output
-      copyAccumulatedText()
-      addText(html.substring(position, tagEnd))
-    }
-
-    position = tagEnd
-    lastCopyPosition = position
   }
-
-  // Continue processing to find the closing body tag
-  const remainingHtml = html.substring(position)
-  const bodyCloseIndex = remainingHtml.indexOf('</body>')
-
-  if (bodyCloseIndex !== -1) {
-    indexes.bodyCloseTagStart = currentOutputLength + bodyCloseIndex
-  }
-
-  // Append the rest of the HTML
-  copyAccumulatedText()
-  addText(remainingHtml)
-
-  return { html: htmlParts.join(''), input, indexes }
-}
-
-/**
- * Find the closing tag for a given tag name
- * For script and style tags, this handles quotes to avoid matching closing tags inside string literals
- */
-function findClosingTag(html: string, startPos: number, tagName: string): number {
-  const tagId = TagIdMap[tagName as keyof typeof TagIdMap]
-  const isScriptOrStyle = tagId === TAG_SCRIPT || tagId === TAG_STYLE
-
-  if (!isScriptOrStyle) {
-    // Simple search for non-script/style tags
-    const closingTag = `</${tagName}`
-    const index = html.indexOf(closingTag, startPos)
-    return index === -1 ? -1 : index
-  }
-
-  // Quote-aware search for script and style tags
-  const closingTag = `</${tagName}`
-  let pos = startPos
-  let inSingleQuote = false
-  let inDoubleQuote = false
-  let inBacktick = false
-  let lastCharWasBackslash = false
-
-  while (pos < html.length) {
-    const currentCharCode = html.charCodeAt(pos)
-
-    // Handle quote state transitions (only if not escaped)
-    if (!lastCharWasBackslash) {
-      if (currentCharCode === APOS_CHAR && !inDoubleQuote && !inBacktick) {
-        inSingleQuote = !inSingleQuote
-      }
-      else if (currentCharCode === QUOTE_CHAR && !inSingleQuote && !inBacktick) {
-        inDoubleQuote = !inDoubleQuote
-      }
-      else if (currentCharCode === 96 && !inSingleQuote && !inDoubleQuote) { // backtick
-        inBacktick = !inBacktick
-      }
-    }
-
-    // Track escape character state
-    lastCharWasBackslash = currentCharCode === BACKSLASH_CHAR && !lastCharWasBackslash
-
-    // Check for closing tag only when not inside quotes
-    const inQuotes = inSingleQuote || inDoubleQuote || inBacktick
-    if (!inQuotes && html.startsWith(closingTag, pos)) {
-      // Verify it's a complete tag (followed by whitespace or >)
-      const afterTagPos = pos + closingTag.length
-      if (afterTagPos >= html.length) {
-        return pos
-      }
-      const nextChar = html.charCodeAt(afterTagPos)
-      if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
-        return pos
-      }
-    }
-
-    pos++
-  }
-
   return -1
 }
 
-/**
- * Find the end of a closing tag (after the '>')
- */
-function findTagEnd(html: string, closingTagStart: number, tagName: string): number {
-  let pos = closingTagStart + tagName.length + 2 // Skip '</' and tag name
-  while (pos < html.length && html.charCodeAt(pos) !== GT_CHAR) {
-    pos++
+function readTemplate(html: string, deferBodyClose: boolean) {
+  if (deferBodyClose) {
+    let attempts = 0
+    for (const { index } of html.matchAll(BODY_START_RE)) {
+      const end = findBodyStartEnd(html, index)
+      if (end > 0 && end < html.length) {
+        const prefix = parseTemplateDocument(html.slice(0, end))
+        // A text match only limits the scan. The parser must confirm the boundary.
+        if (prefix.indexes.bodyTagStart === index && prefix.indexes.bodyTagEnd === end)
+          return { ...prefix, partial: true }
+      }
+      // Bound the number of prefix parses when the template repeats tag text.
+      if (++attempts === 2)
+        break
+    }
   }
-  return pos < html.length ? pos + 1 : pos
+  return { ...parseTemplateDocument(html), partial: false }
+}
+
+const FOREIGN_CONTENT_RE = /<(?:svg|math)[\t\n\f\r />]/i
+
+function createTemplateTreeAdapter(): TreeAdapter<DefaultTreeAdapterMap> {
+  const foreign = new Set<DefaultTreeAdapterTypes.Element>()
+  return {
+    ...defaultTreeAdapter,
+    onItemPush(node) {
+      if (node.namespaceURI !== parse5Html.NS.HTML)
+        foreign.add(node)
+    },
+    onItemPop(node) {
+      if (node.namespaceURI !== parse5Html.NS.HTML)
+        foreign.delete(node)
+    },
+    setNodeSourceCodeLocation(node, location) {
+      if (!foreign.size || !defaultTreeAdapter.isCommentNode(node))
+        defaultTreeAdapter.setNodeSourceCodeLocation(node, location)
+    },
+    updateNodeSourceCodeLocation(node, location) {
+      // The HTML parser can record a document close while foreign elements remain open.
+      if (foreign.size && location.endTag && defaultTreeAdapter.isElementNode(node)
+        && (node.tagName === 'head' || node.tagName === 'body')) {
+        return
+      }
+      defaultTreeAdapter.updateNodeSourceCodeLocation(node, location)
+    },
+  }
+}
+
+function parseTemplateDocument(html: string) {
+  const treeAdapter = FOREIGN_CONTENT_RE.test(html) ? createTemplateTreeAdapter() : defaultTreeAdapter
+  const document = parse(html, { sourceCodeLocationInfo: true, treeAdapter })
+  const root = getChildElement(document, 'html')
+  const head = getChildElement(root, 'head')
+  const body = getChildElement(root, 'body')
+  const rootStart = root?.sourceCodeLocation?.startTag
+  const bodyStart = body?.sourceCodeLocation?.startTag
+
+  return {
+    root,
+    rootStart,
+    head,
+    bodyStart,
+    body,
+    indexes: {
+      htmlTagStart: rootStart?.startOffset ?? -1,
+      htmlTagEnd: rootStart?.endOffset ?? -1,
+      headTagEnd: head?.sourceCodeLocation?.endTag?.startOffset ?? -1,
+      bodyTagStart: bodyStart?.startOffset ?? -1,
+      bodyTagEnd: bodyStart?.endOffset ?? -1,
+      bodyCloseTagStart: body?.sourceCodeLocation?.endTag?.startOffset ?? -1,
+    },
+  }
+}
+
+/** Find document tag boundaries without extracting existing tags. */
+/* @__PURE__ */
+export function parseHtmlForIndexes(html: string, includeBodyClose = true): PreparedHtmlTemplateWithIndexes {
+  const { indexes } = readTemplate(html, !includeBodyClose)
+  return { html, input: {}, indexes }
+}
+
+/** Extract managed elements from the document head while preserving other markup. */
+/* @__PURE__ */
+export function parseHtmlForUnheadExtraction(html: string, deferBodyClose = false): PreparedHtmlTemplateWithIndexes {
+  const { root, rootStart, head, body, bodyStart, indexes, partial } = readTemplate(html, deferBodyClose)
+  const input: SerializableHead = {}
+  const parts: string[] = []
+  let cursor = 0
+  let removed = 0
+
+  function replace(start: number, end: number, replacement = '') {
+    parts.push(html.slice(cursor, start), replacement)
+    cursor = end
+    removed += end - start - replacement.length
+  }
+
+  if (root && rootStart) {
+    const attrs = readAttributes(root, rootStart)
+    if (Object.keys(attrs).length) {
+      input.htmlAttrs = attrs
+      replace(indexes.htmlTagStart, indexes.htmlTagEnd, '<html>')
+      indexes.htmlTagEnd -= removed
+    }
+  }
+
+  if (head && indexes.headTagEnd >= 0) {
+    let whitespaceStart: number | undefined
+    for (const node of head.childNodes) {
+      if (defaultTreeAdapter.isTextNode(node)) {
+        whitespaceStart = node.sourceCodeLocation?.startOffset
+        continue
+      }
+
+      const precedingText = whitespaceStart
+      whitespaceStart = undefined
+      if (!defaultTreeAdapter.isElementNode(node) || !node.sourceCodeLocation?.startTag)
+        continue
+
+      const { startTag, endTag } = node.sourceCodeLocation
+      if ((endTag ?? startTag).endOffset > indexes.headTagEnd)
+        continue
+
+      // Match the existing output format by removing indentation with extracted tags.
+      const start = precedingText !== undefined && !html.slice(precedingText, startTag.startOffset).trim()
+        ? precedingText
+        : startTag.startOffset
+      const { tagName } = node
+      switch (tagName) {
+        case 'title':
+        case 'script':
+        case 'style': {
+          if (!endTag)
+            continue
+          const content = html.slice(startTag.endOffset, endTag.startOffset)
+          if (tagName === 'script' && !canExtractScript(content))
+            continue
+          if (tagName === 'title')
+            input.title ||= content.trim() || undefined
+          else if (tagName === 'script')
+            (input.script ||= []).push({ ...readAttributes(node, startTag), innerHTML: content } as NonNullable<SerializableHead['script']>[number])
+          else
+            (input.style ||= []).push({ ...readAttributes(node, startTag), textContent: content })
+          replace(start, endTag.endOffset)
+          break
+        }
+        case 'meta':
+          (input.meta ||= []).push(readAttributes(node, startTag) as NonNullable<SerializableHead['meta']>[number])
+          replace(start, startTag.endOffset)
+          break
+        case 'link':
+          (input.link ||= []).push(readAttributes(node, startTag) as NonNullable<SerializableHead['link']>[number])
+          replace(start, startTag.endOffset)
+          break
+        case 'base':
+          if (!input.base) {
+            input.base = readAttributes(node, startTag)
+            replace(start, startTag.endOffset)
+          }
+          break
+      }
+    }
+    indexes.headTagEnd -= removed
+  }
+
+  if (body && bodyStart) {
+    indexes.bodyTagStart -= removed
+    const attrs = readAttributes(body, bodyStart)
+    if (Object.keys(attrs).length) {
+      input.bodyAttrs = attrs
+      replace(bodyStart.startOffset, bodyStart.endOffset, '<body>')
+    }
+    indexes.bodyTagEnd -= removed
+  }
+  if (indexes.bodyCloseTagStart >= 0)
+    indexes.bodyCloseTagStart -= removed
+
+  return {
+    html: parts.length ? parts.join('') + html.slice(cursor) : html,
+    input,
+    indexes: partial ? withDeferredBodyClose(html, indexes, removed) : indexes,
+  }
+}
+
+function withDeferredBodyClose(
+  html: string,
+  indexes: PreparedHtmlTemplateWithIndexes['indexes'],
+  removed: number,
+): PreparedHtmlTemplateWithIndexes['indexes'] {
+  return {
+    ...indexes,
+    get bodyCloseTagStart() {
+      const offset = parseTemplateDocument(html).indexes.bodyCloseTagStart
+      return offset >= 0 ? offset - removed : -1
+    },
+  }
+}
+
+const SCRIPT_START_RE = /<script[\t\n\f\r />]/i
+const SCRIPT_END_RE = /<\/script/gi
+
+function canExtractScript(content: string) {
+  if (!content.includes('<!--') || !SCRIPT_START_RE.test(content))
+    return true
+
+  const escaped = content.replace(SCRIPT_END_RE, '<\\/script')
+  if (escaped === content)
+    return true
+
+  const markup = `<head><script>${escaped}</script></head>`
+  return parseTemplateDocument(markup).indexes.headTagEnd === markup.length - '</head>'.length
+}
+
+function readAttributes(node: DefaultTreeAdapterTypes.Element, startTag: Token.LocationWithAttributes) {
+  const attrs: Record<string, string> = {}
+  if (startTag.attrs) {
+    for (const { name, value } of node.attrs) {
+      if (hasOwn(startTag.attrs, name))
+        attrs[name] = value.replaceAll('&', '&amp;')
+    }
+  }
+  return attrs
 }
 
 /**
@@ -677,8 +446,7 @@ export function applyHeadToHtml(
   if (indexes.headTagEnd >= 0) {
     parts.push(html.substring(lastIndex, indexes.headTagEnd))
     parts.push(headHtml.headTags)
-    parts.push('</head>')
-    lastIndex = indexes.headTagEnd + 7 // Skip past '</head>'
+    lastIndex = indexes.headTagEnd
   }
 
   // 3. Content up to <body> tag and modify it
@@ -694,10 +462,11 @@ export function applyHeadToHtml(
   }
 
   // 4. Content up to </body> tag and inject bodyTags
-  if (indexes.bodyCloseTagStart >= 0) {
-    parts.push(html.substring(lastIndex, indexes.bodyCloseTagStart))
+  const bodyClose = headHtml.bodyTags ? indexes.bodyCloseTagStart : -1
+  if (bodyClose >= 0) {
+    parts.push(html.substring(lastIndex, bodyClose))
     parts.push(headHtml.bodyTags)
-    parts.push(html.substring(indexes.bodyCloseTagStart))
+    parts.push(html.substring(bodyClose))
   }
   else {
     // No closing body tag found, just append the rest
