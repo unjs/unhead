@@ -60,11 +60,7 @@ describe('defineArticle', () => {
       const article = await findNode<Article>(head, '#article')
       expect(article?.headline).toEqual('Article headline')
       expect(article?.description).toEqual('my article description')
-      expect(article?.image).toMatchInlineSnapshot(`
-        {
-          "@id": "https://example.com/#/schema/image/1",
-        }
-      `)
+      expect(article?.image).toEqual({ '@id': 'https://example.com/test#/schema/image/1' })
       //
       // expect(client.graphNodes.length).toEqual(2)
       expect(client).toMatchInlineSnapshot(`
@@ -77,13 +73,13 @@ describe('defineArticle', () => {
             "description": "my article description",
             "headline": "Article headline",
             "image": {
-              "@id": "https://example.com/#/schema/image/1",
+              "@id": "https://example.com/test#/schema/image/1",
             },
             "inLanguage": "en-AU",
             "thumbnailUrl": "https://example.com/image.png",
           },
           {
-            "@id": "https://example.com/#/schema/image/1",
+            "@id": "https://example.com/test#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/image.png",
             "inLanguage": "en-AU",
@@ -448,7 +444,7 @@ describe('defineArticle', () => {
           "datePublished": "2022-04-06T08:00:51+00:00",
           "headline": "The pecan tree &#8220;Carya illinoinensis&#8221;",
           "image": {
-            "@id": "https://kootingalpecancompany.com/#/schema/image/1",
+            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal#/schema/image/1",
           },
           "inLanguage": "en-US",
           "isPartOf": {

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
+import type { EffectScope } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { getCurrentInstance, nextTick, ref } from 'vue'
+import { getCurrentInstance, getCurrentScope, nextTick, ref } from 'vue'
 import { useDom } from '../../../../unhead/test/fixtures'
 import { useHead, useSeoMeta } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
@@ -103,6 +104,26 @@ describe('onRendered option (Vue)', () => {
     renderDOMHead(head, { document: dom.window.document })
     // onRendered should NOT fire after component unmount
     expect(onRendered).toHaveBeenCalledTimes(1)
+  })
+
+  it('runs the callback in the component effect scope', async () => {
+    const dom = useDom()
+    let setupScope: EffectScope | undefined
+    let callbackScope: EffectScope | undefined
+
+    const head = csrVueAppWithUnhead(dom, () => {
+      setupScope = getCurrentScope()
+      useHead({ title: 'Scoped' }, {
+        onRendered() {
+          callbackScope = getCurrentScope()
+        },
+      })
+    })
+
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(setupScope).toBeDefined()
+    expect(callbackScope).toBe(setupScope)
   })
 
   it('works with useSeoMeta', async () => {

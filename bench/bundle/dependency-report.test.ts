@@ -46,9 +46,10 @@ describe('runtime dependency report', () => {
       |---|---|---|---|---|
       | @unhead/vue | 18 | 29 MB | vue 2 MB | 0 |
 
-      </details>
+      <sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded. Skipped optional dependencies are unavailable on the CI platform.</sub>
 
-      <sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded. Skipped optional dependencies are unavailable on the CI platform.</sub>"
+      </details>
+      "
     `)
   })
 
