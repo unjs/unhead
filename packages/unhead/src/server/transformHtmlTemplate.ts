@@ -48,7 +48,7 @@ function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateC
   const cache = extractedTemplates ||= new WeakMap()
   let extracted = cache.get(prepared)
   if (!extracted) {
-    const template = parseHtmlForUnheadExtraction(prepared.html)
+    const template = parseHtmlForUnheadExtraction(prepared)
     freezeExtractedInput(template.input)
     Object.freeze(template.indexes)
     Object.freeze(template)
@@ -76,7 +76,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
   let cached: ExtractedTemplateCache | undefined
   let template: PreparedHtmlTemplateWithIndexes
   if (typeof html === 'string') {
-    template = parseHtmlForUnheadExtraction(html)
+    template = parseHtmlForUnheadExtraction(html, true)
   }
   else {
     cached = extractPreparedTemplate(html)
@@ -116,7 +116,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function transformHtmlTemplateRaw(head: Unhead<any, SSRHeadPayload>, html: string | PreparedTemplate) {
-  // For raw mode, we only need indexes, not head extraction
-  const template = typeof html === 'string' ? parseHtmlForIndexes(html) : html
-  return applyHeadToHtml(template, head.render())
+  const headHtml = head.render()
+  const template = typeof html === 'string' ? parseHtmlForIndexes(html, headHtml.bodyTags ? 'body-close' : 'body-open') : html
+  return applyHeadToHtml(template, headHtml)
 }

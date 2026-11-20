@@ -4,6 +4,8 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
+const ASCII_UPPER_RE = /[A-Z]/g
+
 function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: any,
@@ -53,7 +55,7 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
       continue
     const isData = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
-    const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
+    const key = isHtmlAttr && !isData ? prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase()) : prop
     if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
     const value = input[prop]
@@ -79,8 +81,8 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
       const str = String(value)
-      const isMeta = tag.tag === 'meta' && key === 'content'
-      tag.attrs[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
+      const preserveString = isData || (tag.tag === 'meta' && key === 'content') || (tag.tag === 'script' && typeof value === 'string' && (key === 'type' || key === 'language'))
+      tag.attrs[key] = str === 'true' || str === '' ? (preserveString ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }
   }
   return tag
