@@ -2,6 +2,7 @@ import type { DefaultTreeAdapterMap, DefaultTreeAdapterTypes, Token, TreeAdapter
 import type { SerializableHead } from '../types'
 import { defaultTreeAdapter, parse, html as parse5Html } from 'parse5'
 import { hasOwn } from '../utils/hasOwn'
+import { templateTagOrder } from '../utils/templateOrder'
 
 const TAG_HTML = 0
 const TAG_HEAD = 1
@@ -371,7 +372,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const bodyOutlet = mode === 'stream'
     ? (prepared ? prepared.bodyOutlet : findBodyOutlet(html, body, indexes))
     : undefined
-  const input: SerializableHead = {}
+  const order: string[] = []
+  const input: SerializableHead = { [templateTagOrder]: order } as SerializableHead
   const parts: string[] = []
   let cursor = 0
   let removed = 0
@@ -393,6 +395,10 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   }
 
   if (head && indexes.headTagEnd >= 0) {
+    // Resource movement across any meta CSP can change which policy governs it.
+    const preserveResources = mode === 'stream' && head.childNodes.some(node =>
+      defaultTreeAdapter.isElementNode(node) && node.tagName === 'meta'
+      && node.attrs.some(attr => attr.name === 'http-equiv' && attr.value.toLowerCase() === 'content-security-policy'))
     let whitespaceStart: number | undefined
     for (const node of head.childNodes) {
       if (defaultTreeAdapter.isTextNode(node)) {
@@ -414,6 +420,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
         ? precedingText
         : startTag.startOffset
       const { tagName } = node
+      if (preserveResources && (tagName === 'script' || tagName === 'style' || tagName === 'link'))
+        continue
       switch (tagName) {
         case 'title':
         case 'script':
@@ -462,6 +470,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           }
           break
       }
+      if (cursor > startTag.startOffset)
+        order.push(tagName)
     }
     indexes.headTagEnd -= removed
   }

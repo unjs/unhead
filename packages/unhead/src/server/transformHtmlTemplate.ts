@@ -15,9 +15,9 @@ function cloneExtractedInput<T>(value: T): T {
   if (Array.isArray(value))
     return value.map(cloneExtractedInput) as T
   if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
-    const clone: Record<string, unknown> = {}
-    for (const key of Object.keys(value))
-      clone[key] = cloneExtractedInput((value as Record<string, unknown>)[key])
+    const clone: Record<PropertyKey, unknown> = {}
+    for (const key of Reflect.ownKeys(value))
+      clone[key] = cloneExtractedInput((value as Record<PropertyKey, unknown>)[key])
     return clone as T
   }
   return value
@@ -29,8 +29,8 @@ function freezeExtractedInput<T>(value: T): T {
       freezeExtractedInput(item)
   }
   else if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
-    for (const key of Object.keys(value))
-      freezeExtractedInput((value as Record<string, unknown>)[key])
+    for (const key of Reflect.ownKeys(value))
+      freezeExtractedInput((value as Record<PropertyKey, unknown>)[key])
   }
   return value && typeof value === 'object' ? Object.freeze(value) : value
 }

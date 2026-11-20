@@ -121,6 +121,45 @@ describe.each([
     expect(document.head.querySelector('script')?.nonce).toBe('shell')
   })
 
+  it('preserves resources on each side of template CSP declarations', () => {
+    const source = `<html><head><script id="config">window.config = true</script><style id="before">body{color:red}</style><link id="first" rel="stylesheet" href="/first.css"><meta http-equiv="Content-Security-Policy" content="script-src 'nonce-shell'; style-src 'nonce-shell'"><script id="allowed" nonce="shell">window.allowed = true</script><style id="after" nonce="shell">body{color:blue}</style><link id="last" rel="stylesheet" href="/last.css"><meta http-equiv="Content-Security-Policy" content="script-src 'none'"></head><body></body></html>`
+    const { head } = createStreamableHead({ disableDefaults: true, nonce: 'shell' })
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    expect(Array.from(document.head.children, element => element.id || element.tagName)).toEqual([
+      'config',
+      'before',
+      'first',
+      'META',
+      'allowed',
+      'after',
+      'last',
+      'META',
+      'SCRIPT',
+    ])
+    expect(document.head.lastElementChild?.getAttribute('nonce')).toBe('shell')
+  })
+
+  it.each([false, true])('preserves stylesheet cascade source order, hooks: %s', (hooked) => {
+    const source = '<html><head><link rel="stylesheet" href="/first.css"><style>body{color:red}</style><link rel="stylesheet" href="data:text/css,body%7Bcolor%3Ablue%7D"></head><body></body></html>'
+    const { head } = createStreamableHead({
+      disableDefaults: true,
+      hooks: hooked ? { 'entries:normalize': () => {} } : undefined,
+    })
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    expect(Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'), element =>
+      element.getAttribute('href') || element.textContent)).toEqual([
+      '/first.css',
+      'body{color:red}',
+      'data:text/css,body%7Bcolor%3Ablue%7D',
+    ])
+  })
+
   it('keeps later entries in the stream when the payload has already rendered', () => {
     const { head } = createStreamableHead({ disableDefaults: true })
     head.push({ title: 'Shell app title' })
