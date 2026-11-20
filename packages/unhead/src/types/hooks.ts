@@ -41,7 +41,11 @@ type HookTags = Omit<ResolvedHeadTag[], number | 'push' | 'unshift' | 'splice' |
   unshift: (...items: HeadTagInput[]) => number
   splice: (start: number, deleteCount?: number, ...items: HeadTagInput[]) => ResolvedHeadTag[]
   fill: (value: HeadTagInput, start?: number, end?: number) => HookTags
-  concat: (...items: (HeadTagInput | ConcatArray<HeadTagInput>)[]) => HeadTagInput[]
+  concat: {
+    (...items: ConcatArray<HeadTag>[]): HeadTag[]
+    (...items: (HeadTag | ConcatArray<HeadTag>)[]): HeadTag[]
+    (...items: (HeadTagInput | ConcatArray<HeadTagInput>)[]): HeadTagInput[]
+  }
 }
 
 interface TagHookContext {

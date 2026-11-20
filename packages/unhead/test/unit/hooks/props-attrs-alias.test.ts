@@ -5,6 +5,48 @@ import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('tag.props / tag.attrs alias', () => {
+  it('accepts legacy callback annotations and array helpers', () => {
+    const serialize = (tags: HeadTag[]) => tags.map(tagToString).join('')
+    const head = createHead({ disableDefaults: true })
+    const seen: string[] = []
+    head.hooks.hook('tags:resolve', (ctx: { tags: HeadTag[] }) => {
+      seen.push(serialize(ctx.tags))
+    })
+    head.hooks.hook('tags:resolve', (ctx) => {
+      seen.push(serialize(ctx.tags))
+      const arrays: HeadTag[] = ctx.tags.concat([ctx.tags[0]])
+      const mixed: HeadTag[] = ctx.tags.concat(ctx.tags[0], [ctx.tags[0]])
+      seen.push(serialize(arrays), serialize(mixed))
+      ctx.tags = ctx.tags.concat({ tag: 'link', attrs: { href: '/canonical' } })
+    })
+    head.push({ title: 'home' })
+
+    expect(renderSSRHead(head).headTags).toContain('<link href="/canonical">')
+    expect(seen).toEqual([
+      '<title>home</title>',
+      '<title>home</title>',
+      '<title>home</title><title>home</title>',
+      '<title>home</title><title>home</title><title>home</title>',
+    ])
+  })
+
+  it.each(['props', 'attrs'] as const)('serializes %s replacements inside the same listener', (alias) => {
+    const head = createHead({ disableDefaults: true })
+    let serialized = ''
+    head.hooks.hook('tags:resolve', ({ tags }) => {
+      const tag = tags.find(tag => tag.tag === 'link')!
+      tag[alias] = { rel: 'canonical', href: '/replacement' }
+      serialized = tagToString(tag)
+      // The other alias must support writes immediately too.
+      tag[alias === 'props' ? 'attrs' : 'props']!.href = '/final'
+    })
+    head.push({ link: [{ rel: 'canonical', href: '/original' }] })
+
+    const html = renderSSRHead(head).headTags
+    expect(serialized).toBe('<link rel="canonical" href="/replacement">')
+    expect(html).toBe('<link rel="canonical" href="/final">')
+  })
+
   it('accepts HeadTag annotations, plugin factories and hook index assignments', () => {
     const legacyTag: HeadTag = { tag: 'meta', props: { name: 'description', content: 'legacy factory' } }
     const makeTag = (): HeadTag => legacyTag

@@ -27,13 +27,32 @@ interface TagHookContext {
   tagMap?: Map<string, HeadTag>
 }
 
+function bindTagAliases(tag: HeadTag): HeadTag {
+  if (Object.isFrozen(tag))
+    tag = { ...tag }
+  // Live tags share one attribute bag even during a listener. Keep the alias
+  // enumerable so object spreads and serialized wire formats still include it.
+  Object.defineProperty(tag, 'props', {
+    configurable: true,
+    enumerable: true,
+    get() { return this.attrs },
+    set(attrs) { this.attrs = attrs },
+  })
+  return tag
+}
+
 function syncContext(ctx: TagHookContext, previous?: Set<HeadTag['attrs']>) {
   syncTagAliases(ctx.tags, previous)
+  for (let i = 0; i < ctx.tags.length; i++)
+    ctx.tags[i] = bindTagAliases(ctx.tags[i])
   for (const [key, tag] of ctx.tagMap || []) {
     // Array-valued duplicate meta entries also carry tag metadata.
-    if (Array.isArray(tag))
+    if (Array.isArray(tag)) {
       syncTagAliases(tag, previous)
-    const resolved = syncTag(tag, previous)
+      for (let i = 0; i < tag.length; i++)
+        tag[i] = bindTagAliases(tag[i])
+    }
+    const resolved = bindTagAliases(syncTag(tag, previous))
     if (resolved !== tag)
       ctx.tagMap!.set(key, resolved)
   }
