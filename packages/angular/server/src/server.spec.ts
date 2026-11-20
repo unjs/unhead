@@ -73,6 +73,24 @@ describe('provideServerHead', () => {
     expect(request.document.body.getAttribute('data-template')).toBe('A & B')
   })
 
+  it('preserves attribute names accepted by the HTML parser', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.document.body.outerHTML = '<body @state="ready"><main>SSR app</main></body>'
+
+    await request.render()
+
+    expect(request.document.body.getAttribute('@state')).toBe('ready')
+  })
+
+  it('uses HTML whitespace to split classes', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.head.push({ bodyAttrs: { class: 'first&#9;second' } })
+
+    await request.render()
+
+    expect(request.document.body.className).toBe('first second')
+  })
+
   it('creates an isolated head for each sequential server injector render', async () => {
     const requestA = createRequest()
     pushRequestHead(requestA.head, 'A')

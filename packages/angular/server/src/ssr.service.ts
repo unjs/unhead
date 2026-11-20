@@ -5,13 +5,16 @@ import { UnheadInjectionToken } from '@unhead/angular'
 import { parseHtmlForUnheadExtraction } from 'unhead/parser'
 import { renderSSRHead } from 'unhead/server'
 
+const HTML_WHITESPACE_RE = /[\t\n\f\r ]+/
+
 function applyAttributes(element: HTMLElement, attrs: string) {
   if (!attrs)
     return
 
   const container = element.ownerDocument.createElement('div')
   container.innerHTML = `<div${attrs}></div>`
-  for (const { name, value } of Array.from(container.firstElementChild!.attributes)) {
+  for (const attribute of Array.from(container.firstElementChild!.attributes)) {
+    const { name, value } = attribute
     if (name === 'style') {
       for (const declaration of value.split(';')) {
         const [prop, val] = declaration.split(':').map(s => s.trim())
@@ -20,10 +23,10 @@ function applyAttributes(element: HTMLElement, attrs: string) {
       }
     }
     else if (name === 'class' && value) {
-      value.split(' ').filter(Boolean).forEach(className => element.classList.add(className))
+      value.split(HTML_WHITESPACE_RE).filter(Boolean).forEach(className => element.classList.add(className))
     }
     else {
-      element.setAttribute(name, value)
+      element.setAttributeNode(attribute.cloneNode() as Attr)
     }
   }
 }
