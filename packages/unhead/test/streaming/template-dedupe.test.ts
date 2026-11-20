@@ -121,6 +121,22 @@ describe.each([
     expect(document.head.querySelector('script')?.nonce).toBe('shell')
   })
 
+  it('keeps a template base before CSP and relative resources', () => {
+    const source = `<html><head><base href="/assets/"><meta http-equiv="Content-Security-Policy" content="base-uri 'none'"><link rel="stylesheet" href="theme.css"><script src="app.js"></script></head><body></body></html>`
+    const { head } = createStreamableHead({ disableDefaults: true })
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    expect(Array.from(document.head.querySelectorAll('base, meta[http-equiv], link, script[src]'), element => element.tagName)).toEqual([
+      'BASE',
+      'META',
+      'LINK',
+      'SCRIPT',
+    ])
+    expect(document.head.querySelector('base')?.getAttribute('href')).toBe('/assets/')
+  })
+
   it('preserves resources on each side of template CSP declarations', () => {
     const source = `<html><head><script id="config">window.config = true</script><style id="before">body{color:red}</style><link id="first" rel="stylesheet" href="/first.css"><meta http-equiv="Content-Security-Policy" content="script-src 'nonce-shell'; style-src 'nonce-shell'"><script id="allowed" nonce="shell">window.allowed = true</script><style id="after" nonce="shell">body{color:blue}</style><link id="last" rel="stylesheet" href="/last.css"><meta http-equiv="Content-Security-Policy" content="script-src 'none'"></head><body></body></html>`
     const { head } = createStreamableHead({ disableDefaults: true, nonce: 'shell' })

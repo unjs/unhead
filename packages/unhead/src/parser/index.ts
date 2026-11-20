@@ -464,6 +464,9 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           replace(start, startTag.endOffset)
           break
         case 'base':
+          // A base takes effect at its source position, before any later CSP.
+          if (mode === 'stream')
+            continue
           if (!input.base) {
             input.base = readAttributes(node, startTag) as unknown as SerializableHead['base']
             replace(start, startTag.endOffset)
