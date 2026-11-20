@@ -34,7 +34,8 @@ function convertTag(tag: DescriptorTag, descriptor: HtmlTagDescriptor): TagInput
 
   const { props } = normalizeProps({ tag, props: {} }, input)
   for (const [name, value] of Object.entries(input)) {
-    if (props[name] !== value && !(value === '' && props[name] === true))
+    const normalized: unknown = props[name]
+    if (normalized !== value && !(value === '' && normalized === true))
       unsupported(tag, `attribute "${name}"`)
   }
   if (tag === 'meta' && !props.content && !props.charset && !props['http-equiv'])

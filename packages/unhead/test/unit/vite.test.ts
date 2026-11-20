@@ -23,7 +23,7 @@ describe('htmlTagsToHead', () => {
     const href = '/font.woff2?a=1&b=2'
     const head = createHead({ disableDefaults: true, omitLineBreaks: true })
     head.push(htmlTagsToHead([{ tag: 'link', attrs: { rel: 'preload', href, as: 'font', crossorigin: '' } }]))
-    head.push({ link: [{ rel: 'preload', href, as: 'font' }] })
+    head.push({ link: [{ rel: 'preload', href, as: 'font', crossorigin: 'anonymous' }] })
 
     expect(renderSSRHead(head).headTags).toBe('<link rel="preload" href="/font.woff2?a=1&b=2" as="font" crossorigin>')
   })
