@@ -46,6 +46,26 @@ function removeStyles(style: CSSStyleDeclaration, keys: Iterable<string>, next?:
   }
 }
 
+function isStaticValue(value: unknown) {
+  return value === null || (typeof value !== 'object' && typeof value !== 'function')
+}
+
+function staticRootProps(input: Record<string, unknown>) {
+  const props: Record<string, unknown> = Object.create(null)
+  for (const [key, value] of Object.entries(input)) {
+    if (isStaticValue(value)) {
+      props[key] = value
+    }
+    else if (key === 'class' || key === 'style') {
+      if (Array.isArray(value))
+        props[key] = value.filter(item => typeof item === 'string')
+      else if (value && typeof value === 'object')
+        props[key] = Object.fromEntries(Object.entries(value).filter(([, item]) => isStaticValue(item)))
+    }
+  }
+  return props
+}
+
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map(), _p: {}, _s: {}, _l: new Map() }
   for (const [tag, el] of [['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]] as const) {
@@ -53,16 +73,20 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
       continue
     state._e.set(tag, el)
     const styleKeys = new Set<string>()
-    // Root attributes can also belong to the template. Clean up only the original entries.
+    // A raw entry can contain callbacks or attributes that useHeadSafe rejects.
     for (const entry of head.entries.values()) {
       const original = (entry._o as Record<string, any> | undefined)?.[tag]
       if (!original || typeof original !== 'object')
         continue
-      const { props } = normalizeProps({ tag, props: {} }, original)
+      const baseline = entry.options?._safe ? { class: original.class } : original
+      const { props } = normalizeProps({ tag, props: {} }, staticRootProps(baseline))
       for (const key in props) {
         const cleanupKey = `${tag}:attr:${key}`
         if (key === 'class') {
-          for (const value of (props[key] as Iterable<string> | null) || []) {
+          const classes = props[key] as unknown
+          if (!(classes instanceof Set))
+            continue
+          for (const value of classes) {
             for (const name of value.split(WHITESPACE_RE)) {
               if (name)
                 state._p[`${cleanupKey}:${name}`] = () => el.classList.remove(name)
@@ -70,9 +94,11 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
           }
         }
         else if (key === 'style') {
-          const declarations = props[key] as unknown as StyleDeclarations | null
-          for (const name of declarations?.keys() || [])
-            styleKeys.add(name)
+          const declarations = props[key] as unknown
+          if (declarations instanceof Map) {
+            for (const name of declarations.keys())
+              styleKeys.add(name)
+          }
         }
         else if (el.hasAttribute(key)) {
           state._p[cleanupKey] = () => el.removeAttribute(key)

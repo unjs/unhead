@@ -1,4 +1,5 @@
 import { renderDOMHead } from '@unhead/dom'
+import { useHeadSafe } from 'unhead'
 import { describe, expect, it } from 'vitest'
 import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../util'
 
@@ -158,6 +159,54 @@ describe('issue 881 - document without a body', () => {
 })
 
 describe('issue 881 - pre-hydration external attributes on html/body', () => {
+  it('renders computed class array members on the first client render', () => {
+    const document = useDom().window.document
+    const head = createClientHeadWithContext({ document })
+
+    head.push({ bodyAttrs: { class: [() => 'active'] } })
+
+    expect(document.body.classList.contains('active')).toBe(true)
+  })
+
+  it('renders computed style array members on the first client render', () => {
+    const document = useDom().window.document
+    const head = createClientHeadWithContext({ document })
+
+    head.push({ bodyAttrs: { style: [() => 'color: red'] } })
+
+    expect(document.body.style.color).toBe('red')
+  })
+
+  it('preserves a template class when a computed class map omits it', () => {
+    const document = useDom().window.document
+    document.body.classList.add('template')
+
+    const head = createClientHeadWithContext({ document })
+    head.push({ bodyAttrs: { class: { template: () => false } } })
+
+    expect(document.body.classList.contains('template')).toBe(true)
+  })
+
+  it('preserves a template ID when the safe input rejects that attribute', () => {
+    const document = useDom().window.document
+    document.body.id = 'template'
+    document.body.classList.add('server')
+
+    let ready = false
+    const head = createClientHeadWithContext({
+      document,
+      hooks: { 'dom:beforeRender': (ctx) => { ctx.shouldRender = ready } },
+    })
+    const input = { bodyAttrs: { class: 'server', id: 'ignored' } }
+    const entry = useHeadSafe(head, input)
+    entry.patch({ bodyAttrs: { class: 'active' } })
+    ready = true
+    head.render()
+
+    expect(document.body.id).toBe('template')
+    expect(document.body.className).toBe('active')
+  })
+
   it('removes styles and attributes from all original entries when no bodyAttrs resolve', () => {
     const document = useDom().window.document
     document.body.id = 'ssr-modal'
