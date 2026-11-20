@@ -1,9 +1,30 @@
 import type { HeadTagInput } from 'unhead/types'
-import { createHead, renderSSRHead, ssrRenderTags } from 'unhead/server'
+import { createHead, renderSSRHead, ssrRenderTags, tagToString } from 'unhead/server'
 import { resolveTags, sanitizeTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('ssr resolved attribute inputs', () => {
+  it('renders legacy tags inserted by entries:resolve with a resolve listener', () => {
+    const head = createHead({ disableDefaults: true })
+    head.hooks.hook('entries:resolve', ({ tags }) => {
+      tags.push({ tag: 'meta', props: { name: 'description', content: 'injected description' } })
+    })
+    head.hooks.hook('tags:resolve', () => {})
+
+    expect(renderSSRHead(head).headTags)
+      .toBe('<meta name="description" content="injected description">')
+  })
+
+  it.each(['props', 'attrs'] as const)('renders %s replacements on spread copies of resolved links', (alias) => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ link: [{ rel: 'canonical', href: '/original' }] })
+    const tags = resolveTags(head).map(tag => ({ ...tag, [alias]: { rel: 'canonical', href: '/replacement' } }))
+
+    expect(renderSSRHead(head, { resolvedTags: tags }).headTags)
+      .toBe('<link rel="canonical" href="/replacement">')
+    expect(renderSSRHead(head).headTags).toBe('<link rel="canonical" href="/original">')
+  })
+
   it.each(['props', 'attrs'] as const)('renders %s replacements on resolved links without tag hooks', (alias) => {
     const head = createHead({ disableDefaults: true })
     head.push({ link: [{ rel: 'canonical', href: '/original' }] })
@@ -38,6 +59,32 @@ describe('ssr resolved attribute inputs', () => {
     ssrRenderTags,
     renderSSRHead: (tags: HeadTagInput[]) => renderSSRHead(createHead({ disableDefaults: true }), { resolvedTags: tags }),
   }
+
+  it.each(Object.entries(renderers))('%s renders legacy replacements on copied root attributes', (_, render) => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ htmlAttrs: { lang: 'en' }, bodyAttrs: { id: 'original' } })
+    const tags = resolveTags(head).map((tag) => {
+      const props: Record<string, string> = tag.tag === 'htmlAttrs' ? { lang: 'fr' } : { id: 'replacement' }
+      return Object.freeze({ ...tag, props })
+    })
+
+    expect(render(tags)).toMatchObject({ htmlAttrs: ' lang="fr"', bodyAttrs: ' id="replacement"' })
+  })
+
+  it('keeps canonical overrides on copies after live replacements and repeated spreads', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ link: [{ rel: 'canonical', href: '/original' }] })
+    const tag = resolveTags(head)[0]
+    tag.attrs = { rel: 'canonical', href: '/live' }
+    const legacy = { ...{ ...tag }, props: { rel: 'canonical', href: '/legacy' } }
+    const canonical = { ...legacy, attrs: { rel: 'canonical', href: '/canonical' } }
+
+    expect(tagToString(legacy)).toBe('<link rel="canonical" href="/legacy">')
+    expect(tagToString(canonical)).toBe('<link rel="canonical" href="/canonical">')
+    expect(ssrRenderTags(sanitizeTags([legacy])).headTags).toBe('<link rel="canonical" href="/legacy">')
+    expect(renderSSRHead(head, { resolvedTags: [canonical] }).headTags)
+      .toBe('<link rel="canonical" href="/canonical">')
+  })
 
   it.each(Object.entries(renderers))('%s retains props-only root attributes without render hooks', (_, render) => {
     const tags: HeadTagInput[] = [

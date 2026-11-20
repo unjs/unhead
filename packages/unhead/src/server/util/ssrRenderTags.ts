@@ -1,4 +1,5 @@
 import type { ResolvedHeadTag as HeadTag, HeadTagInput, RenderSSRHeadOptions } from '../../types'
+import { resolveTagAttrs } from '../../utils/tagHooks'
 import { propsToString } from './propsToString'
 import { tagToString } from './tagToString'
 
@@ -14,7 +15,7 @@ export function ssrRenderTags<T extends HeadTagInput>(tags: T[], options?: Rende
 
   for (const tag of tags) {
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      Object.assign(schema[tag.tag], tag.attrs ?? tag.props ?? {})
+      Object.assign(schema[tag.tag], resolveTagAttrs(tag))
       continue
     }
     const s = tagToString(tag)

@@ -197,6 +197,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   if (head._h) {
     entries = [...head.entries.values()]
     callHook(head, 'entries:resolve', { entries, ...ctx })
+    // Entry listeners may insert legacy tags before the defensive clone.
+    syncTagAliases(ctx.tags)
   }
   syncEntryHookCache(head, hooks)
   for (const e of entries || head.entries.values()) {

@@ -1,12 +1,19 @@
 import type { HookCallback } from 'hookable'
 import type { ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from '../types'
 
+const AliasAttrs = /* @__PURE__ */ Symbol('unhead.attrs')
+
+export function resolveTagAttrs(tag: HeadTagInput, previous?: Set<HeadTag['attrs']>): HeadTag['attrs'] {
+  const original = (tag as HeadTagInput & { [AliasAttrs]?: HeadTag['attrs'] })[AliasAttrs]
+  return tag.attrs === undefined || (tag.props !== undefined && ((original !== undefined && original === tag.attrs) || previous?.has(tag.attrs)))
+    ? tag.props ?? {}
+    : tag.attrs
+}
+
 function syncTag(tag: HeadTagInput, previous?: Set<HeadTag['attrs']>): HeadTag {
   if (tag.attrs !== undefined && tag.attrs === tag.props)
     return tag as HeadTag
-  const attrs = tag.attrs === undefined || (tag.props !== undefined && previous?.has(tag.attrs))
-    ? tag.props ?? {}
-    : tag.attrs
+  const attrs = resolveTagAttrs(tag, previous)
   // Keep hook-owned tag references shared with tagMap. Copy external or
   // frozen tags so prepared input and entry caches remain untouched.
   if (previous && !Object.isFrozen(tag)) {
@@ -37,6 +44,13 @@ export function bindTagAliases(tag: HeadTag, copy = false): HeadTag {
     return tag
   if (copy || frozen)
     tag = { ...tag }
+  // A spread reads this getter into a data property. The copied baseline
+  // distinguishes a legacy replacement from an independent canonical input.
+  Object.defineProperty(tag, AliasAttrs, {
+    configurable: true,
+    enumerable: true,
+    get: getTagAttrs,
+  })
   // Live tags share one attribute bag even during a listener. Keep the alias
   // enumerable so object spreads and serialized wire formats still include it.
   Object.defineProperty(tag, 'props', {
