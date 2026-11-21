@@ -1,15 +1,23 @@
 import { defineBuildConfig } from 'unbuild'
 
-export default defineBuildConfig({
-  externals: [
-    'vue',
-    'vite',
-    'webpack',
-    'unplugin',
-    '@unhead/bundler',
-    '@unhead/bundler/vite',
-    '@unhead/bundler/framework',
-  ],
+const externals = [
+  'vue',
+  'vite',
+  'webpack',
+  'unplugin',
+  '@unhead/bundler',
+  '@unhead/bundler/vite',
+  '@unhead/bundler/framework',
+]
+
+function logSideEffects(_: unknown, options: { experimentalLogSideEffects?: boolean }) {
+  options.experimentalLogSideEffects = true
+}
+
+export default defineBuildConfig([{
+  // The compiled server head comes from the next build, which then checks the package exports
+  failOnWarn: false,
+  externals,
   declaration: true,
   entries: [
     { input: 'src/index', name: 'index' },
@@ -28,9 +36,15 @@ export default defineBuildConfig({
     { input: 'src/stream/iife', name: 'stream/iife' },
     { input: 'src/legacy', name: 'legacy' },
   ],
-  hooks: {
-    'rollup:options': (_, options) => {
-      options.experimentalLogSideEffects = true
-    },
-  },
-})
+  hooks: { 'rollup:options': logSideEffects },
+}, {
+  // The compiled server head builds alone. It then shares no dist file with the other
+  // entries, so their dist stays byte for byte the same.
+  clean: false,
+  externals,
+  declaration: true,
+  entries: [
+    { input: 'src/compiled/server', name: 'compiled/server' },
+  ],
+  hooks: { 'rollup:options': logSideEffects },
+}])

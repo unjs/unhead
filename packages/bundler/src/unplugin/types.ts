@@ -1,3 +1,4 @@
+import type { CompileTransformOptions } from './CompileTransform'
 import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
@@ -22,6 +23,19 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    * to override the target.
    */
   transformInlineScripts?: InlineScriptTransformOptions | false
+  /**
+   * Compile static `useHead` and `useSeoMeta` calls of `@unhead/vue` to compiled tags in
+   * server builds. A call that cannot compile stays as written. The server head
+   * must come from `@unhead/vue/compiled/server`.
+   *
+   * An auto-imported call compiles only when `autoImports` names it. Pass an object to set it.
+   *
+   * Applies to a Vite build with the `@unhead/vue` bundler plugin only. Another build warns once
+   * and leaves every call as written. Off by default.
+   *
+   * @experimental
+   */
+  compile?: boolean | CompileTransformOptions
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
