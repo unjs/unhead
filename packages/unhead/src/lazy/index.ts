@@ -48,6 +48,7 @@ export interface QueuedEntry<T> {
 /** @internal */
 export interface HeadQueue<T> {
   index: number
+  hydrating: boolean
   entries: Map<number, QueuedEntry<T>>
   plugins: HeadPluginInput[]
   closeStream?: false | (() => void)
@@ -61,17 +62,16 @@ export interface HeadQueue<T> {
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): LazyUnhead<T> {
-  const queue: HeadQueue<T> = { index: 1, entries: new Map(), plugins: [] }
-  let hydrating = true
+  const queue: HeadQueue<T> = { index: 1, hydrating: true, entries: new Map(), plugins: [] }
   let active: ClientUnhead<T> | undefined
   let loading: Promise<ClientUnhead<T>> | undefined
 
   const shell: LazyUnhead<T> = {
     ssr: false,
     finishHydration() {
-      if (!hydrating)
+      if (!queue.hydrating)
         return
-      hydrating = false
+      queue.hydrating = false
       // eslint-disable-next-line node/prefer-global/process
       if (process.env.NODE_ENV !== 'production' && !loading && options.streamKey === undefined) {
         import('./devCheck')
@@ -96,8 +96,8 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       if (active)
         return active.push(input, entryOptions)
       const _i = entryOptions?._index ?? queue.index++
-      const entry: QueuedEntry<T> = { input, options: entryOptions, hydrated: hydrating }
-      if (hydrating && !options.render)
+      const entry: QueuedEntry<T> = { input, options: entryOptions, hydrated: queue.hydrating }
+      if (queue.hydrating && !options.render)
         entry.baseline = { input: copyInput(input) }
       // eslint-disable-next-line node/prefer-global/process
       if (process.env.NODE_ENV !== 'production')
@@ -106,12 +106,12 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       return {
         _i,
         patch(next) {
-          if (!hydrating)
+          if (!queue.hydrating)
             entry.hydrated = false
           // A component may populate the same object during its hydration render.
           // Read it outside the render so Vue does not subscribe to that input.
           const baseline = entry.baseline
-          if (baseline && hydrating && next === entry.input) {
+          if (baseline && queue.hydrating && next === entry.input) {
             queueMicrotask(() => {
               if (entry.input === next && !entry.disposed && !entry.active)
                 baseline.input = copyInput(next)

@@ -1,6 +1,6 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { StreamingGlobal } from '../stream/types'
-import type { HeadEntry, HeadRenderer } from '../types'
+import type { ActiveHeadEntry, HeadEntry, HeadRenderer } from '../types'
 import type { HeadQueue, LazyHeadOptions } from './index'
 import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
@@ -98,6 +98,26 @@ export async function activate<T>(
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
   const head = createClientHeadAdapter(core, createHooks(options.hooks), head => render(head))
   head._b = true
+  // Apply one hydration policy to replayed entries and entries registered after load.
+  function preserveHydrationOrder(active: ActiveHeadEntry<T>) {
+    const live = head.entries.get(active._i)
+    if (stream && active._i >= 0 && live && live._order === undefined) {
+      live._order = -(1 << 21) + active._i
+      const patch = active.patch
+      active.patch = (input) => {
+        if (!queue.hydrating)
+          delete live._order
+        patch(input)
+      }
+    }
+  }
+  const clientPush = head.push
+  head.push = (input, entryOptions) => {
+    const active = clientPush(input, entryOptions)
+    if (queue.hydrating)
+      preserveHydrationOrder(active)
+    return active
+  }
   // A plugin or a hook can push through the real head or the shell during handoff.
   Object.defineProperty(head, '_entryCount', {
     get: () => queue.index,
@@ -121,16 +141,8 @@ export async function activate<T>(
     for (const [_i, entry] of queue.entries) {
       const input = entry.input
       const active = entry.active = head.push(input, { ...entry.options, _index: _i })
-      const live = head.entries.get(_i)
-      if (stream && entry.hydrated && live) {
-        // Keep handles stable while sorting hydration below the streamed entry range.
-        live._order = -(1 << 21) + _i
-        const patch = active.patch
-        active.patch = (input) => {
-          delete live._order
-          patch(input)
-        }
-      }
+      if (entry.hydrated)
+        preserveHydrationOrder(active)
       if (entry.baseline) {
         hydrated.push({
           _i,

@@ -14,6 +14,36 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it.each(['active push', 'active patch', 'replayed patch'] as const)('keeps streamed metadata above hydration defaults after early load: %s', async (operation) => {
+    const { document, queue } = createStreamDocument()
+    const head = createHead({ document, streamKey: 'pageHead' })
+    const initial = operation === 'replayed patch' ? head.push({ title: 'Initial layout' }) : undefined
+    queue.push([{ title: 'Page', meta: [{ name: 'description', content: 'Page description' }] }])
+    await head.load()
+
+    const layout = initial ?? head.push({ title: 'Layout', meta: [{ name: 'description', content: 'Layout description' }] })
+    if (operation !== 'active push')
+      layout.patch({ title: 'Updated layout', meta: [{ name: 'description', content: 'Updated layout description' }] })
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Page')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page description')
+    })
+
+    head.finishHydration()
+    queue.push([{ title: 'Later page', meta: [{ name: 'description', content: 'Later page description' }] }])
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Later page')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Later page description')
+    })
+
+    layout.patch({ title: 'Client', meta: [{ name: 'description', content: 'Client description' }] })
+    queue.push([{ title: 'Last page', meta: [{ name: 'description', content: 'Last page description' }] }])
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Client')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client description')
+    })
+  })
+
   it.each(['before load', 'after load'])('lets streamed page metadata replace hydrated layout defaults %s', async (arrival) => {
     const { document, queue } = createStreamDocument()
     const head = createHead({ document, streamKey: 'pageHead' })
