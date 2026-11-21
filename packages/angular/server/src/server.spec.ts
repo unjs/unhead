@@ -2,7 +2,7 @@ import type { EnvironmentInjector } from '@angular/core'
 import type { Unhead } from 'unhead/types'
 import { DOCUMENT } from '@angular/common'
 import { createEnvironmentInjector, Injector } from '@angular/core'
-import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
+import { BEFORE_APP_SERIALIZED, ɵDominoAdapter as DominoAdapter } from '@angular/platform-server'
 import { UnheadInjectionToken } from '@unhead/angular'
 import { afterEach, describe, expect, it } from 'vitest'
 import { provideServerHead } from './server'
@@ -16,8 +16,7 @@ interface SSRRequest {
 
 const injectors: EnvironmentInjector[] = []
 
-function createRequest(): SSRRequest {
-  const requestDocument = document.implementation.createHTMLDocument()
+function createRequest(requestDocument = document.implementation.createHTMLDocument()): SSRRequest {
   requestDocument.body.innerHTML = '<main>SSR app</main>'
 
   const injector = createEnvironmentInjector([
@@ -55,6 +54,77 @@ describe('provideServerHead', () => {
   afterEach(() => {
     while (injectors.length)
       injectors.pop()!.destroy()
+  })
+
+  it('applies root attribute names and values to the Angular server document', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.document.documentElement.setAttribute('xml:lang', 'en')
+    request.document.body.setAttribute('data-template', 'A & B &#65; "quoted"')
+    request.head.push({
+      bodyAttrs: { 'data-label': 'A "quoted" value' },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('xml:lang')).toBe('en')
+    expect(request.document.documentElement.getAttribute('xml')).toBeNull()
+    expect(request.document.documentElement.getAttribute('lang')).toBeNull()
+    expect(request.document.body.getAttribute('data-label')).toBe('A "quoted" value')
+    expect(request.document.body.getAttribute('data-template')).toBe('A & B &#65; "quoted"')
+  })
+
+  it('keeps character references literal in pushed root attributes', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.head.push({
+      htmlAttrs: { 'data-label': '&quot; "quoted"' },
+      bodyAttrs: { 'data-label': '&#65;' },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('data-label')).toBe('&quot; "quoted"')
+    expect(request.document.body.getAttribute('data-label')).toBe('&#65;')
+  })
+
+  it('updates attributes with names accepted by the HTML parser', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.document.body.outerHTML = '<body @state="pending"><main>SSR app</main></body>'
+    request.head.push({ bodyAttrs: { '@state': 'ready' } })
+
+    await request.render()
+
+    expect(request.document.body.getAttribute('@state')).toBe('ready')
+  })
+
+  it('uses HTML whitespace to split classes', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.head.push({ bodyAttrs: { class: 'first\tsecond' } })
+
+    await request.render()
+
+    expect(request.document.body.className).toBe('first second')
+  })
+
+  it('updates an existing namespaced root attribute in place', async () => {
+    const request = createRequest()
+    const namespace = 'http://www.w3.org/2000/xmlns/'
+    request.document.documentElement.setAttributeNS(namespace, 'xmlns', 'urn:initial')
+    const htmlAttrs = { xmlns: 'urn:updated', lang: 'en' }
+    request.head.push({ htmlAttrs })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('xmlns')).toBe('urn:updated')
+    expect(request.document.documentElement.getAttributeNS(namespace, 'xmlns')).toBe('urn:updated')
+  })
+
+  it('registers the rendered root ID in the Angular server document', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.head.push({ htmlAttrs: { id: 'root' } })
+
+    await request.render()
+
+    expect(request.document.getElementById('root')).toBe(request.document.documentElement)
   })
 
   it('creates an isolated head for each sequential server injector render', async () => {
