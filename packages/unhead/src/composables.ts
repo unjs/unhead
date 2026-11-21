@@ -10,11 +10,11 @@ import { FlatMetaPlugin } from './plugins/flatMeta'
 import { SafeInputPlugin } from './plugins/safe'
 import { hasOwn } from './utils/hasOwn'
 
-export function useHead<T extends Unhead<any>, I = ResolvableHead>(unhead: T, input?: ResolvableHead, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+export function useHead<T extends Pick<Unhead<any>, 'push'>, I = ResolvableHead>(unhead: T, input?: ResolvableHead, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   return unhead.push((input || {}) as I, options) as ActiveHeadEntry<I>
 }
 
-export function useHeadSafe<T extends Unhead<any>>(unhead: T, input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
+export function useHeadSafe<T extends Pick<Unhead<any>, 'push' | 'use'>>(unhead: T, input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
   unhead.use(SafeInputPlugin)
   return useHead(unhead, input as ResolvableHead, Object.assign(options, { _safe: true })) as ActiveHeadEntry<HeadSafe>
 }
@@ -37,7 +37,7 @@ function normalizeSeoMetaInput(input: UseSeoMetaInput) {
   }
 }
 
-export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaInput = {}, options?: HeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput> {
+export function useSeoMeta<T extends Pick<Unhead<any>, 'push' | 'use'>>(unhead: T, input: UseSeoMetaInput = {}, options?: HeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput> {
   unhead.use(FlatMetaPlugin)
   const entry = unhead.push(normalizeSeoMetaInput(input), options)
   // just in case

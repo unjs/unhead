@@ -1,10 +1,13 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { StreamingGlobal } from '../stream/types'
 import type { HeadEntry, HeadRenderer } from '../types'
-import type { LazyHeadOptions } from './index'
+import type { HeadQueue, LazyHeadOptions } from './index'
+import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
 import { attachStreamHead } from '../stream/queue'
+import { createUnhead } from '../unhead'
+import { createHooks } from '../utils/hooks'
 
 // A change since hydration may have dropped or re-keyed an entry, leaving its server
 // element unknown to the renderer. Adopt only existing elements without replaying
@@ -38,29 +41,94 @@ function resolveStream(document: Document | undefined, streamKey: string) {
   return stream
 }
 
-export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, finishHydration: () => HeadEntry<T>[], streamKey?: string): HeadRenderer<any> {
-  const stream = streamKey === undefined ? undefined : resolveStream(head.resolvedOptions.document, streamKey)
-  if (stream?._head && stream._head !== head)
-    throw new Error('[unhead] This stream already has a client head.')
-  // Failed validation must leave hydration open for a later attempt.
-  const hydrated = finishHydration()
-  head.resolvedOptions._tagWeight = tagWeight
-  if (stream && !stream._head) {
-    // Reserve earlier entry positions so late SSR patches cannot override live client entries.
+export async function activate<T>(
+  options: LazyHeadOptions,
+  queue: HeadQueue<T>,
+  connect: (head: ClientUnhead<T>) => void,
+): Promise<ClientUnhead<T>> {
+  const document = options.document ?? globalThis.document
+  const resolveQueue = () => {
+    if (options.streamKey === undefined)
+      return
+    const stream = resolveStream(document, options.streamKey)
+    if (stream._head)
+      throw new Error('[unhead] This stream already has a client head.')
+    return stream
+  }
+  // Check before loading plugins, then again if the plugin import yielded to another task.
+  let stream = resolveQueue()
+  const lazyPlugins = options.lazyPlugins ? await options.lazyPlugins() : undefined
+  if (options.lazyPlugins)
+    stream = resolveQueue()
+  let render: HeadRenderer<boolean> = () => false
+  const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
+  const head = createClientHeadAdapter(core, createHooks(options.hooks), head => render(head))
+  head._b = true
+  // A plugin or a hook can push through the real head or the shell during handoff.
+  Object.defineProperty(head, '_entryCount', {
+    get: () => queue.index,
+    set: index => queue.index = index,
+    configurable: true,
+  })
+
+  const hydrated: HeadEntry<T>[] = []
+  try {
+    for (const plugin of options.plugins ?? [])
+      head.use(plugin)
+    for (const plugin of lazyPlugins ?? [])
+      head.use(plugin)
+    let pluginIndex = 0
+    const registerQueuedPlugins = () => {
+      while (pluginIndex < queue.plugins.length)
+        head.use(queue.plugins[pluginIndex++]!)
+    }
+    registerQueuedPlugins()
+
+    for (const [_i, entry] of queue.entries) {
+      const input = entry.input
+      const active = entry.active = head.push(input, { ...entry.options, _index: _i })
+      if (entry.baseline) {
+        hydrated.push({
+          _i,
+          input: entry.baseline.input,
+          _o: entry.baseline.input,
+          options: head.entries.get(_i)?.options,
+        })
+      }
+      // The push can call a hook before the active handle is available.
+      if (entry.disposed)
+        active.dispose()
+      else if (entry.input !== input)
+        active.patch(entry.input)
+      registerQueuedPlugins()
+    }
+  }
+  catch (error) {
+    for (const entry of queue.entries.values())
+      entry.active = undefined
+    throw error
+  }
+
+  let renderId = 0
+  render = (options.render as HeadRenderer<boolean>) || (() => {
+    const id = ++renderId
+    setTimeout(() => {
+      if (id === renderId && (head._dom || !hydrated.length || adoptHydratedEntries(head, hydrated))) {
+        hydrated.length = 0
+        renderLazyDOMHead(head)
+      }
+    })
+    return false
+  })
+
+  Object.defineProperty(head, '_entryCount', { value: queue.index, writable: true })
+  connect(head)
+  if (stream) {
+    // Late server patches are fallbacks for the framework's live entries.
     let index = -(1 << 20)
     attachStreamHead(stream, head, input => head.push(input as T, { _index: index++ })._i)
   }
-  let renderId = 0
-  // A custom renderer owns the document, as with v3 `createHead`, so the default one never adopts.
-  // The default one batches the changes of a task into one render, as the Vue client head does.
-  // The first render that creates the DOM state adopts first, so a change after the load,
-  // in the debounce or during a pause, still adopts. A pause holds both. With no hydrated
-  // entries there is no server head to adopt.
-  return (options.render as HeadRenderer<any>) || (() => {
-    const id = ++renderId
-    setTimeout(() => {
-      if (id === renderId && (head._dom || !hydrated.length || adoptHydratedEntries(head, hydrated)))
-        renderLazyDOMHead(head)
-    })
-  })
+  head._b = false
+  head.render()
+  return head
 }

@@ -18,19 +18,17 @@ describe('lazy head with streaming SSR', () => {
     const { document, queue } = createStreamDocument()
     const window = document.defaultView as unknown as { pageHead?: StreamingGlobal }
     delete window.pageHead
-    const onLoadError = vi.fn()
     const plugin = vi.fn(() => ({ key: 'stream-plugin' }))
-    const head = createHead({ document, streamKey: 'pageHead', onLoadError, lazyPlugins: async () => [plugin] })
+    const head = createHead({ document, streamKey: 'pageHead', lazyPlugins: async () => [plugin] })
 
-    expect(await head.load()).toBe(false)
-    expect(onLoadError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('server bootstrap') }))
+    await expect(head.load()).rejects.toThrow('server bootstrap')
     expect(document.title).toBe('Shell')
 
     const stylesheet = head.push({ link: [{ rel: 'stylesheet', href: '/shell.css' }] })
     stylesheet.dispose()
     window.pageHead = queue
     queue.push([{ title: 'Streamed' }])
-    expect(await head.load()).toBe(true)
+    await head.load()
     expect(plugin).toHaveBeenCalledTimes(1)
     await vi.waitFor(() => {
       expect(document.title).toBe('Streamed')
@@ -38,7 +36,7 @@ describe('lazy head with streaming SSR', () => {
     })
   })
 
-  it('preserves patch order and keeps the same head through activation', async () => {
+  it('preserves patch order through activation', async () => {
     const { document, queue } = createStreamDocument()
     queue.push([{ title: 'First patch' }])
     let ready!: () => void
@@ -47,7 +45,7 @@ describe('lazy head with streaming SSR', () => {
     })
     const lazyPlugins = vi.fn(() => pluginReady.then(() => []))
     const head = createHead({ document, streamKey: 'pageHead', lazyPlugins })
-    head.render()
+    head.finishHydration()
     queue.push([{ title: 'Second patch' }])
     expect(document.title).toBe('Shell')
 
@@ -55,9 +53,9 @@ describe('lazy head with streaming SSR', () => {
     queue.push([{ title: 'During load' }])
     expect(document.title).toBe('Shell')
     ready()
-    expect(await loading).toBe(true)
+    const client = await loading
     await vi.waitFor(() => expect(document.title).toBe('During load'))
-    expect(queue._head).toBe(head)
+    expect(queue._head).toBe(client)
 
     queue.push([{ title: 'After load' }])
     await vi.waitFor(() => expect(document.title).toBe('After load'))
@@ -81,7 +79,7 @@ describe('lazy head with streaming SSR', () => {
       },
     })
 
-    expect(await head.load()).toBe(true)
+    await head.load()
     await vi.waitFor(() => expect(document.title).toBe('Patch received during replay'))
   })
 
@@ -90,14 +88,14 @@ describe('lazy head with streaming SSR', () => {
     const head = createHead({ document, streamKey: 'pageHead' })
     const stylesheet = head.push({ link: [{ rel: 'stylesheet', href: '/shell.css' }] })
     stylesheet.dispose()
-    head.render()
+    head.finishHydration()
     head.push({ title: 'Client' })
     queue.push([{ title: 'Late server title' }])
     await Promise.resolve()
     expect(document.title).toBe('Shell')
     expect(document.querySelector('link[href="/shell.css"]')).toBeTruthy()
 
-    expect(await head.load()).toBe(true)
+    await head.load()
     await vi.waitFor(() => {
       expect(document.title).toBe('Client')
       expect(document.querySelector('link[href="/shell.css"]')).toBeNull()

@@ -7,7 +7,7 @@ import { createHead as createServerHead, renderSSRHead } from '../packages/unhea
 // The production path: in development the lazy head imports its dev check on each hydration.
 vi.stubEnv('NODE_ENV', 'production')
 
-// Head work during hydration: create the head, push the entries of a page, end hydration with `render()`.
+// Head work during hydration: create the head, push the entries of a page, end hydration.
 const entries = Array.from({ length: 20 }, (_, i) => ({
   meta: [{ name: `meta-${i}`, content: `value ${i}` }],
   link: [{ rel: 'prefetch', href: `/chunk-${i}.js` }],
@@ -32,7 +32,7 @@ it('hydration head work', async ({ bench }) => {
     bench('lazy head', () => {
       const head = createLazyHead({ document: lazyDocument })
       entries.forEach(entry => head.push(entry))
-      head.render()
+      head.finishHydration()
     }),
   )
 })

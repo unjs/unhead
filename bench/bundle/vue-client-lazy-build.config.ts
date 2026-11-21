@@ -55,6 +55,8 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
+      if (compressed >= 1000)
+        throw new Error(`The production Vue lazy shell is ${compressed} B gzip. Keep it below 1000 B.`)
       console.log(`VUE CLIENT LAZY Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },

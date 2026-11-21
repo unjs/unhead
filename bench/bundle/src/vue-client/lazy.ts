@@ -1,10 +1,9 @@
-import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/lazy'
 
-// Same input as minimal.ts, so the eager chunk compares directly with Vue Client (Minimal).
+// Measure the Vue shell with an entry supplied by the framework.
 const head = createHead()
 
-useHead({
+head.push({
   title: 'Test',
   titleTemplate: '%s | Site',
   meta: [
@@ -16,6 +15,4 @@ useHead({
   script: [
     { src: '/test.js', defer: true },
   ],
-}, {
-  head,
 })

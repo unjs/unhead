@@ -1,46 +1,29 @@
 import type { LazyHeadOptions, LazyUnhead } from 'unhead/lazy'
-import type { UseHeadInput, VueHeadClient } from './types'
+import type { Plugin } from 'vue'
+import type { UseHeadInput } from './types'
 import { createHead as _createHead } from 'unhead/lazy'
 import { getCurrentInstance } from 'vue'
 import { vueInstall } from './install'
 
-/**
- * @experimental
- */
-export type LazyVueHead = LazyUnhead<UseHeadInput> & VueHeadClient<UseHeadInput, boolean>
+/** @experimental */
+export type LazyVueHead = LazyUnhead<UseHeadInput> & Plugin
 
-// Hydration sets vnode.el before setup runs. So a mounted component, or one with no
-// server element, is making a call that the server cannot have rendered.
-function _isClientOnlyPush() {
-  const vm = getCurrentInstance()
-  return !!vm && (vm.isMounted || !vm.vnode.el)
-}
-
-// The component that pushes an entry, for dev warnings
-function _entrySource() {
+function entrySource() {
   const type = getCurrentInstance()?.type as { __file?: string, __name?: string, name?: string } | undefined
   return type && (type.__file || type.__name || type.name)
 }
 
 /**
- * The lazy head for a server rendered Vue app. It loads the DOM runtime only when a
- * change needs it, or when `load()` runs.
+ * Create a lazy head for a server-rendered Vue app. The framework calls `load()`
+ * when it is ready to apply queued entries.
  *
- * @experimental The lazy head API may change in a future minor release.
+ * @experimental
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: LazyHeadOptions = {}): LazyVueHead {
-  const head = _createHead<UseHeadInput>({
-    _isClientOnlyPush,
-    // only dev warnings read the entry source, so production builds drop it
-    // eslint-disable-next-line node/prefer-global/process
-    ...(process.env.NODE_ENV !== 'production' && { _entrySource }),
-    ...options,
-  } as LazyHeadOptions) as LazyVueHead
-  head.install = vueInstall(head)
-  return head
+  // eslint-disable-next-line node/prefer-global/process
+  const head = _createHead<UseHeadInput>(process.env.NODE_ENV === 'production' ? options : { _entrySource: entrySource, ...options })
+  return Object.assign(head, { install: vueInstall(head) })
 }
 
-export type {
-  LazyHeadOptions,
-}
+export type { LazyHeadOptions }
