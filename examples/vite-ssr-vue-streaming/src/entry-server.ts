@@ -1,9 +1,9 @@
 import { renderToWebStream } from 'vue/server-renderer'
-import { createStreamableHead, type PreparedTemplate } from '@unhead/vue/stream/server'
+import { createStreamableHead } from '@unhead/vue/stream/server'
 import { VueHeadMixin } from '@unhead/vue'
 import { createApp } from './main'
 
-export async function render(url: string, template: string | PreparedTemplate) {
+export async function render(url: string, template: string) {
   const { app, router } = createApp()
   const { head, wrapStream } = createStreamableHead()
 

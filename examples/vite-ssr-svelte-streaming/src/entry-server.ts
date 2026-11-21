@@ -1,8 +1,8 @@
 import { render as _render } from 'svelte/server'
 import App from './App.svelte'
-import { createStreamableHead, type PreparedTemplate, UnheadContextKey } from '@unhead/svelte/stream/server'
+import { createStreamableHead, UnheadContextKey } from '@unhead/svelte/stream/server'
 
-export async function render(url: string, template: string | PreparedTemplate) {
+export async function render(url: string, template: string) {
   const { head, wrapStream } = createStreamableHead()
   const context = new Map()
   context.set(UnheadContextKey, head)
