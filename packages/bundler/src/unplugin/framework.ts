@@ -5,6 +5,7 @@ import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
+import { StaticJsonLdTransform } from './StaticJsonLdTransform'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
@@ -143,6 +144,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (options.transformJsonLd)
+          plugins.push(StaticJsonLdTransform.vite({ filter: options.filter }))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {

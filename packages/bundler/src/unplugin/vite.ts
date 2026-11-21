@@ -4,6 +4,7 @@ import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
+import { StaticJsonLdTransform } from './StaticJsonLdTransform'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
@@ -31,6 +32,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
   }
+  if (options.transformJsonLd)
+    plugins.push(StaticJsonLdTransform.vite({ filter: options.filter }))
   const minifyTransformOptions = resolveMinifyTransformOptions(options)
   if (minifyTransformOptions) {
     plugins.push(MinifyTransform.vite({
