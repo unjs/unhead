@@ -277,7 +277,17 @@ function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableC
 
 /** Strips crawler keys from a `useSeoMeta` input object. */
 function stripSeoMetaObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
-  const removeProps = new Set(obj.properties.filter((p: any) => isCrawlerSeoMetaProp(p, isDroppableCall)))
+  const removeProps = new Set<any>()
+  const retainedKeys = new Set<string | undefined>()
+  for (const prop of obj.properties) {
+    const key = staticKey(prop)
+    // A retained spread, computed key, or duplicate can supply a default.
+    // Keep the override so stripping cannot activate that earlier value.
+    if (isCrawlerSeoMetaProp(prop, isDroppableCall) && !retainedKeys.has(undefined) && !retainedKeys.has(key))
+      removeProps.add(prop)
+    else
+      retainedKeys.add(key)
+  }
   if (!removeProps.size)
     return 'unchanged'
   removeListItems(s, obj.properties, removeProps, obj.end - 1)

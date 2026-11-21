@@ -1,4 +1,8 @@
 import type { RspackCompiler, WebpackCompiler } from 'unplugin'
+import { JSDOM } from 'jsdom'
+import { useSeoMeta } from 'unhead'
+import { createHead as createClientHead } from 'unhead/client'
+import { createHead as createServerHead } from 'unhead/server'
 import { isCrawlerTag, normalizeEntryToTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 import { createFrameworkPlugin } from '../src/unplugin/framework'
@@ -299,10 +303,43 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
     expect(await transform(source)).toBeUndefined()
   })
 
-  it('keeps spread useSeoMeta input and removes explicit crawler keys beside it', async () => {
-    const code = await transform(`useSeoMeta({ ...base, ogTitle: 'x' })`)
-    expect(code).toContain('...base')
-    expect(code).not.toContain('ogTitle')
+  it.each([
+    ['spread', `...{ description: 'Default description' },`],
+    ['computed key', `['description'.toLowerCase()]: 'Default description',`],
+    ['duplicate key with a side effect', `description: sideEffect(),`],
+    ['removable duplicate key', `description: 'Default description',`],
+  ])('preserves the page description during hydration over an earlier %s', async (_label, defaults) => {
+    const source = `useSeoMeta({ ${defaults} description: 'Page description', title: 'Page' })`
+    const plugin = Unhead({ devtools: false, serverOnlyCrawlerTags: true }).find(p => p.name === PLUGIN_NAME)!
+    const result = await runTransform(plugin, source, 'page.ts', env('client'))
+    const sideEffects: string[] = []
+    const run = (code: string, apply: (input: Parameters<typeof useSeoMeta>[1]) => unknown) => {
+      // eslint-disable-next-line no-new-func
+      new Function('useSeoMeta', 'sideEffect', code)(
+        apply,
+        () => {
+          sideEffects.push('read')
+          return 'Default description'
+        },
+      )
+    }
+    const server = createServerHead()
+    run(source, input => useSeoMeta(server, input))
+    const dom = new JSDOM(`<html><head>${server.render().headTags}</head><body></body></html>`)
+    try {
+      const document = dom.window.document
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page description')
+      sideEffects.length = 0
+      const client = createClientHead({ document })
+      run(result?.code ?? source, input => useSeoMeta(client, input))
+      client.render()
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page description')
+      expect(document.title).toBe('Page')
+      expect(sideEffects).toEqual(defaults.includes('sideEffect()') ? ['read'] : [])
+    }
+    finally {
+      dom.window.close()
+    }
   })
 
   it('changes nothing in server builds', async () => {
