@@ -12,29 +12,31 @@ function normalizeStyleClassProps(
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
   const store: any = isStyle ? new Map() : new Set()
-  const add = (v: string) => {
-    if (!v)
-      return
-    if (isStyle) {
-      const i = v.indexOf(':')
-      i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
+  const add = (item: unknown) => {
+    if (typeof item === 'string') {
+      if (isStyle) {
+        for (const rule of item.split(';')) {
+          const colon = rule.indexOf(':')
+          if (colon > 0)
+            store.set(rule.slice(0, colon).trim(), rule.slice(colon + 1).trim())
+        }
+      }
+      else {
+        item.split(' ').forEach(name => name && store.add(name))
+      }
     }
-    else {
-      v.split(' ').forEach(c => c && store.add(c))
+    else if (Array.isArray(item)) {
+      item.forEach(add)
+    }
+    else if (item && typeof item === 'object') {
+      for (const name in item) {
+        const v = (item as Record<string, unknown>)[name]
+        if (v && v !== 'false')
+          isStyle ? store.set(name.trim(), String(v)) : add(name)
+      }
     }
   }
-  if (typeof value === 'string') {
-    (isStyle ? value.split(';') : [value]).forEach(add)
-  }
-  else if (Array.isArray(value)) {
-    value.forEach(add)
-  }
-  else if (value && typeof value === 'object') {
-    for (const k in value) {
-      const v = value[k]
-      v && v !== 'false' && (isStyle ? store.set(k.trim(), String(v)) : add(k))
-    }
-  }
+  add(value)
   return store
 }
 

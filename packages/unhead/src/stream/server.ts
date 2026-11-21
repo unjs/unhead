@@ -415,6 +415,10 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
     let bodyTags: typeof state.bodyTags
+    let title = head._title
+    let titleTemplate = head._titleTemplate
+    let titleEntry: number | undefined
+    let templateEntry: number | undefined
     for (const entry of head.entries.values()) {
       const normalized = normalizedEntries?.get(entry._i)
       let input = normalized && normalized.input === entry.input
@@ -428,6 +432,14 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
         if (!input)
           continue
       }
+      if (input?.title !== undefined) {
+        title = input.title?.textContent ?? input.title
+        titleEntry = entry._i
+      }
+      if (input?.titleTemplate !== undefined) {
+        titleTemplate = input.titleTemplate?.textContent ?? input.titleTemplate
+        templateEntry = entry._i
+      }
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
         inputs.push(input)
@@ -440,7 +452,20 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       if (buffered)
         (bodyTags ||= []).push([buffered, safe])
     }
+    const callbackEntry = templateEntry ?? titleEntry
+    // The replay queue only accepts JSON. Preserve the raw title for later callbacks.
+    if (typeof titleTemplate === 'function' && callbackEntry !== undefined) {
+      try {
+        inputs.push({ title: titleTemplate(title ?? undefined) ?? '', titleTemplate: null })
+      }
+      catch (error) {
+        head.entries.delete(callbackEntry)
+        throw error
+      }
+    }
     const serialized = safeJsonStringify(inputs)
+    head._title = title
+    head._titleTemplate = titleTemplate
     if (nextSeen)
       state.seen = nextSeen
     if (bodyTags)

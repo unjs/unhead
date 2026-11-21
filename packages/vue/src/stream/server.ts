@@ -1,8 +1,8 @@
 import type { defineLink } from 'unhead'
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, GenericLink, HeadEntryOptions, KnownLinkRel, ResolvableTitleTemplate, SSRHeadPayload, Unhead } from 'unhead/types'
+import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, GenericLink, HeadEntryOptions, KnownLinkRel, ResolvableHead, ResolvableTitleTemplate, SchemaAugmentations, SSRHeadPayload, Unhead } from 'unhead/types'
 import type { Plugin, Ref } from 'vue'
-import type { MaybeFalsy, ReactiveHead, ResolvableProperties } from '../types'
+import type { MaybeFalsy, ReactiveHead, ResolvableArray, ResolvableLink, ResolvableProperties, ResolvableValue } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream,
@@ -10,19 +10,25 @@ import {
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
-type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams' | 'title'
+type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams'
 type VueStreamableHeadSchema
-  = Omit<ReactiveHead, StreamableHeadObjectKey | 'titleTemplate'>
+  = Omit<ReactiveHead, StreamableHeadObjectKey | 'title' | 'titleTemplate' | 'link'>
     & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
-    & { titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate> }
+    & {
+      title?: ResolvableValue<Exclude<ReactiveHead['title'], () => unknown>>
+      titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate>
+      link?: ResolvableArray<ResolvableLink | { rel: ResolvableValue<KnownLinkRel> }>
+    }
 type VueStreamableHeadValue = MaybeFalsy<VueStreamableHeadSchema>
 type VueStreamableHeadInput
-  = | VueStreamableHeadValue
-    | Ref<VueStreamableHeadValue>
+  = | ResolvableHead
+    | VueStreamableHeadValue
+    | Ref<VueStreamableHeadValue | (() => VueStreamableHeadValue)>
     | (() => VueStreamableHeadValue | Ref<VueStreamableHeadValue>)
 
 type UnwrapHeadRef<Value> = Value extends Ref<infer Head> ? Head : Value
 type ResolveHeadValue<Value> = UnwrapHeadRef<Value extends () => infer Result ? Result : Value>
+type ResolveHeadEntry<Value> = ResolveHeadValue<UnwrapHeadRef<Value>>
 type UnwrapTagArray<Value> = Value extends readonly (infer Tag)[] ? ResolveHeadValue<Tag> : Value
 type TagValue<Value> = UnwrapTagArray<ResolveHeadValue<Value>>
 type ObjectKeys<Value> = Value extends object ? keyof Value : never
@@ -53,6 +59,7 @@ type StreamableTagKey = Exclude<keyof VueStreamableHeadSchema, 'templateParams'>
 type DefinedLinkRelationKey = Exclude<keyof ReturnType<typeof defineLink<{ rel: string }>>['rel'], keyof string>
 type DeclaredLink<Rel> = ResolveHeadValue<Rel> extends Record<DefinedLinkRelationKey, infer Input> ? Input : never
 type LinkWithRelation<Input, Rel> = Rel extends KnownLinkRel ? Omit<Input, 'rel'> & { rel: Rel } : never
+type ResolvableCustomLink = ResolvableProperties<GenericLink & SchemaAugmentations['link']>
 
 type LinkVariantKeys<Rel, Variants> = Variants extends { rel: infer VariantRel }
   ? ResolveHeadValue<Rel> extends ResolveHeadValue<VariantRel> ? keyof Variants : never
@@ -66,15 +73,16 @@ type UnknownDefinedLinkAttributes<Input, Variants> = Input extends { rel: infer 
   ? string extends Rel
     ? Exclude<SuppliedTagKeys<Input>, keyof Extract<Variants, object>>
     : UnknownVariantKeys<LinkWithRelation<Input, Extract<KnownLinkRel, Rel>>, Variants, 'rel'>
+      | (Exclude<Rel, KnownLinkRel> extends never ? never : UnknownVariantKeys<Input, ResolvableCustomLink, 'rel'>)
   : never
 
 type UnknownLinkAttributes<Tag, Variants> = Tag extends { rel: infer Rel }
   ? [DeclaredLink<Rel>] extends [never]
-      ? UnknownTagAttributes<Tag, Variants>
+      ? UnknownVariantKeys<LinkWithRelation<Tag, ResolveHeadValue<Rel>>, Variants, 'rel'>
       : Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants> | keyof GenericLink>
         | UnknownDefinedLinkAttributes<DefinedLinkFields<Tag, DeclaredLink<Rel>, Rel, Variants>, Variants>
   : UnknownTagAttributes<Tag, Variants>
-type StreamableTagVariants<Key extends StreamableTagKey> = Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>
+type StreamableTagVariants<Key extends StreamableTagKey> = Exclude<TagValue<(Key extends 'link' ? ReactiveHead : VueStreamableHeadSchema)[Key]>, Ref>
 
 // Check tag attributes without descending into attribute values such as JSON or class maps.
 type UnknownTagKeys<Head> = Head extends object
@@ -85,8 +93,8 @@ type UnknownTagKeys<Head> = Head extends object
     }[keyof Head & StreamableTagKey]
   : never
 type UnknownHeadInputKeys<Input>
-  = | Exclude<KnownObjectKeys<ResolveHeadValue<Input>>, keyof VueStreamableHeadSchema>
-    | UnknownTagKeys<ResolveHeadValue<Input>>
+  = | Exclude<KnownObjectKeys<ResolveHeadEntry<Input>>, keyof VueStreamableHeadSchema>
+    | UnknownTagKeys<ResolveHeadEntry<Input>>
 type CheckedHeadInput<Input> = Input & (
   [UnknownHeadInputKeys<NoInfer<Input>>] extends [never]
     ? unknown
@@ -98,7 +106,7 @@ interface VueStreamableHeadEntry extends ActiveHeadEntry<VueStreamableHeadInput>
   patch: <Input extends VueStreamableHeadInput>(input: CheckedHeadInput<Input>) => void
 }
 
-type VueStreamableHead = Omit<Unhead<VueStreamableHeadInput, SSRHeadPayload>, 'push'> & Plugin & {
+type VueStreamableHead = Omit<Unhead<any, SSRHeadPayload>, 'push'> & Plugin & {
   /** Create a head entry. */
   push: <Input extends VueStreamableHeadInput>(input: CheckedHeadInput<Input>, options?: HeadEntryOptions) => VueStreamableHeadEntry
 }

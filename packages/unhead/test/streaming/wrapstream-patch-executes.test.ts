@@ -59,6 +59,14 @@ describe('the patch a bare wrapStream emits', () => {
     expect(remaining).toEqual([])
   })
 
+  it('replays the result of a title-template callback as a literal title', async () => {
+    const { document } = await serveAndRun({
+      title: 'Docs',
+      titleTemplate: (title?: string) => `${title} | 100%s`,
+    })
+    expect(document.title).toBe('Docs | 100%s')
+  })
+
   it('escapes content that would otherwise close the script element', async () => {
     const { html, document } = await serveAndRun({
       meta: [{ name: 'description', content: '</script><img onerror=alert(1)>' }],

@@ -1,4 +1,5 @@
-import { createStreamableHead, renderSSRHeadShell } from '@unhead/vue/stream/server'
+import type { Unhead } from 'unhead/types'
+import { createStreamableHead, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '@unhead/vue/stream/server'
 import { defineLink } from 'unhead'
 import { computed, ref } from 'vue'
 
@@ -104,7 +105,7 @@ describe('vue streaming server types', () => {
     entry.patch({ link: [defineLink({ rel: maybePreload.value, href: '/docs.png', as: 'image', imagesrcset: '/docs.png 1x' })] })
   })
 
-  it('renders valid reactive link variants', async () => {
+  it('renders valid reactive link variants', () => {
     const { head } = createStreamableHead()
     const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
     const imagePreload = computed(() => ({
@@ -112,16 +113,97 @@ describe('vue streaming server types', () => {
       as: computed(() => 'image' as const),
       imagesrcset: '/docs.png 1x',
     }))
-    const entry = head.push(() => computed(() => ({ link: [canonical, imagePreload] })))
+    head.push(() => computed(() => ({ link: [canonical, imagePreload] })))
+    const shell = renderSSRHeadShell(head, '<html><head></head><body>')
+    expect(shell).toContain('<link rel="canonical" href="/docs/">')
+    expect(shell).toContain('<link rel="preload" as="image" imagesrcset="/docs.png 1x">')
+
+    const entry = head.push({})
     entry.patch(() => ref({ link: [canonical, imagePreload] }))
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('"imagesrcset":"/docs.png 1x"')
+
     const inferredLinks = computed(() => [
       { rel: 'canonical' as const, href: '/docs/' },
       { rel: 'preload' as const, as: 'image' as const, imagesrcset: '/docs.png 1x' },
     ])
-    entry.patch({ link: inferredLinks })
-    const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-    expect(shell).toContain('<link rel="canonical" href="/docs/">')
-    expect(shell).toContain('<link rel="preload" as="image" imagesrcset="/docs.png 1x">')
+    head.push({ link: inferredLinks })
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('"imagesrcset":"/docs.png 1x"')
+  })
+
+  it('renders a union-valued relation ref and checks all its alternatives', () => {
+    const { head } = createStreamableHead()
+    const rel = ref<'canonical' | 'author'>('canonical')
+    const link = { rel, href: '/docs/' }
+    head.push({ link: [link] })
+    rel.value = 'author'
+    expect(renderSSRHeadShell(head, '<html><head></head><body>')).toContain('<link rel="author" href="/docs/">')
+
+    const maybePreload = computed(() => rel.value === 'author' ? 'preload' as const : 'canonical' as const)
+    // @ts-expect-error The canonical alternative forbids as
+    head.push({ link: [{ rel: maybePreload, href: '/docs.js', as: 'script' }] })
+    // @ts-expect-error The preload alternative requires as
+    head.push({ link: [{ rel: maybePreload, href: '/docs.js' }] })
+  })
+
+  it('checks values added to a custom link', () => {
+    const { head } = createStreamableHead()
+    const link = defineLink({ rel: 'EditURI', href: '/rsd.xml' })
+    head.push({ link: [{ ...link, prefetch: 'true' }] })
+    // @ts-expect-error A custom link prefetch attribute needs a string
+    head.push({ link: [{ ...link, prefetch: 123 }] })
+  })
+
+  it('works with core head consumers and ref-wrapped entry getters', () => {
+    const { head } = createStreamableHead()
+    const entry = head.push(ref(() => ({ title: 'Docs' })))
+    entry.patch(computed(() => () => ({ title: 'Vue' })))
+    const core: Unhead = head
+    core.push({ base: { href: '/docs/' } })
+    const shell = renderSSRHeadShell(head, '<html><head></head><body>')
+    expect(shell).toContain('<title>Vue</title>')
+    expect(shell).toContain('<base href="/docs/">')
+
+    // @ts-expect-error A ref around a getter still checks the returned keys
+    head.push(ref(() => ({ title: 'Docs', invalid: true })))
+    // @ts-expect-error A ref around a title must hold a resolved title value
+    head.push({ title: ref(() => 'Docs') })
+  })
+
+  it('renders mixed class and style arrays with maps', () => {
+    const { head } = createStreamableHead()
+    head.push({ bodyAttrs: ref({
+      class: ['root', { active: true, hidden: false }],
+      style: ['display:block', { color: 'red' }],
+    }) })
+    const shell = renderSSRHeadShell(head, '<html><head></head><body>')
+    expect(shell).toContain('class="root active"')
+    expect(shell).toContain('style="display:block;color:red"')
+  })
+
+  it('provides the title to callbacks inside title-template objects', () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'Vue', titleTemplate: computed(() => ({ textContent: (title?: string) => `${title} | Docs` })) })
+    expect(renderSSRHeadShell(head, '<html><head></head><body>')).toContain('<title>Vue | Docs</title>')
+  })
+
+  it('serializes callback titles in late stream chunks', () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'Home' })
+    renderSSRHeadShell(head, '<html><head></head><body>')
+    head.push({ titleTemplate: ref(title => `${title} | Docs`) })
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Home | Docs')
+    head.push({ title: 'Vue' })
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Vue | Docs')
+  })
+
+  it('preserves valid late entries when a title-template callback throws', () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'Docs' })
+    head.push({ titleTemplate: () => {
+      throw new Error('Title template failed')
+    } })
+    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('Title template failed')
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('"title":"Docs"')
   })
 
   it('rejects attributes from a different link variant', () => {
