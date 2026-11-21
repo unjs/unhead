@@ -1,44 +1,45 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { StreamingGlobal } from '../stream/types'
-import type { HeadEntry, HeadRenderer, HeadTag } from '../types'
+import type { HeadEntry, HeadRenderer } from '../types'
 import type { HeadQueue, LazyHeadOptions } from './index'
 import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
 import { attachStreamHead } from '../stream/queue'
 import { createUnhead } from '../unhead'
-import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
-import { normalizeEntryToTags } from '../utils/normalize'
 
-function retireStreamedFallbacks<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]) {
-  // Keep ownership after adoption releases its snapshots. The live map remains
-  // authoritative even while adoption temporarily replaces head.entries.
+function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue: HeadQueue<T>) {
   const live = head.entries
-  const identity = (tag: HeadTag) => dedupeKey(tag) || hashTag(tag)
-  const owners = new Map(hydrated.map(entry => [
-    entry._i,
-    new Set(normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || [])
-      .map(tag => identity(Object.assign(tag, entry.options)))),
-  ]))
-  head.hooks.hook('entries:normalize', (ctx) => {
-    if (!ctx.entry._streamed) {
-      // Include keys supplied by plugins and later client patches, too.
-      const owned = owners.get(ctx.entry._i)
-      if (owned) {
-        for (const tag of ctx.tags)
-          owned.add(identity(tag))
+  const wasDiscarded = () => queue.closeStream === false
+  const discard = () => {
+    stream._q.length = 0
+    stream.push = () => {}
+    let removed = false
+    for (const [id, entry] of live) {
+      if (entry._streamed) {
+        live.delete(id)
+        removed = true
       }
-      return
     }
-    ctx.tags = ctx.tags.filter((tag) => {
-      const key = identity(tag)
-      for (const [id, owned] of owners) {
-        if (!live.has(id) && owned.has(key))
-          return false
-      }
-      return true
-    })
+    if (removed)
+      head.invalidate()
+  }
+  if (wasDiscarded()) {
+    discard()
+    return
+  }
+  queue.closeStream = discard
+  // Late server patches are fallbacks for the framework's live entries.
+  let index = -(1 << 20)
+  attachStreamHead(stream, head, (input) => {
+    if (wasDiscarded())
+      return
+    const entry = head.push(input as T, { _index: index++ })
+    // A user hook can leave the route in the middle of replay.
+    if (wasDiscarded())
+      entry.dispose()
+    return entry._i
   })
 }
 
@@ -156,12 +157,8 @@ export async function activate<T>(
 
   Object.defineProperty(head, '_entryCount', { value: queue.index, writable: true })
   connect(head)
-  if (stream) {
-    retireStreamedFallbacks(head, hydrated)
-    // Late server patches are fallbacks for the framework's live entries.
-    let index = -(1 << 20)
-    attachStreamHead(stream, head, input => head.push(input as T, { _index: index++ })._i)
-  }
+  if (stream)
+    connectStream(head, stream, queue)
   head._b = false
   head.render()
   return head

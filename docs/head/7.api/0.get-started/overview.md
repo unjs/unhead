@@ -18,7 +18,7 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ## Lazy Head
 
-The [Lazy Head](/docs/head/api/lazy-head) is an experimental client head for server rendered pages. It loads its DOM runtime on the first head change.
+The [Lazy Head](/docs/head/api/lazy-head) queues entries for server-rendered pages. The framework calls `load()` to start applying them.
 
 ## Plugins
 

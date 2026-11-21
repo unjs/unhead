@@ -26,6 +26,8 @@ export interface LazyUnhead<T = ResolvableHead> {
   use: (plugin: HeadPluginInput) => void
   /** Stop recording which entries came from hydration. */
   finishHydration: () => void
+  /** Discard streamed patches from the initial page when the framework leaves it. */
+  discardStream: () => void
   /** Render if the runtime is active. */
   render: () => boolean
   /** Load the runtime and return the client head. Concurrent calls share one load. */
@@ -47,6 +49,7 @@ export interface HeadQueue<T> {
   index: number
   entries: Map<number, QueuedEntry<T>>
   plugins: HeadPluginInput[]
+  closeStream?: false | (() => void)
 }
 
 /**
@@ -74,6 +77,12 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
           .then(({ checkHydratedHead }) => !loading && checkHydratedHead(options, queue))
           .catch(error => console.warn('[unhead] The lazy head dev check failed.', error))
       }
+    },
+    discardStream() {
+      const close = queue.closeStream
+      queue.closeStream = false
+      if (close)
+        close()
     },
     use(plugin) {
       if (active)

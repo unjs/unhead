@@ -32,6 +32,7 @@ A custom `render` option controls rendering from activation onward. The default 
 | `push(input, options?)` | Add an entry. Its `patch()` and `dispose()` work before and after activation. |
 | `use(plugin)` | Register a plugin on activation or register it immediately if the runtime is active. |
 | `finishHydration()` | Mark the end of hydration. Call this when your framework finishes collecting the initial entries. |
+| `discardStream()` | Drop pending and applied patches from the initial server stream. Call this when leaving its page. It leaves runtime loading to the caller. |
 | `load()` | Load and return the full client head as a `Promise`. Concurrent calls share the load. |
 | `render()` | Forward to the client head when active. Before activation, return `false`. |
 

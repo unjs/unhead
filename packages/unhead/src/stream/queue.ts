@@ -5,7 +5,7 @@ import type { StreamingGlobal } from './types'
 export function attachStreamHead(
   queue: Pick<StreamingGlobal, '_q'> & Partial<StreamingGlobal>,
   head: Unhead<any>,
-  push = (input: SerializableHead) => head.push(input)._i,
+  push: (input: SerializableHead) => number | undefined = input => head.push(input)._i,
 ): void {
   const backlog = queue._q
   queue._q = []
@@ -23,7 +23,8 @@ export function attachStreamHead(
       // Hooks can enqueue a patch during replay. Apply it after the existing backlog.
       for (const batch of pending) {
         for (const input of batch) {
-          const entry = head.entries.get(push(input))
+          const id = push(input)
+          const entry = id === undefined ? undefined : head.entries.get(id)
           if (entry)
             entry._streamed = true
         }
