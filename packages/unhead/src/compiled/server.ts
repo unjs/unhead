@@ -5,7 +5,7 @@ import type { CompiledTag, CompiledTags } from './types'
 import { serverPropResolver } from '../server/createHead'
 import { createServerRenderer as createV3Renderer } from '../server/renderSSRHead'
 import { capoTagWeight } from '../server/sort'
-import { propsToString } from '../server/util/propsToString'
+import { propsToString, rootPropsToString } from '../server/util/propsToString'
 import { tagToString } from '../server/util/tagToString'
 import { registerPlugin } from '../unhead'
 import { DupeableTags } from '../utils/const'
@@ -144,8 +144,8 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     for (const name in hooks)
       (head._native ||= []).push([name, hooks[name]])
     // Another plugin with this key has hooks this entry cannot run natively. The same hook
-    // names do not prove the real template params plugin, so that plugin marks itself.
-    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key] || (key === 'template-params' && !resolved._native)
+    // names do not prove either real plugin, so both plugins mark themselves.
+    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key] || !resolved._native
     if (key === 'template-params') {
       head._tp = hooks
     }
@@ -357,7 +357,7 @@ const renderer: CompiledRenderer = {
     }
     return html
   },
-  a: propsToString,
+  a: rootPropsToString,
   c(compiledTagsHead) {
     const head = compiledTagsHead as CompiledHead
     const store = head._hookStore

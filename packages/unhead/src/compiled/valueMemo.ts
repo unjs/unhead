@@ -23,6 +23,7 @@ const MODE_ATTR = 0
 const MODE_TITLE = 1
 const MODE_RAW = 2
 const MODE_JSON = 3
+const MODE_ROOT_ATTR = 4
 
 function markMode(value: string, mode: number): string {
   return value.replace(TOKEN_ENTRY_RE, `${DYNAMIC_VALUE_OPEN}$1.$2.${mode}${DYNAMIC_VALUE_CLOSE}`)
@@ -62,7 +63,7 @@ export function buildValueMemo(head: CompiledTagsHead, omitLineBreaks: boolean |
     // a value is a scalar, or nested JSON in template params, which holds no dynamic value
     for (const key in tag.props) {
       if (tag.props[key]?.includes?.(DYNAMIC_VALUE_OPEN))
-        tag.props[key] = markMode(tag.props[key], MODE_ATTR)
+        tag.props[key] = markMode(tag.props[key], tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs' ? MODE_ROOT_ATTR : MODE_ATTR)
     }
     for (const key of ['textContent', 'innerHTML']) {
       if (tag[key]?.includes?.(DYNAMIC_VALUE_OPEN)) {
@@ -112,13 +113,14 @@ function escapeValue(entryValue: unknown, mode: number, tp: boolean, infer?: boo
     return String(entryValue)
   if (typeof entryValue !== 'string' || !entryValue || entryValue === 'true')
     return
-  if (mode >= MODE_RAW)
+  if (mode === MODE_RAW || mode === MODE_JSON)
     return entryValue.includes('@import') || (mode === MODE_RAW && endsInImportStart(entryValue)) ? undefined : !entryValue.includes('<') ? entryValue : mode === MODE_JSON ? entryValue.replace(LT_RE, '\\u003C') : undefined
   if ((tp && PARAM_UNSAFE_RE.test(entryValue)) || (infer && !NOT_BLANK_RE.test(entryValue)))
     return
-  return mode === MODE_ATTR
-    ? entryValue.includes('"') ? entryValue.replace(DOUBLE_QUOTE_RE, '&quot;') : entryValue
-    : entryValue.includes('$') ? undefined : escapeHtml(entryValue)
+  const value = mode === MODE_ROOT_ATTR ? entryValue.replaceAll('&', '&amp;') : entryValue
+  return mode === MODE_ATTR || mode === MODE_ROOT_ATTR
+    ? value.includes('"') ? value.replace(DOUBLE_QUOTE_RE, '&quot;') : value
+    : value.includes('$') ? undefined : escapeHtml(value)
 }
 
 /**

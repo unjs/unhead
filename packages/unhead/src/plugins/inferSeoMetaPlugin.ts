@@ -80,6 +80,8 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
     })
     return {
       key: 'infer-seo-meta',
+      // Only this implementation can use the compiled renderer's selective tag copies.
+      _native: true,
       hooks: {
         // `_plain` tells the compiled server head that no function changes the text. Only then
         // may its memo hold the inferred tags.
