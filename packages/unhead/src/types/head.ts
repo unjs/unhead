@@ -295,6 +295,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _dom?: DomState
+  /** @internal */
+  _domEvent?: RenderDomEvent
   /**
    * @internal
    */
@@ -356,4 +358,20 @@ export interface DomState {
    * @internal
    */
   _e: Map<string, Element>
+  /** @internal */
+  _l?: Map<string, [target: EventTarget, source: DomEventHandler, cleanup: () => void]>
 }
+
+/** @internal */
+export type DomEventHandler = (this: Element, event: Event) => void
+
+/** @internal */
+export type RenderDomEvent = (
+  state: DomState,
+  id: string,
+  tag: HeadTag['tag'],
+  element: Element,
+  name: string,
+  handler: DomEventHandler,
+  track: (key: string, cleanup: () => void, fresh?: boolean) => void,
+) => void
