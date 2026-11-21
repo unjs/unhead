@@ -52,7 +52,8 @@ export async function createServer(
   else {
     app.use((await import('compression')).default())
     app.use(
-      express.static(resolve('dist/client'), {
+      ['/assets', '/test/assets'],
+      express.static(resolve('dist/client/assets'), {
         index: false,
       }),
     )
