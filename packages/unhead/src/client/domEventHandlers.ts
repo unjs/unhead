@@ -30,10 +30,16 @@ export const renderDomEvent: RenderDomEvent = (state, id, tag, element, name, so
   track(key, cleanup, true)
 }
 
+export function installDomEventHandlers(head: Unhead<any>): boolean {
+  if (head.ssr || head._domEvent)
+    return false
+  head._domEvent = renderDomEvent
+  head.dirty = true
+  return true
+}
+
 /** Enable DOM event handlers for this client head. */
 export function enableDomEventHandlers(head: Unhead<any>): void {
-  if (!head.ssr && !head._domEvent) {
-    head._domEvent = renderDomEvent
-    head.dirty = true
-  }
+  if (installDomEventHandlers(head) && head._dom)
+    head.render()
 }

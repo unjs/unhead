@@ -20,7 +20,6 @@ describe('lean client event handlers', () => {
     expect(script.hasAttribute('onload')).toBe(false)
 
     enableDomEventHandlers(head)
-    head.render()
     script.dispatchEvent(new Event('load'))
     expect(onload).toHaveBeenCalledOnce()
 
