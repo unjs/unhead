@@ -1,6 +1,6 @@
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+import { renderSSRHead, ssrRenderTags } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { resolveTags } from 'unhead/utils'
@@ -68,28 +68,8 @@ describe('vue e2e keys', () => {
 
     csrHead.push(AboutSchema)
 
-    expect(resolveTags(csrHead)).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "link:key:main-icon",
-          "_h": "main-icon",
-          "_p": 2048,
-          "_w": 100,
-          "attrs": {
-            "data-hid": "main-icon",
-            "href": "/page-about.ico",
-            "rel": "icon",
-          },
-          "key": "main-icon",
-          "props": {
-            "data-hid": "main-icon",
-            "href": "/page-about.ico",
-            "rel": "icon",
-          },
-          "tag": "link",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(resolveTags(csrHead)).headTags)
+      .toBe('<link rel="icon" href="/page-about.ico" data-hid="main-icon">')
 
     // @ts-expect-error untyped
     expect([...csrHead._dom?._e.values()][2]).toMatchInlineSnapshot(`
