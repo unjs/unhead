@@ -14,6 +14,49 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it.each(['before load', 'after load'])('lets streamed page metadata replace hydrated layout defaults %s', async (arrival) => {
+    const { document, queue } = createStreamDocument()
+    const head = createHead({ document, streamKey: 'pageHead' })
+    head.push({ title: 'Layout', meta: [{ name: 'description', content: 'Layout description' }] })
+    head.finishHydration()
+    const page = { title: 'Page', meta: [{ name: 'description', content: 'Page description' }] }
+    if (arrival === 'before load')
+      queue.push([page])
+    await head.load()
+    if (arrival === 'after load')
+      queue.push([page])
+
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Page')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page description')
+    })
+
+    head.push({ title: 'Client', meta: [{ name: 'description', content: 'Client description' }] })
+    queue.push([{ title: 'Later page', meta: [{ name: 'description', content: 'Later page description' }] }])
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Client')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client description')
+    })
+  })
+
+  it.each(['before load', 'after load'])('preserves a client update to a hydrated entry %s', async (update) => {
+    const { document, queue } = createStreamDocument()
+    const head = createHead({ document, streamKey: 'pageHead' })
+    const layout = head.push({ title: 'Layout', meta: [{ name: 'description', content: 'Layout description' }] })
+    head.finishHydration()
+    const client = { title: 'Client', meta: [{ name: 'description', content: 'Client description' }] }
+    if (update === 'before load')
+      layout.patch(client)
+    await head.load()
+    if (update === 'after load')
+      layout.patch(client)
+    queue.push([{ title: 'Page', meta: [{ name: 'description', content: 'Page description' }] }])
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Client')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client description')
+    })
+  })
+
   it.each(['before navigation', 'after navigation'])('discards server-only patches with activation %s', async (activation) => {
     const { document, queue } = createStreamDocument()
     const head = createHead({ document, streamKey: 'pageHead' })

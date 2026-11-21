@@ -30,7 +30,7 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
     return
   }
   queue.closeStream = discard
-  // Late server patches are fallbacks for the framework's live entries.
+  // Stream patches replace hydration defaults and remain below newer client entries.
   let index = -(1 << 20)
   attachStreamHead(stream, head, (input) => {
     if (wasDiscarded())
@@ -121,6 +121,16 @@ export async function activate<T>(
     for (const [_i, entry] of queue.entries) {
       const input = entry.input
       const active = entry.active = head.push(input, { ...entry.options, _index: _i })
+      const live = head.entries.get(_i)
+      if (stream && entry.hydrated && live) {
+        // Keep handles stable while sorting hydration below the streamed entry range.
+        live._order = -(1 << 21) + _i
+        const patch = active.patch
+        active.patch = (input) => {
+          delete live._order
+          patch(input)
+        }
+      }
       if (entry.baseline) {
         hydrated.push({
           _i,

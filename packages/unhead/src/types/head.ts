@@ -22,6 +22,8 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _i: number
+  /** Sort order when it differs from the stable entry index. @internal */
+  _order?: number
   /**
    * Resolved tags
    *

@@ -215,7 +215,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
-          t._p = (e._i << 10) + i
+          t._p = ((e._order ?? e._i) << 10) + i
           t._d = dedupeKey(t)
           if (!t._d)
             t._h = hashTag(t)

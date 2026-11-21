@@ -37,6 +37,7 @@ export interface LazyUnhead<T = ResolvableHead> {
 /** @internal */
 export interface QueuedEntry<T> {
   input: T
+  hydrated?: boolean
   options?: HeadEntryOptions
   baseline?: { input: T }
   disposed?: boolean
@@ -95,7 +96,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       if (active)
         return active.push(input, entryOptions)
       const _i = entryOptions?._index ?? queue.index++
-      const entry: QueuedEntry<T> = { input, options: entryOptions }
+      const entry: QueuedEntry<T> = { input, options: entryOptions, hydrated: hydrating }
       if (hydrating && !options.render)
         entry.baseline = { input: copyInput(input) }
       // eslint-disable-next-line node/prefer-global/process
@@ -105,6 +106,8 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       return {
         _i,
         patch(next) {
+          if (!hydrating)
+            entry.hydrated = false
           // A component may populate the same object during its hydration render.
           // Read it outside the render so Vue does not subscribe to that input.
           const baseline = entry.baseline
