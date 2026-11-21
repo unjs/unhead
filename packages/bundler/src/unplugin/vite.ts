@@ -4,6 +4,7 @@ import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
+import { StaticInlineKeys } from './StaticInlineKeys'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
@@ -39,6 +40,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       ...minifyTransformOptions,
     }))
   }
+  if (options.transformInlineTagKeys)
+    plugins.push(StaticInlineKeys.vite({ filter: options.filter, sourcemap: options.sourcemap, framework }))
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {
