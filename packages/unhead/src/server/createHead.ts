@@ -29,6 +29,31 @@ const DEFAULT_INIT = {
   ],
 }
 
+/** Render an explicitly encoded document without the built-in UTF-8 fallback. @internal */
+export function renderWithoutDefaultCharset(head: Unhead<any>): SSRHeadPayload {
+  // The server pushes its default entry first, at index 1.
+  const entry = head.entries.get(1)
+  if (entry?.input !== DEFAULT_INIT)
+    return head.render() as SSRHeadPayload
+
+  const replacement = {
+    _i: entry._i,
+    input: {
+      htmlAttrs: { ...DEFAULT_INIT.htmlAttrs },
+      meta: DEFAULT_INIT.meta.filter(meta => !meta.charset).map(meta => ({ ...meta })),
+    },
+    options: entry.options,
+  }
+  head.entries.set(1, replacement)
+  try {
+    return head.render() as SSRHeadPayload
+  }
+  finally {
+    if (head.entries.get(1) === replacement)
+      head.entries.set(1, entry)
+  }
+}
+
 // identity for anything but `on*` function handlers, so `_static` for the
 // default init fast path (the default entry has no event handlers)
 const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(

@@ -120,7 +120,7 @@ describe.each([
     ['plain', { charset: 'utf-8' }],
     ['with an ID before the charset attribute', { id: 'app-charset', charset: 'utf-8' }],
   ] as const)('keeps a %s charset early enough to decode the document', (_, charset) => {
-    const { head } = createStreamableHead({ disableDefaults: true })
+    const { head } = createStreamableHead()
     head.push({ meta: [charset] })
     const source = `<!DOCTYPE html><html><head><meta charset="windows-1252"><!--${'x'.repeat(1200)}--><title>caf\u00E9</title></head><body></body></html>`
 
@@ -141,6 +141,45 @@ describe.each([
     const { document } = new JSDOM(Buffer.from(shell + end)).window
 
     expect(document.title).toBe('caf\u00E9')
+  })
+
+  it('decodes legacy-encoded shell and body bytes with default head options', async () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'café', meta: [{ name: 'description', content: 'déjà vu' }] })
+    const source = templateWithTags
+      .replace('charset="UTF-8"', 'charset="windows-1252"')
+      .replace('</body>', '<footer>crème</footer></body>')
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const response = new Response(Buffer.from(`${shell}<p>piñata</p>${end}`, 'latin1'), {
+      headers: { 'Content-Type': 'text/html' },
+    })
+    const { document } = new JSDOM(Buffer.from(await response.arrayBuffer())).window
+
+    expect(document.characterSet).toBe('windows-1252')
+    expect(document.title).toBe('café')
+    expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('déjà vu')
+    expect(document.querySelector('#app > p')?.textContent).toBe('piñata')
+    expect(document.querySelector('footer')?.textContent).toBe('crème')
+    expect(Array.from(document.head.querySelectorAll('meta[charset]'), meta => meta.getAttribute('charset'))).toEqual(['windows-1252'])
+  })
+
+  it('keeps the UTF-8 byte wrapper aligned with its output', async () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'café' })
+    const source = templateWithTags.replace('charset="UTF-8"', 'charset="windows-1252"')
+    const input = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<p>piñata</p>'))
+        controller.close()
+      },
+    })
+
+    const bytes = await new Response(wrapStream(head, input, template(source))).arrayBuffer()
+    const { document } = new JSDOM(Buffer.from(bytes)).window
+
+    expect(document.characterSet).toBe('UTF-8')
+    expect(document.title).toBe('café')
+    expect(document.querySelector('#app > p')?.textContent).toBe('piñata')
   })
 
   it('keeps the template CSP before the bootstrap script', () => {

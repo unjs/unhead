@@ -3,7 +3,7 @@ import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 import { placeStreamingMetadata } from '../parser/streamingMetadata'
-import { createHead } from '../server/createHead'
+import { createHead, renderWithoutDefaultCharset } from '../server/createHead'
 import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
@@ -486,7 +486,7 @@ function safeJsonStringify(obj: any): string {
  * 4. Writes the closing HTML (with body tags)
  *
  * @param head - The Unhead instance
- * @param stream - The app's ReadableStream (from renderToWebStream, etc.)
+ * @param stream - The app's UTF-8 ReadableStream (from renderToWebStream, etc.)
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
@@ -541,7 +541,7 @@ export function wrapStream(
       const activeReader = stream.getReader()
       let prepared: StreamingTemplateParts
       try {
-        prepared = prepareStreamingTemplate(head, template, preRenderedState)
+        prepared = renderStreamingTemplate(head, template, preRenderedState, false)
       }
       catch (error) {
         activeReader.releaseLock()
@@ -681,6 +681,9 @@ function getPreparedStreamingLayout(template: PreparedHtmlTemplateWithIndexes): 
  * - Properly injects head content, html/body attrs, and bootstrap script
  * - Injects body tags (scripts at end of body) into the closing part
  *
+ * For a legacy-encoded response, encode the shell, app content, and closing
+ * HTML with the same charset.
+ *
  * @param head - The Unhead instance
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - A rendered payload to insert alongside the template's own tags
@@ -699,6 +702,15 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
+  return renderStreamingTemplate(head, template, preRenderedState, true)
+}
+
+function renderStreamingTemplate(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState: SSRHeadPayload | undefined,
+  useTemplateCharset: boolean,
+): StreamingTemplateParts {
   const cached = typeof template !== 'string' && !preRenderedState ? extractPreparedTemplate(template, 'stream') : undefined
   let parsed = typeof template === 'string'
     ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template, 'stream'))
@@ -709,7 +721,10 @@ export function prepareStreamingTemplate(
   const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
   let parts: StreamingTemplateParts
   try {
-    const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+    // The byte wrapper writes UTF-8. Manual streaming can use the template's encoding.
+    const ssr = preRenderedState ?? (useTemplateCharset && parsed.hasLegacyCharset
+      ? renderWithoutDefaultCharset(head)
+      : head.render() as SSRHeadPayload)
     // A skipped render returns an empty payload and cannot replace the extracted markup.
     if (templateEntry && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
       parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template

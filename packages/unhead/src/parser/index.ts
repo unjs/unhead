@@ -51,6 +51,7 @@ export interface PreparedHtmlTemplateWithIndexes {
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
   headSlots?: readonly HeadSlot[]
+  hasLegacyCharset?: boolean
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -378,6 +379,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   let cursor = 0
   let removed = 0
   let headSlots: HeadSlot[] | undefined
+  let hasLegacyCharset = false
 
   function replace(start: number, end: number, replacement = '') {
     parts.push(html.slice(cursor, start), replacement)
@@ -434,7 +436,11 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           }
         }
         else {
-          (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
+          const attrs = readAttributes(node, startTag)
+          if (kind === 'charset' && attrs.charset.trim().toLowerCase() !== 'utf-8') {
+            hasLegacyCharset = true
+          }
+          (input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           if (firstSlot)
             (headSlots ||= []).push(Object.freeze({ kind, offset }))
         }
@@ -508,6 +514,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
     result.bodyOutlet = Object.freeze({ start: bodyOutlet.start - removed, end: bodyOutlet.end - removed })
   if (headSlots)
     result.headSlots = Object.freeze(headSlots)
+  if (hasLegacyCharset)
+    result.hasLegacyCharset = true
   return result
 }
 
