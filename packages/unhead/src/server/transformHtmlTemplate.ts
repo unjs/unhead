@@ -4,13 +4,12 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
 import { precomputeEntryTags } from './createHead'
 import { capoTagWeight } from './sort'
 
-interface ExtractedTemplateCache {
+export interface ExtractedTemplateCache {
   template: PreparedHtmlTemplateWithIndexes
   tags: HeadTag[]
 }
 
 let extractedTemplates: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
-let extractedStreamingTemplates: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
 
 function cloneExtractedInput<T>(value: T): T {
   if (Array.isArray(value))
@@ -52,11 +51,14 @@ function hasHooks(head: Unhead<any>): boolean {
  *
  * @internal
  */
-export function extractPreparedTemplate(prepared: PreparedTemplate, mode: 'document' | 'stream' = 'document'): ExtractedTemplateCache {
-  const cache = mode === 'stream' ? (extractedStreamingTemplates ||= new WeakMap()) : (extractedTemplates ||= new WeakMap())
+export function extractPreparedTemplate(
+  prepared: PreparedTemplate,
+  cache: WeakMap<PreparedTemplate, ExtractedTemplateCache>,
+  extract: (template: PreparedTemplate) => PreparedHtmlTemplateWithIndexes,
+): ExtractedTemplateCache {
   let extracted = cache.get(prepared)
   if (!extracted) {
-    const template = parseHtmlForUnheadExtraction(prepared, mode === 'stream' ? 'stream' : false)
+    const template = extract(prepared)
     freezeExtractedInput(template.input)
     Object.freeze(template.indexes)
     Object.freeze(template)
@@ -114,7 +116,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
     template = parseHtmlForUnheadExtraction(html, true)
   }
   else {
-    cached = extractPreparedTemplate(html)
+    cached = extractPreparedTemplate(html, extractedTemplates ||= new WeakMap(), parseHtmlForUnheadExtraction)
     template = cached.template
   }
   pushExtractedTemplateEntry(head, cached, template)

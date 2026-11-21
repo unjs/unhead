@@ -1,8 +1,10 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
+import type { ExtractedTemplateCache } from '../server/transformHtmlTemplate'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
-import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
+import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { placeStreamingMetadata } from '../parser/streamingMetadata'
+import { parseHtmlForStreamingExtraction } from '../parser/template'
 import { createHead, renderWithoutDefaultCharset } from '../server/createHead'
 import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -19,6 +21,7 @@ const AMP_RE = /&/g
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
+let preparedStreamingExtractions: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
 let preparedStreamingLayouts: WeakMap<PreparedHtmlTemplateWithIndexes, StreamingTemplateLayout | null> | undefined
 
 /**
@@ -711,9 +714,11 @@ function renderStreamingTemplate(
   preRenderedState: SSRHeadPayload | undefined,
   useTemplateCharset: boolean,
 ): StreamingTemplateParts {
-  const cached = typeof template !== 'string' && !preRenderedState ? extractPreparedTemplate(template, 'stream') : undefined
+  const cached = typeof template !== 'string' && !preRenderedState
+    ? extractPreparedTemplate(template, preparedStreamingExtractions ||= new WeakMap(), parseHtmlForStreamingExtraction)
+    : undefined
   let parsed = typeof template === 'string'
-    ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForUnheadExtraction(template, 'stream'))
+    ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForStreamingExtraction(template))
     : cached?.template ?? template
 
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
