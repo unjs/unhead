@@ -59,7 +59,7 @@ describe('provideServerHead', () => {
   it('applies root attribute names and values to the Angular server document', async () => {
     const request = createRequest(new DominoAdapter().createHtmlDocument())
     request.document.documentElement.setAttribute('xml:lang', 'en')
-    request.document.body.setAttribute('data-template', 'A & B')
+    request.document.body.setAttribute('data-template', 'A & B &#65; "quoted"')
     request.head.push({
       bodyAttrs: { 'data-label': 'A "quoted" value' },
     })
@@ -70,12 +70,26 @@ describe('provideServerHead', () => {
     expect(request.document.documentElement.getAttribute('xml')).toBeNull()
     expect(request.document.documentElement.getAttribute('lang')).toBeNull()
     expect(request.document.body.getAttribute('data-label')).toBe('A "quoted" value')
-    expect(request.document.body.getAttribute('data-template')).toBe('A & B')
+    expect(request.document.body.getAttribute('data-template')).toBe('A & B &#65; "quoted"')
   })
 
-  it('preserves attribute names accepted by the HTML parser', async () => {
+  it('keeps character references literal in pushed root attributes', async () => {
     const request = createRequest(new DominoAdapter().createHtmlDocument())
-    request.document.body.outerHTML = '<body @state="ready"><main>SSR app</main></body>'
+    request.head.push({
+      htmlAttrs: { 'data-label': '&quot; "quoted"' },
+      bodyAttrs: { 'data-label': '&#65;' },
+    })
+
+    await request.render()
+
+    expect(request.document.documentElement.getAttribute('data-label')).toBe('&quot; "quoted"')
+    expect(request.document.body.getAttribute('data-label')).toBe('&#65;')
+  })
+
+  it('updates attributes with names accepted by the HTML parser', async () => {
+    const request = createRequest(new DominoAdapter().createHtmlDocument())
+    request.document.body.outerHTML = '<body @state="pending"><main>SSR app</main></body>'
+    request.head.push({ bodyAttrs: { '@state': 'ready' } })
 
     await request.render()
 
@@ -84,7 +98,7 @@ describe('provideServerHead', () => {
 
   it('uses HTML whitespace to split classes', async () => {
     const request = createRequest(new DominoAdapter().createHtmlDocument())
-    request.head.push({ bodyAttrs: { class: 'first&#9;second' } })
+    request.head.push({ bodyAttrs: { class: 'first\tsecond' } })
 
     await request.render()
 
