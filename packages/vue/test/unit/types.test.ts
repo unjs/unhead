@@ -3,10 +3,10 @@ import type { RawInput, SerializableHead } from '../../src/'
 import type { injectHead } from '../../src/composables'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
-import { createStreamableHead } from '@unhead/vue/stream/client'
-import { createStreamableHead as createStreamableServerHead } from '@unhead/vue/stream/server'
+import { createStreamableHead as createStreamableClientHead } from '@unhead/vue/stream/client'
 import { computed, ref } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
+import { createStreamableHead } from '../../src/stream/server'
 
 describe('types', () => {
   it('types useHead', () => {
@@ -159,24 +159,16 @@ describe('types', () => {
     const injectedInput: Parameters<ReturnType<typeof injectHead>['push']>[0] = { title }
     void injectedInput
 
-    const streamHead = createStreamableHead()
+    const streamHead = createStreamableClientHead()
     streamHead?.push({ title: () => title.value })
     // @ts-expect-error Vue refs require useHead() on the streaming client
     streamHead?.push({ title })
-
-    const serverHead = createServerHead()
-    serverHead.push({ title })
-    serverHead.push(computed(() => ({ title: title.value })))
-    // @ts-expect-error Vue server heads own the Vue resolver chain
+  })
+  it('does not accept custom server prop resolvers', () => {
+    // @ts-expect-error Vue installs its own prop resolver
     createServerHead({ propResolvers: [] })
-
-    const { head: streamServerHead } = createStreamableServerHead()
-    streamServerHead.push({ title })
-    streamServerHead.push(computed(() => ({ title: title.value })))
-    // @ts-expect-error Stream server heads retain a concrete input schema
-    streamServerHead.push({ invalid: true })
-    // @ts-expect-error Vue stream server heads own the Vue resolver chain
-    createStreamableServerHead({ propResolvers: [] })
+    // @ts-expect-error Vue installs its own prop resolver
+    createStreamableHead({ propResolvers: [] })
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'
