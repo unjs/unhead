@@ -1,6 +1,7 @@
-import type { HeadSafe } from '../types/safeSchema'
+import type { ResolvableHead } from '../types/schema'
 import type { HeadTag } from '../types/tags'
-import { hasContent } from '../utils/const'
+import { hasContent, HasElementTags, ValidHeadTags } from '../utils/const'
+import { normalizeEntryToTags } from '../utils/normalize'
 import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -127,7 +128,7 @@ function hasBlockedRel(rel: string): boolean {
   return !tokens.some(Boolean) || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
 }
 
-function makeTagSafe(tag: HeadTag): HeadSafe | false {
+function makeTagSafe(tag: HeadTag): HeadTag | false {
   let next: Record<string, any> = {}
   const { tag: type, props: prev } = tag
 
@@ -242,15 +243,53 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
   return tag
 }
 
+function sanitizeStreamedInput(input: ResolvableHead): Record<string, unknown> | undefined {
+  let safe: Record<string, any> | undefined
+  for (const tag of normalizeEntryToTags(input, [])) {
+    const name = tag.tag
+    if (!ValidHeadTags.has(name) && name !== 'titleTemplate' && name !== 'templateParams')
+      continue
+    if (!makeTagSafe(tag))
+      continue
+
+    safe ||= {}
+    if (name === 'title' || name === 'titleTemplate') {
+      safe[name] = tag.textContent
+    }
+    else if (HasElementTags.has(name)) {
+      (safe[name] ||= []).push({
+        ...tag.props,
+        key: tag.key,
+        tagPosition: tag.tagPosition,
+        tagPriority: tag.tagPriority,
+        tagDuplicateStrategy: tag.tagDuplicateStrategy,
+        textContent: tag.textContent,
+        // The minimal streaming client has no safety hook to recheck a substituted URL.
+        processTemplateParams: name === 'link' ? false : tag.processTemplateParams,
+      })
+    }
+    else {
+      const props: Record<string, unknown> = { ...tag.props }
+      if (props.class instanceof Set)
+        props.class = [...props.class]
+      if (props.style instanceof Map)
+        props.style = Object.fromEntries(props.style)
+      safe[name] = props
+    }
+  }
+  return safe
+}
+
 export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'safe',
+  _filterStreamInput: sanitizeStreamedInput,
   hooks: {
     'entries:normalize': (ctx) => {
       if (ctx.entry.options?._safe) {
         ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
           const safeTag = makeTagSafe(tag)
           if (safeTag)
-            acc.push(safeTag as HeadTag)
+            acc.push(safeTag)
           return acc
         }, [])
       }
@@ -267,7 +306,7 @@ export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
         }
         const safeTag = makeTagSafe(tag)
         if (safeTag)
-          acc.push(safeTag as HeadTag)
+          acc.push(safeTag)
         return acc
       }, [])
     },

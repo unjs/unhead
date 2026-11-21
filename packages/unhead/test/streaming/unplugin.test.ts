@@ -1,4 +1,5 @@
 import { runInNewContext } from 'node:vm'
+import { parseSync } from 'oxc-parser'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildStreamingPluginOptions,
@@ -32,6 +33,16 @@ function callLoad(plugin: any, id: string) {
 }
 
 describe('streaming unplugin', () => {
+  it('preserves quotes in the generated module specifier', () => {
+    const framework = 'framework\'s-alias'
+    const plugin = createStreamingPlugin.vite({ framework, mode: 'module' })
+    const { code } = callLoad(plugin, RESOLVED_CLIENT_ID)
+    const { errors, program } = parseSync('client.mjs', code)
+
+    expect(errors).toEqual([])
+    expect(program.body[0]).toMatchObject({ type: 'ImportDeclaration', source: { value: `${framework}/client` } })
+  })
+
   it('rejects inline stream keys containing closing script tags', () => {
     expect(() => buildStreamingPluginOptions({
       framework: '@unhead/test',

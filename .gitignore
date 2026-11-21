@@ -26,3 +26,6 @@ playwright-report/
 
 .nuxt
 .output
+
+# PR Lens writes its previews here. They are rebuilt on demand.
+.pr-lens/
