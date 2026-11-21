@@ -8,10 +8,13 @@ export function attachStreamHead(
   push: (input: SerializableHead) => number | undefined = input => head.push(input)._i,
 ): void {
   const backlog = queue._q
+  const previousHead = queue._head
+  const previousPush = queue.push
+  let attaching = true
   queue._q = []
   queue._head = head
   let pending: SerializableHead[][] | undefined
-  queue.push = (entries) => {
+  const streamPush: StreamingGlobal['push'] = (entries) => {
     if (pending) {
       pending.push(entries)
       return
@@ -30,6 +33,13 @@ export function attachStreamHead(
         }
       }
     }
+    catch (error) {
+      // Activation retries with a fresh head. Retain the entire replay, including
+      // patches received by hooks, until that head owns the queue successfully.
+      if (attaching && queue.push === streamPush)
+        queue._q = pending
+      throw error
+    }
     finally {
       pending = undefined
       head._b = batching
@@ -39,6 +49,20 @@ export function attachStreamHead(
       }
     }
   }
-  if (backlog.length)
-    queue.push(backlog.flat())
+  queue.push = streamPush
+  try {
+    if (backlog.length)
+      queue.push(backlog.flat())
+  }
+  catch (error) {
+    // A route exit deliberately replaces push and must remain discarded.
+    if (queue.push === streamPush) {
+      queue.push = previousPush
+    }
+    queue._head = previousHead
+    throw error
+  }
+  finally {
+    attaching = false
+  }
 }

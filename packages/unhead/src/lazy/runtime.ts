@@ -10,7 +10,7 @@ import { createUnhead } from '../unhead'
 import { createHooks } from '../utils/hooks'
 import { copyInput } from './same'
 
-function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue: HeadQueue<T>) {
+function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue: HeadQueue<T>, replayShell: () => void) {
   const live = head.entries
   const wasDiscarded = () => queue.closeStream === false
   const discard = () => {
@@ -37,6 +37,7 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
     if (wasDiscarded())
       return
     const entry = head.push(input as T, { _index: index++ })
+    replayShell()
     // A user hook can leave the route in the middle of replay.
     if (wasDiscarded())
       entry.dispose()
@@ -139,6 +140,7 @@ export async function activate<T>(
     configurable: true,
   })
 
+  const previousCloseStream = queue.closeStream
   try {
     for (const plugin of options.plugins ?? [])
       head.use(plugin)
@@ -151,31 +153,44 @@ export async function activate<T>(
     }
     registerQueuedPlugins()
 
-    for (const [_i, entry] of queue.entries) {
-      const input = entry.input
-      const active = entry.active = head.push(input, { ...entry.options, _index: _i })
-      if (entry.hydrated)
-        preserveHydrationOrder(active)
-      if (entry.baseline) {
-        hydrated.set(_i, {
-          _i,
-          input: entry.baseline.input,
-          _o: entry.baseline.input,
-          options: head.entries.get(_i)?.options,
-        })
-      }
-      // The push can call a hook before the active handle is available.
-      if (entry.disposed)
-        active.dispose()
-      else if (entry.input !== input)
-        active.patch(entry.input)
+    const replayShell = () => {
       registerQueuedPlugins()
+      for (const [_i, entry] of queue.entries) {
+        if (entry.active)
+          continue
+        const input = entry.input
+        const active = entry.active = head.push(input, { ...entry.options, _index: _i })
+        if (entry.hydrated)
+          preserveHydrationOrder(active)
+        if (entry.baseline) {
+          hydrated.set(_i, {
+            _i,
+            input: entry.baseline.input,
+            _o: entry.baseline.input,
+            options: head.entries.get(_i)?.options,
+          })
+        }
+        // The push can call a hook before the active handle is available.
+        if (entry.disposed)
+          active.dispose()
+        else if (entry.input !== input)
+          active.patch(entry.input)
+        registerQueuedPlugins()
+      }
     }
+    replayShell()
+    if (stream)
+      connectStream(head, stream, queue, replayShell)
   }
   catch (error) {
     for (const entry of queue.entries.values())
       entry.active = undefined
+    if (queue.closeStream !== false)
+      queue.closeStream = previousCloseStream
     throw error
+  }
+  finally {
+    head._b = false
   }
 
   let renderId = 0
@@ -207,9 +222,6 @@ export async function activate<T>(
 
   Object.defineProperty(head, '_entryCount', { value: queue.index, writable: true })
   connect(head)
-  if (stream)
-    connectStream(head, stream, queue)
-  head._b = false
   head.render()
   return head
 }

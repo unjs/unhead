@@ -14,6 +14,82 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it('retries activation after a failing replay leaves the route', async () => {
+    const { document, queue } = createStreamDocument()
+    queue.push([{ title: 'Obsolete' }])
+    let fail = true
+    const head = createHead({
+      document,
+      streamKey: 'pageHead',
+      plugins: [(client) => {
+        const push = client.push
+        client.push = (input, options) => {
+          if (fail) {
+            fail = false
+            head.discardStream()
+            throw new Error('route left during replay')
+          }
+          return push(input, options)
+        }
+        return { key: 'leave-once' }
+      }],
+    })
+    try {
+      await expect(head.load()).rejects.toThrow('route left during replay')
+      head.push({ title: 'Destination' })
+      await head.load()
+      queue.push([{ title: 'Late obsolete' }])
+      await vi.waitFor(() => expect(document.title).toBe('Destination'))
+    }
+    finally {
+      document.defaultView?.close()
+    }
+  })
+
+  it('retries stream replay after a push wrapper fails without losing patches or client renders', async () => {
+    const { document, queue } = createStreamDocument()
+    queue.push([
+      { meta: [{ name: 'first', content: 'retained' }] },
+      { title: 'Second streamed', meta: [{ name: 'second', content: 'retained' }] },
+    ])
+    let fail = true
+    const head = createHead({
+      document,
+      streamKey: 'pageHead',
+      plugins: [(client) => {
+        const push = client.push
+        client.push = (input, options) => {
+          if (input.title === 'Second streamed' && fail) {
+            fail = false
+            queue.push([{ meta: [{ name: 'during-replay', content: 'retained' }] }])
+            head.push({ meta: [{ name: 'from-hook', content: 'retained' }] })
+            throw new Error('stream push failed once')
+          }
+          return push(input, options)
+        }
+        return { key: 'fail-once' }
+      }],
+    })
+    const initial = head.push({ title: 'Initial client' })
+    head.finishHydration()
+    try {
+      await expect(head.load()).rejects.toThrow('stream push failed once')
+      initial.patch({ title: 'Updated after failure' })
+      queue.push([{ meta: [{ name: 'after-failure', content: 'retained' }] }])
+      await head.load()
+      await vi.waitFor(() => {
+        expect(document.title).toBe('Updated after failure')
+        for (const name of ['first', 'second', 'during-replay', 'from-hook', 'after-failure'])
+          expect(document.querySelector(`meta[name="${name}"]`)?.getAttribute('content')).toBe('retained')
+      })
+      head.push({ title: 'Subsequent client' })
+      await vi.waitFor(() => expect(document.title).toBe('Subsequent client'))
+    }
+    finally {
+      document.defaultView?.close()
+    }
+  })
+
   it.each(['active push', 'active patch', 'replayed patch'] as const)('keeps streamed metadata above hydration defaults after early load: %s', async (operation) => {
     const { document, queue } = createStreamDocument()
     const head = createHead({ document, streamKey: 'pageHead' })
