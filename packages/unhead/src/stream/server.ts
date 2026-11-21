@@ -724,7 +724,8 @@ function renderStreamingTemplate(
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
   const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
   const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
-  let rendered = false
+  // Without hooks, the server renderer cannot skip via ssr:beforeRender.
+  let rendered = !head.hooks
   const stopTrackingRender = templateEntry
     ? head.hooks?.hook('ssr:rendered', () => {
         rendered = true

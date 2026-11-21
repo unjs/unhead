@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { JSDOM } from 'jsdom'
-import { transformHtmlTemplate } from 'unhead/server'
+import { createUnhead } from 'unhead'
+import { createServerRenderer, transformHtmlTemplate } from 'unhead/server'
 import { createStreamableHead, prepareStreamingTemplate, prepareTemplate, renderShell, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
@@ -110,6 +111,27 @@ describe.each([
       expect(window.document.head.querySelector('title')?.textContent ?? null).toBeNull()
       expect(window.document.body.className).toBe(withBodyAttrs ? 'app' : '')
       window.close()
+    }
+  })
+
+  it('keeps a removed title absent after an empty hookless render', async () => {
+    const source = '<html><head><title>Template</title></head><body></body></html>'
+    const makeHead = () => {
+      const head = createUnhead(createServerRenderer())
+      head.push({ titleTemplate: () => null })
+      return head
+    }
+
+    const { shell, end } = prepareStreamingTemplate(makeHead(), template(source))
+    const streamed = await new Response(wrapStream(makeHead(), new ReadableStream<Uint8Array>({
+      start(controller) { controller.close() },
+    }), template(source))).text()
+
+    for (const html of [shell + end, streamed]) {
+      const { window } = new JSDOM(html)
+      const title = window.document.head.querySelector('title')
+      window.close()
+      expect(title?.textContent ?? null).toBeNull()
     }
   })
 
