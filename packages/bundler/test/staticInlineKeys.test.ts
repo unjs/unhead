@@ -1,6 +1,7 @@
 import type { ResolvableHead } from 'unhead/types'
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
 import { runInNewContext } from 'node:vm'
+import { useHead as coreUseHead } from 'unhead'
 import { createHead } from 'unhead/server'
 import { resolveConfig } from 'vite'
 import { describe, expect, it } from 'vitest'
@@ -35,7 +36,7 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
   }
   const head = createHead({ disableDefaults: true })
   const useHead = (entry: ResolvableHead) => head.push(entry)
-  runInNewContext(code.replace(/^import .*\n/gm, ''), { useHead, headApi: { useHead }, ...input })
+  runInNewContext(code.replace(/^import .*\n/gm, ''), { useHead, headApi: { useHead }, coreUseHead, coreHead: head, ...input })
   return head.render().headTags
 }
 
@@ -89,12 +90,24 @@ describe('static inline keys', () => {
   it('keeps singleton tags and styles with an existing identity', async () => {
     const code = `useHead({
       title: ${JSON.stringify(css)}, base: { href: '/first' }, meta: [{ charset: 'utf-8' }],
-      style: [{ id: 'theme', innerHTML: ${JSON.stringify(css)} }],
+      style: [{ id: 'theme', innerHTML: ${JSON.stringify(css)} },
+        { hid: 'old-id', innerHTML: ${JSON.stringify(css)} },
+        { vmid: 'meta-id', innerHTML: ${JSON.stringify(`${css} /* legacy */`)} }],
       script: [{ type: 'importmap', innerHTML: ${JSON.stringify(`{"imports":{"script":"${'x'.repeat(4200)}"}}`)} }],
     })
     useHead({ title: 'Latest', style: [{ ID: 'theme', textContent: ${JSON.stringify(`${css} /* latest */`)} }] })
     useHead({ script: [{ innerHTML: ${JSON.stringify(js)} }] }, {})`
 
     expect(await render(code, true)).toBe(await render(code, false))
+  })
+
+  it('reads the inline input from the core composable', async () => {
+    const code = `import { useHead as coreUseHead } from 'unhead'
+    coreUseHead(coreHead, { style: [{ innerHTML: ${JSON.stringify(css)} }] })
+    coreUseHead(coreHead, { script: [{ innerHTML: ${JSON.stringify(js)} }] }, {})`
+
+    const output = await render(code, true)
+    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
   })
 })

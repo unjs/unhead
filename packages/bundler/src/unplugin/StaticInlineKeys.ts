@@ -46,19 +46,20 @@ function resolveStaticText(value: Expression, scope: ScopeTracker): string | und
   return staticText(value)
 }
 
-function isHeadCall(callee: CallExpression['callee'], scope: ScopeTracker, allowAutoImport: boolean): boolean {
+function headInputIndex(callee: CallExpression['callee'], scope: ScopeTracker, allowAutoImport: boolean): 0 | 1 | undefined {
   const binding = callee.type === 'MemberExpression' ? callee.object : callee
   if (binding.type !== 'Identifier')
-    return false
+    return
   const declaration = scope.getDeclaration(binding.name)
   if (!declaration)
-    return allowAutoImport && callee.type === 'Identifier' && HEAD_FUNCTIONS.has(callee.name)
+    return allowAutoImport && callee.type === 'Identifier' && HEAD_FUNCTIONS.has(callee.name) ? 0 : undefined
   if (!(declaration instanceof ScopeTrackerImport) || !HEAD_IMPORT_RE.test(declaration.importNode.source.value))
-    return false
-  if (declaration.node.type === 'ImportNamespaceSpecifier')
-    return callee.type === 'MemberExpression' && !callee.computed && callee.property.type === 'Identifier' && HEAD_FUNCTIONS.has(callee.property.name)
-  return callee.type === 'Identifier' && declaration.node.type === 'ImportSpecifier'
-    && declaration.node.imported.type === 'Identifier' && HEAD_FUNCTIONS.has(declaration.node.imported.name)
+    return
+  const name = declaration.node.type === 'ImportNamespaceSpecifier' && callee.type === 'MemberExpression' && !callee.computed
+    ? callee.property
+    : declaration.node.type === 'ImportSpecifier' && callee.type === 'Identifier' ? declaration.node.imported : undefined
+  if (name?.type === 'Identifier' && HEAD_FUNCTIONS.has(name.name))
+    return declaration.importNode.source.value === 'unhead' ? 1 : 0
 }
 
 function inlineBody(tag: ObjectExpression, name: 'script' | 'style' | 'noscript', scope: ScopeTracker) {
@@ -85,8 +86,10 @@ function inlineBody(tag: ObjectExpression, name: 'script' | 'style' | 'noscript'
     .filter(field => field !== 'innerHTML' && field !== 'textContent')
     .map(field => [field, 'present']))
   const normalized = normalizeProps({ tag: name, props: {} }, attrs)
-  if (dedupeKey(normalized) || normalized.props.src || [...fields.keys()].some(field => field.toLowerCase() === 'data-hid'))
+  if (dedupeKey(normalized) || normalized.props.src || normalized.props.hid || normalized.props.vmid
+    || [...fields.keys()].some(field => field.toLowerCase() === 'data-hid')) {
     return
+  }
   if (name === 'script') {
     for (const [field, type] of fields) {
       if (field.toLowerCase() !== 'type')
@@ -158,13 +161,14 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
         walk(parsed.program, {
           scopeTracker,
           enter(node) {
-            // Entry options can override the normalized tag identity.
-            if (node.type !== 'CallExpression' || node.arguments.length !== 1
-              || !isHeadCall(node.callee, scopeTracker, !dependency && options.framework === '@unhead/vue' && isVueScript)) {
+            if (node.type !== 'CallExpression')
               return
-            }
+            const index = headInputIndex(node.callee, scopeTracker, !dependency && options.framework === '@unhead/vue' && isVueScript)
+            // Entry options can override the normalized tag identity.
+            if (index === undefined || node.arguments.length !== index + 1)
+              return
 
-            const argument = node.arguments[0]
+            const argument = node.arguments[index]
             const input = argument?.type === 'ArrowFunctionExpression' ? argument.body : argument
             if (input?.type !== 'ObjectExpression')
               return
