@@ -97,6 +97,10 @@
     "./compiled/server": {
       "types": "./dist/compiled/server.d.ts",
       "default": "./dist/compiled/server.mjs"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -154,6 +158,9 @@
       ],
       "compiled/server": [
         "dist/compiled/server.d.ts"
+      ],
+      "vite": [
+        "dist/vite.d.ts"
       ]
     }
   },
@@ -177,6 +184,7 @@
   },
   "dependencies": {
     "hookable": "catalog:",
+    "parse5": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {

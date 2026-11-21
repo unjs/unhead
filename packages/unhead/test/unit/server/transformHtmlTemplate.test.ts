@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { parseHtmlForUnheadExtraction } from '../../../src/parser'
 import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server/transformHtmlTemplate'
 import { createServerHeadWithContext } from '../../util'
 
@@ -31,15 +30,13 @@ describe('transformHtmlTemplate edge cases', () => {
   })
 
   describe('malformed HTML', () => {
-    it('handles unclosed tags', async () => {
+    it('preserves an unclosed title without inserting managed markup', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Test Title' })
 
       const html = '<html><head><title>Original</head><body>Content'
       const result = await transformHtmlTemplate(head, html)
-      expect(result).toContain('<title>Test Title</title>')
-      // The parser extracts existing title "Original" from the template
-      expect(result).toContain('Original')
+      expect(result).toBe(html)
     })
 
     it('handles mismatched tags', async () => {
@@ -220,15 +217,17 @@ document.documentElement.dataset.theme = 'dark'
 <script src="/b.js"></script></head><body>Content</body></html>`)
     })
 
-    it('leaves a commented nested script at a closing tag in any letter case or followed by a slash or form feed', () => {
-      const html = `<html><head><script><!-- <script></SCRIPT>a</script><script><!-- <script></script/>b</script><script><!-- <script></script\f>c</script><script src="/b.js"></script></head><body>Content</body></html>`
+    it('preserves source scripts that depend on mixed-case or delimited raw closing tags', () => {
+      const scripts = [
+        '<script type="text/plain"><!-- <script></SCRIPT>a</script>',
+        '<script type="text/plain"><!-- <script></script/>b</script>',
+        '<script type="text/plain"><!-- <script></script\f>c</script>',
+      ].join('')
+      const html = `<html><head>${scripts}</head><body>Content</body></html>`
+      const head = createServerHeadWithContext()
+      head.push({ title: 'Page title' })
 
-      expect(parseHtmlForUnheadExtraction(html).input.script).toEqual([
-        { innerHTML: '<!-- <script></SCRIPT>a' },
-        { innerHTML: '<!-- <script></script/>b' },
-        { innerHTML: '<!-- <script></script\f>c' },
-        { src: '/b.js', innerHTML: '' },
-      ])
+      expect(transformHtmlTemplate(head, html)).toBe(`<html><head>${scripts}<title>Page title</title></head><body>Content</body></html>`)
     })
 
     it('does not treat other tag names after <!-- as a nested script', async () => {

@@ -1,9 +1,9 @@
 import { renderToPipeableStream } from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom'
-import { createStreamableHead, UnheadProvider } from '@unhead/react/stream/server'
+import { createStreamableHead, type PreparedTemplate, UnheadProvider } from '@unhead/react/stream/server'
 import App from './App'
 
-export function render(url: string, template: string) {
+export function render(url: string, template: string | PreparedTemplate) {
   const { head, onShellReady, wrap } = createStreamableHead()
 
   const { pipe, abort } = renderToPipeableStream(

@@ -147,6 +147,7 @@ export default defineBuildConfig([{
     { input: 'src/validate/index', name: 'validate' },
     { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
+    { input: 'src/vite/index', name: 'vite' },
   ],
 }, {
   // The compiled server head builds alone. It then shares no dist file with the other

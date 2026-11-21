@@ -2,6 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { prepareTemplate } from '@unhead/vue/stream/server'
 import express from 'express'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
@@ -15,13 +16,8 @@ export async function createServer(
   const resolve = p => path.resolve(__dirname, p)
 
   const indexProd = isProd
-    ? fs.readFileSync(resolve('dist/client/index.html'), 'utf-8')
+    ? prepareTemplate(fs.readFileSync(resolve('dist/client/index.html'), 'utf-8'))
     : ''
-
-  const manifest = isProd
-    ? // @ts-expect-error
-      (await import('./dist/client/ssr-manifest.json')).default
-    : {}
 
   const app = express()
 
@@ -56,8 +52,8 @@ export async function createServer(
   else {
     app.use((await import('compression')).default())
     app.use(
-      '/test/',
-      (await import('serve-static')).default(resolve('dist/client'), {
+      ['/assets', '/test/assets'],
+      express.static(resolve('dist/client/assets'), {
         index: false,
       }),
     )
