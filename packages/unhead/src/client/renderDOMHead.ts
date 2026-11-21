@@ -80,19 +80,22 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       }
       state = undefined
     }
+    const keepEffects = adoption && !!state
     if (!state) {
       state = createDomState(head, dom)
     }
     else {
-      // hand the previous render's side effects to _p (cleanup pool) by reference; track()
-      // reclaims the ones that are still live and the rest are disposed after this pass
-      state._p = state._s
+      // Adoption adds SSR cleanups to the active effects. A live render then retires unused ones.
+      state._p = keepEffects ? {} : state._s
     }
-    state._s = {}
+    if (!keepEffects)
+      state._s = {}
     const renderState = state
     const previous = renderState._p
 
     function track(key: string, fn: () => void, fresh?: boolean) {
+      if (keepEffects && renderState._s[key])
+        return
       // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
       // closure, so this avoids reallocating ~one closure per tracked prop every frame. `fresh` opts
       // out for content closures, which capture a value that can change between renders.

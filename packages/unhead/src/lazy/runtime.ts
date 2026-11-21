@@ -49,9 +49,8 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
 // historical writes, so the next render removes stale ones. Respect rendering pauses.
 // Adoption reads a separate map, so an entry a hook pushes or disposes changes the live map through
 // the entry, and the restore keeps that change.
-function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]) {
+function adoptHydratedEntries<T>(head: ClientUnhead<T>, adoption: Map<number, HeadEntry<T>>) {
   const live = head.entries
-  const adoption = new Map(hydrated.map(entry => [entry._i, entry]))
   // A lookup by id falls back to the live map, so a hook that disposes or pushes an entry
   // outside the adoption, such as a client only entry, still finds it. An entry is an object,
   // so `has` is a lookup that found one.
@@ -59,6 +58,7 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   adoption.get = id => get(id) || live.get(id)
   adoption.has = id => !!adoption.get(id)
   head.entries = adoption
+  head.dirty = true
   try {
     return renderLazyDOMHead(head, {}, true)
   }
@@ -116,7 +116,7 @@ export async function activate<T>(
   const clientPush = head.push
   head.push = (input, entryOptions) => {
     // Keep SSR ownership until adoption, even if navigation removes the live entry.
-    const baseline = queue.hydrating && !options.render && !head._dom && (entryOptions?._index ?? 0) >= 0
+    const baseline = queue.hydrating && !options.render && (entryOptions?._index ?? 0) >= 0
       ? { input: copyInput(input) }
       : undefined
     const active = clientPush(input, entryOptions)
@@ -182,10 +182,18 @@ export async function activate<T>(
   render = (options.render as HeadRenderer<boolean>) || (() => {
     const id = ++renderId
     setTimeout(() => {
-      if (id === renderId && (head._dom || !hydrated.size || adoptHydratedEntries(head, [...hydrated.values()]))) {
-        hydrated.clear()
-        renderLazyDOMHead(head)
+      if (id !== renderId)
+        return
+      if (hydrated.size) {
+        const adoption = new Map(hydrated)
+        if (!adoptHydratedEntries(head, adoption))
+          return
+        for (const [id, snapshot] of adoption) {
+          if (hydrated.get(id) === snapshot)
+            hydrated.delete(id)
+        }
       }
+      renderLazyDOMHead(head)
     })
     return false
   })

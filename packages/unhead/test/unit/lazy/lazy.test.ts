@@ -38,6 +38,32 @@ beforeEach(() => {
 })
 
 describe('lazy head createHead', () => {
+  it.each(['dispose', 'patch'] as const)('cleans up an SSR stylesheet first registered after the DOM rendered: %s', async (operation) => {
+    const layout: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/layout.css' }] }
+    const page: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/old.css' }] }
+    const { document } = ssrDom(layout, page).window
+    const head = createLazyHead({ document })
+    head.push({ ...layout, title: 'Early render' })
+    await head.load()
+    await vi.waitFor(() => expect(document.title).toBe('Early render'))
+
+    const entry = head.push(page)
+    head.finishHydration()
+    const next: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/new.css' }] }
+    if (operation === 'dispose') {
+      entry.dispose()
+      head.push(next)
+    }
+    else {
+      entry.patch(next)
+    }
+
+    await vi.waitFor(() => {
+      expect([...document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href')))
+        .toEqual(['/layout.css', '/new.css'])
+    })
+  })
+
   it.each(['dispose', 'patch'] as const)('removes a departed SSR stylesheet registered after early load: %s', async (operation) => {
     const input: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/server.css' }] }
     const dom = ssrDom(input)
