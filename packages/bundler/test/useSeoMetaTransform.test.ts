@@ -36,6 +36,54 @@ function runTransformed(code: string): { imported: string[], useHead: ReturnType
 }
 
 describe('useSeoMetaTransform', () => {
+  // `readEntry` reports `seoMeta` for the entry, as for the call it replaces
+  describe('markEntries', () => {
+    const source = `import { useSeoMeta } from 'unhead'\nuseSeoMeta({ title: 'T', description: 'D' })\nuseSeoMeta({ description: 'E' }, { tagPriority: 'low' })\nuseSeoMeta({ description: 'F' }, {})\nuseSeoMeta({ description: 'G' }, options)`
+    const run = async (opts: any, ctx?: any) => {
+      const plugin = UseSeoMetaTransform.vite(opts) as any
+      const code = (await runTransform(plugin, source, 'some-id.js', ctx))!.code
+      const useHead = vi.fn()
+      // eslint-disable-next-line no-new-func
+      new Function('useHead', 'options', code.replace(/^import[^\n]*\n/, ''))(useHead, { head: 'h' })
+      return useHead.mock.calls.map(call => call[1])
+    }
+    const server = { environment: { config: { consumer: 'server' } } }
+    const client = { environment: { config: { consumer: 'client' } } }
+
+    it('marks each useHead call of a server build as seo meta', async () => {
+      expect(await run({ markEntries: true }, server)).toEqual([{ seoMeta: true }, { tagPriority: 'low', seoMeta: true }, { seoMeta: true }, { head: 'h', seoMeta: true }])
+    })
+
+    // runs the server build of a source, and gives the options of each call it writes
+    const serverCalls = async (code: string, scope: Record<string, unknown> = {}) => {
+      const plugin = UseSeoMetaTransform.vite({ markEntries: true }) as any
+      const output = (await runTransform(plugin, code, 'some-id.js', server))!.code
+      const useHead = vi.fn()
+      const useServerHead = vi.fn()
+      // eslint-disable-next-line no-new-func
+      new Function('useHead', 'useServerHead', ...Object.keys(scope), output.replace(/^import[^\n]*\n/, ''))(useHead, useServerHead, ...Object.values(scope))
+      return { useHead: useHead.mock.calls.map(call => call[1]), useServerHead: useServerHead.mock.calls.map(call => call[1]) }
+    }
+
+    it('marks both calls that a useServerSeoMeta call with a title becomes', async () => {
+      const marked = [{ seoMeta: true }, { tagPriority: 'low', seoMeta: true }]
+      expect(await serverCalls(`import { useServerSeoMeta } from 'unhead'\nuseServerSeoMeta({ title: 'T', description: 'D' })\nuseServerSeoMeta({ title: 'U', description: 'E' }, { tagPriority: 'low' })`))
+        .toEqual({ useHead: marked, useServerHead: marked })
+    })
+
+    it('marks a call that spreads its options', async () => {
+      const source = `import { useSeoMeta } from 'unhead'\nuseSeoMeta({ description: 'D' }, ...rest)`
+      expect((await serverCalls(source, { rest: [{ head: 'h' }] })).useHead).toEqual([{ head: 'h', seoMeta: true }])
+      expect((await serverCalls(source, { rest: [] })).useHead).toEqual([{ seoMeta: true }])
+    })
+
+    it('marks no call of a client build, or with the option off', async () => {
+      const plain = [undefined, { tagPriority: 'low' }, {}, { head: 'h' }]
+      expect(await run({ markEntries: true }, client)).toEqual(plain)
+      expect(await run({}, server)).toEqual(plain)
+    })
+  })
+
   const couldTransform = [
     'import { useSeoMeta } from \'unhead\'',
     'useSeoMeta({ title: \'Hello\', description: \'World\' })',

@@ -3,7 +3,7 @@ import { compileTags, createHead, dynamicValue, getRenderTier, renderSSRHead } f
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 
 function compile(input: any, dynamicValues?: number) {
-  const result = compileTags(input, { dynamicValues })
+  const result = compileTags(input, { valueCount: dynamicValues })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

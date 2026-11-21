@@ -38,7 +38,7 @@ const AUTO_IMPORT_PATH = '#imports'
 // wrapper that resolves it some other way, such as Nuxt, so the call passes the head
 // that `injectHead` finds. The call imports `injectHead` from the module of its composable
 // when that module is known to export it. Otherwise it reads the auto import when there is one.
-const AUTO_HEAD = `{ head: typeof injectHead === 'function' ? injectHead() : undefined }`
+const AUTO_HEAD_PROP = `head: typeof injectHead === 'function' ? injectHead() : undefined`
 
 type HeadKind = 'head' | 'seo'
 const CALLEES = new Map<string, HeadKind>([['useHead', 'head'], ['useServerHead', 'head'], ['useSeoMeta', 'seo'], ['useServerSeoMeta', 'seo']])
@@ -84,7 +84,7 @@ export function resolveCompileOptions(compile: boolean | CompileTransformOptions
 
 /**
  * Which builds compile head calls. Client builds leave head calls as written: the client
- * head takes normal input only.
+ * head takes head input only.
  */
 function compilesFor(consumer: BuildConsumer | undefined): boolean {
   return consumer === 'server'
@@ -112,10 +112,10 @@ export interface CompileTransformOptions extends BaseTransformerTypes {
 
 type CompiledCall
   = | { _tag: 'Ok', tags: CompiledTags, values: any[], loose?: string }
-    | { _tag: 'Bail', reason: string }
+    | { _tag: 'Err', reason: string }
 
 function bail(reason: string): CompiledCall {
-  return { _tag: 'Bail', reason }
+  return { _tag: 'Err', reason }
 }
 
 function unwrap(node: any): any {
@@ -333,10 +333,15 @@ function seoToHeadInput(decoded: Record<string, unknown>): unknown {
   return { title, titleTemplate, meta }
 }
 
+// Options a compiled entry takes: `head`, and the `seoMeta: true` marker of the useSeoMeta transform
 function isHeadOnly(node: any): boolean {
   const inner = unwrap(node)
-  const prop = inner.type === 'ObjectExpression' && inner.properties.length === 1 && inner.properties[0]
-  return !!prop && prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method && staticKey(prop.key) === 'head'
+  return inner.type === 'ObjectExpression' && inner.properties.length > 0 && inner.properties.every((prop: any) => prop.type === 'Property' && prop.kind === 'init' && !prop.computed && !prop.method
+    && (staticKey(prop.key) === 'head' || (staticKey(prop.key) === 'seoMeta' && unwrap(prop.value).value === true)))
+}
+
+function namesHead(node: any): boolean {
+  return unwrap(node).properties.some((prop: any) => staticKey(prop.key) === 'head')
 }
 
 function isFunctionNode(node: any): boolean {
@@ -447,8 +452,8 @@ function compileInput(input: any, kind: HeadKind, shapeValues: boolean): Compile
     if (headInput === BAIL)
       return bail('a flat meta value that v3 does not normalize')
   }
-  const result = compiler!.compileTags(headInput, { dynamicValues: values.length })
-  if (result._tag === 'Bail')
+  const result = compiler!.compileTags(headInput, { valueCount: values.length })
+  if (result._tag === 'Err')
     return result
   if (kind === 'seo' && values.length) {
     const tags = JSON.parse(JSON.stringify(result.tags)) as CompiledTag[]
@@ -628,7 +633,8 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         if (!callee)
           return
         const [arg, options] = node.arguments
-        const autoHead = !callee.resolvesHead && !options
+        // options with only the marker name no head, so the auto import still picks it
+        const autoHead = !callee.resolvesHead && (!options || (isHeadOnly(options) && !namesHead(options)))
         // a returned useSeoMeta entry patches flat input, which a compiled entry does not take
         // another `injectHead` in scope would take the place of the auto import
         const injectHead = autoHead && !callee.headSource ? bindingOf('injectHead') : undefined
@@ -639,12 +645,12 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         const getter = !held && callee.kind === 'head' ? getterObject(arg) : undefined
         const input = held || getter?.object || unwrap(arg)
         const result = compileHeadCall(node, callee.kind, input)
-        if (result._tag === 'Bail') {
+        if (result._tag === 'Err') {
           if (hasFunctionTitleTemplate(input))
-            warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays normal input, and the server head renders it on a slower path. Use a string, such as '%s %separator %siteName'.`)
+            warn(`[unhead] ${id}: titleTemplate is a function, so this head call stays as written, and the server head renders it on a slower path. Use a string, such as '%s %separator %siteName'.`)
           const rel = !NODE_MODULES_RE.test(id) && result.reason === 'dynamic value in the identity of a link tag' && keylessLinkRel(input)
           if (rel)
-            warn(`[unhead] ${id}: a link with no key takes its rel and href as its identity, and this href is a dynamic value. So this head call stays normal input, and the server head renders it on a slower path. To compile it, add a key, such as key: '${rel}'.`)
+            warn(`[unhead] ${id}: a link with no key takes its rel and href as its identity, and this href is a dynamic value. So this head call stays as written, and the server head renders it on a slower path. To compile it, add a key, such as key: '${rel}'.`)
           return
         }
 
@@ -654,7 +660,11 @@ export const CompileTransform = createUnplugin<CompileTransformOptions, false>((
         // a getter that runs statements keeps them, so it stays the values argument
         const valuesGetter = getter && (getter.block || result.values.length)
         const hasValues = result.values.length || valuesGetter
-        const tail = autoHead ? `, ${hasValues ? '' : 'undefined, '}${callee.headSource ? `{ head: ${importedInjectHead(callee.headSource)}() }` : AUTO_HEAD}` : options && !hasValues ? ', undefined' : ''
+        const valuesSlot = hasValues ? '' : 'undefined'
+        const headProp = !autoHead ? '' : callee.headSource ? `head: ${importedInjectHead(callee.headSource)}()` : AUTO_HEAD_PROP
+        const tail = autoHead && !options ? `, ${valuesSlot && `${valuesSlot}, `}{ ${headProp} }` : options && valuesSlot ? `, ${valuesSlot}` : ''
+        if (autoHead && options)
+          s.overwrite(options.start, options.end, `{ ${headProp}, seoMeta: true }`)
         // the place of the loose input stays when an argument follows it
         if (result.loose)
           head.push(hoist(result.loose))

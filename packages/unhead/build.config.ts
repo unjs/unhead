@@ -150,7 +150,7 @@ export default defineBuildConfig([{
     { input: 'src/vite/index', name: 'vite' },
   ],
 }, {
-  // The compiled server head builds alone. It then shares no dist file with the other
+  // The compiled entries build alone. They then share no dist file with the other
   // entries, so their dist stays byte for byte the same.
   clean: false,
   declaration: true,
@@ -158,6 +158,7 @@ export default defineBuildConfig([{
     'rollup:options': failOnSideEffects,
   },
   entries: [
+    { input: 'src/compiled/index', name: 'compiled' },
     { input: 'src/compiled/server', name: 'compiled/server' },
   ],
 }])

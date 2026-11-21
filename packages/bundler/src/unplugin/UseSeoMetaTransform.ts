@@ -1,5 +1,7 @@
 import type { SourceMapInput } from 'rollup'
+import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
+import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import {
@@ -9,7 +11,7 @@ import {
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 const SEO_META_RE = /\buse(?:Server)?SeoMeta\b/
 
@@ -22,6 +24,13 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
    * Extra import paths to consider where `useSeoMeta()` may be imported from.
    */
   importPaths?: string[]
+  /**
+   * Adds the `seoMeta: true` entry option to each `useHead` call a server build writes, so
+   * `readEntry` reports the entry as the `useSeoMeta` call it was. The `compile` option sets it.
+   *
+   * @internal
+   */
+  markEntries?: boolean
 }
 
 const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
@@ -50,6 +59,7 @@ const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
 export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
   const rewriteImports = options.imports ?? true
   const importPaths = options.importPaths?.length ? new Set(options.importPaths) : undefined
+  let fallbackConsumer: BuildConsumer | undefined
 
   function isValidPackage(s: string) {
     if (s === 'unhead' || s.startsWith('@unhead')) {
@@ -99,6 +109,8 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         if (!shouldTransformId(id))
           return
 
+        // a client head takes the marker as an entry option, so only a server build writes it
+        const marks = options.markEntries && resolveBuildConsumer(this, fallbackConsumer) === 'server'
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
@@ -165,6 +177,24 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               return
             }
 
+            // The second argument (options like { head }) goes to each call this one becomes. An
+            // object literal takes the marker in place, so the compile transform still reads its
+            // `head`. A spread argument is a list, and the options are its first item.
+            const optionsNode = node.arguments[1]
+            const optionsArg = optionsNode && code.substring(optionsNode.start, optionsNode.end)
+            const entryOptions = !marks
+              ? optionsArg
+              : !optionsNode
+                  ? '{ seoMeta: true }'
+                  : optionsNode.type === 'SpreadElement'
+                    ? `{ ...[${optionsArg}][0], seoMeta: true }`
+                    : optionsNode.type !== 'ObjectExpression'
+                      ? `{ ...${optionsArg}, seoMeta: true }`
+                      : optionsNode.properties.length
+                        ? `${code.substring(optionsNode.start, optionsNode.properties.at(-1).end)}, seoMeta: true }`
+                        : '{ seoMeta: true }'
+            const close = entryOptions ? `}, ${entryOptions})` : '})'
+
             let output: string[] | false = []
             const title = properties.find((property: any) => property.key?.name === 'title')
             const titleTemplate = properties.find((property: any) => property.key?.name === 'titleTemplate')
@@ -179,13 +209,8 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               }
             }
             if (originalName === 'useServerSeoMeta') {
-              if (output.length) {
-                const secondArg = node.arguments[1]
-                if (secondArg)
-                  output.push(`}, ${code.substring(secondArg.start, secondArg.end)});`)
-                else
-                  output.push('});')
-              }
+              if (output.length)
+                output.push(`${close};`)
               output.push('useServerHead({')
             }
 
@@ -314,14 +339,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (output) {
               if (meta.length)
                 output.push('  ]')
-              // Preserve the second argument (options like { head }) if present
-              if (node.arguments.length >= 2) {
-                const optionsArg = code.substring(node.arguments[1].start, node.arguments[1].end)
-                output.push(`}, ${optionsArg})`)
-              }
-              else {
-                output.push('})')
-              }
+              output.push(close)
               s.overwrite(node.start, node.end, output.join('\n'))
 
               // Track import for rewriting
@@ -372,6 +390,18 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
           }
         }
+      },
+    },
+    // a bundler with no Environment API tells the build target here
+    ...options.markEntries && {
+      webpack(ctx) {
+        fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
+      },
+      vite: {
+        apply(_config: UserConfig, env: ConfigEnv) {
+          fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
+          return true
+        },
       },
     },
   }

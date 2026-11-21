@@ -18,8 +18,8 @@ function pageInput(): any {
   }
 }
 
-function compile(input: any, dynamicValues?: number) {
-  const result = compileTags(input, { dynamicValues })
+function compile(input: any, valueCount?: number) {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

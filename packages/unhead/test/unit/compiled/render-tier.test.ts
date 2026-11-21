@@ -16,7 +16,7 @@ describe('getRenderTier', () => {
     const head = createHead()
     head.push(tags)
     head.push({ title: 'Loose' })
-    expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: '1 entry is not compiled tags with no options' })
+    expect(getRenderTier(head)).toEqual({ _tag: 'Fast', reason: '1 entry holds head input or has entry options' })
   })
 
   it('is Fast for compiled tags with entry options', () => {

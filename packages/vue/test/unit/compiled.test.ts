@@ -7,8 +7,8 @@ import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, ref } from 'vue'
 
-function compiledTags(input: any, dynamicValues?: number): any {
-  const result = compileTags(input, { dynamicValues })
+function compiledTags(input: any, valueCount?: number): any {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags

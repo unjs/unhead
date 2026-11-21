@@ -4,8 +4,8 @@ import { compileTags, createHead, dynamicValue, renderSSRHead } from '../../../s
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead as createV3Head, renderSSRHead as renderV3 } from '../../../src/server'
 
-function compile(input: any, dynamicValues?: number) {
-  const result = compileTags(input, { dynamicValues })
+function compile(input: any, valueCount?: number) {
+  const result = compileTags(input, { valueCount })
   if (result._tag !== 'Ok')
     throw new Error(result.reason)
   return result.tags
