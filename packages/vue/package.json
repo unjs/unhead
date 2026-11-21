@@ -37,6 +37,10 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./client/lean": {
+      "types": "./dist/client/lean.d.ts",
+      "default": "./dist/client/lean.mjs"
+    },
     "./stream/server": {
       "types": "./dist/stream/server.d.ts",
       "default": "./dist/stream/server.mjs"
@@ -95,6 +99,9 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "client/lean": [
+        "dist/client/lean"
       ],
       "stream/server": [
         "dist/stream/server"

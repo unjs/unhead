@@ -20,6 +20,11 @@
   createHead: function
   renderDOMHead: function
   VueHeadMixin: object
+./client/lean:
+  createHead: function
+  enableDomEventHandlers: function
+  renderDOMHead: function
+  VueHeadMixin: object
 ./components:
   Head: object
 ./legacy:

@@ -1,30 +1,32 @@
-import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
+import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomEvent, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
+import { renderDomEvent } from './domEventHandlers'
 
 const WHITESPACE_RE = /\s+/
 
-type DomEventHandler = (this: Element, e: Event) => any
-
-// [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
-// The event type needs no slot: the key holds the prop name it comes from.
-type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => void]
-
-type DomStateInternal = DomState & {
-  _d: Document
-  _l: Map<string, DomEventSideEffect>
-}
+type DomStateInternal = DomState & { _d: Document }
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
-  return (head: Unhead<any>) => _renderDOMHead(head, options)
+  return head => _renderDOMHead(head, options, renderDomEvent)
+}
+
+/* @__NO_SIDE_EFFECTS__ */
+export function createLeanDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
+  return head => _renderDOMHead(head, options)
 }
 
 /** @deprecated Use `head.render()` instead */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+  return _renderDOMHead(head, options, renderDomEvent)
+}
+
+/** @deprecated Use `head.render()` instead */
+export function renderLeanDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   return _renderDOMHead(head, options)
 }
 
@@ -37,7 +39,7 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {} }
   // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
   // when the same head is rendered into another pre-rendered document.
   for (const entry of head.entries.values()) {
@@ -56,12 +58,11 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions, renderEvent?: RenderDomEvent): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
     return false
-  const defaultView = dom.defaultView
   head._du = true
   let didRender = false
   try {
@@ -76,7 +77,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         for (const k in state._p) state._p[k]()
         state._s = state._p = {}
         state._e.clear()
-        state._l.clear()
       }
       state = undefined
     }
@@ -98,31 +98,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       // out for content closures, which capture a value that can change between renders.
       renderState._s[key] = (!fresh && previous[key]) || fn
       delete previous[key]
-    }
-
-    function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
-      const key = `${id}:event:${k}`
-      const prev = renderState._l.get(key)
-      // same target/source: keep the existing listener, just re-track its cleanup
-      if (prev && prev[0] === target && prev[1] === source) {
-        track(key, prev[3])
-        return
-      }
-      prev?.[3]()
-      const dk = `data-${k}`
-      const handler = ((e: Event) => source.call($el, e)) as EventListener
-      const cleanup = () => {
-        target.removeEventListener(ev, handler)
-        if ($el.getAttribute(dk) === '')
-          $el.removeAttribute(dk)
-        if (renderState._l.get(key)?.[2] === handler)
-          renderState._l.delete(key)
-      }
-      target.addEventListener(ev, handler)
-      renderState._l.set(key, [target, source, handler, cleanup])
-      $el.setAttribute(dk, '')
-      // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
-      track(key, cleanup, true)
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
@@ -158,10 +133,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       for (const k in tag.props) {
         const v = tag.props[k]
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
-          const ev = k.slice(2)
-          if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
-            (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
-          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
+          (head._domEvent ?? renderEvent)?.(renderState, id, tag.tag, $el, k, v, track)
           continue
         }
         const ck = `${id}:attr:${k}`
@@ -268,6 +240,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     head._du = false
   }
   if (didRender && (head.dirty || hasPendingEntries(head)))
-    _renderDOMHead(head, options)
+    _renderDOMHead(head, options, renderEvent)
   return didRender
 }
