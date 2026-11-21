@@ -25,15 +25,26 @@ describe('vue streaming server types', () => {
     const htmlAttrs = computed(() => ({ lang: 'en' }))
     const bodyAttrs = ref({ class: 'dark' })
     const title = computed(() => ({ textContent: 'Vue Streaming' }))
+    const titleTemplate = computed(() => ({ textContent: '%s | Docs' }))
     const entry = head.push({ base })
 
-    entry.patch({ base, htmlAttrs, bodyAttrs, title })
+    entry.patch({ base, htmlAttrs, bodyAttrs, title, titleTemplate })
 
     const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
 
     expect(shell).toContain('<base href="/docs/">')
     expect(shell).toContain('<html lang="en">')
     expect(shell).toContain('<body class="dark">')
-    expect(shell).toContain('<title>Vue Streaming</title>')
+    expect(shell).toContain('<title>Vue Streaming | Docs</title>')
+  })
+
+  it('renders singleton tag getters and title template callbacks', async () => {
+    const { head } = createStreamableHead()
+    head.push({ base: () => ({ href: '/docs/' }), title: 'Vue', titleTemplate: title => `${title} | Docs` })
+
+    const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+
+    expect(shell).toContain('<base href="/docs/">')
+    expect(shell).toContain('<title>Vue | Docs</title>')
   })
 })
