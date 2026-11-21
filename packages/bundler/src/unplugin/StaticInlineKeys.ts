@@ -130,8 +130,10 @@ function bundlesDependency(environment: ResolvedConfig['environments'][string], 
   if (isExternalDependency(environment, name))
     return false
   const { noExternal } = environment.resolve
-  return noExternal === true || (Array.isArray(noExternal) && noExternal.some(rule =>
-    typeof rule === 'string' ? rule === name : name.match(rule) !== null))
+  if (noExternal === true)
+    return true
+  const rules = Array.isArray(noExternal) ? noExternal : noExternal ? [noExternal] : []
+  return rules.some(rule => typeof rule === 'string' ? rule === name : name.match(rule) !== null)
 }
 
 export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((options) => {
@@ -197,7 +199,12 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
               return
 
             const argument = node.arguments[index]
-            const input = argument?.type === 'ArrowFunctionExpression' ? argument.body : argument
+            // A parameter can shadow a constant in the surrounding scope.
+            if (argument?.type === 'ArrowFunctionExpression' && argument.params.length)
+              return
+            let input = argument?.type === 'ArrowFunctionExpression' ? argument.body : argument
+            while (input?.type === 'ParenthesizedExpression')
+              input = input.expression
             if (input?.type !== 'ObjectExpression')
               return
             for (const property of input.properties) {

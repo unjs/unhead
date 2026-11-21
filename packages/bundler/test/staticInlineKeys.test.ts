@@ -135,4 +135,22 @@ describe('static inline keys', () => {
 
     expect(await render(code, true, {}, undefined, { bundled: false, external: true, linked: true })).toBe(await render(code))
   })
+
+  it('keeps callback parameter values independent of outer constants', async () => {
+    const code = `const body = ${JSON.stringify(css)}
+    useHead((body = ${JSON.stringify(`${css} /* first */`)}) => ({ style: [{ innerHTML: body }] }))
+    useHead({ style: [{ innerHTML: body }] })`
+
+    const output = await render(code, true)
+    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+  })
+
+  it('keys a static body from a callback without parameters', async () => {
+    const code = `useHead(() => ({ style: [{ innerHTML: ${JSON.stringify(css)} }] }))`
+
+    const output = await render(code, true)
+    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+  })
 })
