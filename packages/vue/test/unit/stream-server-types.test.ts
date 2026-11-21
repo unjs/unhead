@@ -54,6 +54,9 @@ describe('vue streaming server types', () => {
 
     // @ts-expect-error Check attributes on tags in a getter's returned ref
     head.push(() => ref({ meta: [{ name: 'description', content: 'Docs', invalid: true }] }))
+    const titleWithExtra = { textContent: 'Docs', value: 'unexpected' }
+    // @ts-expect-error A ref implementation key is not a title attribute
+    entry.patch(() => ref({ title: titleWithExtra }))
     // @ts-expect-error Check attributes on a computed singleton tag
     entry.patch({ base: computed(() => ({ href: '/docs/', invalid: true })) })
     const invalidLink = ref({ rel: 'canonical', href: '/docs/', invalid: true } as const)

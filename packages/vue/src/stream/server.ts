@@ -33,7 +33,7 @@ type UnknownTagKeys<Head> = Head extends object
   ? {
       [Key in keyof Head & StreamableTagKey]-?: Exclude<
         KnownObjectKeys<TagValue<Head[Key]>>,
-        ObjectKeys<TagValue<VueStreamableHeadSchema[Key]>>
+        ObjectKeys<Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>>
       >
     }[keyof Head & StreamableTagKey]
   : never
