@@ -64,6 +64,33 @@ describe('vue streaming server types', () => {
     entry.patch({ link: computed((): [typeof canonical, typeof invalidLink] => [canonical, invalidLink]) })
   })
 
+  it('renders valid reactive link variants', async () => {
+    const { head } = createStreamableHead()
+    const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
+    const imagePreload = computed(() => ({
+      rel: ref('preload' as const),
+      as: computed(() => 'image' as const),
+      imagesrcset: '/docs.png 1x',
+    }))
+    const entry = head.push(() => computed(() => ({ link: [canonical, imagePreload] })))
+    entry.patch(() => ref({ link: [canonical, imagePreload] }))
+    const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+    expect(shell).toContain('<link rel="canonical" href="/docs/">')
+    expect(shell).toContain('<link rel="preload" as="image" imagesrcset="/docs.png 1x">')
+  })
+
+  it('rejects attributes from a different link variant', () => {
+    const { head } = createStreamableHead()
+    const entry = head.push({})
+    const canonicalWithPreloadAttrs = ref({ rel: 'canonical', href: '/docs/', as: 'image' } as const)
+    // @ts-expect-error Canonical links cannot use the preload as attribute
+    head.push(() => ref({ link: [canonicalWithPreloadAttrs] }))
+
+    const scriptWithImageAttrs = computed(() => ({ rel: 'preload', as: 'script', href: '/docs.js', imagesrcset: '/docs.png 1x' } as const))
+    // @ts-expect-error A script preload cannot use the image preload imagesrcset attribute
+    entry.patch({ link: computed(() => [scriptWithImageAttrs]) })
+  })
+
   it('renders head entry getters that return refs and computed values', async () => {
     const { head } = createStreamableHead()
     const title = ref({ title: 'Vue Streaming' })

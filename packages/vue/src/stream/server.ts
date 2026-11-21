@@ -27,13 +27,31 @@ type TagValue<Value> = UnwrapTagArray<ResolveHeadValue<Value>>
 type ObjectKeys<Value> = Value extends object ? keyof Value : never
 type KnownObjectKeys<Value> = 0 extends (1 & Value) ? never : ObjectKeys<Value>
 
+// An exact match in any compatible variant takes precedence over extra keys in other variants.
+type TagVariantResult<Tag, Variant> = Variant extends object
+  ? Tag extends Variant
+    ? Exclude<keyof Tag, keyof Variant> extends infer ExtraKeys
+      ? [ExtraKeys] extends [never] ? true : ExtraKeys
+      : never
+    : never
+  : never
+type UnknownVariantKeys<Tag, Variants> = [KnownObjectKeys<Tag>] extends [never]
+  ? never
+  : Tag extends object
+    ? TagVariantResult<Tag, Variants> extends infer Match
+      ? true extends Match ? never : Exclude<Match, true>
+      : never
+    : never
+type UnknownTagAttributes<Tag, Variants>
+  = Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants>> | UnknownVariantKeys<Tag, Variants>
+
 type StreamableTagKey = Exclude<keyof VueStreamableHeadSchema, 'templateParams'>
 // Check tag attributes without descending into attribute values such as JSON or class maps.
 type UnknownTagKeys<Head> = Head extends object
   ? {
-      [Key in keyof Head & StreamableTagKey]-?: Exclude<
-        KnownObjectKeys<TagValue<Head[Key]>>,
-        ObjectKeys<Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>>
+      [Key in keyof Head & StreamableTagKey]-?: UnknownTagAttributes<
+        TagValue<Head[Key]>,
+        Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>
       >
     }[keyof Head & StreamableTagKey]
   : never
