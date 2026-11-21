@@ -378,8 +378,6 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
     const factory = createFrameworkPlugin({ framework: '@unhead/vue', streamingPlugin: { vite: () => [] } as any })
     expect(names(factory({ devtools: false }).vite())).not.toContain(PLUGIN_NAME)
     expect(names(factory({ devtools: false, serverOnlyCrawlerTags: true }).vite())).toContain(PLUGIN_NAME)
-    // webpack plugin instances carry no name: the transform and the runtime plugin when enabled
-    expect(factory({ serverOnlyCrawlerTags: true }).webpack().length).toBe(factory().webpack().length + 2)
   })
 
   it('adds the crawler tag plugin to every client createHead() from unhead/client', async () => {
@@ -403,11 +401,5 @@ createHead({ streamKey: 'custom' })`)).toEqual([{ streamKey: 'custom', plugins: 
   it('keeps the input of a local function that shadows the imported createHead()', async () => {
     expect(await runRuntime(`import { createHead } from 'unhead/client'\nfunction make(createHead) { createHead({ document: 1 }) }\nmake(modules.other.createHead)`))
       .toEqual([{ document: 1 }])
-  })
-
-  it('registers the runtime plugin only with the option on', () => {
-    const names = (plugins: any[]) => plugins.map(p => p.name)
-    expect(names(Unhead({ devtools: false }))).not.toContain('unhead:server-only-crawler-tags-runtime')
-    expect(names(Unhead({ devtools: false, serverOnlyCrawlerTags: true }))).toContain('unhead:server-only-crawler-tags-runtime')
   })
 })

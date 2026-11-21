@@ -44,13 +44,15 @@ async function clientSize(plugins: Plugin[]): Promise<number> {
 }
 
 describe('serverOnlyCrawlerTags bundle size', () => {
-  it('costs the core client nothing with the option off', async () => {
+  it('adds no client bytes unless the runtime filter is enabled', async () => {
     const off = await clientSize(Unhead({ devtools: false }) as Plugin[])
     // The core client never reaches the crawler tag predicates, so stubbing them changes nothing.
     expect(await clientSize([...Unhead({ devtools: false }) as Plugin[], stubCrawlerModule])).toBe(off)
     // Without the plugin the build is the same size.
     expect(await clientSize([])).toBe(off)
-    // With the option on, the client head carries the crawler tag plugin.
-    expect(await clientSize(Unhead({ devtools: false, serverOnlyCrawlerTags: true }) as Plugin[])).toBeGreaterThan(off)
+    expect(await clientSize(Unhead({ devtools: false, serverOnlyCrawlerTags: true }))).toBe(off)
+    expect(await clientSize(Unhead({ devtools: false, serverOnlyCrawlerTags: {} }))).toBe(off)
+    expect(await clientSize(Unhead({ devtools: false, serverOnlyCrawlerTags: { runtime: false } }))).toBe(off)
+    expect(await clientSize(Unhead({ devtools: false, serverOnlyCrawlerTags: { runtime: true } }))).toBeGreaterThan(off)
   }, 60_000)
 })

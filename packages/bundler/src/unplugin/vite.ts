@@ -29,9 +29,10 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     plugins.push(TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
   }
   if (options.serverOnlyCrawlerTags) {
-    const crawlerTagsOpts = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    const { runtime, ...crawlerTagsOpts } = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
     plugins.push(ServerOnlyCrawlerTags.vite({ filter: options.filter, sourcemap: options.sourcemap, ...crawlerTagsOpts }))
-    plugins.push(ServerOnlyCrawlerTagsRuntime.vite({}))
+    if (runtime)
+      plugins.push(ServerOnlyCrawlerTagsRuntime.vite({}))
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}

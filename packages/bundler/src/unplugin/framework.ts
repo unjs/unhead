@@ -68,9 +68,10 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
   }
   if (options.serverOnlyCrawlerTags) {
-    const crawlerTagsOpts = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    const { runtime, ...crawlerTagsOpts } = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
     defs.push({ instance: ServerOnlyCrawlerTags, options: { ...common, ...crawlerTagsOpts } })
-    defs.push({ instance: ServerOnlyCrawlerTagsRuntime, options: {} })
+    if (runtime)
+      defs.push({ instance: ServerOnlyCrawlerTagsRuntime, options: {} })
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}

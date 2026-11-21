@@ -29,9 +29,10 @@ useHead({ bodyAttrs: { class: 'page-b' }, link: [{ rel: 'canonical', href: '/b' 
 } as const
 
 type Page = keyof typeof PAGES
+type CrawlerTagsOption = NonNullable<Parameters<typeof Unhead>[0]>['serverOnlyCrawlerTags']
 
 /** The page sources as a build emits them for `consumer`, with the option on or off. */
-async function build(consumer: 'client' | 'server', serverOnlyCrawlerTags: boolean): Promise<Record<Page, string>> {
+async function build(consumer: 'client' | 'server', serverOnlyCrawlerTags: CrawlerTagsOption): Promise<Record<Page, string>> {
   const plugin = Unhead({ serverOnlyCrawlerTags, devtools: false, validate: false }).vite().find(p => p.name === 'unhead:server-only-crawler-tags') as any
   const out = {} as Record<Page, string>
   for (const page of Object.keys(PAGES) as Page[]) {
@@ -51,7 +52,7 @@ function bindImports(code: string) {
 }
 
 /** The client head as a build creates it: the option wraps `createHead()` from `unhead/client`. */
-async function createBuiltClientHead<T>(serverOnlyCrawlerTags: boolean, options: CreateClientHeadOptions, createHead: (options: CreateClientHeadOptions) => T): Promise<T> {
+async function createBuiltClientHead<T>(serverOnlyCrawlerTags: CrawlerTagsOption, options: CreateClientHeadOptions, createHead: (options: CreateClientHeadOptions) => T): Promise<T> {
   const plugin = Unhead({ serverOnlyCrawlerTags, devtools: false, validate: false }).vite().find(p => p.name === 'unhead:server-only-crawler-tags-runtime') as any
   const res = plugin && await plugin.transform.handler.call({ environment: { config: { consumer: 'client' } } }, CLIENT_ENTRY, 'main.ts')
   const modules = { 'unhead/client': { createHead }, 'unhead/plugins': unheadPlugins }
@@ -92,7 +93,7 @@ function pushRuntimeEntry(head: HeadInstance, page: Page) {
   return head.push({ style: [{ key: 'runtime', textContent: `.runtime{content:"${page}"}` }] })
 }
 
-async function run(serverOnlyCrawlerTags: boolean, runtimeEntry = false) {
+async function run(serverOnlyCrawlerTags: CrawlerTagsOption, runtimeEntry = false) {
   // SSR page A with the server build
   const serverHead = createServerHead({ disableDefaults: true })
   if (runtimeEntry)
@@ -166,7 +167,7 @@ describe('serverOnlyCrawlerTags with Vue SSR and hydration', () => {
   })
 
   it('keeps server crawler tags when a runtime entry pushes its own', async () => {
-    const on = await run(true, true)
+    const on = await run({ runtime: true }, true)
     const crawler = (head: string[]) => head.filter(t => /name="(?:description|twitter:card)"/.test(t))
     expect(crawler(on.server.head)).toEqual([
       '<meta name="description" content="A desc">',
@@ -188,10 +189,16 @@ describe('serverOnlyCrawlerTags with Vue SSR and hydration', () => {
     expect(off.navigated.head).toContain('<meta name="description" content="B desc">')
   })
 
+  it('lets a runtime entry set crawler tags when only static inputs are stripped', async () => {
+    const { hydrated, navigated } = await run(true, true)
+    expect(hydrated.head).toContain('<meta name="description" content="Module default">')
+    expect(navigated.head).toContain('<link rel="canonical" href="/a">')
+  })
+
   it('keeps server crawler tags when a client plugin pushes during setup', async () => {
     const page = document.implementation.createHTMLDocument()
     page.head.innerHTML = '<meta name="description" content="From the server">'
-    const head = await createBuiltClientHead(true, {
+    const head = await createBuiltClientHead({ runtime: true }, {
       document: page,
       plugins: [(head) => {
         head.push({ title: 'Plugin title', meta: [{ name: 'description', content: 'From the plugin' }] })
@@ -208,11 +215,12 @@ describe('serverOnlyCrawlerTags with Vue SSR and hydration', () => {
 })
 
 describe('serverOnlyCrawlerTags with streaming SSR', () => {
-  it.each(['async', 'inline', 'module'] as const)('keeps server crawler tags through the %s bootstrap', (mode) => {
-    const plugins = Unhead({ streaming: { mode }, serverOnlyCrawlerTags: true, devtools: false, validate: false }).vite()
-    const runtime = plugins.find(p => p.name === 'unhead:server-only-crawler-tags-runtime') as any
+  const cases = (['async', 'inline', 'module'] as const).flatMap(mode => [true, false].map(runtime => ({ mode, runtime })))
+  it.each(cases)('replays server tags in $mode mode with runtime=$runtime', ({ mode, runtime }) => {
+    const plugins = Unhead({ streaming: { mode }, serverOnlyCrawlerTags: { runtime }, devtools: false, validate: false }).vite()
+    const filter = plugins.find(p => p.name === 'unhead:server-only-crawler-tags-runtime') as any
     const transform = (source: string) => {
-      const result = runtime.transform.handler.call({ environment: { config: { consumer: 'client' } } }, source, 'entry.ts')
+      const result = filter?.transform.handler.call({ environment: { config: { consumer: 'client' } } }, source, 'entry.ts')
       return bindImports(result?.code ?? source)
     }
     const streamKey = '__unhead__'
@@ -267,13 +275,14 @@ return createStreamableHead()`)) as NonNullable<ReturnType<typeof wrapStreamedHe
 
       const entry = head.push({ title: 'Client title', meta: [{ name: 'description', content: 'Client description' }] })
       useCoreSeoMeta(head, { description: 'Client SEO description', twitterTitle: 'Client Twitter title', themeColor: '#fff' }, { tagPriority: 'critical' })
-      expect(readMeta('description')).toBe('Live description')
-      expect(readMeta('twitter:title')).toBeUndefined()
+      const expectedDescription = runtime ? 'Live description' : 'Client SEO description'
+      expect(readMeta('description')).toBe(expectedDescription)
+      expect(readMeta('twitter:title')).toBe(runtime ? undefined : 'Client Twitter title')
       expect(readMeta('theme-color')).toBe('#fff')
       expect(document.title).toBe('Client title')
 
       entry.dispose()
-      expect(readMeta('description')).toBe('Live description')
+      expect(readMeta('description')).toBe(expectedDescription)
     }
     finally {
       streamWindow[streamKey] = prevQueue

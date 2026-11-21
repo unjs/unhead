@@ -21,7 +21,10 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    *
    * Disabled by default.
    */
-  serverOnlyCrawlerTags?: ServerOnlyCrawlerTagsOptions | boolean
+  serverOnlyCrawlerTags?: boolean | (ServerOnlyCrawlerTagsOptions & {
+    /** Filter crawler tags from client entries at runtime. Disabled by default. */
+    runtime?: boolean
+  })
   minify?: MinifyTransformOptions | false
   /**
    * Transpile static inline scripts to the bundler's browser target.

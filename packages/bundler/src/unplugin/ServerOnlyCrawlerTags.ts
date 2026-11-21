@@ -443,8 +443,7 @@ const PLUGIN_LOCAL = '__unheadServerOnlyCrawlerTags'
  * The plugin covers tags the transform cannot read, such as `head.push()` input.
  *
  * Framework packages call `createHead()` from `unhead/client`, so this reads
- * `node_modules` too. Builds without the option never import the plugin, so
- * the runtime costs them nothing.
+ * `node_modules` too. The bundler only uses this transform with `runtime: true`.
  */
 export const ServerOnlyCrawlerTagsRuntime = createUnplugin<object | undefined, false>((_, meta) => {
   let fallbackConsumer: BuildConsumer | undefined

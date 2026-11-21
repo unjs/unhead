@@ -8,8 +8,7 @@ const CAMEL_CASE_BOUNDARY_RE = /[A-Z]/
  * Removes crawler tags that originate on the client. The DOM renderer still
  * applies crawler tags replayed from the server stream.
  *
- * The `serverOnlyCrawlerTags` bundler option registers it on client heads.
- * Other builds never import it, so it costs them no bytes.
+ * The bundler registers it on client heads with `serverOnlyCrawlerTags: { runtime: true }`.
  */
 export const ServerOnlyCrawlerTagsPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'serverOnlyCrawlerTags',
