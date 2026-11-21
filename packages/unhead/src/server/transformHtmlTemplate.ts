@@ -4,7 +4,7 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
 import { precomputeEntryTags } from './createHead'
 import { capoTagWeight } from './sort'
 
-interface ExtractedTemplateCache {
+export interface ExtractedTemplateCache {
   template: PreparedHtmlTemplateWithIndexes
   tags: HeadTag[]
 }
@@ -44,11 +44,21 @@ function hasHooks(head: Unhead<any>): boolean {
   return false
 }
 
-function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateCache {
-  const cache = extractedTemplates ||= new WeakMap()
+/**
+ * Cached extraction for a `PreparedTemplate`: its head tags lifted out of the
+ * HTML into an entry input. Shared by `transformHtmlTemplate` and streaming
+ * shells so one template pays for extraction once.
+ *
+ * @internal
+ */
+export function extractPreparedTemplate(
+  prepared: PreparedTemplate,
+  cache: WeakMap<PreparedTemplate, ExtractedTemplateCache>,
+  extract: (template: PreparedTemplate) => PreparedHtmlTemplateWithIndexes,
+): ExtractedTemplateCache {
   let extracted = cache.get(prepared)
   if (!extracted) {
-    const template = parseHtmlForUnheadExtraction(prepared)
+    const template = extract(prepared)
     freezeExtractedInput(template.input)
     Object.freeze(template.indexes)
     Object.freeze(template)
@@ -61,6 +71,33 @@ function extractPreparedTemplate(prepared: PreparedTemplate): ExtractedTemplateC
     cache.set(prepared, extracted)
   }
   return extracted
+}
+
+/**
+ * Pushes a template's extracted head tags as entry 0 so app tags dedupe
+ * against them. Shared by `transformHtmlTemplate` and streaming shells.
+ *
+ * @internal
+ */
+export function pushExtractedTemplateEntry(head: Unhead<any>, cached: ExtractedTemplateCache | undefined, template: PreparedHtmlTemplateWithIndexes) {
+  // Entry hooks are allowed to mutate their request's input. Never expose the
+  // cached extraction object or one request can affect every later request
+  // that reuses the same prepared template.
+  const hooked = cached ? hasHooks(head) : false
+  const hasDynamicResolver = cached
+    ? head.resolvedOptions.propResolvers?.some(resolver => !resolver._static) || false
+    : false
+  const input = cached && (hooked || hasDynamicResolver) ? cloneExtractedInput(template.input) : template.input
+  head.push(input, { _index: 0 })
+  const entry = head.entries.get(0)
+  if (entry
+    && cached
+    && !hooked
+    && head.resolvedOptions._tagWeight === capoTagWeight
+    && !hasDynamicResolver) {
+    entry._precomputedTags = cached.tags
+  }
+  return entry
 }
 
 /**
@@ -79,26 +116,10 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
     template = parseHtmlForUnheadExtraction(html, true)
   }
   else {
-    cached = extractPreparedTemplate(html)
+    cached = extractPreparedTemplate(html, extractedTemplates ||= new WeakMap(), parseHtmlForUnheadExtraction)
     template = cached.template
   }
-  // Entry hooks are allowed to mutate their request's input. Never expose the
-  // cached extraction object or one request can affect every later request
-  // that reuses the same prepared template.
-  const hooked = cached ? hasHooks(head) : false
-  const hasDynamicResolver = cached
-    ? head.resolvedOptions.propResolvers?.some(resolver => !resolver._static) || false
-    : false
-  const input = cached && (hooked || hasDynamicResolver) ? cloneExtractedInput(template.input) : template.input
-  head.push(input, { _index: 0 })
-  if (cached
-    && !hooked
-    && head.resolvedOptions._tagWeight === capoTagWeight
-    && !hasDynamicResolver) {
-    const entry = head.entries.get(0)
-    if (entry)
-      entry._precomputedTags = cached.tags
-  }
+  pushExtractedTemplateEntry(head, cached, template)
   return applyHeadToHtml(template, head.render())
 }
 

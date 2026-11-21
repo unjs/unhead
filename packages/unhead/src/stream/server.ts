@@ -1,11 +1,16 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
+import type { ExtractedTemplateCache } from '../server/transformHtmlTemplate'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
-import { createHead } from '../server/createHead'
+import { placeStreamingMetadata } from '../parser/streamingMetadata'
+import { parseHtmlForStreamingExtraction } from '../parser/template'
+import { createHead, renderWithoutDefaultCharset } from '../server/createHead'
+import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
+import { isEmptyProps } from '../utils/resolve'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
 
@@ -16,7 +21,8 @@ const AMP_RE = /&/g
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
-let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
+let preparedStreamingExtractions: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
+let preparedStreamingLayouts: WeakMap<PreparedHtmlTemplateWithIndexes, StreamingTemplateLayout | null> | undefined
 
 /**
  * Base context with just the head instance.
@@ -185,18 +191,16 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
   return result
 }
 
-/**
- * Injects the bootstrap script and full head payload into a whole template.
- * Shared by renderSSRHeadShell and prepareStreamingTemplate's no-split fallback.
- */
-function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
+function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: PreparedHtmlTemplateWithIndexes): string {
+  const bootstrap = createBootstrapScript(getStreamKey(head), head._stream?.nonce)
+  const metadata = parsed.headSlots ? placeStreamingMetadata(parsed.headSlots, ssr.headTags) : undefined
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
-    headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
+    headTags: bootstrap + (metadata?.headTags ?? ssr.headTags),
     bodyAttrs: ssr.bodyAttrs,
     bodyTagsOpen: ssr.bodyTagsOpen,
     bodyTags: ssr.bodyTags,
-  })
+  }, metadata?.inserts)
 }
 
 /**
@@ -485,7 +489,7 @@ function safeJsonStringify(obj: any): string {
  * 4. Writes the closing HTML (with body tags)
  *
  * @param head - The Unhead instance
- * @param stream - The app's ReadableStream (from renderToWebStream, etc.)
+ * @param stream - The app's UTF-8 ReadableStream (from renderToWebStream, etc.)
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
@@ -540,7 +544,7 @@ export function wrapStream(
       const activeReader = stream.getReader()
       let prepared: StreamingTemplateParts
       try {
-        prepared = prepareStreamingTemplate(head, template, preRenderedState)
+        prepared = renderStreamingTemplate(head, template, preRenderedState, false)
       }
       catch (error) {
         activeReader.releaseLock()
@@ -634,7 +638,7 @@ interface StreamingTemplateLayout {
 }
 
 function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const { html, indexes, bodyOutlet } = parsed
+  const { html, indexes, bodyOutlet, headSlots } = parsed
   const { bodyTagEnd, bodyCloseTagStart } = indexes
   if (bodyTagEnd < 0 || bodyCloseTagStart < bodyTagEnd)
     return
@@ -645,13 +649,14 @@ function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes):
       html: html.slice(0, bodyOutlet?.start ?? bodyTagEnd),
       input: parsed.input,
       indexes: { ...indexes, bodyCloseTagStart: -1 },
+      headSlots,
     },
     endBeforeBodyTags: html.slice(bodyOutlet?.end ?? bodyTagEnd, bodyCloseTagStart),
     endAfterBodyTags: html.slice(bodyCloseTagStart),
   }
 }
 
-function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTemplateLayout | undefined {
+function getPreparedStreamingLayout(template: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
   const cache = preparedStreamingLayouts ||= new WeakMap()
   let layout = cache.get(template)
   if (layout === undefined) {
@@ -675,12 +680,16 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
  * splitting at body tag boundaries when no marker is found.
  *
  * This is the recommended way to handle streaming templates as it:
- * - Uses consistent template parsing (same as transformHtmlTemplateRaw)
+ * - Dedupes the template title, description, and charset against the current head
  * - Properly injects head content, html/body attrs, and bootstrap script
  * - Injects body tags (scripts at end of body) into the closing part
  *
+ * For a legacy-encoded response, encode the shell, app content, and closing
+ * HTML with the same charset.
+ *
  * @param head - The Unhead instance
  * @param template - Full HTML template (string or `prepareTemplate()` result)
+ * @param preRenderedState - A rendered payload to insert alongside the template's own tags
  * @returns Object with `shell` (before app) and `end` (after app) parts
  *
  * @example
@@ -696,35 +705,70 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+  return renderStreamingTemplate(head, template, preRenderedState, true)
+}
 
-  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-  const layout = typeof template === 'string'
-    ? createStreamingTemplateLayout(parsed)
-    : getPreparedStreamingLayout(template)
+function renderStreamingTemplate(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState: SSRHeadPayload | undefined,
+  useTemplateCharset: boolean,
+): StreamingTemplateParts {
+  const cached = typeof template !== 'string' && !preRenderedState
+    ? extractPreparedTemplate(template, preparedStreamingExtractions ||= new WeakMap(), parseHtmlForStreamingExtraction)
+    : undefined
+  let parsed = typeof template === 'string'
+    ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForStreamingExtraction(template))
+    : cached?.template ?? template
 
+  const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
+  const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
+  const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
+  // Without hooks, the server renderer cannot skip via ssr:beforeRender.
+  let rendered = !head.hooks
+  const stopTrackingRender = templateEntry
+    ? head.hooks?.hook('ssr:rendered', () => {
+        rendered = true
+      })
+    : undefined
   let parts: StreamingTemplateParts
-  if (layout) {
-    const shell = applyHeadToHtml(layout.shellTemplate, {
-      htmlAttrs: ssr.htmlAttrs,
-      headTags: createBootstrapScript(getStreamKey(head), head._stream?.nonce) + ssr.headTags,
-      bodyAttrs: ssr.bodyAttrs,
-      bodyTagsOpen: ssr.bodyTagsOpen,
-      bodyTags: '',
-    })
-
-    parts = {
-      shell,
-      end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
-      bodyTagsAt: layout.endBeforeBodyTags.length,
+  try {
+    // The byte wrapper writes UTF-8. Manual streaming can use the template's encoding.
+    const ssr = preRenderedState ?? (useTemplateCharset && parsed.hasLegacyCharset
+      ? renderWithoutDefaultCharset(head)
+      : head.render() as SSRHeadPayload)
+    // A skipped render returns an empty payload and cannot replace the extracted markup.
+    if (templateEntry && !rendered && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
+      parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
+    const layout = typeof template === 'string'
+      ? createStreamingTemplateLayout(parsed)
+      : getPreparedStreamingLayout(parsed)
+    if (layout) {
+      const shell = applyShellToTemplate(head, { ...ssr, bodyTags: '' }, layout.shellTemplate)
+      parts = {
+        shell,
+        end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
+        bodyTagsAt: layout.endBeforeBodyTags.length,
+      }
+    }
+    else {
+      parts = {
+        shell: applyShellToTemplate(head, ssr, parsed),
+        end: '',
+      }
     }
   }
-  else {
-    // Can't split, return full template as shell
-    parts = {
-      shell: applyShellToTemplate(head, ssr, parsed),
-      end: '',
+  catch (error) {
+    if (templateEntry && head.entries.get(0) === templateEntry) {
+      if (previousEntry)
+        head.entries.set(0, previousEntry)
+      else
+        head.entries.delete(0)
     }
+    throw error
+  }
+  finally {
+    stopTrackingRender?.()
   }
 
   // Only clear entries once the shell/end parts have been successfully
