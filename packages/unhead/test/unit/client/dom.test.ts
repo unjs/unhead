@@ -1,5 +1,5 @@
 import { renderDOMHead } from '@unhead/dom'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { useHead } from '../../../src'
 import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
@@ -105,36 +105,6 @@ describe('dom', () => {
     expect(document.querySelector('meta[name="description"]')).toBe(el)
     expect(el.getAttribute('content')).toBe('updated')
     expect(reads).toBe(0)
-  })
-
-  it.each(['script', 'style'] as const)('adopts and cleans up a long inline %s', (tag) => {
-    const innerHTML = `/* ${'inline content '.repeat(400)} */`
-    const server = createServerHeadWithContext()
-    server.push({ [tag]: [{ innerHTML }] })
-    const { document, Event } = useDom(server.render()).window
-    const original = document.head.querySelector(tag)!
-    const head = useDOMHead({ document })
-    const onload = vi.fn()
-    const updatedOnload = vi.fn()
-
-    const entry = head.push({ [tag]: [{ 'innerHTML': innerHTML, 'data-active': 'true', onload }] })
-    expect(document.head.querySelectorAll(tag)).toHaveLength(1)
-    expect(document.head.querySelector(tag)).toBe(original)
-    expect(original.hasAttribute('data-hid')).toBe(false)
-    original.dispatchEvent(new Event('load'))
-    expect(onload).toHaveBeenCalledTimes(1)
-
-    entry.patch({ [tag]: [{ innerHTML, onload: updatedOnload }], meta: [{ name: 'new-tag', content: 'forces a scan' }] })
-    expect(document.head.querySelector(tag)).toBe(original)
-    expect(original.hasAttribute('data-active')).toBe(false)
-    original.dispatchEvent(new Event('load'))
-    expect(onload).toHaveBeenCalledTimes(1)
-    expect(updatedOnload).toHaveBeenCalledTimes(1)
-
-    entry.dispose()
-    expect(document.head.querySelector(tag)).toBeNull()
-    original.dispatchEvent(new Event('load'))
-    expect(updatedOnload).toHaveBeenCalledTimes(1)
   })
 
   it('basic', async () => {

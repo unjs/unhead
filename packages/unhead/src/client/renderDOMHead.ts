@@ -6,7 +6,6 @@ import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
 const WHITESPACE_RE = /\s+/
-const COMPACT_ID_MIN_LENGTH = 4096
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -17,11 +16,6 @@ type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => vo
 type DomStateInternal = DomState & {
   _d: Document
   _l: Map<string, DomEventSideEffect>
-  compactIds?: { byElement: WeakMap<Element, string>, nextId: number }
-}
-
-function escapeEffectId(id: string): string {
-  return id?.[0] === '\0' ? `\0${id}` : id
 }
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -133,18 +127,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       renderState._e.set(id, $el)
-      // Keep content-based identity for dedupe and adoption. Cleanup keys can
-      // use a shorter ID to avoid repeating a large body for every effect.
-      let effectId = escapeEffectId(id)
-      if (id?.length >= COMPACT_ID_MIN_LENGTH && (id.startsWith('script:content:') || id.startsWith('style:content:'))) {
-        const ids = renderState.compactIds ||= { byElement: new WeakMap(), nextId: 0 }
-        let compact = ids.byElement.get($el)
-        if (compact === undefined) {
-          compact = `\0${++ids.nextId}`
-          ids.byElement.set($el, compact)
-        }
-        effectId = compact
-      }
       if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -153,7 +135,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (text != null && text !== '') {
           if (text !== $el.textContent)
             $el.textContent = text as string
-          track(`${effectId}:text`, () => {
+          track(`${id}:text`, () => {
             if ($el.textContent === text)
               $el.textContent = ''
           }, true)
@@ -162,12 +144,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (html != null && html !== '') {
           if (html !== $el.innerHTML)
             $el.innerHTML = html as string
-          track(`${effectId}:html`, () => {
+          track(`${id}:html`, () => {
             if ($el.innerHTML === html)
               $el.innerHTML = ''
           }, true)
         }
-        const elKey = `${effectId}:el`
+        const elKey = `${id}:el`
         track(elKey, previous[elKey] || (() => {
           $el?.remove()
           renderState._e.delete(id)
@@ -179,10 +161,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
             (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
-          trackEvent(effectId, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
+          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
           continue
         }
-        const ck = `${effectId}:attr:${k}`
+        const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
@@ -236,7 +218,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
-        const trackedKey = `${renderState.compactIds?.byElement.get($el) ?? escapeEffectId(key)}:el`
+        const trackedKey = `${key}:el`
         if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !$el.isConnected)
           renderState._e.delete(key)
         else

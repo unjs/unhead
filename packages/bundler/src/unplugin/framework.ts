@@ -5,6 +5,7 @@ import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
+import { StaticInlineKeys } from './StaticInlineKeys'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
@@ -143,6 +144,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (options.transformInlineTagKeys)
+          plugins.push(StaticInlineKeys.vite({ filter: options.filter, sourcemap: options.sourcemap, framework }))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
