@@ -92,6 +92,27 @@ describe.each([
     expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Template')
   })
 
+  it.each([false, true])('keeps a removed title absent with unrelated body attributes: %s', async (withBodyAttrs) => {
+    const source = '<html><head><title>Template</title></head><body></body></html>'
+    const makeHead = () => {
+      const { head } = createStreamableHead({ disableDefaults: true })
+      head.push({ titleTemplate: () => null, ...(withBodyAttrs ? { bodyAttrs: { class: 'app' } } : {}) })
+      return head
+    }
+
+    const { shell, end } = prepareStreamingTemplate(makeHead(), template(source))
+    const streamed = await new Response(wrapStream(makeHead(), new ReadableStream<Uint8Array>({
+      start(controller) { controller.close() },
+    }), template(source))).text()
+
+    for (const html of [shell + end, streamed]) {
+      const { window } = new JSDOM(html)
+      expect(window.document.head.querySelector('title')?.textContent ?? null).toBeNull()
+      expect(window.document.body.className).toBe(withBodyAttrs ? 'app' : '')
+      window.close()
+    }
+  })
+
   it('retains static metadata when an SSR hook skips rendering', () => {
     let renders = 0
     const { head } = createStreamableHead({

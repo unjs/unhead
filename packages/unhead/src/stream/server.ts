@@ -724,6 +724,12 @@ function renderStreamingTemplate(
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
   const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
   const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
+  let rendered = false
+  const stopTrackingRender = templateEntry
+    ? head.hooks?.hook('ssr:rendered', () => {
+        rendered = true
+      })
+    : undefined
   let parts: StreamingTemplateParts
   try {
     // The byte wrapper writes UTF-8. Manual streaming can use the template's encoding.
@@ -731,7 +737,7 @@ function renderStreamingTemplate(
       ? renderWithoutDefaultCharset(head)
       : head.render() as SSRHeadPayload)
     // A skipped render returns an empty payload and cannot replace the extracted markup.
-    if (templateEntry && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
+    if (templateEntry && !rendered && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
       parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
     const layout = typeof template === 'string'
       ? createStreamingTemplateLayout(parsed)
@@ -759,6 +765,9 @@ function renderStreamingTemplate(
         head.entries.delete(0)
     }
     throw error
+  }
+  finally {
+    stopTrackingRender?.()
   }
 
   // Only clear entries once the shell/end parts have been successfully
