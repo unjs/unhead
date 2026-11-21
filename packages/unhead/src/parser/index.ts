@@ -413,19 +413,31 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
 
       if (mode === 'stream') {
         const kind = streamingMetadataKind(node)
-        if (!kind || (kind === 'title' && !endTag))
+        if (!kind)
           continue
+        const offset = startTag.startOffset - removed
+        const firstSlot = !headSlots?.some(slot => slot.kind === kind)
         if (kind === 'title') {
-          const title = node.childNodes.find(defaultTreeAdapter.isTextNode)?.value
+          if (!endTag)
+            continue
+          const text = node.childNodes.find(defaultTreeAdapter.isTextNode)?.value
+          const title = text ? trimHtmlWhitespace(text) : ''
           if (title)
-            input.title ||= trimHtmlWhitespace(title) || undefined
+            input.title ||= title
+          if (firstSlot) {
+            (headSlots ||= []).push(Object.freeze({
+              kind,
+              offset,
+              openTag: node.attrs.length ? html.slice(startTag.startOffset, startTag.endOffset) : undefined,
+              emptyMarkup: title ? undefined : html.slice(startTag.startOffset, endTag.endOffset),
+            }))
+          }
         }
         else {
           (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
+          if (firstSlot)
+            (headSlots ||= []).push(Object.freeze({ kind, offset }))
         }
-        // Replace the first occurrence in place so later template scripts can read it.
-        if (!headSlots?.some(slot => slot.kind === kind))
-          (headSlots ||= []).push(Object.freeze({ kind, offset: startTag.startOffset - removed }))
         replace(startTag.startOffset, (endTag ?? startTag).endOffset)
         continue
       }

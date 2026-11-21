@@ -190,7 +190,7 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
 
 function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: PreparedHtmlTemplateWithIndexes): string {
   const bootstrap = createBootstrapScript(getStreamKey(head), head._stream?.nonce)
-  const metadata = parsed.headSlots && ssr.headTags ? placeStreamingMetadata(parsed.headSlots, ssr.headTags) : undefined
+  const metadata = parsed.headSlots ? placeStreamingMetadata(parsed.headSlots, ssr.headTags) : undefined
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
     headTags: bootstrap + (metadata?.headTags ?? ssr.headTags),

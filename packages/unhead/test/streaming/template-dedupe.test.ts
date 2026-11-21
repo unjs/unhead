@@ -39,10 +39,10 @@ describe.each([
         { name: 'description', content: 'App' },
       ],
     })
-    const source = templateWithTags.replace('<title>', '<meta name="app-config" content="ready"><title>').replace('</head>', `<script>
+    const source = templateWithTags.replace('<title>', '<meta name="app-config" content="ready"><title id="boot-title">').replace('</head>', `<script>
       document.documentElement.dataset.seen = [
         document.querySelector('meta[name=app-config]')?.content,
-        document.title,
+        document.getElementById('boot-title')?.textContent,
         document.querySelector('meta[name=description]')?.content,
       ].join(',')
     </script></head>`)
@@ -67,6 +67,18 @@ describe.each([
     expect(document.documentElement.lang).toBe('fr')
     expect(document.body.className).toBe('loaded')
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+  })
+
+  it('retains an empty template title when the app only supplies a description', () => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    head.push({ meta: [{ name: 'description', content: 'App' }] })
+    const source = '<html><head><title id="boot-title"></title></head><body></body></html>'
+
+    const { shell } = prepareStreamingTemplate(head, template(source))
+    const { document } = new JSDOM(shell).window
+
+    expect(document.head.querySelector('title#boot-title')?.textContent).toBe('')
+    expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('App')
   })
 
   it('retains static metadata when the template omits the head end tag', () => {
