@@ -9,6 +9,7 @@ const scanTimeout = 2000
 
 export function FeatureInventory(): Plugin {
   let root: string
+  let canInspectHtml: boolean
   let roots: string[]
   let coreDirectories: Set<string>
   let parsed: Map<string, string[]>
@@ -45,6 +46,8 @@ export function FeatureInventory(): Plugin {
     },
     configResolved(config) {
       root = config.root
+      // HTML hooks can insert executable tags after the module graph is linked.
+      canInspectHtml = !config.plugins.some(plugin => plugin.transformIndexHtml)
     },
     async buildStart(options) {
       roots = []
@@ -101,6 +104,7 @@ export function FeatureInventory(): Plugin {
       const evidence = selected = complete
         ? await collectFeatureEvidence({
             root,
+            canInspectHtml,
             coreDirectories,
             getModule: id => this.getModuleInfo(id),
             resolveImport: async (id, importer) => {
@@ -125,6 +129,7 @@ export function FeatureInventory(): Plugin {
         }
         const final = await collectFeatureEvidence({
           root,
+          canInspectHtml,
           coreDirectories,
           getModule: id => this.getModuleInfo(id),
           resolveImport: async (id, importer) => {

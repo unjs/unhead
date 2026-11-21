@@ -35,6 +35,7 @@ export interface FeatureModule {
 
 interface FeatureGraph {
   root: string
+  canInspectHtml: boolean
   coreDirectories: ReadonlySet<string>
   getModule: (id: string) => FeatureModule | null
   resolveImport: (specifier: string, importer: string) => Promise<string | undefined>
@@ -147,7 +148,7 @@ export async function collectFeatureEvidence(graph: FeatureGraph, roots: readonl
     const module = graph.getModule(id)
     if (!isProjectModule(graph.root, id) || !module?.code)
       return fail(id, 'Unmodeled module')
-    if (id.endsWith('.html') && !await inspectHtml(graph, id, module))
+    if (id.endsWith('.html') && (!graph.canInspectHtml || !await inspectHtml(graph, id, module)))
       return fail(id, 'Unmodeled HTML entry')
 
     active.add(id)

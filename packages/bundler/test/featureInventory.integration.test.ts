@@ -1,6 +1,6 @@
 import type { ClientUnhead } from 'unhead/client'
 import { Buffer } from 'node:buffer'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -145,6 +145,23 @@ configure(head)
     expect(document.body.dataset.resized).toBe('yes')
   })
 
+  it('keeps runtime support when an HTML plugin can inject code after linking', async () => {
+    const { root, config } = await fixture(app)
+    const html = join(root, 'index.html')
+    await writeFile(html, '<!DOCTYPE html><script type="module" src="./entry.js"></script>')
+    const info = vi.fn()
+    await build({
+      ...config,
+      customLogger: { ...createLogger('silent'), info },
+      build: { ...config.build, rollupOptions: { ...config.build.rollupOptions, input: html } },
+      plugins: [...config.plugins, {
+        name: 'external-html-script',
+        transformIndexHtml: () => [{ tag: 'script', attrs: { src: 'https://other.example/injected.js' } }],
+      }],
+    })
+    expect(info.mock.calls.map(call => String(call[0])).find(message => message.includes('Unhead features'))).toContain('domEvents=unknown, titleTemplate=unknown')
+  })
+
   it('stops before emitting output if a late entry changes the inventory', async () => {
     const { root, config } = await fixture('import \'./head.js\'')
     await writeFile(join(root, 'head.js'), appWithHead)
@@ -163,10 +180,12 @@ configure(head)
   })
 
   it('retains runtime support across a watch rebuild', async () => {
-    const { entry, config, run } = await fixture(appWithHead)
+    const { root, entry, config, run } = await fixture(app)
+    const full = await clientBytes({ ...config, plugins: [] })
+    const entryBundle = join(root, 'out', 'entry.mjs')
     const watcher = await build({
       ...config,
-      build: { ...config.build, watch: {}, rollupOptions: { ...config.build.rollupOptions, preserveEntrySignatures: 'strict' } },
+      build: { ...config.build, watch: {} },
     })
     if (Array.isArray(watcher) || !('on' in watcher))
       throw new Error('Expected a Vite watcher')
@@ -180,29 +199,27 @@ configure(head)
     })
     try {
       await waitForBundle()
-      const previous = await run('?watch=1')
-      const probe = previous.push({ titleTemplate: '%s | Watch' })
-      expect(document.title).toBe('Page | Watch')
-      probe.dispose()
+      expect((await stat(entryBundle)).size).toBe(full)
+      await run('?watch=1')
+      expect(document.title).toBe('Page')
 
       const rebuilt = waitForBundle()
-      await writeFile(entry, `${appWithHead}\nhead.push({ title: 'Rebuilt', titleTemplate: '%s | Next' })`)
+      await writeFile(entry, `${app}
+head.push({ title: 'Rebuilt', titleTemplate: '%s | Next', bodyAttrs: {
+  onresize: () => { document.body.dataset.resized = 'yes' },
+} })`)
       await rebuilt
-      const next = await run('?watch=2')
-      const onresize = vi.fn()
-      const listener = next.push({ bodyAttrs: { onresize } })
+      await run('?watch=2')
       expect(document.title).toBe('Rebuilt | Next')
       window.dispatchEvent(new Event('resize'))
-      expect(onresize).toHaveBeenCalledOnce()
-      listener.dispose()
+      expect(document.body.dataset.resized).toBe('yes')
 
       const removed = waitForBundle()
-      await writeFile(entry, appWithHead)
+      await writeFile(entry, app)
       await removed
-      const final = await run('?watch=3')
-      const template = final.push({ titleTemplate: '%s | Still available' })
-      expect(document.title).toBe('Page | Still available')
-      template.dispose()
+      expect((await stat(entryBundle)).size).toBe(full)
+      await run('?watch=3')
+      expect(document.title).toBe('Page')
     }
     finally {
       await watcher.close()
