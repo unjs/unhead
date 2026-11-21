@@ -12,8 +12,11 @@ type DomEventHandler = (this: Element, e: Event) => any
 // [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
 // The event type needs no slot: the key holds the prop name it comes from.
 type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => void]
+type StyleDeclarations = ReadonlyMap<string, string>
+type StyleCleanup = (next?: StyleDeclarations) => void
 
 type DomStateInternal = DomState & {
+  _a: WeakSet<Element>
   _d: Document
   _l: Map<string, DomEventSideEffect>
 }
@@ -36,22 +39,74 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
   return false
 }
 
+function removeStyles(style: CSSStyleDeclaration, keys: Iterable<string>, next?: StyleDeclarations) {
+  for (const key of keys) {
+    if (!next?.has(key))
+      style.removeProperty(key)
+  }
+}
+
+function isStaticValue(value: unknown) {
+  return value === null || (typeof value !== 'object' && typeof value !== 'function')
+}
+
+function staticRootProps(input: Record<string, unknown>) {
+  const props: Record<string, unknown> = Object.create(null)
+  for (const [key, value] of Object.entries(input)) {
+    if (isStaticValue(value)) {
+      props[key] = value
+    }
+    else if (key === 'class' || key === 'style') {
+      if (Array.isArray(value))
+        props[key] = value.filter(item => typeof item === 'string')
+      else if (value && typeof value === 'object')
+        props[key] = Object.fromEntries(Object.entries(value).filter(([, item]) => isStaticValue(item)))
+    }
+  }
+  return props
+}
+
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
-  // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
-  // when the same head is rendered into another pre-rendered document.
-  for (const entry of head.entries.values()) {
-    for (const t of ['bodyAttrs', 'htmlAttrs'] as const) {
-      // the pushed input can be null, as a computed input can resolve to
-      const cls = (entry._o as Record<string, any> | null | undefined)?.[t]?.class
-      if (typeof cls === 'string') {
-        const $el = state._e.get(t)!
-        for (const c of cls.split(WHITESPACE_RE)) {
-          if (c)
-            state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
+  const state: DomStateInternal = { _a: new WeakSet(), _d: dom, _t: dom.title, _e: new Map(), _p: {}, _s: {}, _l: new Map() }
+  for (const [tag, el] of [['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]] as const) {
+    if (!el)
+      continue
+    state._e.set(tag, el)
+    const styleKeys = new Set<string>()
+    // A raw entry can contain callbacks or attributes that useHeadSafe rejects.
+    for (const entry of head.entries.values()) {
+      const original = (entry._o as Record<string, any> | undefined)?.[tag]
+      if (!original || typeof original !== 'object')
+        continue
+      const baseline = entry.options?._safe ? { class: original.class } : original
+      const { props } = normalizeProps({ tag, props: {} }, staticRootProps(baseline))
+      for (const key in props) {
+        const cleanupKey = `${tag}:attr:${key}`
+        if (key === 'class') {
+          const classes = props[key] as unknown
+          if (!(classes instanceof Set))
+            continue
+          for (const value of classes) {
+            for (const name of value.split(WHITESPACE_RE)) {
+              if (name)
+                state._p[`${cleanupKey}:${name}`] = () => el.classList.remove(name)
+            }
+          }
+        }
+        else if (key === 'style') {
+          const declarations = props[key] as unknown
+          if (declarations instanceof Map) {
+            for (const name of declarations.keys())
+              styleKeys.add(name)
+          }
+        }
+        else if (el.hasAttribute(key)) {
+          state._p[cleanupKey] = () => el.removeAttribute(key)
         }
       }
     }
+    if (styleKeys.size && el.hasAttribute('style'))
+      state._p[`${tag}:attr:style`] = (next?: StyleDeclarations) => removeStyles(el.style, styleKeys, next)
   }
   return state
 }
@@ -91,13 +146,30 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     state._s = {}
     const renderState = state
     const previous = renderState._p
-
     function track(key: string, fn: () => void, fresh?: boolean) {
       // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
       // closure, so this avoids reallocating ~one closure per tracked prop every frame. `fresh` opts
       // out for content closures, which capture a value that can change between renders.
       renderState._s[key] = (!fresh && previous[key]) || fn
       delete previous[key]
+    }
+
+    function seedAttrCleanups(id: string, $el: Element) {
+      for (const k of $el.getAttributeNames()) {
+        const ck = `${id}:attr:${k}`
+        if (k === 'class') {
+          for (const c of $el.classList)
+            previous[`${ck}:${c}`] = () => $el.classList.remove(c)
+        }
+        if (k === 'style') {
+          const style = ($el as HTMLElement).style
+          const keys = Array.from({ length: style.length }, (_, i) => style.item(i))
+          previous[ck] = (next?: StyleDeclarations) => next ? removeStyles(style, keys, next) : $el.removeAttribute(k)
+        }
+        else {
+          previous[ck] = () => $el.removeAttribute(k)
+        }
+      }
     }
 
     function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
@@ -127,6 +199,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       renderState._e.set(id, $el)
+      const adopted = renderState._a.delete($el)
+      if (adopted)
+        seedAttrCleanups(id, $el)
       if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -149,6 +224,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               $el.innerHTML = ''
           }, true)
         }
+        if (adopted && (text == null || text === '') && (html == null || html === '') && $el.textContent)
+          renderState._p[`${id}:text`] ||= () => { $el.textContent = '' }
         const elKey = `${id}:el`
         track(elKey, previous[elKey] || (() => {
           $el?.remove()
@@ -166,6 +243,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
+          delete renderState._p[ck]
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
             track(key, previous[key] || (() => $el.classList.remove(c)))
@@ -174,11 +252,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           }
         }
         else if (k === 'style' && v) {
-          for (const [sk, sv] of v as Iterable<[string, string]>) {
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
-          }
+          const style = ($el as HTMLElement).style
+          const declarations = v as unknown as StyleDeclarations
+          // Removing a shorthand can clear a longhand the next render still needs.
+          const cleanup = previous[ck] as StyleCleanup | undefined
+          cleanup?.(declarations)
+          for (const [sk, sv] of declarations)
+            style.setProperty(sk, sv)
+          const keys = [...declarations.keys()]
+          track(ck, (next?: StyleDeclarations) => removeStyles(style, keys, next), true)
         }
         else if (v !== false as any && v !== null) {
           if ($el.getAttribute(k) !== v as any)
@@ -208,6 +290,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         continue
       }
       ctx.$el = renderState._e.get(id)
+      // Unclaimed scan candidates must still belong to this document before adoption.
+      if (ctx.$el && renderState._a.has(ctx.$el) && !dom.contains(ctx.$el)) {
+        renderState._e.delete(id)
+        ctx.$el = undefined
+      }
       if (ctx.$el)
         trackCtx(ctx as DomRenderTagContext & { $el: Element })
       else if (HasElementTags.has(tag.tag))
@@ -219,12 +306,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
         const trackedKey = `${key}:el`
-        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !$el.isConnected)
+        if (renderState._s[trackedKey] === undefined && previous[trackedKey] === undefined && !dom.contains($el))
           renderState._e.delete(key)
         else
           tracked.add($el)
       }
-      for (const el of [...dom.body.children, ...dom.head.children]) {
+      for (const el of [...(dom.body?.children || []), ...dom.head.children]) {
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
           continue
@@ -239,6 +326,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         while (renderState._e.has(k))
           k = `${dedupe}:${c++}`
         renderState._e.set(k, el)
+        renderState._a.add(el)
       }
     }
     for (const ctx of pending) {
@@ -250,10 +338,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     if (frag.head)
       dom.head.appendChild(frag.head)
-    if (frag.bodyOpen)
-      dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
-    if (frag.bodyClose)
-      dom.body.appendChild(frag.bodyClose)
+    // body-position tags need a <body>; on a body-less document they are dropped
+    if (dom.body) {
+      if (frag.bodyOpen)
+        dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
+      if (frag.bodyClose)
+        dom.body.appendChild(frag.bodyClose)
+    }
     for (const k in previous)
       previous[k]()
     head._dom = renderState
