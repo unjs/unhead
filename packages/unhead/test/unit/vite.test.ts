@@ -8,7 +8,7 @@ describe('htmlTagsToHead', () => {
     const head = createHead({ disableDefaults: true, omitLineBreaks: true })
     head.push(htmlTagsToHead([
       { tag: 'style', children: 'body { color: red }', injectTo: 'head' },
-      { tag: 'style', children: 'body { color: blue }' },
+      { tag: 'style', children: 'body { color: blue }', injectTo: 'head-prepend' },
       { tag: 'script', attrs: { src: '/start.js', async: true, defer: false }, injectTo: 'body-prepend' },
       { tag: 'script', children: 'start()', injectTo: 'body' },
     ]))
@@ -36,6 +36,40 @@ describe('htmlTagsToHead', () => {
     ]))
 
     expect(renderSSRHead(head).headTags).toBe('<base href="/prepend/" target="_blank">')
+  })
+
+  it.each([false, true])('rejects a module and nomodule pair with identical inline source (reversed: %s)', (reversed) => {
+    const tags = [
+      { tag: 'script', attrs: { type: 'MODULE' }, children: 'start()' },
+      { tag: 'script', attrs: { noModule: '' }, children: 'start()' },
+    ]
+
+    expect(() => htmlTagsToHead(reversed ? tags.toReversed() : tags)).toThrow(TypeError)
+  })
+
+  it('rejects a module and nomodule pair with the same explicit identity', () => {
+    expect(() => htmlTagsToHead([
+      { tag: 'script', attrs: { id: 'boot', type: 'module', src: '/modern.js' } },
+      { tag: 'script', attrs: { id: 'boot', nomodule: true, src: '/legacy.js' } },
+    ])).toThrow(TypeError)
+  })
+
+  it('renders a module and nomodule pair with distinct IDs', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push(htmlTagsToHead([
+      { tag: 'script', attrs: { id: 'modern', type: 'module' }, children: 'start()' },
+      { tag: 'script', attrs: { id: 'legacy', nomodule: true }, children: 'start()' },
+    ]))
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<script id="modern" type="module">start()</script>')
+    expect(headTags).toContain('<script id="legacy" nomodule>start()</script>')
+  })
+
+  it.each(['footer', null])('rejects unsupported manifest placement %j', (injectTo) => {
+    const descriptor = { tag: 'script', attrs: { src: '/entry.js' }, injectTo: injectTo as HtmlTagDescriptor['injectTo'] }
+
+    expect(() => htmlTagsToHead([descriptor])).toThrow(TypeError)
   })
 
   it.each([

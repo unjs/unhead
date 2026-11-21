@@ -1,6 +1,7 @@
 import type { HtmlTagDescriptor } from 'vite'
 import type { SerializableHead } from '../types'
 import { HasElementTags, SelfClosingTags, TagConfigKeys } from '../utils/const'
+import { dedupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 import { isUnsafeKey } from '../utils/unsafeKey'
 
@@ -60,10 +61,37 @@ function convertTag(tag: DescriptorTag, descriptor: HtmlTagDescriptor): TagInput
       break
     case 'head':
       break
-    default:
+    case 'head-prepend':
+    case undefined:
       input.tagPriority = 'high'
+      break
+    default:
+      unsupported(tag, 'an unsupported injectTo value')
   }
   return input
+}
+
+function rejectScriptCollisions(scripts: TagInput[]) {
+  let scriptKinds: Map<string, 'module' | 'nomodule'> | undefined
+  for (const input of scripts) {
+    if (!input.innerHTML && input.id === undefined && input.charset === undefined)
+      continue
+
+    const isModule = typeof input.type === 'string' && input.type.toLowerCase() === 'module'
+    const kind = isModule ? 'module' : input.nomodule !== undefined ? 'nomodule' : undefined
+    if (!kind)
+      continue
+
+    const key = dedupeKey(normalizeProps({ tag: 'script', props: {} }, input))
+    if (!key)
+      continue
+
+    const kinds = scriptKinds ||= new Map()
+    const previous = kinds.get(key)
+    if (previous && previous !== kind)
+      unsupported('script', 'a module and nomodule deduplication collision')
+    kinds.set(key, kind)
+  }
 }
 
 /**
@@ -88,6 +116,9 @@ export function htmlTagsToHead(tags: readonly HtmlTagDescriptor[]): Serializable
       (head[tag] ||= []).push(input)
     }
   }
+
+  if (head.script && head.script.length > 1)
+    rejectScriptCollisions(head.script)
 
   base.sort((a, b) => Number(b.tagPriority === 'high') - Number(a.tagPriority === 'high'))
   for (const input of base) {
