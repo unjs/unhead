@@ -95,7 +95,7 @@ describe('the patch a bare wrapStream emits', () => {
 
   it('applies every declaration in a streamed mixed style array', async () => {
     const { document } = await serveAndRun({
-      bodyAttrs: { style: ['color:red; font-size:18px; --label:"a;b"', { opacity: 0 }] },
+      bodyAttrs: { style: ['color:red; /* comment; */ font-size:18px; --label:"a;b"', { opacity: 0 }] },
     })
     expect(document.body.style.color).toBe('red')
     expect(document.body.style.fontSize).toBe('18px')

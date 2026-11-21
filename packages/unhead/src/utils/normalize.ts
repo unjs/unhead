@@ -5,7 +5,6 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
-const CSS_DELIMITER_RE = /\/\*[\s\S]*?\*\/|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|[()[\]{};]/g
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -22,19 +21,40 @@ function normalizeStyleClassProps(
     if (typeof item === 'string') {
       if (isStyle) {
         let start = 0
-        if (item.includes(';')) {
-          let depth = 0
-          for (const { 0: token, index } of item.matchAll(CSS_DELIMITER_RE)) {
-            if (token === ';' && !depth) {
-              addRule(item.slice(start, index))
-              start = index + 1
-            }
-            else if ('([{'.includes(token)) {
-              depth++
-            }
-            else if (depth && ')]}'.includes(token)) {
-              depth--
-            }
+        let depth = 0
+        let quote = ''
+        for (let index = 0; index < item.length; index++) {
+          const ch = item[index]
+          if (ch === '\\') {
+            index++
+          }
+          else if (quote) {
+            if (ch === quote)
+              quote = ''
+          }
+          else if (ch === '"' || ch === '\'') {
+            quote = ch
+          }
+          else if (ch === '/' && item[index + 1] === '*') {
+            const end = item.indexOf('*/', index + 2)
+            if (end < 0)
+              break
+            if (index === start)
+              start = end + 2
+            index = end + 1
+          }
+          else if (ch === ';' && !depth) {
+            addRule(item.slice(start, index))
+            start = index + 1
+          }
+          else if ('([{'.includes(ch)) {
+            depth++
+          }
+          else if (depth && ')]}'.includes(ch)) {
+            depth--
+          }
+          else if (index === start && !ch.trim()) {
+            start++
           }
         }
         addRule(item.slice(start))
