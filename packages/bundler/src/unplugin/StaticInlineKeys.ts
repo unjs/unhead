@@ -2,6 +2,8 @@ import type { CallExpression, Expression, ObjectExpression, ObjectProperty } fro
 import type { ResolvedConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import { createHash } from 'node:crypto'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, ScopeTrackerVariable, walk } from 'oxc-walker'
 import { dedupeKey, normalizeProps } from 'unhead/utils'
@@ -66,7 +68,7 @@ function inlineBody(tag: ObjectExpression, name: 'script' | 'style' | 'noscript'
   const fields = new Map<string, Expression>()
   for (const field of tag.properties) {
     const prop = field.type === 'Property' ? propertyName(field) : undefined
-    if (prop === undefined || fields.has(prop) || field.type !== 'Property')
+    if (prop === undefined || prop === '__proto__' || fields.has(prop) || field.type !== 'Property')
       return
     fields.set(prop, field.value)
   }
@@ -106,16 +108,35 @@ function packageName(pathname: string): string | undefined {
   return pathname.replaceAll('\\', '/').split('/node_modules/').at(-1)?.match(PACKAGE_NAME_RE)?.[0]
 }
 
+function nearestPackageName(dir: string, cache: Map<string, string | undefined>): string | undefined {
+  if (cache.has(dir))
+    return cache.get(dir)
+  const manifest = join(dir, 'package.json')
+  const parent = dirname(dir)
+  const name: unknown = existsSync(manifest)
+    ? JSON.parse(readFileSync(manifest, 'utf8')).name
+    : dir === parent ? undefined : nearestPackageName(parent, cache)
+  const result = typeof name === 'string' ? name : undefined
+  cache.set(dir, result)
+  return result
+}
+
+function isExternalDependency(environment: ResolvedConfig['environments'][string], name: string) {
+  const { external } = environment.resolve
+  return external === true || external?.some(id => id === name || id.startsWith(`${name}/`))
+}
+
 function bundlesDependency(environment: ResolvedConfig['environments'][string], name: string) {
-  const { external, noExternal } = environment.resolve
-  if (external === true || external?.some(id => id === name || id.startsWith(`${name}/`)))
+  if (isExternalDependency(environment, name))
     return false
+  const { noExternal } = environment.resolve
   return noExternal === true || (Array.isArray(noExternal) && noExternal.some(rule =>
     typeof rule === 'string' ? rule === name : name.match(rule) !== null))
 }
 
 export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((options) => {
   let serverEnvironments: ResolvedConfig['environments'][string][] = []
+  const packageNames = new Map<string, string | undefined>()
   return {
     name: 'unhead:static-inline-keys',
     enforce: 'post',
@@ -144,6 +165,12 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
           if (!name || !serverEnvironments.length || !serverEnvironments.every(env => bundlesDependency(env, name)))
             return
         }
+        else if (serverEnvironments.some(env => env.resolve.external === true || env.resolve.external?.length)) {
+          // Linked workspace packages may resolve outside node_modules.
+          const name = nearestPackageName(dirname(pathname), packageNames)
+          if (name && serverEnvironments.some(env => isExternalDependency(env, name)))
+            return
+        }
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         let parsed: ReturnType<typeof parseAndWalkSource>
@@ -160,8 +187,9 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
         const s = new MagicString(code)
         walk(parsed.program, {
           scopeTracker,
-          enter(node) {
-            if (node.type !== 'CallExpression')
+          enter(node, parent) {
+            // A caller can patch a returned entry with a new input.
+            if (node.type !== 'CallExpression' || parent?.type !== 'ExpressionStatement')
               return
             const index = headInputIndex(node.callee, scopeTracker, !dependency && options.framework === '@unhead/vue' && isVueScript)
             // Entry options can override the normalized tag identity.
@@ -195,7 +223,8 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
                   s.appendLeft(tag.start + 1, key)
                 }
                 else {
-                  s.prependRight(tag.start, `{${key}innerHTML:`)
+                  const shorthand = property.shorthand ? `${name}:` : ''
+                  s.prependRight(tag.start, `${shorthand}{${key}innerHTML:`)
                   s.appendLeft(tag.end, '}')
                 }
               }

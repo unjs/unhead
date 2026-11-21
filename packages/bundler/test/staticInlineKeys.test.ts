@@ -11,10 +11,13 @@ import { runTransform } from './utils'
 const js = `globalThis.visits++; /*${'static code '.repeat(350)}*/`
 const css = `.page { display: grid; } /*${'static style '.repeat(350)}*/`
 
-async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean }) {
-  const id = dependency
-    ? '/app/node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js'
-    : '/app/App.vue?vue&type=script&setup=true&lang.ts'
+async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean, linked?: boolean }) {
+  const packageName = dependency?.linked ? '@unhead/bundler' : '@acme/head'
+  const id = dependency?.linked
+    ? new URL('./linked-fixture.js', import.meta.url).pathname
+    : dependency
+      ? '/app/node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js'
+      : '/app/App.vue?vue&type=script&setup=true&lang.ts'
   for (const plugin of Unhead({
     transformInlineTagKeys: enabled,
     transformInlineScripts: false,
@@ -26,8 +29,8 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
         configFile: false,
         plugins: [plugin],
         ssr: {
-          noExternal: dependency.bundled ? ['@acme/head'] : [],
-          external: dependency.external ? ['@acme/head'] : [],
+          noExternal: dependency.bundled ? [packageName] : [],
+          external: dependency.external ? [packageName] : [],
         },
       }, 'build')
     }
@@ -109,5 +112,27 @@ describe('static inline keys', () => {
     const output = await render(code, true)
     expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
     expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+  })
+
+  it('keys an inline string passed as a shorthand property', async () => {
+    const code = `const style = ${JSON.stringify(css)}; useHead({ style })`
+
+    const output = await render(code, true)
+    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+  })
+
+  it('preserves entries that may be patched and tags with inherited IDs', async () => {
+    const code = `const entry = useHead({ script: [${JSON.stringify(js)}] })
+    useHead({ style: [{ __proto__: { id: 'theme' }, innerHTML: ${JSON.stringify(css)} }] })`
+
+    expect(await render(code, true)).toBe(await render(code))
+  })
+
+  it('preserves linked modules explicitly externalized in SSR', async () => {
+    const code = `import { useHead } from 'nuxt/app'
+    useHead({ script: [${JSON.stringify(js)}] })`
+
+    expect(await render(code, true, {}, undefined, { bundled: false, external: true, linked: true })).toBe(await render(code))
   })
 })
