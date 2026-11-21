@@ -8,6 +8,7 @@ import { tagWeight } from '../client/tagWeight'
 import { attachStreamHead } from '../stream/queue'
 import { createUnhead } from '../unhead'
 import { createHooks } from '../utils/hooks'
+import { copyInput } from './same'
 
 function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue: HeadQueue<T>) {
   const live = head.entries
@@ -98,6 +99,7 @@ export async function activate<T>(
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
   const head = createClientHeadAdapter(core, createHooks(options.hooks), head => render(head))
   head._b = true
+  const hydrated = new Map<number, HeadEntry<T>>()
   // Apply one hydration policy to replayed entries and entries registered after load.
   function preserveHydrationOrder(active: ActiveHeadEntry<T>) {
     const live = head.entries.get(active._i)
@@ -113,7 +115,19 @@ export async function activate<T>(
   }
   const clientPush = head.push
   head.push = (input, entryOptions) => {
+    // Keep SSR ownership until adoption, even if navigation removes the live entry.
+    const baseline = queue.hydrating && !options.render && !head._dom && (entryOptions?._index ?? 0) >= 0
+      ? { input: copyInput(input) }
+      : undefined
     const active = clientPush(input, entryOptions)
+    if (baseline) {
+      hydrated.set(active._i, {
+        _i: active._i,
+        input: baseline.input,
+        _o: baseline.input,
+        options: head.entries.get(active._i)?.options,
+      })
+    }
     if (queue.hydrating)
       preserveHydrationOrder(active)
     return active
@@ -125,7 +139,6 @@ export async function activate<T>(
     configurable: true,
   })
 
-  const hydrated: HeadEntry<T>[] = []
   try {
     for (const plugin of options.plugins ?? [])
       head.use(plugin)
@@ -144,7 +157,7 @@ export async function activate<T>(
       if (entry.hydrated)
         preserveHydrationOrder(active)
       if (entry.baseline) {
-        hydrated.push({
+        hydrated.set(_i, {
           _i,
           input: entry.baseline.input,
           _o: entry.baseline.input,
@@ -169,8 +182,8 @@ export async function activate<T>(
   render = (options.render as HeadRenderer<boolean>) || (() => {
     const id = ++renderId
     setTimeout(() => {
-      if (id === renderId && (head._dom || !hydrated.length || adoptHydratedEntries(head, hydrated))) {
-        hydrated.length = 0
+      if (id === renderId && (head._dom || !hydrated.size || adoptHydratedEntries(head, [...hydrated.values()]))) {
+        hydrated.clear()
         renderLazyDOMHead(head)
       }
     })

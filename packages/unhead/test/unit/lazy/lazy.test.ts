@@ -38,6 +38,30 @@ beforeEach(() => {
 })
 
 describe('lazy head createHead', () => {
+  it.each(['dispose', 'patch'] as const)('removes a departed SSR stylesheet registered after early load: %s', async (operation) => {
+    const input: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/server.css' }] }
+    const dom = ssrDom(input)
+    const { head, setPaused } = pausableHead(dom)
+    await head.load()
+    const entry = head.push(input)
+    // Let the first render attempt observe the pause before leaving the route.
+    await settle(20)
+    expect(dom.window.document.querySelector('link')?.getAttribute('href')).toBe('/server.css')
+    head.finishHydration()
+    const destination: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/destination.css' }] }
+    if (operation === 'dispose') {
+      entry.dispose()
+      head.push(destination)
+    }
+    else {
+      entry.patch(destination)
+    }
+    setPaused(false)
+    head.render()
+    await vi.waitFor(() => expect([...dom.window.document.querySelectorAll('link[rel="stylesheet"]')].map(link => link.getAttribute('href'))).toEqual(['/destination.css']))
+    dom.window.close()
+  })
+
   it('stores entries and does not touch the document before load', async () => {
     const dom = ssrDom(titled)
     const before = dom.serialize()
