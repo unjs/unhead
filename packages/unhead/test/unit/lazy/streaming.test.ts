@@ -14,6 +14,46 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it.each([
+    { activation: 'before navigation', backlogged: true },
+    { activation: 'after navigation', backlogged: true },
+    { activation: 'before navigation', backlogged: false },
+    { activation: 'after navigation', backlogged: false },
+  ])(
+    'retires disposed route stylesheets with activation $activation and backlogged=$backlogged',
+    async ({ activation, backlogged }) => {
+      const { document, queue } = createStreamDocument()
+      document.querySelector('link')!.remove()
+      const head = createHead({ document, streamKey: 'pageHead' })
+      const initial = { link: [{ rel: 'stylesheet' as const, href: '/initial.css' }] }
+      if (backlogged)
+        queue.push([initial])
+      const page = head.push(initial)
+      head.finishHydration()
+
+      if (activation === 'before navigation') {
+        await head.load()
+        await vi.waitFor(() => expect(document.querySelector('link[href="/initial.css"]')).toBeTruthy())
+      }
+
+      page.dispose()
+      head.push({ link: [{ rel: 'stylesheet', href: '/destination.css' }] })
+      await head.load()
+      await vi.waitFor(() => {
+        expect([...document.querySelectorAll('link[rel="stylesheet"]')].map(el => el.getAttribute('href')))
+          .toEqual(['/destination.css'])
+      })
+
+      // A late batch may mix stale route tags with unrelated server fallbacks.
+      queue.push([{ ...initial, meta: [{ name: 'stream-only', content: 'retained' }] }])
+      await vi.waitFor(() => {
+        expect(document.querySelector('meta[name="stream-only"]')?.getAttribute('content')).toBe('retained')
+        expect([...document.querySelectorAll('link[rel="stylesheet"]')].map(el => el.getAttribute('href')))
+          .toEqual(['/destination.css'])
+      })
+    },
+  )
+
   it('reports a missing stream queue on load and retries once the bootstrap is available', async () => {
     const { document, queue } = createStreamDocument()
     const window = document.defaultView as unknown as { pageHead?: StreamingGlobal }
