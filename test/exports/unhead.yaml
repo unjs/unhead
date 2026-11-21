@@ -153,3 +153,5 @@
   validateInputShape: function
   VALIDATION_RULE_IDS: object
   viewportUserScalable: function
+./vite:
+  htmlTagsToHead: function

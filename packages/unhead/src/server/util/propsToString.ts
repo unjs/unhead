@@ -3,13 +3,25 @@ import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 const DOUBLE_QUOTE_RE = /"/g
 
 /* @__PURE__ */
-function encodeAttribute(value: string) {
-  const s = typeof value === 'string' ? value : String(value)
+function encodeAttribute(value: string, escapeAmpersands: boolean) {
+  let s = typeof value === 'string' ? value : String(value)
+  if (escapeAmpersands)
+    s = s.replaceAll('&', '&amp;')
   return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
 }
 
 /* @__PURE__ */
 export function propsToString(props: Record<string, any>) {
+  return stringifyProps(props, false)
+}
+
+/* @__PURE__ */
+export function rootPropsToString(props: Record<string, any>) {
+  return stringifyProps(props, true)
+}
+
+/* @__PURE__ */
+function stringifyProps(props: Record<string, any>, escapeAmpersands: boolean) {
   let attrs = ''
 
   for (const key in props) {
@@ -33,7 +45,7 @@ export function propsToString(props: Record<string, any>) {
     }
 
     if (value !== false && value !== null) {
-      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value)}"`
+      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value, escapeAmpersands)}"`
     }
   }
 
