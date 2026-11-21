@@ -9,7 +9,6 @@ import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, splitTrans
 
 const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_SOURCE_RE = /^(?:unhead(?:\/(?:client|server|legacy))?|@unhead\/[^/]+(?:\/(?:client|server|legacy))?|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
-const NUXT_HEAD_SOURCE_RE = /\/nuxt\/dist\/(?:app\/composables\/head|head\/runtime\/composables)(?:\.m?js)?$/
 const UNSAFE_PROPERTIES = new Set(['__proto__', 'constructor', 'prototype'])
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue }
@@ -118,7 +117,7 @@ export const StaticJsonLdTransform = createUnplugin<BaseTransformerTypes | undef
             if (declaration instanceof ScopeTrackerImport && declaration.node.type === 'ImportSpecifier') {
               const { imported } = declaration.node
               const source = declaration.importNode.source.value
-              if (imported.type !== 'Identifier' || !HEAD_FUNCTIONS.has(imported.name) || !(HEAD_SOURCE_RE.test(source) || NUXT_HEAD_SOURCE_RE.test(source)))
+              if (imported.type !== 'Identifier' || !HEAD_FUNCTIONS.has(imported.name) || !HEAD_SOURCE_RE.test(source))
                 return
             }
             else if (declaration || !HEAD_FUNCTIONS.has(node.callee.name)) {
