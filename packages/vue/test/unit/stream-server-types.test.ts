@@ -17,11 +17,28 @@ describe('vue streaming server types', () => {
     head.push(ref({ invalid: true }))
     // @ts-expect-error A getter returning a ref still needs a valid head entry
     head.push(() => ref({ invalid: true }))
+    // @ts-expect-error Valid fields do not make unknown fields legal
+    head.push(() => ref({ title: 'Docs', invalid: true }))
     // @ts-expect-error The base href must be a string, including inside a ref
     head.push({ base: ref({ href: 42 }) })
     const entry = head.push({ title })
     // @ts-expect-error A computed entry returned by a getter still needs a string href
     entry.patch(() => computed(() => ({ base: { href: 42 } })))
+    // @ts-expect-error Check the keys in a computed value returned by a getter
+    entry.patch(() => computed(() => ({ title: 'Docs', invalid: true })))
+
+    const enabled = ref(true)
+    const page = ref({ title: 'Docs' })
+    const section = computed(() => ({ base: { href: '/docs/' } }))
+    head.push(() => enabled.value ? page : section)
+    const input: Parameters<typeof head.push>[0] = enabled.value ? page : () => section
+    head.push(input)
+    head.push(null)
+    entry.patch(undefined)
+    entry.patch(() => enabled.value ? page : false)
+    const invalidSection = computed(() => ({ base: { href: '/docs/' }, invalid: true }))
+    // @ts-expect-error Every branch of the getter must have valid keys
+    entry.patch(() => enabled.value ? page : invalidSection)
   })
 
   it('renders head entry getters that return refs and computed values', async () => {
