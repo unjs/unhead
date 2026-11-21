@@ -41,6 +41,26 @@ describe('vue streaming server types', () => {
     entry.patch(() => enabled.value ? page : invalidSection)
   })
 
+  it('checks keys on nested tag objects through refs and computed values', () => {
+    const { head } = createStreamableHead()
+    const meta = ref({ name: 'description', content: 'Docs' })
+    const entry = head.push(() => computed(() => ({
+      meta: [meta],
+      htmlAttrs: { 'data-section': 'docs', 'style': { color: 'red' } },
+      templateParams: { custom: 'Docs' },
+    })))
+    const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
+    entry.patch({ link: computed(() => [canonical]) })
+
+    // @ts-expect-error Check attributes on tags in a getter's returned ref
+    head.push(() => ref({ meta: [{ name: 'description', content: 'Docs', invalid: true }] }))
+    // @ts-expect-error Check attributes on a computed singleton tag
+    entry.patch({ base: computed(() => ({ href: '/docs/', invalid: true })) })
+    const invalidLink = ref({ rel: 'canonical', href: '/docs/', invalid: true } as const)
+    // @ts-expect-error Check ref elements inside computed tag arrays
+    entry.patch({ link: computed((): [typeof canonical, typeof invalidLink] => [canonical, invalidLink]) })
+  })
+
   it('renders head entry getters that return refs and computed values', async () => {
     const { head } = createStreamableHead()
     const title = ref({ title: 'Vue Streaming' })

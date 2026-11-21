@@ -21,8 +21,25 @@ type VueStreamableHeadInput
     | (() => VueStreamableHeadValue | Ref<VueStreamableHeadValue>)
 
 type UnwrapHeadRef<Value> = Value extends Ref<infer Head> ? Head : Value
-type UnknownHeadKeys<Value> = Value extends object ? Exclude<keyof Value, keyof VueStreamableHeadSchema> : never
-type UnknownHeadInputKeys<Input> = UnknownHeadKeys<UnwrapHeadRef<Input extends () => infer Result ? Result : Input>>
+type ResolveHeadValue<Value> = UnwrapHeadRef<Value extends () => infer Result ? Result : Value>
+type UnwrapTagArray<Value> = Value extends readonly (infer Tag)[] ? ResolveHeadValue<Tag> : Value
+type TagValue<Value> = UnwrapTagArray<ResolveHeadValue<Value>>
+type ObjectKeys<Value> = Value extends object ? keyof Value : never
+type KnownObjectKeys<Value> = 0 extends (1 & Value) ? never : ObjectKeys<Value>
+
+type StreamableTagKey = Exclude<keyof VueStreamableHeadSchema, 'templateParams'>
+// Check tag attributes without descending into attribute values such as JSON or class maps.
+type UnknownTagKeys<Head> = Head extends object
+  ? {
+      [Key in keyof Head & StreamableTagKey]-?: Exclude<
+        KnownObjectKeys<TagValue<Head[Key]>>,
+        ObjectKeys<TagValue<VueStreamableHeadSchema[Key]>>
+      >
+    }[keyof Head & StreamableTagKey]
+  : never
+type UnknownHeadInputKeys<Input>
+  = | Exclude<KnownObjectKeys<ResolveHeadValue<Input>>, keyof VueStreamableHeadSchema>
+    | UnknownTagKeys<ResolveHeadValue<Input>>
 type CheckedHeadInput<Input> = Input & (
   [UnknownHeadInputKeys<NoInfer<Input>>] extends [never]
     ? unknown
