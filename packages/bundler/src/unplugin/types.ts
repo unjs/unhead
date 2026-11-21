@@ -25,7 +25,7 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
-  /** Generate keys for long static inline scripts and styles. Disabled by default. */
+  /** Generate keys for long static inline tags that dedupe by content. Disabled by default. */
   transformInlineTagKeys?: boolean
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
   devtools?: UnheadDevtoolsOptions | false
