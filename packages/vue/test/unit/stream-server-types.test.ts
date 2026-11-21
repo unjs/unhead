@@ -1,4 +1,5 @@
 import { createStreamableHead, renderSSRHeadShell } from '@unhead/vue/stream/server'
+import { defineLink } from 'unhead'
 import { computed, ref } from 'vue'
 
 describe('vue streaming server types', () => {
@@ -64,6 +65,18 @@ describe('vue streaming server types', () => {
     entry.patch({ link: computed((): [typeof canonical, typeof invalidLink] => [canonical, invalidLink]) })
   })
 
+  it('renders custom defineLink relations through reactive entries', async () => {
+    const { head } = createStreamableHead()
+    const discovery = defineLink({ rel: 'EditURI', href: '/rsd.xml', type: 'application/rsd+xml' })
+    const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
+    const entry = head.push(() => ref({ link: [discovery] }))
+    entry.patch({ link: computed(() => [canonical, discovery]) })
+
+    const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+    expect(shell).toContain('<link rel="EditURI" href="/rsd.xml" type="application/rsd+xml">')
+    expect(shell).toContain('<link rel="canonical" href="/docs/">')
+  })
+
   it('renders valid reactive link variants', async () => {
     const { head } = createStreamableHead()
     const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
@@ -90,6 +103,20 @@ describe('vue streaming server types', () => {
     const canonicalWithPreloadAttrs = ref({ rel: 'canonical', href: '/docs/', as: 'image' } as const)
     // @ts-expect-error Canonical links cannot use the preload as attribute
     head.push(() => ref({ link: [canonicalWithPreloadAttrs] }))
+    const custom = defineLink({ rel: 'EditURI', href: '/rsd.xml', type: 'application/rsd+xml' })
+    // @ts-expect-error A custom relation cannot hide an invalid canonical link in the same array
+    entry.patch({ link: computed(() => [custom, canonicalWithPreloadAttrs]) })
+    const canonicalWithType = { ...custom, rel: 'canonical' as const }
+    // @ts-expect-error Changing the relation restores the canonical variant's attribute rules
+    entry.patch({ link: [canonicalWithType] })
+    const canonicalOrAuthor = ref(false)
+    const knownRelation = canonicalOrAuthor.value ? 'canonical' : 'author'
+    const knownLink = defineLink({ rel: knownRelation, href: '/docs/' })
+    entry.patch({ link: [knownLink] })
+    const knownLinkWithPreloadAttr = defineLink({ rel: knownRelation, href: '/docs/', as: 'image' })
+    // @ts-expect-error Both possible relations forbid the preload attribute
+    entry.patch({ link: [knownLinkWithPreloadAttr] })
+
     const preload = ref(false)
     const conditionalAs = computed(() => ({ rel: 'canonical', href: '/docs/', as: preload.value ? 'image' : undefined } as const))
     // @ts-expect-error A canonical link might supply a preload attribute

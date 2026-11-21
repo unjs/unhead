@@ -1,5 +1,6 @@
+import type { defineLink } from 'unhead'
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, HeadEntryOptions, ResolvableTitleTemplate, SSRHeadPayload, Unhead } from 'unhead/types'
+import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, GenericLink, HeadEntryOptions, ResolvableTitleTemplate, SSRHeadPayload, Unhead } from 'unhead/types'
 import type { Plugin, Ref } from 'vue'
 import type { MaybeFalsy, ReactiveHead, ResolvableProperties } from '../types'
 import {
@@ -49,13 +50,20 @@ type UnknownTagAttributes<Tag, Variants>
   = Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants>> | UnknownVariantKeys<Tag, Variants>
 
 type StreamableTagKey = Exclude<keyof VueStreamableHeadSchema, 'templateParams'>
+type DefinedLinkRelationKey = Exclude<keyof ReturnType<typeof defineLink<{ rel: string }>>['rel'], keyof string>
+type UnknownLinkAttributes<Tag, Variants> = Tag extends { rel: infer Rel }
+  ? [Extract<DefinedLinkRelationKey, keyof ResolveHeadValue<Rel>>] extends [never]
+      ? UnknownTagAttributes<Tag, Variants>
+      : Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants> | keyof GenericLink>
+  : UnknownTagAttributes<Tag, Variants>
+type StreamableTagVariants<Key extends StreamableTagKey> = Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>
+
 // Check tag attributes without descending into attribute values such as JSON or class maps.
 type UnknownTagKeys<Head> = Head extends object
   ? {
-      [Key in keyof Head & StreamableTagKey]-?: UnknownTagAttributes<
-        TagValue<Head[Key]>,
-        Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>
-      >
+      [Key in keyof Head & StreamableTagKey]-?: Key extends 'link'
+        ? UnknownLinkAttributes<TagValue<Head[Key]>, StreamableTagVariants<Key>>
+        : UnknownTagAttributes<TagValue<Head[Key]>, StreamableTagVariants<Key>>
     }[keyof Head & StreamableTagKey]
   : never
 type UnknownHeadInputKeys<Input>
