@@ -143,9 +143,9 @@ function usePlugin(head: CompiledHead, plugin: HeadPluginInput) {
     const hooks = resolved.hooks || {}
     for (const name in hooks)
       (head._native ||= []).push([name, hooks[name]])
-    // Another plugin with this key has hooks this entry cannot run natively. The same hook
-    // names do not prove either real plugin, so both plugins mark themselves.
-    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key] || !resolved._native
+    // Spreading a plugin preserves its marker. Only unchanged hooks can receive shared tags.
+    head._v3 ||= Object.keys(hooks).join() !== BUILT_IN[key]
+      || !resolved._native || Object.keys(hooks).some(name => hooks[name] !== resolved._native[name])
     if (key === 'template-params') {
       head._tp = hooks
     }
