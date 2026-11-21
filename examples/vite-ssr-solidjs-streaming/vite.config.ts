@@ -1,5 +1,5 @@
+import solid from '@solidjs/vite-plugin'
 import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
 import { Unhead } from '@unhead/solid-js/vite'
 
 export default defineConfig({

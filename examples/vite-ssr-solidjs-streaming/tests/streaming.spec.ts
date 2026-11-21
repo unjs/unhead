@@ -27,15 +27,13 @@ test.describe('SolidJS Streaming SSR with Unhead', () => {
   // STREAMING BEHAVIOR
   // ============================================
   test.describe('Streaming behavior', () => {
-    test('head updates happen via streaming (not client-side JS)', async ({ page }) => {
-      const response = await page.goto('/')
-      const html = await response?.text() || ''
+    test('applies streamed head updates without app hydration', async ({ page }) => {
+      await page.route('**/src/entry-client.tsx', route => route.abort())
+      await page.goto('/')
 
-      // Wait for newsletter (last component)
-      await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
-
-      // Async content should be in streamed HTML
-      expect(html).toContain('window.__unhead__')
+      await expect(page.locator('.newsletter')).toBeVisible()
+      await expect(page.locator('meta[name="promo-code"]')).toHaveAttribute('content', 'SUMMER50')
+      await expect(page).toHaveTitle('StreamShop - Ready!')
     })
 
     test('all components render', async ({ page }) => {
@@ -200,8 +198,9 @@ test.describe('SolidJS Streaming SSR with Unhead', () => {
 
     test('no unexpected console errors during streaming and hydration', async ({ page }) => {
       const errors: string[] = []
+      page.on('pageerror', error => errors.push(error.message))
       page.on('console', msg => {
-        if (msg.type() === 'error') {
+        if (msg.type() === 'error' || msg.text().includes('Hydration')) {
           errors.push(msg.text())
         }
       })
@@ -212,15 +211,7 @@ test.describe('SolidJS Streaming SSR with Unhead', () => {
       // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out favicon 404 errors, hydration mismatches (expected during streaming), and WebSocket errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('Hydration') &&
-        !e.includes('mismatch') &&
-        !e.includes('WebSocket') &&
-        !e.includes('websocket')
-      )
-      expect(criticalErrors).toHaveLength(0)
+      expect(errors.filter(error => !error.includes('favicon'))).toEqual([])
     })
   })
 })

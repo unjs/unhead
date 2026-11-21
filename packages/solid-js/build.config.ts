@@ -5,6 +5,7 @@ export default defineBuildConfig({
   declaration: true,
   externals: [
     'solid-js',
+    '@solidjs/web',
     'vite',
     'webpack',
     'unplugin',
