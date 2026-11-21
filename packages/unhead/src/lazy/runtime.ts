@@ -186,8 +186,15 @@ export async function activate<T>(
         return
       if (hydrated.size) {
         const adoption = new Map(hydrated)
-        if (!adoptHydratedEntries(head, adoption))
-          return
+        try {
+          if (!adoptHydratedEntries(head, adoption))
+            return
+        }
+        catch (error) {
+          // Historical input cannot prevent live entries from rendering. Retire this
+          // batch after reporting the failed cleanup instead of retrying it forever.
+          console.warn('[unhead] Failed to adopt hydrated entries.', error)
+        }
         for (const [id, snapshot] of adoption) {
           if (hydrated.get(id) === snapshot)
             hydrated.delete(id)

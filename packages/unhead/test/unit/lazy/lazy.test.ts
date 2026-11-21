@@ -38,6 +38,71 @@ beforeEach(() => {
 })
 
 describe('lazy head createHead', () => {
+  it.each([false, true])('renders later pages after a disposed route title template loses its state (template only: %s)', async (templateOnly) => {
+    let route: { name: string } | undefined = { name: 'Route' }
+    const titleTemplate = vi.fn((title?: string) => `${title || 'Page'} | ${route!.name}`)
+    const input: ResolvableHead = {
+      title: templateOnly ? undefined : 'Page',
+      titleTemplate,
+      link: [{ rel: 'stylesheet', href: '/route.css' }],
+    }
+    const dom = ssrDom(input)
+    const { document } = dom.window
+    const head = createLazyHead({ document })
+    const entry = head.push(input)
+    head.finishHydration()
+    entry.dispose()
+    route = undefined
+    const destination = head.push({ title: 'Destination' })
+    vi.useFakeTimers()
+    try {
+      await head.load()
+      // Catch timer exceptions as test failures, rather than unhandled runner errors.
+      await vi.runAllTimersAsync()
+      expect(document.title).toBe('Destination')
+      expect(document.querySelector('link')).toBeNull()
+      destination.patch({ title: 'Updated destination' })
+      await vi.runAllTimersAsync()
+      expect(document.title).toBe('Updated destination')
+      expect(titleTemplate).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      vi.useRealTimers()
+      dom.window.close()
+    }
+  })
+
+  it('renders live entries even when a historical snapshot cannot resolve', async () => {
+    const dom = ssrDom(titled)
+    const { document } = dom.window
+    const head = createLazyHead({ document })
+    const entry = head.push({
+      title: () => {
+        throw new Error('retired snapshot unavailable')
+      },
+    })
+    head.finishHydration()
+    entry.dispose()
+    const destination = head.push({ title: 'Destination' })
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.useFakeTimers()
+    try {
+      await head.load()
+      await vi.runAllTimersAsync()
+      expect(document.title).toBe('Destination')
+      expect(warning).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ message: 'retired snapshot unavailable' }))
+      destination.patch({ title: 'Updated destination' })
+      await vi.runAllTimersAsync()
+      expect(document.title).toBe('Updated destination')
+      expect(warning).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      warning.mockRestore()
+      vi.useRealTimers()
+      dom.window.close()
+    }
+  })
+
   it.each(['dispose', 'patch'] as const)('cleans up an SSR stylesheet first registered after the DOM rendered: %s', async (operation) => {
     const layout: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/layout.css' }] }
     const page: ResolvableHead = { link: [{ rel: 'stylesheet', href: '/old.css' }] }

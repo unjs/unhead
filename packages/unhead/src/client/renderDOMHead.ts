@@ -197,7 +197,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const pending: DomRenderTagContext[] = []
     const frag: Partial<Record<string, DocumentFragment>> = {}
     head.dirty = false
-    const rawTags = resolveTags(head, options)
+    const rawTags = resolveTags(head, options, adoption)
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
