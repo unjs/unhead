@@ -1,5 +1,5 @@
 import type { HeadTag, RenderSSRHeadOptions } from '../../types'
-import { propsToString } from './propsToString'
+import { rootPropsToString } from './propsToString'
 import { tagToString } from './tagToString'
 
 /* @__PURE__ */
@@ -28,7 +28,7 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
     headTags: schema.tags.head,
     bodyTags: schema.tags.bodyClose,
     bodyTagsOpen: schema.tags.bodyOpen,
-    htmlAttrs: propsToString(schema.htmlAttrs),
-    bodyAttrs: propsToString(schema.bodyAttrs),
+    htmlAttrs: rootPropsToString(schema.htmlAttrs),
+    bodyAttrs: rootPropsToString(schema.bodyAttrs),
   }
 }

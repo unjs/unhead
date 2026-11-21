@@ -404,7 +404,7 @@ function extractTemplate(
   }
 
   if (root && rootStart) {
-    const attrs = readAttributes(root, rootStart)
+    const attrs = readAttributes(root, rootStart, false)
     if (Object.keys(attrs).length) {
       input.htmlAttrs = attrs
       replace(indexes.htmlTagStart, indexes.htmlTagEnd, '<html>')
@@ -419,7 +419,7 @@ function extractTemplate(
 
   if (body && bodyStart) {
     indexes.bodyTagStart -= removed
-    const attrs = readAttributes(body, bodyStart)
+    const attrs = readAttributes(body, bodyStart, false)
     if (Object.keys(attrs).length) {
       input.bodyAttrs = attrs
       replace(bodyStart.startOffset, bodyStart.endOffset, '<body>')
@@ -589,12 +589,13 @@ function canExtractScript(content: string) {
   return parseTemplateDocument(markup).indexes.headTagEnd === markup.length - '</head>'.length
 }
 
-function readAttributes(node: DefaultTreeAdapterTypes.Element, startTag: Token.LocationWithAttributes) {
+// The root attribute serializer escapes ampersands after merging with pushed values.
+function readAttributes(node: DefaultTreeAdapterTypes.Element, startTag: Token.LocationWithAttributes, escapeAmpersands = true) {
   const attrs: Record<string, string> = {}
   if (startTag.attrs) {
     for (const { name, value } of node.attrs) {
       if (hasOwn(startTag.attrs, name))
-        attrs[name] = value.replaceAll('&', '&amp;')
+        attrs[name] = escapeAmpersands ? value.replaceAll('&', '&amp;') : value
     }
   }
   return attrs
