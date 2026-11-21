@@ -1027,6 +1027,9 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       rolldown:
         specifier: 1.2.3
         version: 1.2.3

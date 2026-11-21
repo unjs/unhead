@@ -169,6 +169,14 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+  return resolveTagsWithTitle(head, options, resolveTitleTemplate)
+}
+
+export function resolveTagsWithTitle(
+  head: Unhead<any>,
+  options: ResolveTagsOptions | undefined,
+  resolveTitle?: typeof resolveTitleTemplate,
+): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -234,7 +242,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
-  resolveTitleTemplate(ctx, head)
+  if (resolveTitle)
+    resolveTitle(ctx, head)
+  else
+    head._title = ctx.tagMap.get('title')?.textContent
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)

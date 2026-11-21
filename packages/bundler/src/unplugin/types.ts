@@ -25,6 +25,10 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
+  treeshake?: (TreeshakeServerComposablesOptions & {
+    /** Prune unused client features when the Vite 8 build can prove their absence. */
+    features?: boolean
+  }) | false
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */

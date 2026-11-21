@@ -118,6 +118,7 @@
   "dependencies": {
     "magic-string": "catalog:",
     "oxc-walker": "catalog:",
+    "parse5": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {

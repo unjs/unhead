@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
@@ -103,7 +103,16 @@ export default defineBuildConfig({
   clean: true,
   declaration: true,
   hooks: {
-    'rollup:options': (_, options) => {
+    'rollup:options': (ctx, options) => {
+      const defaults = resolve(ctx.options.rootDir, 'src/buildFeatures')
+      // Keep the default switches separate so the application build can replace them.
+      options.plugins = [{
+        name: 'unhead-build-features',
+        resolveId(id, importer) {
+          if (importer && id === '../buildFeatures' && resolve(dirname(importer), id) === defaults)
+            return { id: '#unhead-build-features', external: true }
+        },
+      }, ...(options.plugins || [])]
       options.experimentalLogSideEffects = true
       const onwarn = options.onwarn
       options.onwarn = (warning, warn) => {
@@ -125,6 +134,7 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/buildFeatures', name: 'build-features' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },

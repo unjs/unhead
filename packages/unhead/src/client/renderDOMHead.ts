@@ -1,9 +1,10 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomEvent, RenderDomHeadOptions, Unhead } from '../types'
+import { domEvents, titleTemplate } from '../buildFeatures'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
-import { resolveTags } from '../utils/resolve'
+import { resolveTagsWithTitle, resolveTitleTemplate } from '../utils/resolve'
 import { renderDomEvent } from './domEventHandlers'
 
 const WHITESPACE_RE = /\s+/
@@ -12,7 +13,7 @@ type DomStateInternal = DomState & { _d: Document }
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
-  return head => _renderDOMHead(head, options, renderDomEvent)
+  return head => _renderDOMHead(head, options, domEvents ? renderDomEvent : undefined)
 }
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -22,7 +23,7 @@ export function createLeanDomRenderer(options: RenderDomHeadOptions = {}): HeadR
 
 /** @deprecated Use `head.render()` instead */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
-  return _renderDOMHead(head, options, renderDomEvent)
+  return _renderDOMHead(head, options, domEvents ? renderDomEvent : undefined)
 }
 
 /** @deprecated Use `head.render()` instead */
@@ -163,7 +164,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const pending: DomRenderTagContext[] = []
     const frag: Partial<Record<string, DocumentFragment>> = {}
     head.dirty = false
-    const rawTags = resolveTags(head, options)
+    const rawTags = resolveTagsWithTitle(head, options, titleTemplate ? resolveTitleTemplate : undefined)
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {

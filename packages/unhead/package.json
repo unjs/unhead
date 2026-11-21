@@ -24,6 +24,9 @@
     "url": "https://github.com/unjs/unhead/issues"
   },
   "sideEffects": false,
+  "imports": {
+    "#unhead-build-features": "./dist/build-features.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

@@ -3,6 +3,7 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
+import { FeatureInventory } from './FeatureInventory'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
@@ -143,6 +144,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (coreOpts.treeshake && coreOpts.treeshake.features)
+          plugins.push(FeatureInventory())
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
