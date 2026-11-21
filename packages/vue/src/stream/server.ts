@@ -1,6 +1,7 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
-import type { UseHeadInput, VueHeadClient } from '../types'
+import type { Ref } from 'vue'
+import type { ReactiveHead, ResolvableValue, VueHeadClient } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream,
@@ -8,15 +9,22 @@ import {
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
+type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams' | 'title'
+type VueStreamableHeadInput = ResolvableValue<
+  Omit<ReactiveHead, StreamableHeadObjectKey> & {
+    [Key in StreamableHeadObjectKey]?: ReactiveHead[Key] | Ref<ReactiveHead[Key]>
+  }
+>
+
 /**
  * Vue-specific context returned by createStreamableHead.
  * Extends WebStreamableHeadContext with Vue-specific head type.
  */
-export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<UseHeadInput>, 'head'> {
+export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<VueStreamableHeadInput>, 'head'> {
   /**
    * The Vue head instance to use with app.use(head)
    */
-  head: VueHeadClient<UseHeadInput, SSRHeadPayload>
+  head: VueHeadClient<VueStreamableHeadInput, SSRHeadPayload>
 }
 
 /**
@@ -46,11 +54,11 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
 export function createStreamableHead(
   options: Omit<CreateStreamableServerHeadOptions, 'propResolvers'> = {},
 ): VueStreamableHeadContext {
-  const { head } = _createStreamableHead({
+  const { head } = _createStreamableHead<VueStreamableHeadInput>({
     ...options,
     propResolvers: [VueResolver],
   })
-  const vueHead = head as VueHeadClient<UseHeadInput, SSRHeadPayload>
+  const vueHead = head as VueHeadClient<VueStreamableHeadInput, SSRHeadPayload>
   vueHead.install = vueInstall(vueHead)
 
   return {
