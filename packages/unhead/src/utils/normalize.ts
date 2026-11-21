@@ -2,14 +2,9 @@ import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
-import { canonicalStringify } from './dedupe'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
-
-function isJsonScriptType(type: unknown): boolean {
-  return typeof type === 'string' && (type.endsWith('json') || type === 'speculationrules' || type === 'importmap')
-}
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -71,28 +66,13 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
-        if (isJsonScriptType(type)) {
+        if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
           tag.props.type = type
-          // fingerprint with key-sorted serialisation so identity is insertion-order
-          // independent, but render with JSON.stringify so output bytes are unchanged
-          tag._c = canonicalStringify(value)
           tag[prop] = JSON.stringify(value)
         }
       }
       else {
         (tag as any)[prop] = value
-        // JSON payloads rebuilt from server-rendered DOM arrive as strings (and users
-        // may push strings directly); fingerprint the parsed value so identity matches
-        // the object-push path. Malformed JSON cannot be fingerprinted: identity then
-        // falls back to the literal string, which still matches identical DOM content.
-        if (tag.tag === 'script' && (prop === 'textContent' || prop === 'innerHTML') && typeof value === 'string' && isJsonScriptType(input.type)) {
-          try {
-            tag._c = canonicalStringify(JSON.parse(value))
-          }
-          catch {
-            // Malformed JSON keeps its literal content as the dedupe identity.
-          }
-        }
       }
     }
     else if (value !== undefined) {
