@@ -1,6 +1,6 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, ResolvedHeadTag as HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -228,7 +228,7 @@ function normalizePendingTags(head: Unhead<any>): { tags: HeadTag[], entries: Ma
       // rather than copying it, so this is the one tag an inspector could
       // mutate into a later render.
       if (tag.tag === 'templateParams')
-        tag.props = { ...tag.props }
+        tag.attrs = tag.props = { ...tag.attrs }
       tags.push(tag)
     }
   }
@@ -268,7 +268,10 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
   const position = tag.tagPosition ?? entryPosition
   if (position === 'bodyClose' || position === 'bodyOpen')
     return true
-  const type = tag.type ?? tag.props?.type
+  // tag may be raw unnormalized input (has `.type` directly) or a resolved HeadTag
+  // (has `.attrs.type`); fall back to the deprecated `.props.type` alias too, in case a
+  // caller still constructs a tag-shaped object that only sets `.props`.
+  const type = tag.type ?? tag.attrs?.type ?? tag.props?.type
   return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
@@ -313,7 +316,7 @@ function splitStreamedBodyTags(input: any, entryPosition: string | undefined, pr
       }
       rest ||= value.slice(0, index)
       seen ||= new Set(previousSeen)
-      const normalized = normalizeProps({ tag: key as HeadTag['tag'], props: {} }, tag)
+      const normalized = normalizeProps({ tag: key as HeadTag['tag'], attrs: {} }, tag)
       const content = hashTag(normalized)
       // The shell already served this exact tag.
       if (seen.has(content))

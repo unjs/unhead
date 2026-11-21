@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
-import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
+import type { ResolvedHeadTag as HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
 /**
  * Side effects are mapped with a key and their cleanup function.
@@ -141,7 +141,7 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
    * createHead({
    *   tagWeight(tag) {
    *     // Promote SEO meta above styles for bots
-   *     if (isBot && tag.tag === 'meta' && tag.props.property?.startsWith('og:'))
+   *     if (isBot && tag.tag === 'meta' && tag.attrs.property?.startsWith('og:'))
    *       return 55 // just above styles (60)
    *     return capoTagWeight(tag)
    *   }

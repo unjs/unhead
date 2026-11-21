@@ -1,5 +1,6 @@
-import type { HeadTag } from '../../types'
+import type { HeadTagInput } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
+import { resolveTagAttrs } from '../../utils/tagHooks'
 import { propsToString } from './propsToString'
 
 const ESCAPE_HTML_RE = /[&<>"'/]/g
@@ -24,8 +25,8 @@ export function escapeHtml(str: string) {
 }
 
 /* @__PURE__ */
-export function tagToString<T extends HeadTag>(tag: T) {
-  const attrs = propsToString(tag.props)
+export function tagToString<T extends HeadTagInput>(tag: T) {
+  const attrs = propsToString(resolveTagAttrs(tag))
   const openTag = `<${tag.tag}${attrs}>`
   // self-closing (meta/link/base) is the common SSR tag: one Set lookup, no close tag.
   // SelfClosingTags and TagsWithInnerContent are disjoint, so the second SelfClosingTags.has()

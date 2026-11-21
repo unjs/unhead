@@ -1,4 +1,4 @@
-import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
+import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, ResolvedHeadTag as HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
@@ -155,8 +155,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           renderState._e.delete(id)
         }))
       }
-      for (const k in tag.props) {
-        const v = tag.props[k]
+      for (const k in tag.attrs) {
+        const v = tag.attrs[k]
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
@@ -195,12 +195,14 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
-      const count = dupeKeyCounter[tag._d!] || 0
-      const id = (count ? `${tag._d}:${count}` : tag._d) || tag._h!
+      // Resolve hooks can insert tags after entry identities are computed.
+      const dedupe = tag._d || dedupeKey(tag)
+      const count = dupeKeyCounter[dedupe!] || 0
+      const id = (count ? `${dedupe}:${count}` : dedupe) || tag._h || hashTag(tag)
       const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
       // meta guard matches dedupeTags: link keys like `link:author:x` must not hit the counter
-      if (tag.tag === 'meta' && tag._d && isMetaArrayDupeKey(tag._d))
-        dupeKeyCounter[tag._d] = count + 1
+      if (tag.tag === 'meta' && dedupe && isMetaArrayDupeKey(dedupe))
+        dupeKeyCounter[dedupe] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
@@ -231,7 +233,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const props: Record<string, any> = { innerHTML: el.innerHTML }
         for (const n of el.getAttributeNames())
           props[n] = el.getAttribute(n)
-        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
+        const next = normalizeProps({ tag: elTag, attrs: {} } as HeadTag, props)
         next.key = el.getAttribute('data-hid') || undefined
         const dedupe = dedupeKey(next) || hashTag(next)
         let k = dedupe

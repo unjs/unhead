@@ -1,4 +1,4 @@
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadRenderer, HeadTag, ResolvableHead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadRenderer, ResolvedHeadTag as HeadTag, ResolvableHead } from '../types'
 import type { ClientUnhead } from './adapter'
 import { createUnhead } from '../unhead'
 import { TagPriorityAliases } from '../utils/const'

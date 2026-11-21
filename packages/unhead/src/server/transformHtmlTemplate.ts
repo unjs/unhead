@@ -1,5 +1,5 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
-import type { HeadTag, SSRHeadPayload, Unhead } from '../types'
+import type { ResolvedHeadTag as HeadTag, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 import { precomputeEntryTags } from './createHead'
 import { capoTagWeight } from './sort'

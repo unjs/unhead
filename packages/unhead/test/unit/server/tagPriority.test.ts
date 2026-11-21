@@ -1,5 +1,5 @@
 import { AliasSortingPlugin } from '../../../src/plugins/aliasSorting'
-import { capoTagWeight, renderSSRHead } from '../../../src/server'
+import { capoTagWeight, renderSSRHead, ssrRenderTags } from '../../../src/server'
 import { resolveTags } from '../../../src/utils/resolve'
 import { createServerHeadWithContext } from '../../util'
 
@@ -9,44 +9,22 @@ describe('tag priority', () => {
     head.push({
       script: [
         {
-          src: '/very-important-script.js',
-          tagPriority: 'critical',
+          src: '/not-important-script.js',
         },
       ],
     })
     head.push({
       script: [
         {
-          src: '/not-important-script.js',
+          src: '/very-important-script.js',
+          tagPriority: 'critical',
         },
       ],
     })
 
-    expect(resolveTags(head)).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": undefined,
-          "_h": "script:src:/very-important-script.js",
-          "_p": 1024,
-          "_w": 42,
-          "props": {
-            "src": "/very-important-script.js",
-          },
-          "tag": "script",
-          "tagPriority": "critical",
-        },
-        {
-          "_d": undefined,
-          "_h": "script:src:/not-important-script.js",
-          "_p": 2048,
-          "_w": 50,
-          "props": {
-            "src": "/not-important-script.js",
-          },
-          "tag": "script",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(resolveTags(head)).headTags).toBe(
+      '<script src="/very-important-script.js"></script>\n<script src="/not-important-script.js"></script>',
+    )
   })
   it('charset first', async () => {
     const head = createServerHeadWithContext()
@@ -294,7 +272,7 @@ describe('tag priority', () => {
     const head = createServerHeadWithContext({
       tagWeight(tag) {
         // Promote all non-pragma meta tags above styles (60)
-        if (tag.tag === 'meta' && !tag.props.charset && tag.props.name !== 'viewport' && tag.props['http-equiv'] !== 'content-security-policy') {
+        if (tag.tag === 'meta' && !tag.attrs.charset && tag.attrs.name !== 'viewport' && tag.attrs['http-equiv'] !== 'content-security-policy') {
           return 55
         }
         return capoTagWeight(tag)

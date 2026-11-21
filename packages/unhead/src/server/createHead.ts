@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, ResolvedHeadTag as HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'

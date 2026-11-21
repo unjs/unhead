@@ -1,6 +1,6 @@
 import type { ScriptInstance } from '../scripts'
 import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
-import type { HeadTag } from './tags'
+import type { HeadTag, HeadTagInput, ResolvedHeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
 export type SyncHookResult = void
@@ -15,30 +15,56 @@ export interface SSRHeadPayload {
 
 export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
-  resolvedTags?: HeadTag[]
-  tagWeight?: (tag: HeadTag) => number
+  resolvedTags?: HeadTagInput[]
+  tagWeight?: (tag: ResolvedHeadTag) => number
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 
-export interface DomBeforeRenderCtx extends ShouldRenderContext { tags: HeadTag[] }
+export interface DomBeforeRenderCtx extends ShouldRenderContext { tags: ResolvedHeadTag[] }
 export interface ShouldRenderContext { shouldRender: boolean }
 
 export interface DomRenderTagContext {
-  tag: HeadTag
+  tag: ResolvedHeadTag
   id: string
   $el?: Element
   shouldRender: boolean
 }
-export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
+export interface SSRRenderContext { tags: ResolvedHeadTag[], html: SSRHeadPayload }
 
-interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
+// Listeners receive resolved tags. Dispatch normalizes inserted inputs before
+// the next listener runs, so insertion accepts either attribute alias.
+// Index reads use HeadTag because listeners can assign legacy tags directly.
+type TagLookups = Pick<HeadTagInput[], 'includes' | 'indexOf' | 'lastIndexOf'>
+type HookTags = Omit<ResolvedHeadTag[], number | 'push' | 'unshift' | 'splice' | 'fill' | 'concat' | keyof TagLookups> & TagLookups & {
+  [index: number]: HeadTag
+  push: (...items: HeadTagInput[]) => number
+  unshift: (...items: HeadTagInput[]) => number
+  splice: (start: number, deleteCount?: number, ...items: HeadTagInput[]) => ResolvedHeadTag[]
+  fill: (value: HeadTagInput, start?: number, end?: number) => HookTags
+  concat: {
+    (...items: ConcatArray<HeadTag>[]): HeadTag[]
+    (...items: (HeadTag | ConcatArray<HeadTag>)[]): HeadTag[]
+    (...items: (HeadTagInput | ConcatArray<HeadTagInput>)[]): HeadTagInput[]
+  }
+}
+
+interface TagHookContext {
+  get tags(): HookTags
+  set tags(tags: HeadTagInput[])
+}
+
+interface HookTagMap extends Map<string, ResolvedHeadTag> {
+  set: (key: string, value: HeadTagInput) => this
+}
+
+interface TagResolveContext extends TagHookContext { tagMap: HookTagMap }
 
 export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
-  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
-  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
+  'entries:normalize': (ctx: TagHookContext & { entry: HeadEntry<any> }) => SyncHookResult
+  'tag:normalise': (ctx: { tag: ResolvedHeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
   'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
@@ -67,9 +93,9 @@ export interface SSRHeadHooks {
    * Synchronous: the renderer does not wait for promises before it serializes
    * the patch and clears entries.
    */
-  'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => SyncHookResult
+  'ssr:streamChunk': (ctx: { tags: ResolvedHeadTag[] }) => SyncHookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
-  'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
+  'ssr:render': (ctx: TagHookContext & { options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }
 

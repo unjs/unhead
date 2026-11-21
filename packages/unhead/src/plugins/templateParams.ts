@@ -1,4 +1,4 @@
-import type { HeadTag, TemplateParams } from '../types/tags'
+import type { ResolvedHeadTag as HeadTag, TemplateParams } from '../types/tags'
 import { processTemplateParams } from '../utils'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -16,7 +16,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
     hooks: {
       'tags:resolve': ({ tagMap, tags }) => {
         // we always process params so we can substitute the title
-        const params = (tagMap.get('templateParams')?.props || {}) as TemplateParams
+        const params = (tagMap.get('templateParams')?.attrs || {}) as TemplateParams
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
@@ -32,14 +32,14 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
             continue
           }
           const v = SupportedAttrs[tag.tag]
-          if (v && typeof tag.props[v] === 'string') {
-            tag.props[v] = processTemplateParams(tag.props[v], params, sep)
+          if (v && typeof tag.attrs[v] === 'string') {
+            tag.attrs[v] = processTemplateParams(tag.attrs[v], params, sep)
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
             for (const p of contentAttrs) {
               if (typeof tag[p] === 'string')
-                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && String(tag.props.type).endsWith('json'))
+                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && String(tag.attrs.type).endsWith('json'))
             }
           }
         }

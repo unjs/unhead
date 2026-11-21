@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { useHead } from '@unhead/vue'
+import { ssrRenderTags } from 'unhead/server'
 import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
@@ -18,22 +19,7 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "first-class",
-              "second-class",
-            },
-          },
-          "tag": "htmlAttrs",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags).htmlAttrs).toBe(' class="first-class second-class"')
   })
 
   it('conditional classes', async () => {
@@ -61,34 +47,9 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "layout-theme-dark",
-              "home",
-            },
-          },
-          "tag": "htmlAttrs",
-        },
-        {
-          "_d": "bodyAttrs",
-          "_p": 1025,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "test",
-              "theme-dark",
-            },
-          },
-          "tag": "bodyAttrs",
-        },
-      ]
-    `)
+    const rendered = ssrRenderTags(tags)
+    expect(rendered.htmlAttrs).toBe(' class="layout-theme-dark home"')
+    expect(rendered.bodyAttrs).toBe(' class="test theme-dark"')
   })
   it('basic resolve tags #2', async () => {
     const head = await ssrVueAppWithUnhead(() => {
@@ -102,22 +63,7 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "second-class",
-            },
-          },
-          "tag": "htmlAttrs",
-          "tagDuplicateStrategy": "replace",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags).htmlAttrs).toBe(' class="second-class"')
   })
   it('resolve multiple conditional classes entries', async () => {
     const head = await ssrVueAppWithUnhead(() => {
@@ -157,21 +103,6 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 5120,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "someTrue",
-              "someArrayClass",
-            },
-          },
-          "tag": "htmlAttrs",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags).htmlAttrs).toBe(' class="someTrue someArrayClass"')
   })
 })

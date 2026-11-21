@@ -1,20 +1,21 @@
-import type { HeadTag, RenderSSRHeadOptions } from '../../types'
+import type { ResolvedHeadTag as HeadTag, HeadTagInput, RenderSSRHeadOptions } from '../../types'
+import { resolveTagAttrs } from '../../utils/tagHooks'
 import { rootPropsToString } from './propsToString'
 import { tagToString } from './tagToString'
 
 /* @__PURE__ */
-export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRHeadOptions) {
+export function ssrRenderTags<T extends HeadTagInput>(tags: T[], options?: RenderSSRHeadOptions) {
   const schema: {
     tags: Record<'head' | 'bodyClose' | 'bodyOpen', string>
-    htmlAttrs: HeadTag['props']
-    bodyAttrs: HeadTag['props']
+    htmlAttrs: HeadTag['attrs']
+    bodyAttrs: HeadTag['attrs']
   } = { htmlAttrs: {}, bodyAttrs: {}, tags: { head: '', bodyClose: '', bodyOpen: '' } }
 
   const lineBreaks = !options?.omitLineBreaks ? '\n' : ''
 
   for (const tag of tags) {
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      Object.assign(schema[tag.tag], tag.props)
+      Object.assign(schema[tag.tag], resolveTagAttrs(tag))
       continue
     }
     const s = tagToString(tag)

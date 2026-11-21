@@ -1,6 +1,7 @@
 import type { HeadRenderer, RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
 import { callHook } from '../utils/hooks'
 import { resolveTags } from '../utils/resolve'
+import { callTagHook, syncTagAliases } from '../utils/tagHooks'
 import { capoTagWeight } from './sort'
 import { ssrRenderTags } from './util'
 
@@ -13,11 +14,14 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRe
       return ssrRenderTags([])
     // Fresh per-render options so plugins (e.g. MinifyPlugin) can override
     // render behaviour like `omitLineBreaks` without leaking into the closure.
+    // Normalize external inputs before hooks, including when no listeners run.
+    const tags = options.resolvedTags ? [...options.resolvedTags] : resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight })
+    syncTagAliases(tags)
     const ctx = {
-      tags: options.resolvedTags || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }),
+      tags,
       options: { ...options },
     }
-    callHook(head, 'ssr:render', ctx)
+    callTagHook(head, 'ssr:render', ctx)
     const html: SSRHeadPayload = ssrRenderTags(ctx.tags, ctx.options)
     const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
     callHook(head, 'ssr:rendered', renderCtx)

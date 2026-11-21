@@ -1,5 +1,6 @@
-import { describe, it } from 'vitest'
-import { resolveTags } from '../../../src/utils/resolve'
+import { ssrRenderTags } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
+import { describe, expect, it } from 'vitest'
 import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
@@ -22,7 +23,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    expect(resolveTags(head).map(tag => tag.props)).toEqual([
+    expect(resolveTags(head).map(tag => tag.attrs)).toEqual([
       { name: 'numeric-zero', content: 0 },
       { name: 'string-zero', content: '0' },
       { name: 'value', content: 'value' },
@@ -42,28 +43,13 @@ describe('resolveTags', () => {
       ],
     })
 
-    expect(resolveTags(head)).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "title",
-          "_p": 1024,
-          "_w": 100,
-          "props": {},
-          "tag": "title",
-          "textContent": "My title",
-        },
-        {
-          "_d": "meta:description",
-          "_p": 1025,
-          "_w": 100,
-          "props": {
-            "content": "My description",
-            "name": "description",
-          },
-          "tag": "meta",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(resolveTags(head))).toEqual({
+      headTags: '<title>My title</title>\n<meta name="description" content="My description">',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: '',
+      bodyAttrs: '',
+    })
   })
   it('basic resolve tags', async () => {
     const head = createClientHeadWithContext()
@@ -72,61 +58,13 @@ describe('resolveTags', () => {
 
     const tags = resolveTags(head)
     expect(tags.length).toBe(5)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 1024,
-          "_w": 100,
-          "props": {
-            "dir": "ltr",
-            "lang": "en",
-          },
-          "tag": "htmlAttrs",
-        },
-        {
-          "_d": "bodyAttrs",
-          "_p": 1025,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "dark",
-            },
-          },
-          "tag": "bodyAttrs",
-        },
-        {
-          "_d": undefined,
-          "_h": "script:src:https://cdn.example.com/script.js",
-          "_p": 1026,
-          "_w": 100,
-          "props": {
-            "src": "https://cdn.example.com/script.js",
-          },
-          "tag": "script",
-        },
-        {
-          "_d": "charset",
-          "_p": 1027,
-          "_w": 100,
-          "props": {
-            "charset": "utf-8",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": "link:icon:https://cdn.example.com/favicon.ico",
-          "_p": 1028,
-          "_w": 100,
-          "props": {
-            "href": "https://cdn.example.com/favicon.ico",
-            "rel": "icon",
-            "type": "image/x-icon",
-          },
-          "tag": "link",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '<script src="https://cdn.example.com/script.js"></script>\n<meta charset="utf-8">\n<link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico">',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: ' lang="en" dir="ltr"',
+      bodyAttrs: ' class="dark"',
+    })
   })
 
   it('basic /w removal', async () => {
@@ -146,20 +84,13 @@ describe('resolveTags', () => {
 
     const tags = resolveTags(head)
     expect(tags.length).toBe(1)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": undefined,
-          "_h": "script:src:https://cdn.example.com/script2.js",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "src": "https://cdn.example.com/script2.js",
-          },
-          "tag": "script",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '<script src="https://cdn.example.com/script2.js"></script>',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: '',
+      bodyAttrs: '',
+    })
   })
 
   it('basic /w update', async () => {
@@ -178,61 +109,13 @@ describe('resolveTags', () => {
 
     const tags = resolveTags(head)
     expect(tags.length).toBe(5)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 1024,
-          "_w": 100,
-          "props": {
-            "dir": "ltr",
-            "lang": "en",
-          },
-          "tag": "htmlAttrs",
-        },
-        {
-          "_d": "bodyAttrs",
-          "_p": 1025,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "dark",
-            },
-          },
-          "tag": "bodyAttrs",
-        },
-        {
-          "_d": undefined,
-          "_h": "script:src:https://cdn.example.com/script2.js",
-          "_p": 1026,
-          "_w": 100,
-          "props": {
-            "src": "https://cdn.example.com/script2.js",
-          },
-          "tag": "script",
-        },
-        {
-          "_d": "charset",
-          "_p": 1027,
-          "_w": 100,
-          "props": {
-            "charset": "utf-8",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": "link:icon:https://cdn.example.com/favicon.ico",
-          "_p": 1028,
-          "_w": 100,
-          "props": {
-            "href": "https://cdn.example.com/favicon.ico",
-            "rel": "icon",
-            "type": "image/x-icon",
-          },
-          "tag": "link",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '<script src="https://cdn.example.com/script2.js"></script>\n<meta charset="utf-8">\n<link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico">',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: ' lang="en" dir="ltr"',
+      bodyAttrs: ' class="dark"',
+    })
   })
 
   it('class array merge support', async () => {
@@ -257,36 +140,13 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "foo",
-              "bar",
-              "something-new",
-            },
-          },
-          "tag": "htmlAttrs",
-        },
-        {
-          "_d": "bodyAttrs",
-          "_p": 2049,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "foo2",
-              "bar2",
-              "something-new2",
-            },
-          },
-          "tag": "bodyAttrs",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: ' class="foo bar something-new"',
+      bodyAttrs: ' class="foo2 bar2 something-new2"',
+    })
   })
 
   it('class object merge support', async () => {
@@ -310,22 +170,13 @@ describe('resolveTags', () => {
     })
 
     const tags = resolveTags(head)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "htmlAttrs",
-          "_p": 2048,
-          "_w": 100,
-          "props": {
-            "class": Set {
-              "foo",
-              "bar",
-            },
-          },
-          "tag": "htmlAttrs",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: ' class="foo bar"',
+      bodyAttrs: '',
+    })
   })
 
   it('duplicate tags', async () => {
@@ -346,19 +197,12 @@ describe('resolveTags', () => {
 
     const tags = resolveTags(head)
 
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "meta:description",
-          "_p": 1025,
-          "_w": 100,
-          "props": {
-            "content": "desc 2",
-            "name": "description",
-          },
-          "tag": "meta",
-        },
-      ]
-    `)
+    expect(ssrRenderTags(tags)).toEqual({
+      headTags: '<meta name="description" content="desc 2">',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: '',
+      bodyAttrs: '',
+    })
   })
 })

@@ -14,7 +14,7 @@ describe('browser compatibility', () => {
     })
 
     expect(resolveTags(head)).toContainEqual(expect.objectContaining({
-      props: {
+      attrs: {
         content: 'Compatible',
         name: 'description',
       },

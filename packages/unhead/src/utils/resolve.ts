@@ -1,8 +1,9 @@
-import type { HeadEntry, HeadTag, Unhead } from '../types'
+import type { HeadEntry, ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { bindTagAliases, callTagHook, syncTagAliases } from './tagHooks'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -47,12 +48,12 @@ export interface ResolveTagsOptions {
 function cloneTagsInPlace(tags: HeadTag[]) {
   for (let i = 0; i < tags.length; i++) {
     const t = tags[i]
-    const props: Record<string, any> = { ...t.props }
-    if (props.class instanceof Set)
-      props.class = new Set(props.class)
-    if (props.style instanceof Map)
-      props.style = new Map(props.style)
-    tags[i] = { ...t, props }
+    const attrs: Record<string, any> = { ...t.attrs }
+    if (attrs.class instanceof Set)
+      attrs.class = new Set(attrs.class)
+    if (attrs.style instanceof Map)
+      attrs.style = new Map(attrs.style)
+    tags[i] = { ...t, attrs, props: attrs }
   }
 }
 
@@ -86,14 +87,14 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
+      const attrs = { ...prev.attrs }
+      for (const p in next.attrs) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        attrs[p] = p === 'style'
+          ? new Map([...(prev.attrs.style || []) as any, ...next.attrs[p] as any])
+          : p === 'class' ? new Set([...(prev.attrs.class || []) as any, ...next.attrs[p] as any]) : next.attrs[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k, { ...next, attrs, props: attrs })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -136,15 +137,15 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
 function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
-    const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
+    const { innerHTML, tag, attrs } = t
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(attrs) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!hasContent(attrs.content) && !attrs['http-equiv'] && !attrs.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
-      const type = String(props.type)
+      const type = String(attrs.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
@@ -157,15 +158,19 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
         t.textContent = escape(t.textContent) as typeof t.textContent
       t._d = dedupeKey(t)
     }
-    tags[w++] = t
+    // Bind the public output after all sanitization copies. Copy cache tags,
+    // while preserving the identity of tags already exposed to listeners.
+    tags[w++] = bindTagAliases(t, true)
   }
   tags.length = w
   return tags
 }
 
 // public contract: returns a new array and leaves the input untouched
-export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  return sanitizeTagsInPlace([...tags])
+export function sanitizeTags(tags: HeadTagInput[]): HeadTag[] {
+  const resolved = [...tags]
+  syncTagAliases(resolved)
+  return sanitizeTagsInPlace(resolved)
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
@@ -192,6 +197,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   if (head._h) {
     entries = [...head.entries.values()]
     callHook(head, 'entries:resolve', { entries, ...ctx })
+    // Entry listeners may insert legacy tags before the defensive clone.
+    syncTagAliases(ctx.tags)
   }
   syncEntryHookCache(head, hooks)
   for (const e of entries || head.entries.values()) {
@@ -209,7 +216,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         // re-read per entry: an earlier listener may have (un)registered hooks
         if (hooks['entries:normalize']?.length) {
           const normalizeCtx = { tags, entry: e }
-          callHook(head, 'entries:normalize', normalizeCtx)
+          callTagHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
         for (let i = 0; i < tags.length; i++) {
@@ -236,8 +243,9 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
-  callHook(head, 'tags:beforeResolve', ctx)
-  callHook(head, 'tags:resolve', ctx)
-  callHook(head, 'tags:afterResolve', ctx)
+  callTagHook(head, 'tags:beforeResolve', ctx)
+  callTagHook(head, 'tags:resolve', ctx)
+  callTagHook(head, 'tags:afterResolve', ctx)
+  syncTagAliases(ctx.tags)
   return sanitizeTagsInPlace(ctx.tags)
 }

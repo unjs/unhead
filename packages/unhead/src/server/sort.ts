@@ -1,13 +1,14 @@
-import type { HeadTag } from '../types'
+import type { HeadTagInput } from '../types'
 import { TagPriorityAliases } from '../utils/const'
 
 // Capo.js tag weights for optimal head ordering
 const isTruthy = (v?: string | boolean) => v === '' || v === true
 
-export function capoTagWeight(tag: HeadTag): number {
+export function capoTagWeight(tag: HeadTagInput): number {
   if (typeof tag.tagPriority === 'number')
     return tag.tagPriority
   let weight = 100
+  const attrs = tag.attrs ?? tag.props!
   const offset = TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0
   if (tag.tag === 'base') {
     weight = -10
@@ -16,10 +17,10 @@ export function capoTagWeight(tag: HeadTag): number {
     weight = 10
   }
   else if (tag.tag === 'meta') {
-    weight = tag.props['http-equiv'] === 'content-security-policy' ? -30 : tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
+    weight = attrs['http-equiv'] === 'content-security-policy' ? -30 : attrs.charset ? -20 : attrs.name === 'viewport' ? -15 : weight
   }
-  else if (tag.tag === 'link' && tag.props.rel) {
-    const rel = tag.props.rel
+  else if (tag.tag === 'link' && attrs.rel) {
+    const rel = attrs.rel
     weight = rel === 'preconnect'
       ? 20
       : rel === 'stylesheet'
@@ -31,7 +32,7 @@ export function capoTagWeight(tag: HeadTag): number {
             : weight
   }
   else if (tag.tag === 'script') {
-    const type = typeof tag.props.type === 'string' ? tag.props.type : ''
+    const type = typeof attrs.type === 'string' ? attrs.type : ''
     const json = type.endsWith('json')
     if (type === 'importmap')
       // parse-time directive, not a loadable resource: placed between
@@ -41,12 +42,12 @@ export function capoTagWeight(tag: HeadTag): number {
     else if (type === 'speculationrules')
       // performance hint, belongs late in head alongside prefetch/prerender
       weight = 90
-    else if (isTruthy(tag.props.async))
+    else if (isTruthy(attrs.async))
       weight = 30
     // async is falsy past this point
-    else if ((tag.props.src && !isTruthy(tag.props.defer) && type !== 'module' && !json) || ((tag.innerHTML || tag.textContent) && !json))
+    else if ((attrs.src && !isTruthy(attrs.defer) && type !== 'module' && !json) || ((tag.innerHTML || tag.textContent) && !json))
       weight = 50
-    else if ((isTruthy(tag.props.defer) && tag.props.src) || type === 'module')
+    else if ((isTruthy(attrs.defer) && attrs.src) || type === 'module')
       weight = 80
   }
   else if (tag.tag === 'style') {
