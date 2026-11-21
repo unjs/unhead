@@ -2,6 +2,7 @@ import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parse
 import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
+import { placeStreamingMetadata } from '../parser/streamingMetadata'
 import { createHead } from '../server/createHead'
 import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -188,7 +189,15 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
 }
 
 function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: PreparedHtmlTemplateWithIndexes): string {
-  return applyHeadToHtml(parsed, ssr, createBootstrapScript(getStreamKey(head), head._stream?.nonce))
+  const bootstrap = createBootstrapScript(getStreamKey(head), head._stream?.nonce)
+  const metadata = parsed.headSlots && ssr.headTags ? placeStreamingMetadata(parsed.headSlots, ssr.headTags) : undefined
+  return applyHeadToHtml(parsed, {
+    htmlAttrs: ssr.htmlAttrs,
+    headTags: bootstrap + (metadata?.headTags ?? ssr.headTags),
+    bodyAttrs: ssr.bodyAttrs,
+    bodyTagsOpen: ssr.bodyTagsOpen,
+    bodyTags: ssr.bodyTags,
+  }, metadata?.inserts)
 }
 
 /**
@@ -626,7 +635,7 @@ interface StreamingTemplateLayout {
 }
 
 function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const { html, indexes, bodyOutlet, headCharsetAt } = parsed
+  const { html, indexes, bodyOutlet, headSlots } = parsed
   const { bodyTagEnd, bodyCloseTagStart } = indexes
   if (bodyTagEnd < 0 || bodyCloseTagStart < bodyTagEnd)
     return
@@ -637,7 +646,7 @@ function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes):
       html: html.slice(0, bodyOutlet?.start ?? bodyTagEnd),
       input: parsed.input,
       indexes: { ...indexes, bodyCloseTagStart: -1 },
-      headCharsetAt,
+      headSlots,
     },
     endBeforeBodyTags: html.slice(bodyOutlet?.end ?? bodyTagEnd, bodyCloseTagStart),
     endAfterBodyTags: html.slice(bodyCloseTagStart),
@@ -668,7 +677,7 @@ function getPreparedStreamingLayout(template: PreparedHtmlTemplateWithIndexes): 
  * splitting at body tag boundaries when no marker is found.
  *
  * This is the recommended way to handle streaming templates as it:
- * - Dedupes template head tags against the current head
+ * - Dedupes the template title, description, and charset against the current head
  * - Properly injects head content, html/body attrs, and bootstrap script
  * - Injects body tags (scripts at end of body) into the closing part
  *

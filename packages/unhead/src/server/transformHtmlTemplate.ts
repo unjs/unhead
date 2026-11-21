@@ -9,15 +9,16 @@ interface ExtractedTemplateCache {
   tags: HeadTag[]
 }
 
-let extractedTemplates: WeakMap<PreparedTemplate, { document?: ExtractedTemplateCache, stream?: ExtractedTemplateCache }> | undefined
+let extractedTemplates: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
+let extractedStreamingTemplates: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
 
 function cloneExtractedInput<T>(value: T): T {
   if (Array.isArray(value))
     return value.map(cloneExtractedInput) as T
   if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
-    const clone: Record<PropertyKey, unknown> = {}
-    for (const key of Reflect.ownKeys(value))
-      clone[key] = cloneExtractedInput((value as Record<PropertyKey, unknown>)[key])
+    const clone: Record<string, unknown> = {}
+    for (const key of Object.keys(value))
+      clone[key] = cloneExtractedInput((value as Record<string, unknown>)[key])
     return clone as T
   }
   return value
@@ -29,8 +30,8 @@ function freezeExtractedInput<T>(value: T): T {
       freezeExtractedInput(item)
   }
   else if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
-    for (const key of Reflect.ownKeys(value))
-      freezeExtractedInput((value as Record<PropertyKey, unknown>)[key])
+    for (const key of Object.keys(value))
+      freezeExtractedInput((value as Record<string, unknown>)[key])
   }
   return value && typeof value === 'object' ? Object.freeze(value) : value
 }
@@ -52,9 +53,8 @@ function hasHooks(head: Unhead<any>): boolean {
  * @internal
  */
 export function extractPreparedTemplate(prepared: PreparedTemplate, mode: 'document' | 'stream' = 'document'): ExtractedTemplateCache {
-  const cache = extractedTemplates ||= new WeakMap()
-  const variants = cache.get(prepared)
-  let extracted = variants?.[mode]
+  const cache = mode === 'stream' ? (extractedStreamingTemplates ||= new WeakMap()) : (extractedTemplates ||= new WeakMap())
+  let extracted = cache.get(prepared)
   if (!extracted) {
     const template = parseHtmlForUnheadExtraction(prepared, mode === 'stream' ? 'stream' : false)
     freezeExtractedInput(template.input)
@@ -66,7 +66,7 @@ export function extractPreparedTemplate(prepared: PreparedTemplate, mode: 'docum
       template,
       tags,
     })
-    cache.set(prepared, Object.freeze({ ...variants, [mode]: extracted }))
+    cache.set(prepared, extracted)
   }
   return extracted
 }

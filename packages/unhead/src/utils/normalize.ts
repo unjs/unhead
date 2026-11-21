@@ -2,7 +2,6 @@ import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
-import { templateTagOrder } from './templateOrder'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
@@ -124,7 +123,6 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     return []
   if (typeof input === 'function')
     input = input()
-  const sourceOrder: string[] | undefined = input?.[templateTagOrder]
   // The root intentionally passes through the resolver chain twice. The first
   // pass unwraps refs, then walkResolver invokes a function returned by a ref.
   input = resolveHeadInput(input, propResolvers)
@@ -140,23 +138,5 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
       }
     }
   }
-  if (!sourceOrder?.length)
-    return tags
-  // Normalization groups tag types. Restore template order before assigning sort positions.
-  const remaining = new Set(tags)
-  const groups = new Map<string, HeadTag[]>()
-  for (const tag of tags) {
-    const group = groups.get(tag.tag) || []
-    group.push(tag)
-    groups.set(tag.tag, group)
-  }
-  const ordered: HeadTag[] = []
-  for (const name of sourceOrder) {
-    const tag = groups.get(name)?.shift()
-    if (tag) {
-      ordered.push(tag)
-      remaining.delete(tag)
-    }
-  }
-  return [...ordered, ...remaining]
+  return tags
 }

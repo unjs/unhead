@@ -30,6 +30,31 @@ describe.each([
     expect(document.querySelector('#app > p')?.textContent).toBe('Streamed content')
   })
 
+  it('keeps template metadata visible to the following startup script', () => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    head.push({
+      title: 'App',
+      meta: [
+        { name: 'title', content: 'Other metadata', tagPriority: -50 },
+        { name: 'description', content: 'App' },
+      ],
+    })
+    const source = templateWithTags.replace('<title>', '<meta name="app-config" content="ready"><title>').replace('</head>', `<script>
+      document.documentElement.dataset.seen = [
+        document.querySelector('meta[name=app-config]')?.content,
+        document.title,
+        document.querySelector('meta[name=description]')?.content,
+      ].join(',')
+    </script></head>`)
+
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const { window } = new JSDOM(shell + end, { runScripts: 'dangerously' })
+    const seen = window.document.documentElement.dataset.seen
+    window.close()
+
+    expect(seen).toBe('ready,App,App')
+  })
+
   it('retains static tags and attributes and decodes template titles once', () => {
     const { head } = createStreamableHead({ disableDefaults: true })
     const source = '<html lang="fr"><head><title>&nbsp;Marks &amp; Spencer</title><meta name="description" content="Template"></head><body class="loaded"></body></html>'

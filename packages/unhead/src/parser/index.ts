@@ -1,8 +1,9 @@
 import type { DefaultTreeAdapterMap, DefaultTreeAdapterTypes, Token, TreeAdapter } from 'parse5'
 import type { SerializableHead } from '../types'
+import type { HeadSlot } from './streamingMetadata'
 import { defaultTreeAdapter, parse, html as parse5Html } from 'parse5'
 import { hasOwn } from '../utils/hasOwn'
-import { templateTagOrder } from '../utils/templateOrder'
+import { streamingMetadataKind } from './streamingMetadata'
 
 const TAG_HTML = 0
 const TAG_HEAD = 1
@@ -49,7 +50,7 @@ export interface PreparedHtmlTemplateWithIndexes {
     bodyCloseTagStart: number
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
-  headCharsetAt?: number
+  headSlots?: readonly HeadSlot[]
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -372,12 +373,11 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const bodyOutlet = mode === 'stream'
     ? (prepared ? prepared.bodyOutlet : findBodyOutlet(html, body, indexes))
     : undefined
-  const order: string[] = []
-  const input: SerializableHead = { [templateTagOrder]: order } as SerializableHead
+  const input: SerializableHead = {}
   const parts: string[] = []
   let cursor = 0
   let removed = 0
-  let headCharsetAt: number | undefined
+  let headSlots: HeadSlot[] | undefined
 
   function replace(start: number, end: number, replacement = '') {
     parts.push(html.slice(cursor, start), replacement)
@@ -411,15 +411,30 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
       if ((endTag ?? startTag).endOffset > indexes.headTagEnd)
         continue
 
+      if (mode === 'stream') {
+        const kind = streamingMetadataKind(node)
+        if (!kind || (kind === 'title' && !endTag))
+          continue
+        if (kind === 'title') {
+          const title = node.childNodes.find(defaultTreeAdapter.isTextNode)?.value
+          if (title)
+            input.title ||= trimHtmlWhitespace(title) || undefined
+        }
+        else {
+          (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
+        }
+        // Replace the first occurrence in place so later template scripts can read it.
+        if (!headSlots?.some(slot => slot.kind === kind))
+          (headSlots ||= []).push(Object.freeze({ kind, offset: startTag.startOffset - removed }))
+        replace(startTag.startOffset, (endTag ?? startTag).endOffset)
+        continue
+      }
+
       // Match the existing output format by removing indentation with extracted tags.
       const start = precedingText !== undefined && !html.slice(precedingText, startTag.startOffset).trim()
         ? precedingText
         : startTag.startOffset
       const { tagName } = node
-      // App policies are appended to the static head. Keep resources before them,
-      // and retain their order relative to policies already in the template.
-      if (mode === 'stream' && (tagName === 'script' || tagName === 'style' || tagName === 'link'))
-        continue
       switch (tagName) {
         case 'title':
         case 'script':
@@ -430,9 +445,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           if (tagName === 'script' && !canExtractScript(content))
             continue
           if (tagName === 'title') {
-            const title = node.childNodes.find(defaultTreeAdapter.isTextNode)?.value
-            if (title)
-              input.title ||= trimHtmlWhitespace(title) || undefined
+            input.title ||= content.trim() || undefined
           }
           else if (tagName === 'script') {
             (input.script ||= []).push({ ...readAttributes(node, startTag), innerHTML: content } as NonNullable<SerializableHead['script']>[number])
@@ -443,38 +456,21 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           replace(start, endTag.endOffset)
           break
         }
-        case 'meta': {
-          const attrs = readAttributes(node, startTag)
-          if (mode === 'stream') {
-            // The positions of CSP and encoding declarations can affect how the browser reads the shell.
-            const directive = attrs['http-equiv']?.toLowerCase()
-            if (directive === 'content-security-policy' || directive === 'content-type')
-              continue
-            if (attrs.name?.toLowerCase() === 'referrer')
-              continue
-            if (hasOwn(attrs, 'charset'))
-              headCharsetAt ??= start - removed
-          }
-          (input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
+        case 'meta':
+          (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.endOffset)
           break
-        }
         case 'link':
           (input.link ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['link']>[number])
           replace(start, startTag.endOffset)
           break
         case 'base':
-          // A base takes effect at its source position, before any later CSP.
-          if (mode === 'stream')
-            continue
           if (!input.base) {
             input.base = readAttributes(node, startTag) as unknown as SerializableHead['base']
             replace(start, startTag.endOffset)
           }
           break
       }
-      if (cursor > startTag.startOffset)
-        order.push(tagName)
     }
     indexes.headTagEnd -= removed
   }
@@ -498,8 +494,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   }
   if (bodyOutlet)
     result.bodyOutlet = Object.freeze({ start: bodyOutlet.start - removed, end: bodyOutlet.end - removed })
-  if (headCharsetAt !== undefined)
-    result.headCharsetAt = headCharsetAt
+  if (headSlots)
+    result.headSlots = Object.freeze(headSlots)
   return result
 }
 
@@ -572,19 +568,6 @@ function findBodyOutlet(
   return first
 }
 
-const LEADING_CHARSET_RE = /^<meta charset="[^"]*">/
-
-function findRenderedCharset(html: string) {
-  const leading = LEADING_CHARSET_RE.exec(html)
-  if (leading)
-    return { startOffset: 0, endOffset: leading[0].length }
-  const { head } = parseTemplateDocument(html)
-  for (const child of head?.childNodes ?? []) {
-    if (defaultTreeAdapter.isElementNode(child) && child.tagName === 'meta' && child.attrs.some(attr => attr.name === 'charset'))
-      return child.sourceCodeLocation?.startTag
-  }
-}
-
 /**
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
@@ -593,7 +576,7 @@ function findRenderedCharset(html: string) {
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },
-  headPrefix = '',
+  headInserts?: readonly { offset: number, html: string }[],
 ): string {
   const { html, indexes } = template
   const parts: string[] = []
@@ -608,17 +591,13 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
-    let { headTags } = headHtml
-    const { headCharsetAt } = template
-    if (headCharsetAt !== undefined && headTags) {
-      const charset = findRenderedCharset(headTags)
-      if (charset) {
-        parts.push(html.substring(lastIndex, headCharsetAt), headTags.slice(charset.startOffset, charset.endOffset))
-        lastIndex = headCharsetAt
-        headTags = headTags.slice(0, charset.startOffset) + headTags.slice(charset.endOffset)
+    if (headInserts) {
+      for (const insert of headInserts) {
+        parts.push(html.slice(lastIndex, insert.offset), insert.html)
+        lastIndex = insert.offset
       }
     }
-    parts.push(html.substring(lastIndex, indexes.headTagEnd), headPrefix, headTags)
+    parts.push(html.substring(lastIndex, indexes.headTagEnd), headHtml.headTags)
     lastIndex = indexes.headTagEnd
   }
 
