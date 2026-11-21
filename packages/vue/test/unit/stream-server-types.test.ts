@@ -15,8 +15,28 @@ describe('vue streaming server types', () => {
     head.push({ title, invalid: true })
     // @ts-expect-error A ref still needs a valid head entry
     head.push(ref({ invalid: true }))
+    // @ts-expect-error A getter returning a ref still needs a valid head entry
+    head.push(() => ref({ invalid: true }))
     // @ts-expect-error The base href must be a string, including inside a ref
     head.push({ base: ref({ href: 42 }) })
+    const entry = head.push({ title })
+    // @ts-expect-error A computed entry returned by a getter still needs a string href
+    entry.patch(() => computed(() => ({ base: { href: 42 } })))
+  })
+
+  it('renders head entry getters that return refs and computed values', async () => {
+    const { head } = createStreamableHead()
+    const title = ref({ title: 'Vue Streaming' })
+    const base = computed(() => ({ base: { href: '/docs/' } }))
+
+    head.push(() => title)
+    const entry = head.push({ base: { href: '/' } })
+    entry.patch(() => base)
+
+    const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+
+    expect(shell).toContain('<title>Vue Streaming</title>')
+    expect(shell).toContain('<base href="/docs/">')
   })
 
   it('renders refs and computed values around whole tag objects', async () => {

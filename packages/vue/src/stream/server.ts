@@ -1,7 +1,7 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, ResolvableTitleTemplate, SSRHeadPayload } from 'unhead/types'
 import type { Ref } from 'vue'
-import type { ReactiveHead, ResolvableProperties, ResolvableValue, VueHeadClient } from '../types'
+import type { MaybeFalsy, ReactiveHead, ResolvableProperties, VueHeadClient } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream,
@@ -10,11 +10,15 @@ import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
 type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams' | 'title'
-type VueStreamableHeadInput = ResolvableValue<
+type VueStreamableHeadValue = MaybeFalsy<
   Omit<ReactiveHead, StreamableHeadObjectKey | 'titleTemplate'>
   & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
   & { titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate> }
 >
+type VueStreamableHeadInput
+  = | VueStreamableHeadValue
+    | Ref<VueStreamableHeadValue>
+    | (() => VueStreamableHeadValue | Ref<VueStreamableHeadValue>)
 
 /**
  * Vue-specific context returned by createStreamableHead.
