@@ -1,6 +1,6 @@
 import type { defineLink } from 'unhead'
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, GenericLink, HeadEntryOptions, ResolvableTitleTemplate, SSRHeadPayload, Unhead } from 'unhead/types'
+import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, GenericLink, HeadEntryOptions, KnownLinkRel, ResolvableTitleTemplate, SSRHeadPayload, Unhead } from 'unhead/types'
 import type { Plugin, Ref } from 'vue'
 import type { MaybeFalsy, ReactiveHead, ResolvableProperties } from '../types'
 import {
@@ -39,11 +39,11 @@ type TagVariantResult<Tag, Variant> = Variant extends object
       : never
     : never
   : never
-type UnknownVariantKeys<Tag, Variants> = [KnownObjectKeys<Tag>] extends [never]
+type UnknownVariantKeys<Tag, Variants, NoMatch = never> = [KnownObjectKeys<Tag>] extends [never]
   ? never
   : Tag extends object
     ? TagVariantResult<Tag, Variants> extends infer Match
-      ? true extends Match ? never : Exclude<Match, true>
+      ? true extends Match ? never : [Match] extends [never] ? NoMatch : Exclude<Match, true>
       : never
     : never
 type UnknownTagAttributes<Tag, Variants>
@@ -51,10 +51,28 @@ type UnknownTagAttributes<Tag, Variants>
 
 type StreamableTagKey = Exclude<keyof VueStreamableHeadSchema, 'templateParams'>
 type DefinedLinkRelationKey = Exclude<keyof ReturnType<typeof defineLink<{ rel: string }>>['rel'], keyof string>
+type DeclaredLink<Rel> = ResolveHeadValue<Rel> extends Record<DefinedLinkRelationKey, infer Input> ? Input : never
+type LinkWithRelation<Input, Rel> = Rel extends KnownLinkRel ? Omit<Input, 'rel'> & { rel: Rel } : never
+
+type LinkVariantKeys<Rel, Variants> = Variants extends { rel: infer VariantRel }
+  ? ResolveHeadValue<Rel> extends ResolveHeadValue<VariantRel> ? keyof Variants : never
+  : never
+
+// Ignore fields from the widened schema that were absent from the original input.
+type DefinedLinkFields<Tag, Input, Rel, Variants, Extra extends keyof Tag = Exclude<SuppliedTagKeys<Tag>, LinkVariantKeys<Rel, Variants>> & keyof Tag>
+  = Omit<Input, Extra> & Pick<Tag, Extra>
+
+type UnknownDefinedLinkAttributes<Input, Variants> = Input extends { rel: infer Rel extends string }
+  ? string extends Rel
+    ? Exclude<SuppliedTagKeys<Input>, keyof Extract<Variants, object>>
+    : UnknownVariantKeys<LinkWithRelation<Input, Extract<KnownLinkRel, Rel>>, Variants, 'rel'>
+  : never
+
 type UnknownLinkAttributes<Tag, Variants> = Tag extends { rel: infer Rel }
-  ? [Extract<DefinedLinkRelationKey, keyof ResolveHeadValue<Rel>>] extends [never]
+  ? [DeclaredLink<Rel>] extends [never]
       ? UnknownTagAttributes<Tag, Variants>
       : Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants> | keyof GenericLink>
+        | UnknownDefinedLinkAttributes<DefinedLinkFields<Tag, DeclaredLink<Rel>, Rel, Variants>, Variants>
   : UnknownTagAttributes<Tag, Variants>
 type StreamableTagVariants<Key extends StreamableTagKey> = Exclude<TagValue<VueStreamableHeadSchema[Key]>, Ref>
 

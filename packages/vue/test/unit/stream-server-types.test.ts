@@ -77,6 +77,33 @@ describe('vue streaming server types', () => {
     expect(shell).toContain('<link rel="canonical" href="/docs/">')
   })
 
+  it('checks attributes against the known relations a variable can hold', () => {
+    const { head } = createStreamableHead()
+    const configured = ref<string>('canonical')
+    const ordinary = defineLink({ rel: configured.value, href: '/docs/' })
+    const entry = head.push(() => ref({ link: [ordinary] }))
+    const unsafe = defineLink({ rel: configured.value, href: '/docs/', as: 'image' })
+    // @ts-expect-error A string relation can resolve to a link that forbids as
+    entry.patch({ link: computed(() => [unsafe]) })
+    // @ts-expect-error Adding a preload attribute after defineLink still needs a known variant
+    entry.patch({ link: [{ ...ordinary, as: 'image' as const }] })
+
+    const custom = ref('EditURI' as const)
+    entry.patch({ link: [defineLink({ rel: custom.value, href: '/rsd.xml', type: 'application/rsd+xml' })] })
+    const maybeCustom = computed(() => configured.value === 'canonical' ? 'canonical' as const : 'EditURI' as const)
+    const shared = defineLink({ rel: maybeCustom.value, href: '/rsd.xml' })
+    entry.patch({ link: [shared] })
+    // @ts-expect-error Spreading a link preserves the possible known relations
+    entry.patch({ link: [{ ...shared, type: 'application/rsd+xml' }] })
+    const unsafeUnion = defineLink({ rel: maybeCustom.value, href: '/rsd.xml', type: 'application/rsd+xml' })
+    // @ts-expect-error The canonical alternative forbids type
+    head.push(() => ref({ link: [unsafeUnion] }))
+    const maybePreload = computed(() => configured.value === 'preload' ? 'preload' as const : 'EditURI' as const)
+    // @ts-expect-error The preload alternative needs as
+    defineLink({ rel: maybePreload.value, href: '/docs.png' })
+    entry.patch({ link: [defineLink({ rel: maybePreload.value, href: '/docs.png', as: 'image', imagesrcset: '/docs.png 1x' })] })
+  })
+
   it('renders valid reactive link variants', async () => {
     const { head } = createStreamableHead()
     const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)

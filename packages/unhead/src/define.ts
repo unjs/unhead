@@ -3,7 +3,7 @@ import type { InferLink, InferScript, KnownLinkRel, Link, Script } from './types
 // Preserve known alternatives and mark custom relations widened to the Link union.
 declare const definedLinkRelation: unique symbol
 type WidenedLink<T extends { rel: string }> = Link & Omit<T, 'rel'> & (
-  [T['rel']] extends [KnownLinkRel] ? { rel: T['rel'] } : { rel: { readonly [definedLinkRelation]: true } }
+  [T['rel']] extends [KnownLinkRel] ? { rel: T['rel'] } : { rel: { readonly [definedLinkRelation]: T } }
 )
 
 type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
