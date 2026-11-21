@@ -1,6 +1,5 @@
 import type { HookableCore } from 'hookable'
 import type { ClientUnhead } from '../client/adapter'
-import type { StreamingGlobal } from '../stream/types'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntry, HeadPluginInput, HeadRenderer, ResolvableHead } from '../types'
 import { registerPlugin } from '../unhead'
 import { copyInput, sameInput } from './same'
@@ -114,11 +113,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   const adapter = options as LazyHeadAdapterOptions
   const document = options.document || (typeof window !== 'undefined' ? window.document : undefined)
   const streamKey = options.streamKey
-  const stream = streamKey === undefined
-    ? undefined
-    : (document?.defaultView as unknown as Record<string, StreamingGlobal> | undefined)?.[streamKey]
-  if (streamKey !== undefined && (!Array.isArray(stream?._q) || typeof stream.push !== 'function'))
-    throw new Error('[unhead] Lazy head requires the server bootstrap for this streamKey.')
+  const streaming = streamKey !== undefined
   const hooks = createHookStore(options.hooks)
   // Copies of the server rendered entries, kept apart from live entries throughout hydration
   let serverEntries: HeadEntry<T>[] = []
@@ -150,6 +145,9 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   // the lazy plugins register once, for the runtime or the dev check, whichever runs first
   const useLazyPlugins = () => plugins ||= Promise.resolve(options.lazyPlugins?.()).then((list) => {
     list?.forEach(p => head.use(p))
+  }).catch((error) => {
+    plugins = undefined
+    throw error
   })
 
   // During hydration a change means the client already differs from the server, so it loads
@@ -157,7 +155,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   // updates holds it: nothing could render yet. A framework pauses during a navigation,
   // so the load waits for the next page.
   const change = () => {
-    if (stream)
+    if (streaming)
       return
     if (!hydrated)
       hydrationChanged = true
@@ -273,7 +271,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       head.dirty = hydrationChanged
       // A dev aid: name each client tag that waits for the first change. The import is dead code in production.
       // eslint-disable-next-line node/prefer-global/process
-      if (process.env.NODE_ENV !== 'production' && document && !loading && !stream) {
+      if (process.env.NODE_ENV !== 'production' && document && !loading && !streaming) {
         import('./devCheck')
           .then(m => m.checkHydratedHead(head, document, useLazyPlugins, sources, () => !!loading))
           // the check is advisory: its failure, such as a failing lazy plugin loader, must not reject unhandled
@@ -287,20 +285,19 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     // A load before hydration ends that no change started means no server head applies: a page
     // with no server render, or a head created after hydration. Nothing is left to adopt, so the
     // first render takes the entries as they are then, as the default client head does.
-    if (!stream && !hydrated && !loading && !hydrationChanged)
+    if (!streaming && !hydrated && !loading && !hydrationChanged)
       hydrated = serverEntries = []
     // The runtime and the lazy plugins load together, so the first change waits one round trip.
     return loading ||= Promise.all([import('./runtime'), useLazyPlugins()])
       .then(([runtime]) => {
-        hydrated ||= serverEntries
-        render = runtime.upgradeHead(head, options, () => hydrated!, stream)
+        render = runtime.upgradeHead(head, options, () => hydrated ||= serverEntries, streamKey)
         head._b = false
         head.render()
         return true
       })
       // a failed load resets, so a later change or `load()` retries
       .catch((error) => {
-        loading = plugins = undefined
+        loading = undefined
         ;(options.onLoadError || console.error)(error)
         return false
       })
@@ -308,7 +305,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
 
   // `useScript` writes its script only once the runtime renders it
   hooks.hook('script:updated', ({ script }: { script: { status: string } }) => {
-    if (!stream && script.status === 'loading')
+    if (!streaming && script.status === 'loading')
       head.load()
   })
   options.plugins?.forEach(p => head.use(p))

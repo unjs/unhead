@@ -59,14 +59,14 @@ Call `load()` at once for a page with no server render, or for a head created af
 
 After hydration, a `dom:beforeRender` pause holds the load. Pause during a navigation, and call `render()` when it ends. Before hydration ends, a change loads the runtime at once. A `load()` call and a `useScript()` load skip the pause, but the runtime renders nothing until the pause lifts.
 
-With `streamKey`, the framework controls activation. Streamed patches and client head changes wait for `load()`. After a load failure, call `load()` again. See [Streaming SSR](/docs/vue/head/guides/core-concepts/lazy-head#streaming-ssr).
+With `streamKey`, the framework controls activation. Streamed patches and client head changes wait for `load()`. If the stream queue is missing, `load()` returns `false` and calls `onLoadError`. After a load failure, call `load()` again. See [Streaming SSR](/docs/vue/head/guides/core-concepts/lazy-head#streaming-ssr).
 
 ## Chunks
 
 | Chunk | Loads | Size, gzip |
 | --- | --- | --- |
-| The lazy head code in the eager bundle | With the app | About 2.5 KB with `@unhead/vue` |
-| The runtime | On the first head change or when the app calls `load()` | About 4.8 KB |
+| The lazy head code in the eager bundle | With the app | About 2.4 KB with `@unhead/vue` |
+| The runtime | On the first head change or when the app calls `load()` | About 5.0 KB |
 | The dev check | In development, after hydration | None in production |
 
 If your server adds prefetch hints for dynamic imports, the browser downloads the runtime at once. Read [Prefetch hints](/docs/vue/head/guides/core-concepts/lazy-head#prefetch-hints) to keep the runtime out of them.

@@ -14,6 +14,30 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it('reports a missing stream queue on load and retries once the bootstrap is available', async () => {
+    const { document, queue } = createStreamDocument()
+    const window = document.defaultView as unknown as { pageHead?: StreamingGlobal }
+    delete window.pageHead
+    const onLoadError = vi.fn()
+    const plugin = vi.fn(() => ({ key: 'stream-plugin' }))
+    const head = createHead({ document, streamKey: 'pageHead', onLoadError, lazyPlugins: async () => [plugin] })
+
+    expect(await head.load()).toBe(false)
+    expect(onLoadError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('server bootstrap') }))
+    expect(document.title).toBe('Shell')
+
+    const stylesheet = head.push({ link: [{ rel: 'stylesheet', href: '/shell.css' }] })
+    stylesheet.dispose()
+    window.pageHead = queue
+    queue.push([{ title: 'Streamed' }])
+    expect(await head.load()).toBe(true)
+    expect(plugin).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(document.title).toBe('Streamed')
+      expect(document.querySelectorAll('link[href="/shell.css"]')).toHaveLength(0)
+    })
+  })
+
   it('preserves patch order and keeps the same head through activation', async () => {
     const { document, queue } = createStreamDocument()
     queue.push([{ title: 'First patch' }])

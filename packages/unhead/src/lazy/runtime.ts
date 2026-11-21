@@ -30,11 +30,22 @@ function adoptHydratedEntries<T>(head: ClientUnhead<T>, hydrated: HeadEntry<T>[]
   }
 }
 
-export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, hydrated: () => HeadEntry<T>[], stream?: StreamingGlobal): HeadRenderer<any> {
+function resolveStream(document: Document | undefined, streamKey: string) {
+  const view = document?.defaultView as unknown as Record<string, StreamingGlobal> | undefined
+  const stream = view?.[streamKey]
+  if (!Array.isArray(stream?._q) || typeof stream.push !== 'function')
+    throw new Error('[unhead] Lazy head requires the server bootstrap for this streamKey.')
+  return stream
+}
+
+export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, finishHydration: () => HeadEntry<T>[], streamKey?: string): HeadRenderer<any> {
+  const stream = streamKey === undefined ? undefined : resolveStream(head.resolvedOptions.document, streamKey)
+  if (stream?._head && stream._head !== head)
+    throw new Error('[unhead] This stream already has a client head.')
+  // Failed validation must leave hydration open for a later attempt.
+  const hydrated = finishHydration()
   head.resolvedOptions._tagWeight = tagWeight
-  if (stream && stream._head !== head) {
-    if (stream._head)
-      throw new Error('[unhead] This stream already has a client head.')
+  if (stream && !stream._head) {
     // Reserve earlier entry positions so late SSR patches cannot override live client entries.
     let index = -(1 << 20)
     attachStreamHead(stream, head, input => head.push(input as T, { _index: index++ })._i)
@@ -48,7 +59,7 @@ export function upgradeHead<T>(head: ClientUnhead<T>, options: LazyHeadOptions, 
   return (options.render as HeadRenderer<any>) || (() => {
     const id = ++renderId
     setTimeout(() => {
-      if (id === renderId && (head._dom || !hydrated().length || adoptHydratedEntries(head, hydrated())))
+      if (id === renderId && (head._dom || !hydrated.length || adoptHydratedEntries(head, hydrated)))
         renderLazyDOMHead(head)
     })
   })
