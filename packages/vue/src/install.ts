@@ -13,7 +13,7 @@ export function injectHead() {
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function vueInstall(head: VueHeadClient<any>): (app: App) => void {
+export function vueInstall(head: Pick<VueHeadClient<any>, 'push' | 'ssr' | 'use'>): (app: App) => void {
   return (app) => {
     // `$head` is for the @vueuse/head polyfill
     app.config.globalProperties.$unhead = app.config.globalProperties.$head = head

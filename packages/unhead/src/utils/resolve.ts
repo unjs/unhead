@@ -1,7 +1,7 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
+import { callHook } from './callHook'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
 const LT_RE = /</g
@@ -107,7 +107,7 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   return hasFlatMeta
 }
 
-export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>): void {
+export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>, adoption = false): void {
   const title = ctx.tagMap.get('title')
   const tpl = ctx.tagMap.get('titleTemplate')
   head._title = title?.textContent
@@ -118,7 +118,8 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
   if (!fn)
     return
   // @ts-expect-error untyped
-  let v = typeof fn === 'function' ? fn(title?.textContent) : fn
+  // Adoption only needs title ownership. Retired callbacks may reference disposed state.
+  let v = adoption ? head.resolvedOptions.document?.title : typeof fn === 'function' ? fn(title?.textContent) : fn
   if (typeof v === 'string' && !head.plugins.has('template-params'))
     v = v.replace('%s', title?.textContent || '')
   if (title) {
@@ -168,7 +169,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return sanitizeTagsInPlace([...tags])
 }
 
-export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, adoption = false): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -215,7 +216,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
-          t._p = (e._i << 10) + i
+          t._p = ((e._order ?? e._i) << 10) + i
           t._d = dedupeKey(t)
           if (!t._d)
             t._h = hashTag(t)
@@ -234,7 +235,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
-  resolveTitleTemplate(ctx, head)
+  resolveTitleTemplate(ctx, head, adoption)
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)

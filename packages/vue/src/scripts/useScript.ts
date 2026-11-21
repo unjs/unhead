@@ -4,9 +4,10 @@ import type {
   GenericScript,
   HeadEntryOptions,
   SchemaAugmentations,
+  Unhead,
 } from 'unhead/types'
 import type { Ref, WatchHandle } from 'vue'
-import type { ResolvableProperties, VueHeadClient } from '../types'
+import type { ResolvableProperties } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, getCurrentScope, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
@@ -38,7 +39,7 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   /**
    * Unhead instance.
    */
-  head?: VueHeadClient<any>
+  head?: Unhead<any>
 }
 
 export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'resolve' | 'use'> & {

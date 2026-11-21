@@ -11,6 +11,8 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./lazy:
+  createHead: function
 ./legacy:
   activeHead: object
   createHead: function
@@ -63,6 +65,7 @@
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
 ./stream/client:
+  attachStreamHead: function
   createStreamableHead: function
   DEFAULT_STREAM_KEY: string
 ./stream/iife:
