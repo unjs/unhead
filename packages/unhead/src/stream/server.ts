@@ -398,6 +398,10 @@ export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts
 type StreamedTitleUpdate = [entry: HeadEntry<any>, original: unknown, resolved: Record<string, unknown>]
 
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
+  return renderPendingHead(head)
+}
+
+function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
   if (!head.entries.size)
     return ''
 
@@ -461,13 +465,17 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     if (typeof titleTemplate === 'function' && titleChange) {
       flushed = Array.from(head.entries.values(), entry => [entry, entry.input])
       try {
-        inputs.push({ title: titleTemplate(title ?? undefined) ?? '', titleTemplate: null })
+        let text = titleTemplate(title ?? undefined)
+        if (text != null && !head.plugins.has('template-params'))
+          text = text.replace('%s', title || '')
+        inputs.push({ title: text ?? '', titleTemplate: null })
       }
       catch (error) {
         const [entry, original, resolved] = titleChange
         if (head.entries.get(entry._i) === entry && entry.input === original) {
           entry.input = { ...resolved, [templateUpdate ? 'titleTemplate' : 'title']: undefined }
           delete entry._tags
+          onDiscard?.()
         }
         throw error
       }
@@ -502,6 +510,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       }
       catch {
         head.entries.delete(key)
+        onDiscard?.()
       }
     }
     throw error
@@ -558,13 +567,19 @@ export function wrapStream(
   streamState(head).writesBodyTags = true
   // Preserve late entries when no custom chunk renderer exists.
   const flushChunk = options?.flushChunk ?? (() => {
-    let chunk: string
-    try {
-      chunk = renderSSRHeadSuspenseChunk(head)
-    }
-    catch {
-      // The response already started. Skip this patch.
-      return ''
+    let chunk: string | undefined
+    // An entry can lose a title and a template before its other tags are safe to send.
+    for (let retry = true, attempts = head.entries.size * 2 + 1; retry && attempts--;) {
+      retry = false
+      try {
+        chunk = renderPendingHead(head, () => {
+          retry = true
+        })
+        break
+      }
+      catch {
+        // Retry only if a failing input was isolated.
+      }
     }
     if (!chunk)
       return ''

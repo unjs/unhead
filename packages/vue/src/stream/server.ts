@@ -13,12 +13,12 @@ import { VueResolver } from '../resolver'
 type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams'
 type VariableLink
   = | { rel: ResolvableValue<KnownLinkRel> }
-    | { rel: Ref<MaybeFalsy<string>> | (() => MaybeFalsy<string>), href: ResolvableValue<string> }
+    | { rel: ResolvableValue<string>, href: ResolvableValue<string> }
 type VueStreamableHeadSchema
   = Omit<ReactiveHead, StreamableHeadObjectKey | 'title' | 'titleTemplate' | 'link'>
     & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
     & {
-      title?: ResolvableValue<Exclude<ReactiveHead['title'], () => unknown>>
+      title?: ResolvableValue<Exclude<ReactiveHead['title'], Ref | (() => unknown)>>
       titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate>
       link?: ResolvableArray<ResolvableLink | VariableLink>
     }
@@ -75,9 +75,9 @@ type LinkVariantKeys<Rel, Variants> = Variants extends { rel: infer VariantRel }
   ? ResolveHeadValue<Rel> extends ResolveHeadValue<VariantRel> ? keyof Variants : never
   : never
 
-// Ignore fields from the widened schema that were absent from the original input.
-type DefinedLinkFields<Tag, Input, Rel, Variants, Extra extends keyof Tag = Exclude<SuppliedTagKeys<Tag>, LinkVariantKeys<Rel, Variants>> & keyof Tag>
-  = Omit<Input, Extra> & Pick<Tag, Extra>
+// Read current values for supplied fields while ignoring the widened schema's implied fields.
+type DefinedLinkFields<Tag, Input, Rel, Variants, Fields extends keyof Tag = (Exclude<SuppliedTagKeys<Tag>, LinkVariantKeys<Rel, Variants>> | Exclude<keyof Input, 'rel'>) & keyof Tag>
+  = Omit<Input, Fields> & Pick<Tag, Fields>
 
 type UnknownDefinedLinkAttributes<Input, Variants> = Input extends { rel: infer Rel extends string }
   ? string extends Rel

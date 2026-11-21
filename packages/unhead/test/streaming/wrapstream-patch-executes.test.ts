@@ -18,12 +18,16 @@ afterEach(() => {
   globalThis.document = originalDocument
 })
 
-async function serveAndRun(late: Record<string, unknown>) {
+async function serveAndRun(late: Record<string, unknown> | Record<string, unknown>[], options: { shellTitle?: string, final?: boolean } = {}) {
   const { head } = createStreamableHead()
+  if (options.shellTitle)
+    head.push({ title: options.shellTitle })
   const stream = new ReadableStream<Uint8Array>({
     pull(controller) {
-      head.push(late as any)
-      controller.enqueue(new TextEncoder().encode('<p>app</p>'))
+      for (const input of Array.isArray(late) ? late : [late])
+        head.push(input as any)
+      if (!options.final)
+        controller.enqueue(new TextEncoder().encode('<p>app</p>'))
       controller.close()
     },
   })
@@ -59,12 +63,44 @@ describe('the patch a bare wrapStream emits', () => {
     expect(remaining).toEqual([])
   })
 
-  it('replays the result of a title-template callback as a literal title', async () => {
-    const { document } = await serveAndRun({
+  it('substitutes the title placeholder in streamed callback output as in the shell', async () => {
+    const input = {
       title: 'Docs',
       titleTemplate: (title?: string) => `${title} | 100%s`,
+    }
+    const { head } = createStreamableHead()
+    head.push(input)
+    const { window: { document: shell } } = new JSDOM(renderSSRHeadShell(head, TEMPLATE))
+    const { document } = await serveAndRun(input)
+    expect(shell.title).toBe('Docs | 100Docs')
+    expect(document.title).toBe(shell.title)
+  })
+
+  it('removes the shell title when a streamed callback returns null', async () => {
+    const { document } = await serveAndRun({ titleTemplate: () => null }, { shellTitle: 'Home' })
+    expect(document.querySelector('title')).toBeNull()
+  })
+
+  it('flushes valid metadata when the final title callback throws', async () => {
+    const fail = () => {
+      throw new Error('Title failed')
+    }
+    const { document } = await serveAndRun([
+      { titleTemplate: fail, meta: [{ name: 'description', content: 'Kept on final flush' }] },
+      { titleTemplate: fail },
+    ], { shellTitle: 'Home', final: true })
+    expect(document.title).toBe('Home')
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Kept on final flush')
+  })
+
+  it('applies every declaration in a streamed mixed style array', async () => {
+    const { document } = await serveAndRun({
+      bodyAttrs: { style: ['color:red; font-size:18px; --label:"a;b"', { opacity: 0 }] },
     })
-    expect(document.title).toBe('Docs | 100%s')
+    expect(document.body.style.color).toBe('red')
+    expect(document.body.style.fontSize).toBe('18px')
+    expect(document.body.style.getPropertyValue('--label')).toBe('"a;b"')
+    expect(document.body.style.opacity).toBe('0')
   })
 
   it('uses the raw title when replacing a streamed callback template', () => {
@@ -82,6 +118,14 @@ describe('the patch a bare wrapStream emits', () => {
     head.push({ titleTemplate: '%s | B' })
     dom.window.eval(renderSSRHeadSuspenseChunk(head))
     expect(document.title).toBe('Home | B')
+
+    head.push({ titleTemplate: () => null })
+    dom.window.eval(renderSSRHeadSuspenseChunk(head))
+    expect(document.querySelector('title')).toBeNull()
+
+    head.push({ titleTemplate: '%s | C' })
+    dom.window.eval(renderSSRHeadSuspenseChunk(head))
+    expect(document.title).toBe('Home | C')
   })
 
   it('escapes content that would otherwise close the script element', async () => {

@@ -119,6 +119,15 @@ describe('vue streaming server types', () => {
     head.push({ link: [{ rel: ref('EditURI' as const), href: '/rsd.xml' }] })
   })
 
+  it('checks shared attributes with a plain string relation', () => {
+    const { head } = createStreamableHead()
+    const rel: string = 'canonical'
+    head.push({ link: [{ rel, href: '/docs/' }] })
+    expect(renderSSRHeadShell(head, '<html><head></head><body>')).toContain('<link rel="canonical" href="/docs/">')
+    // @ts-expect-error A plain string cannot use a variant-specific attribute
+    head.push({ link: [{ rel, href: '/docs/', as: 'image' }] })
+  })
+
   it('renders valid reactive link variants', () => {
     const { head } = createStreamableHead()
     const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
@@ -165,6 +174,9 @@ describe('vue streaming server types', () => {
     head.push({ link: [{ ...link, prefetch: 'true' }] })
     // @ts-expect-error A custom link prefetch attribute needs a string
     head.push({ link: [{ ...link, prefetch: 123 }] })
+    head.push({ link: [{ ...link, href: '/other.xml' }] })
+    // @ts-expect-error The overwritten href must still be a string
+    head.push({ link: [{ ...link, href: 42 }] })
   })
 
   it('works with core head consumers and ref-wrapped entry getters', () => {
@@ -181,6 +193,8 @@ describe('vue streaming server types', () => {
     head.push(ref(() => ({ title: 'Docs', invalid: true })))
     // @ts-expect-error A ref around a title must hold a resolved title value
     head.push({ title: ref(() => 'Docs') })
+    // @ts-expect-error A computed title must not contain another ref
+    head.push({ title: computed(() => ref('Docs')) })
   })
 
   it('renders mixed class and style arrays with maps', () => {

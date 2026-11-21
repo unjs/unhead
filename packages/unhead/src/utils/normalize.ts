@@ -5,6 +5,7 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
+const CSS_DELIMITER_RE = /\/\*[\s\S]*?\*\/|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|[()[\]{};]/g
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -12,12 +13,31 @@ function normalizeStyleClassProps(
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
   const store: any = isStyle ? new Map() : new Set()
+  const addRule = (rule: string) => {
+    const colon = rule.indexOf(':')
+    if (colon > 0)
+      store.set(rule.slice(0, colon).trim(), rule.slice(colon + 1).trim())
+  }
   const add = (item: unknown) => {
     if (typeof item === 'string') {
       if (isStyle) {
-        const colon = item.indexOf(':')
-        if (colon > 0)
-          store.set(item.slice(0, colon).trim(), item.slice(colon + 1).trim())
+        let start = 0
+        if (item.includes(';')) {
+          let depth = 0
+          for (const { 0: token, index } of item.matchAll(CSS_DELIMITER_RE)) {
+            if (token === ';' && !depth) {
+              addRule(item.slice(start, index))
+              start = index + 1
+            }
+            else if ('([{'.includes(token)) {
+              depth++
+            }
+            else if (depth && ')]}'.includes(token)) {
+              depth--
+            }
+          }
+        }
+        addRule(item.slice(start))
       }
       else {
         item.split(' ').forEach(name => name && store.add(name))
@@ -34,7 +54,7 @@ function normalizeStyleClassProps(
       }
     }
   }
-  add(isStyle && typeof value === 'string' ? value.split(';') : value)
+  add(value)
   return store
 }
 
