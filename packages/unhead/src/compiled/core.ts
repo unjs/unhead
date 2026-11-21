@@ -175,6 +175,7 @@ function memoKey(head: CompiledTagsHead, omitLineBreaks: boolean | undefined): n
 export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boolean | undefined, renderer: CompiledRenderer): SSRHeadPayload {
   let node: TrieNode | undefined = renderer.n
   let last = -1
+  const sequence: [CompiledEntry, CompiledTags][] = []
   for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
     // a value function runs here, in entry order, and may replace the input of its entry
     if (entry._pending === undefined)
@@ -205,7 +206,22 @@ export function renderCompiledHead(head: CompiledTagsHead, omitLineBreaks: boole
       }
     }
     node = next
+    sequence.push([entry, compiledTags])
     last = i
+  }
+  // Getters can remove entries or patch an earlier entry. The memo builder and reader
+  // must see the same entry sequence and compiled tags that formed the trie key.
+  if (node) {
+    let position = 0
+    for (const entry of head.entries.values() as Iterable<CompiledEntry>) {
+      const previous = sequence[position++]
+      if (!previous || previous[0] !== entry || previous[1] !== entry._compiled || !isMemoEntry(entry) || typeof entry._values === 'function') {
+        node = undefined
+        break
+      }
+    }
+    if (position !== sequence.length)
+      node = undefined
   }
   const key = node && memoKey(head, omitLineBreaks)
   if (key != null) {
