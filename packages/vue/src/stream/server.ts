@@ -27,10 +27,13 @@ type TagValue<Value> = UnwrapTagArray<ResolveHeadValue<Value>>
 type ObjectKeys<Value> = Value extends object ? keyof Value : never
 type KnownObjectKeys<Value> = 0 extends (1 & Value) ? never : ObjectKeys<Value>
 
+// Heterogeneous arrays can infer optional undefined keys for absent attributes.
+type SuppliedTagKeys<Tag> = { [Key in keyof Tag]-?: Tag[Key] extends undefined ? never : Key }[keyof Tag]
+
 // An exact match in any compatible variant takes precedence over extra keys in other variants.
 type TagVariantResult<Tag, Variant> = Variant extends object
   ? Tag extends Variant
-    ? Exclude<keyof Tag, keyof Variant> extends infer ExtraKeys
+    ? Exclude<SuppliedTagKeys<Tag>, keyof Variant> extends infer ExtraKeys
       ? [ExtraKeys] extends [never] ? true : ExtraKeys
       : never
     : never
