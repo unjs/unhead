@@ -105,6 +105,20 @@ describe('vue streaming server types', () => {
     entry.patch({ link: [defineLink({ rel: maybePreload.value, href: '/docs.png', as: 'image', imagesrcset: '/docs.png 1x' })] })
   })
 
+  it('accepts shared link attributes with a reactive string relation', () => {
+    const { head } = createStreamableHead()
+    const rel = ref<string>('canonical')
+    head.push({ link: [{ rel, href: '/docs/' }] })
+    rel.value = 'author'
+    expect(renderSSRHeadShell(head, '<html><head></head><body>')).toContain('<link rel="author" href="/docs/">')
+    // @ts-expect-error A broad relation cannot use a variant-specific attribute
+    head.push({ link: [{ rel, href: '/docs/', as: 'image' }] })
+    // @ts-expect-error The shared href attribute still needs a string
+    head.push({ link: [{ rel, href: ref(42) }] })
+    // @ts-expect-error Custom literal relations still need defineLink
+    head.push({ link: [{ rel: ref('EditURI' as const), href: '/rsd.xml' }] })
+  })
+
   it('renders valid reactive link variants', () => {
     const { head } = createStreamableHead()
     const canonical = ref({ rel: 'canonical', href: '/docs/' } as const)
@@ -173,11 +187,11 @@ describe('vue streaming server types', () => {
     const { head } = createStreamableHead()
     head.push({ bodyAttrs: ref({
       class: ['root', { active: true, hidden: false }],
-      style: ['display:block', { color: 'red' }],
+      style: ['background-image:url(data:image/png;base64,AAAA)', { color: 'red', opacity: 0 }],
     }) })
     const shell = renderSSRHeadShell(head, '<html><head></head><body>')
     expect(shell).toContain('class="root active"')
-    expect(shell).toContain('style="display:block;color:red"')
+    expect(shell).toContain('style="background-image:url(data:image/png;base64,AAAA);color:red;opacity:0"')
   })
 
   it('provides the title to callbacks inside title-template objects', () => {
@@ -198,12 +212,43 @@ describe('vue streaming server types', () => {
 
   it('preserves valid late entries when a title-template callback throws', () => {
     const { head } = createStreamableHead()
-    head.push({ title: 'Docs' })
-    head.push({ titleTemplate: () => {
+    head.push({ title: 'Docs', titleTemplate: (title) => {
+      if (title === 'Late')
+        throw new Error('Title template failed')
+      return title ?? null
+    } })
+    renderSSRHeadShell(head, '<html><head></head><body>')
+    head.push({ title: 'Late', meta: [{ name: 'description', content: 'Keep me' }] })
+    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('Title template failed')
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Keep me')
+  })
+
+  it('preserves the title when a callback from the same entry throws', () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'Docs', titleTemplate: () => {
       throw new Error('Title template failed')
     } })
     expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('Title template failed')
     expect(renderSSRHeadSuspenseChunk(head)).toContain('"title":"Docs"')
+  })
+
+  it('keeps entries queued by a callback for the next stream chunk', () => {
+    const { head } = createStreamableHead()
+    head.push({ titleTemplate: () => {
+      head.push({ meta: [{ name: 'description', content: 'From callback' }] })
+      return 'Docs'
+    } })
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Docs')
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('From callback')
+  })
+
+  it('passes an absent title to a callback when title text resolves to null', () => {
+    const { head } = createStreamableHead()
+    head.push({
+      title: { textContent: ref(null) },
+      titleTemplate: title => title ? `${title} | Docs` : 'Untitled',
+    })
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Untitled')
   })
 
   it('rejects attributes from a different link variant', () => {

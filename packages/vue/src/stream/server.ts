@@ -11,13 +11,16 @@ import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
 type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams'
+type VariableLink
+  = | { rel: ResolvableValue<KnownLinkRel> }
+    | { rel: Ref<MaybeFalsy<string>> | (() => MaybeFalsy<string>), href: ResolvableValue<string> }
 type VueStreamableHeadSchema
   = Omit<ReactiveHead, StreamableHeadObjectKey | 'title' | 'titleTemplate' | 'link'>
     & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
     & {
       title?: ResolvableValue<Exclude<ReactiveHead['title'], () => unknown>>
       titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate>
-      link?: ResolvableArray<ResolvableLink | { rel: ResolvableValue<KnownLinkRel> }>
+      link?: ResolvableArray<ResolvableLink | VariableLink>
     }
 type VueStreamableHeadValue = MaybeFalsy<VueStreamableHeadSchema>
 type VueStreamableHeadInput
@@ -60,6 +63,13 @@ type DefinedLinkRelationKey = Exclude<keyof ReturnType<typeof defineLink<{ rel: 
 type DeclaredLink<Rel> = ResolveHeadValue<Rel> extends Record<DefinedLinkRelationKey, infer Input> ? Input : never
 type LinkWithRelation<Input, Rel> = Rel extends KnownLinkRel ? Omit<Input, 'rel'> & { rel: Rel } : never
 type ResolvableCustomLink = ResolvableProperties<GenericLink & SchemaAugmentations['link']>
+type UnknownSharedLinkAttributes<Tag, Variants>
+  = UnknownVariantKeys<Tag, Pick<ResolvableCustomLink, keyof ResolvableCustomLink & keyof Extract<Variants, object>>, 'rel'>
+type UnknownKnownLinkAttributes<Tag, Rel, Variants> = string extends Rel
+  ? UnknownSharedLinkAttributes<Tag, Variants>
+  : Exclude<Rel, MaybeFalsy<KnownLinkRel>> extends never
+    ? UnknownVariantKeys<LinkWithRelation<Tag, Rel>, Variants, 'rel'>
+    : 'rel'
 
 type LinkVariantKeys<Rel, Variants> = Variants extends { rel: infer VariantRel }
   ? ResolveHeadValue<Rel> extends ResolveHeadValue<VariantRel> ? keyof Variants : never
@@ -71,14 +81,14 @@ type DefinedLinkFields<Tag, Input, Rel, Variants, Extra extends keyof Tag = Excl
 
 type UnknownDefinedLinkAttributes<Input, Variants> = Input extends { rel: infer Rel extends string }
   ? string extends Rel
-    ? Exclude<SuppliedTagKeys<Input>, keyof Extract<Variants, object>>
+    ? UnknownSharedLinkAttributes<Input, Variants>
     : UnknownVariantKeys<LinkWithRelation<Input, Extract<KnownLinkRel, Rel>>, Variants, 'rel'>
       | (Exclude<Rel, KnownLinkRel> extends never ? never : UnknownVariantKeys<Input, ResolvableCustomLink, 'rel'>)
   : never
 
 type UnknownLinkAttributes<Tag, Variants> = Tag extends { rel: infer Rel }
   ? [DeclaredLink<Rel>] extends [never]
-      ? UnknownVariantKeys<LinkWithRelation<Tag, ResolveHeadValue<Rel>>, Variants, 'rel'>
+      ? UnknownKnownLinkAttributes<Tag, ResolveHeadValue<Rel>, Variants>
       : Exclude<KnownObjectKeys<Tag>, ObjectKeys<Variants> | keyof GenericLink>
         | UnknownDefinedLinkAttributes<DefinedLinkFields<Tag, DeclaredLink<Rel>, Rel, Variants>, Variants>
   : UnknownTagAttributes<Tag, Variants>

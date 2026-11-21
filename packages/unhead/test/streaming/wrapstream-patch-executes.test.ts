@@ -1,5 +1,5 @@
 import { JSDOM } from 'jsdom'
-import { createStreamableHead, wrapStream } from 'unhead/stream/server'
+import { createStreamableHead, renderSSRHeadShell, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
 
@@ -65,6 +65,23 @@ describe('the patch a bare wrapStream emits', () => {
       titleTemplate: (title?: string) => `${title} | 100%s`,
     })
     expect(document.title).toBe('Docs | 100%s')
+  })
+
+  it('uses the raw title when replacing a streamed callback template', () => {
+    const { head } = createStreamableHead()
+    head.push({ title: 'Home' })
+    const dom = new JSDOM(renderSSRHeadShell(head, TEMPLATE), { runScripts: 'dangerously' })
+    globalThis.window = dom.window as any
+    globalThis.document = dom.window.document
+    initIife({})
+
+    head.push({ titleTemplate: title => `${title} | A` })
+    dom.window.eval(renderSSRHeadSuspenseChunk(head))
+    expect(document.title).toBe('Home | A')
+
+    head.push({ titleTemplate: '%s | B' })
+    dom.window.eval(renderSSRHeadSuspenseChunk(head))
+    expect(document.title).toBe('Home | B')
   })
 
   it('escapes content that would otherwise close the script element', async () => {

@@ -15,11 +15,9 @@ function normalizeStyleClassProps(
   const add = (item: unknown) => {
     if (typeof item === 'string') {
       if (isStyle) {
-        for (const rule of item.split(';')) {
-          const colon = rule.indexOf(':')
-          if (colon > 0)
-            store.set(rule.slice(0, colon).trim(), rule.slice(colon + 1).trim())
-        }
+        const colon = item.indexOf(':')
+        if (colon > 0)
+          store.set(item.slice(0, colon).trim(), item.slice(colon + 1).trim())
       }
       else {
         item.split(' ').forEach(name => name && store.add(name))
@@ -31,12 +29,12 @@ function normalizeStyleClassProps(
     else if (item && typeof item === 'object') {
       for (const name in item) {
         const v = (item as Record<string, unknown>)[name]
-        if (v && v !== 'false')
+        if (v !== 'false' && (v || (isStyle && v === 0)))
           isStyle ? store.set(name.trim(), String(v)) : add(name)
       }
     }
   }
-  add(value)
+  add(isStyle && typeof value === 'string' ? value.split(';') : value)
   return store
 }
 

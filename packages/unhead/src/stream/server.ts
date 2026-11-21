@@ -1,6 +1,6 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, HeadEntry, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -395,6 +395,8 @@ export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts
   return parts.end.slice(0, at) + bodyTags + parts.end.slice(at)
 }
 
+type StreamedTitleUpdate = [entry: HeadEntry<any>, original: unknown, resolved: Record<string, unknown>]
+
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
@@ -417,13 +419,14 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     let bodyTags: typeof state.bodyTags
     let title = head._title
     let titleTemplate = head._titleTemplate
-    let titleEntry: number | undefined
-    let templateEntry: number | undefined
+    let titleUpdate: StreamedTitleUpdate | undefined
+    let templateUpdate: StreamedTitleUpdate | undefined
     for (const entry of head.entries.values()) {
+      const original = entry.input
       const normalized = normalizedEntries?.get(entry._i)
-      let input = normalized && normalized.input === entry.input
+      let input = normalized && normalized.input === original
         ? normalized.resolved
-        : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+        : resolveHeadInput(unwrapEntryInput(original), propResolvers)
       // Streamed patches are replayed without the server head's plugins.
       const options = entry.options
       const safe = options?._safe
@@ -433,12 +436,12 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
           continue
       }
       if (input?.title !== undefined) {
-        title = input.title?.textContent ?? input.title
-        titleEntry = entry._i
+        title = typeof input.title === 'object' ? input.title?.textContent : input.title
+        titleUpdate = [entry, original, input]
       }
       if (input?.titleTemplate !== undefined) {
         titleTemplate = input.titleTemplate?.textContent ?? input.titleTemplate
-        templateEntry = entry._i
+        templateUpdate = [entry, original, input]
       }
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
@@ -452,16 +455,25 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       if (buffered)
         (bodyTags ||= []).push([buffered, safe])
     }
-    const callbackEntry = templateEntry ?? titleEntry
+    const titleChange = templateUpdate ?? titleUpdate
+    let flushed: [HeadEntry<any>, unknown][] | undefined
     // The replay queue only accepts JSON. Preserve the raw title for later callbacks.
-    if (typeof titleTemplate === 'function' && callbackEntry !== undefined) {
+    if (typeof titleTemplate === 'function' && titleChange) {
+      flushed = Array.from(head.entries.values(), entry => [entry, entry.input])
       try {
         inputs.push({ title: titleTemplate(title ?? undefined) ?? '', titleTemplate: null })
       }
       catch (error) {
-        head.entries.delete(callbackEntry)
+        const [entry, original, resolved] = titleChange
+        if (head.entries.get(entry._i) === entry && entry.input === original) {
+          entry.input = { ...resolved, [templateUpdate ? 'titleTemplate' : 'title']: undefined }
+          delete entry._tags
+        }
         throw error
       }
+    }
+    else if (templateUpdate && !titleUpdate && typeof head._titleTemplate === 'function') {
+      inputs.push({ title: title ?? '' })
     }
     const serialized = safeJsonStringify(inputs)
     head._title = title
@@ -470,7 +482,15 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       state.seen = nextSeen
     if (bodyTags)
       (state.bodyTags ||= []).push(...bodyTags)
-    head.entries.clear()
+    if (flushed) {
+      for (const [entry, input] of flushed) {
+        if (head.entries.get(entry._i) === entry && entry.input === input)
+          head.entries.delete(entry._i)
+      }
+    }
+    else {
+      head.entries.clear()
+    }
     return inputs.length ? `window.${streamKey}.push(${serialized})` : ''
   }
   catch (error) {
