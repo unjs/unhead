@@ -1,7 +1,7 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { StreamingGlobal } from '../stream/types'
-import type { ActiveHeadEntry, HeadEntry, HeadRenderer } from '../types'
-import type { HeadQueue, LazyHeadOptions } from './index'
+import type { ActiveHeadEntry, ClientHeadHooks, HeadEntry, HeadRenderer } from '../types'
+import type { HeadQueue, LazyHeadOptions, LazyUnhead } from './index'
 import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
@@ -80,9 +80,10 @@ function resolveStream(document: Document | undefined, streamKey: string) {
 export async function activate<T>(
   options: LazyHeadOptions,
   queue: HeadQueue<T>,
+  shell: LazyUnhead<T>,
   connect: (head: ClientUnhead<T>) => void,
 ): Promise<ClientUnhead<T>> {
-  const document = options.document ?? globalThis.document
+  const document = shell.resolvedOptions.document
   const resolveQueue = () => {
     if (options.streamKey === undefined)
       return
@@ -98,7 +99,8 @@ export async function activate<T>(
     stream = resolveQueue()
   let render: HeadRenderer<boolean> = () => false
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
-  const head = createClientHeadAdapter(core, createHooks(options.hooks), head => render(head))
+  const hooks = shell.hooks ??= createHooks<ClientHeadHooks>()
+  const head = createClientHeadAdapter(core, hooks, head => render(head))
   head._b = true
   const hydrated = new Map<number, HeadEntry<T>>()
   // Apply one hydration policy to replayed entries and entries registered after load.
@@ -139,9 +141,29 @@ export async function activate<T>(
     set: index => queue.index = index,
     configurable: true,
   })
+  Object.defineProperty(head, '_scripts', {
+    get: () => shell._scripts,
+    set: scripts => shell._scripts = scripts,
+  })
+  Object.defineProperty(shell, '_dom', {
+    get: () => queue.head?._dom,
+    configurable: true,
+  })
 
   const previousCloseStream = queue.closeStream
+  const unhooks: (() => void)[] = []
+  const hook = hooks.hook
+  // Keep existing subscriptions alive across attempts. Only undo registrations
+  // made by this attempt if a plugin or streamed entry causes it to fail.
+  hooks.hook = (name, callback) => {
+    const off = hook.call(hooks, name, callback)
+    unhooks.push(off)
+    return off
+  }
+  queue.head = head
   try {
+    for (const name in options.hooks)
+      hooks.hook(name as keyof ClientHeadHooks, options.hooks[name as keyof ClientHeadHooks]!)
     for (const plugin of options.plugins ?? [])
       head.use(plugin)
     for (const plugin of lazyPlugins ?? [])
@@ -183,6 +205,9 @@ export async function activate<T>(
       connectStream(head, stream, queue, replayShell)
   }
   catch (error) {
+    for (const off of unhooks)
+      off()
+    queue.head = undefined
     for (const entry of queue.entries.values())
       entry.active = undefined
     if (queue.closeStream !== false)
@@ -190,6 +215,7 @@ export async function activate<T>(
     throw error
   }
   finally {
+    hooks.hook = hook
     head._b = false
   }
 

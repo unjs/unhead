@@ -1,4 +1,4 @@
-import fs from 'node:fs'
+import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -49,15 +49,29 @@ export default defineBuildConfig({
         emitFile: true,
         filename: 'stats.html',
       }))
-    },
-    'build:done': () => {
-      const file = path.resolve(__dirname, 'dist/vue-client-lazy/vue-client/lazy.mjs')
-      const contents = fs.readFileSync(file)
-      const size = contents.length
-      const compressed = zlib.gzipSync(contents).length
-      if (compressed >= 1000)
-        throw new Error(`The production Vue lazy shell is ${compressed} B gzip. Keep it below 1000 B.`)
-      console.log(`VUE CLIENT LAZY Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
+      config.plugins.push({
+        name: 'vue-lazy-startup-size',
+        generateBundle(_, bundle) {
+          const seen = new Set(['vue'])
+          let size = 0
+          let compressed = 0
+          function measure(name: string) {
+            if (seen.has(name))
+              return
+            seen.add(name)
+            const chunk = bundle[name]
+            if (chunk?.type !== 'chunk')
+              throw new Error(`The lazy shell references an unmeasured startup module: ${name}`)
+            size += Buffer.byteLength(chunk.code)
+            compressed += zlib.gzipSync(chunk.code).length
+            chunk.imports.forEach(measure)
+          }
+          measure('vue-client/lazy.mjs')
+          if (compressed >= 1000)
+            throw new Error(`The production Vue lazy shell is ${compressed} B gzip. Keep it below 1000 B.`)
+          console.log(`VUE CLIENT LAZY Size: ${size} B (gzipped: ${compressed} B)`)
+        },
+      })
     },
   },
 })

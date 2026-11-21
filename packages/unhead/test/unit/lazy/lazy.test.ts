@@ -1,4 +1,5 @@
 import type { ResolvableHead } from '../../../src/types'
+import { HookableCore } from 'hookable'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHead as createClientHead, renderDOMHead } from '../../../src/client'
@@ -509,6 +510,32 @@ describe('lazy head createHead', () => {
     const client = await head.load()
     expect(await head.load()).toBe(client)
     await vi.waitFor(() => expect(document.title).toBe('Retried'))
+  })
+
+  it('keeps early subscriptions and removes failed replay subscriptions on retry', async () => {
+    const { document } = ssrDom(titled).window
+    const hookable = new HookableCore()
+    const head = createLazyHead({ document, hookable })
+    const updates = vi.fn()
+    const pluginUpdates = vi.fn()
+    const unsubscribe = hookable.hook('entries:updated', updates)
+    head.use({ key: 'observer', hooks: { 'entries:updated': pluginUpdates } })
+    let failed = false
+    head.use(() => {
+      if (!failed) {
+        failed = true
+        throw new Error('setup failed')
+      }
+      return { key: 'retry' }
+    })
+    await expect(head.load()).rejects.toThrow('setup failed')
+    const client = await head.load()
+    client.push({ title: 'One' })
+    unsubscribe()
+    client.push({ title: 'Two' })
+    expect(updates).toHaveBeenCalledOnce()
+    expect(pluginUpdates).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
   it('connects before a custom renderer uses the shell', async () => {

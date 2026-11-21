@@ -22,6 +22,7 @@ The lazy head is experimental. Its API may change in a minor release.
 | --- | --- | --- |
 | `streamKey` | `string` | Connect to the queue written by the matching server bootstrap. Omit for buffered SSR or a client-only page. |
 | `lazyPlugins` | `() => Promise<HeadPluginInput[]>` | Load plugins with the runtime. Use dynamic imports to keep plugin code out of the initial bundle. |
+| `hookable` | `HookableCore<ClientHeadHooks>` | Supply a hook registry when a framework integration subscribes to hooks before activation. |
 
 A custom `render` option controls rendering from activation onward. The default renderer adopts the server tags and applies queued changes.
 
@@ -40,6 +41,8 @@ A custom `render` option controls rendering from activation onward. The default 
 
 `finishHydration()` and `render()` leave activation to the caller. In development, `finishHydration()` can check for differences between queued client tags and the server tags on buffered SSR pages.
 
-Use the full client head returned by `load()` for runtime APIs such as `useScript()`.
+Vue's `useScript()` can register scripts before the runtime loads. Framework integrations that access `head.hooks` directly before calling `useScript()` can supply `hookable` when they create the shell. Subscriptions carry through activation. Plugins can read `entries` during tag resolution.
+
+Use the full client head returned by `load()` for other runtime APIs.
 
 See the [Vue setup guide](/docs/vue/head/guides/core-concepts/lazy-head) for hydration, streaming, and client-only pages.

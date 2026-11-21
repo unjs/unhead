@@ -1,5 +1,5 @@
 import type { ClientUnhead } from '../client/adapter'
-import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, HeadPluginInput, ResolvableHead } from '../types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPluginInput, ResolvableHead } from '../types'
 import { copyInput } from './same'
 
 /**
@@ -10,6 +10,8 @@ export interface LazyHeadOptions extends CreateClientHeadOptions {
   streamKey?: string
   /** Load plugins with the runtime to keep them out of the initial bundle. */
   lazyPlugins?: () => Promise<HeadPluginInput[]>
+  /** Hook registry for framework integrations that subscribe before activation. */
+  hookable?: ClientUnhead['hooks']
   /**
    * Name the component that pushed an entry for dev warnings.
    * @internal
@@ -20,10 +22,11 @@ export interface LazyHeadOptions extends CreateClientHeadOptions {
 /**
  * @experimental
  */
-export interface LazyUnhead<T = ResolvableHead> {
-  ssr: false
-  push: (input: T, options?: HeadEntryOptions) => ActiveHeadEntry<T>
-  use: (plugin: HeadPluginInput) => void
+export interface LazyUnhead<T = ResolvableHead> extends Pick<ClientUnhead<T>, 'ssr' | 'push' | 'use' | 'resolvedOptions' | '_scripts' | '_dom'> {
+  /** Available before activation if supplied by the framework or created by Vue's useScript. */
+  hooks?: ClientUnhead<T>['hooks']
+  /** Resolved entries are available once the runtime starts replaying the queue. */
+  readonly entries: Map<number, HeadEntry<T>>
   /** Stop recording which entries came from hydration. */
   finishHydration: () => void
   /** Discard streamed patches from the initial page when the framework leaves it. */
@@ -52,6 +55,7 @@ export interface HeadQueue<T> {
   entries: Map<number, QueuedEntry<T>>
   plugins: HeadPluginInput[]
   closeStream?: false | (() => void)
+  head?: ClientUnhead<T>
 }
 
 /**
@@ -65,9 +69,13 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   const queue: HeadQueue<T> = { index: 1, hydrating: true, entries: new Map(), plugins: [] }
   let active: ClientUnhead<T> | undefined
   let loading: Promise<ClientUnhead<T>> | undefined
+  let emptyEntries: Map<number, HeadEntry<T>> | undefined
 
   const shell: LazyUnhead<T> = {
     ssr: false,
+    hooks: options.hookable,
+    resolvedOptions: { document: options.document ?? globalThis.document },
+    get entries() { return queue.head?.entries ?? (emptyEntries ||= new Map()) },
     finishHydration() {
       if (!queue.hydrating)
         return
@@ -128,18 +136,18 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
       }
     },
     load() {
-      if (active && !loading)
-        return Promise.resolve(active)
-      return loading ||= import('./runtime')
-        .then(({ activate }) => activate(options, queue, (head) => {
-          active = head
-          queue.entries.clear()
-          queue.plugins.length = 0
-        }))
-        .catch((error) => {
-          loading = undefined
-          throw error
-        })
+      return loading ||= active
+        ? Promise.resolve(active)
+        : import('./runtime')
+            .then(({ activate }) => activate(options, queue, shell, (head) => {
+              active = head
+              queue.entries.clear()
+              queue.plugins.length = 0
+            }))
+            .catch((error) => {
+              loading = undefined
+              throw error
+            })
     },
   }
 

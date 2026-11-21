@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent, h, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { injectHead, useHead } from '../src'
 import { createHead as createLazyHead } from '../src/lazy'
+import { useScript } from '../src/scripts'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
 const settle = (ms = 40) => new Promise(resolve => setTimeout(resolve, ms))
@@ -33,6 +34,50 @@ afterEach(() => {
 })
 
 describe('vue lazy head', () => {
+  it('keeps script status reactive across activation', async () => {
+    document.head.innerHTML = ''
+    const head = createLazyHead()
+    const app = createSSRApp({})
+    app.use(head)
+    const script = app.runWithContext(() => useScript('/lazy-script.js', { trigger: 'manual' }))
+
+    const loading = script.load()
+    expect(script.status.value).toBe('loading')
+    await head.load()
+    await vi.waitFor(() => {
+      const element = document.querySelector('script[src="/lazy-script.js"]')
+      expect(element).not.toBeNull()
+      element!.dispatchEvent(new Event('load'))
+    })
+    await loading
+    expect(script.status.value).toBe('loaded')
+    expect(app.runWithContext(() => useScript('/lazy-script.js', { trigger: 'manual' })).status).toBe(script.status)
+    script.remove()
+  })
+
+  it('lets a queued plugin read the injected head entries during resolution', async () => {
+    document.head.innerHTML = '<title>Server</title>'
+    const head = createLazyHead({ document })
+    const app = createSSRApp({}).use(head)
+    const injected = app.runWithContext(injectHead)
+    injected.use({
+      key: 'derived-tags',
+      hooks: {
+        'tags:beforeResolve': (context) => {
+          for (const entry of injected.entries.values()) {
+            const title = entry._tags?.find(tag => tag.tag === 'title')?.textContent
+            if (title)
+              context.tags.push({ tag: 'meta', props: { name: 'derived-title', content: title } })
+          }
+        },
+      },
+    })
+    head.finishHydration()
+    head.push({ title: 'New page' })
+    await head.load()
+    await vi.waitFor(() => expect(document.querySelector('meta[name="derived-title"]')?.getAttribute('content')).toBe('New page'))
+  })
+
   it('names the component of a client only value in a dev warning', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
