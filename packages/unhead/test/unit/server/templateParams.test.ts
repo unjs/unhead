@@ -41,6 +41,8 @@ describe('ssr templateParams', () => {
     ['%siteName https://example.com/some%20image.jpg', 'My Site https://example.com/some%20image.jpg'],
     // a literal percent sign stays
     ['100% %siteName', '100% My Site'],
+    ['  100%  ', '  100%  '],
+    ['  %25siteName  ', '%25siteName'],
     // an encoded byte that is not valid UTF-8 stays
     ['caf%E9 %siteName', 'caf%E9 My Site'],
     ['caf%E9', 'caf%E9'],
