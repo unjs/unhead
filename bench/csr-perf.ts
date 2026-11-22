@@ -156,8 +156,8 @@ async function measureHydration(createHead: typeof CreateHead, JSDOM: typeof imp
     dom.window.close()
   }
   return [
-    { id: 'csr-ssr-hydration-cpu', name: 'CSR first render, Nuxt-style SSR head (CPU / hydration)', kind: 'time', ...stats(cpu) },
-    { id: 'csr-ssr-hydration-wall', name: 'CSR first render, Nuxt-style SSR head (wall / hydration)', kind: 'time', ...stats(wall), informational: true },
+    { id: 'csr-ssr-hydration-cpu', name: 'CSR first render, Nuxt-style SSR head (CPU / hydration)', kind: 'time', category: 'hydration', ...stats(cpu) },
+    { id: 'csr-ssr-hydration-wall', name: 'CSR first render, Nuxt-style SSR head (wall / hydration)', kind: 'time', category: 'hydration', ...stats(wall), informational: true },
   ]
 }
 
