@@ -3,6 +3,7 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
+import { LazyHeadPreload } from './LazyHeadPreload'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -142,7 +143,7 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
  */
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
-    const { streaming, validate, devtools, ...coreOpts } = options
+    const { streaming, validate, devtools, lazyHeadPreload, ...coreOpts } = options
     const defs = resolveCoreDefs(coreOpts)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming
@@ -150,6 +151,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (lazyHeadPreload)
+          plugins.push(LazyHeadPreload(framework))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
