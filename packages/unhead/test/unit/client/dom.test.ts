@@ -179,6 +179,20 @@ describe('dom', () => {
     expect(hydrated[0]).toBe(ssrStyle)
   })
 
+  it('normalizes link identity attributes in a foreign namespace', () => {
+    const document = useDom().window.document
+    const link = document.createElementNS('urn:fixture', 'LINK')
+    link.setAttribute('rel', 'alternate')
+    link.setAttribute('href', '/fr')
+    link.setAttribute('HREFLANG', 'fr')
+    document.head.append(link)
+
+    useDOMHead({ document }).push({ link: [{ rel: 'alternate', href: '/fr', hreflang: 'fr' }] })
+
+    expect(document.head.children).toHaveLength(1)
+    expect(document.head.firstElementChild).toBe(link)
+  })
+
   it('does not replay completed style cleanup when switching documents', () => {
     const document = useDom().window.document
     const head = useDOMHead({ document })

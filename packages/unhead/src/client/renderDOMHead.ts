@@ -220,19 +220,20 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         else
           tracked.add($el)
       }
-      const htmlDocument = dom.contentType === 'text/html'
       for (const el of [...dom.body.children, ...dom.head.children]) {
         if (tracked.has(el))
           continue
-        const elTag = el.tagName.toLowerCase() as HeadTag['tag']
+        const tagName = el.tagName
+        const elTag = tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag))
           continue
         const props: Record<string, any> = {}
         for (const n of el.getAttributeNames())
           props[n] = el.getAttribute(n)
         // These HTML link attributes have the same identity before and after normalization.
+        // Only HTML links in an HTML document report LINK with a lowercase localName.
         // Empty identity attributes need normalization because they become boolean true.
-        const linkHasIdentity = elTag === 'link' && htmlDocument && el.namespaceURI === 'http://www.w3.org/1999/xhtml'
+        const linkHasIdentity = tagName === 'LINK' && el.localName === 'link'
           && props.rel && props.href && props.hreflang !== '' && props.charset !== '' && props.id !== ''
         const next = { tag: elTag, props: linkHasIdentity ? props : {} } as HeadTag
         if (!linkHasIdentity)
