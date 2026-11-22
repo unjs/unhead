@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
@@ -103,7 +103,19 @@ export default defineBuildConfig({
   clean: true,
   declaration: true,
   hooks: {
-    'rollup:options': (_, options) => {
+    'rollup:options': (ctx, options) => {
+      const root = resolve(ctx.options.rootDir, 'src')
+      const defaults = resolve(root, 'client/buildFeatures')
+      // Rollup rebases this external from its input root to each output chunk.
+      // The matching entry below writes the private module into the package.
+      const entry = resolve(root, 'client-features.mjs')
+      options.plugins = [{
+        name: 'unhead-client-features',
+        resolveId(id, importer) {
+          if (importer && id.endsWith('/buildFeatures') && resolve(dirname(importer), id) === defaults)
+            return { id: entry, external: 'relative' }
+        },
+      }, ...(options.plugins || [])]
       options.experimentalLogSideEffects = true
       const onwarn = options.onwarn
       options.onwarn = (warning, warn) => {
@@ -128,6 +140,7 @@ export default defineBuildConfig({
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },
+    { input: 'src/client/buildFeatures', name: 'client-features' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/stream/iife', name: 'stream/iife' },

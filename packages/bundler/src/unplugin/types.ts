@@ -25,6 +25,7 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
+  treeshake?: ViteTreeshakeOptions | false
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
@@ -35,6 +36,16 @@ export interface VitePluginOptions extends UnpluginOptions {
    * Retained as a passthrough so existing framework wrappers keep working.
    */
   _framework?: string
+}
+
+export interface ViteTreeshakeOptions extends TreeshakeServerComposablesOptions {
+  /** Omit unused features from buffered production client builds. */
+  client?: {
+    /** Remove default DOM event handlers. `useScript()` keeps its own handlers. */
+    domEvents?: boolean
+    /** Remove title templates. Plain titles still work. */
+    titleTemplate?: boolean
+  }
 }
 
 /**
