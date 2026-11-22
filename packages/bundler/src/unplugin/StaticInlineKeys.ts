@@ -13,7 +13,8 @@ const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte)|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
 const HEAD_FACTORY_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/(?:client|server)$/
 const HEAD_INJECT_IMPORTS = new Set(['@unhead/vue', '#app', '#app/composables/head', '#unhead/composables', 'nuxt/app'])
-const ABSOLUTE_PATH_PATTERN_RE = /^\^(?:[a-z]:)?\\[\\/](?![?*{])/i
+const LITERAL_PATH_PATTERN_RE = /^\^((?:[^.\\^$*+?()[\]{}|]|\\(?:[\\/.*+?^${}()|[\]-]|x[\da-f]{2}|u[\da-f]{4}))+)(\$)?$/i
+const PATH_ESCAPE_RE = /\\(?:x([\da-f]{2})|u([\da-f]{4})|(.))/gi
 
 interface StaticInlineKeysOptions extends BaseTransformerTypes {
   framework?: string
@@ -125,8 +126,17 @@ function isWithin(root: string, file: string): boolean {
   return fromRoot !== '..' && !fromRoot.startsWith(`..${sep}`) && !isAbsolute(fromRoot)
 }
 
+function externalPatternPath(pattern: RegExp): string | undefined {
+  const match = !pattern.ignoreCase && !pattern.multiline && LITERAL_PATH_PATTERN_RE.exec(pattern.source)
+  if (!match)
+    return
+  const path = match[1]!.replace(PATH_ESCAPE_RE, (_, byte, unit, literal) => byte || unit ? String.fromCharCode(Number.parseInt(byte || unit, 16)) : literal)
+  if (isAbsolute(path) && (match[2] || path.endsWith('/') || path.endsWith('\\')))
+    return path
+}
+
 export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
-  let app: { root: string, owner: NamedPackage | undefined, preserveSymlinks: boolean, externals: (string | RegExp)[] } | undefined
+  let app: { root: string, owner: NamedPackage | undefined, preserveSymlinks: boolean } | undefined
   const packages = new Map<string, NamedPackage | undefined>()
   return {
     name: 'unhead:static-inline-keys',
@@ -155,13 +165,20 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
       const patterns = externals.filter((rule): rule is RegExp => typeof rule !== 'string')
       const hasPathAlias = config.resolve.alias.some(({ find, replacement }) => (typeof find !== 'string' || isAbsolute(find))
         && isAbsolute(replacement) && isWithin(root, replacement))
-      // Patterns that can match an unresolved import cannot be checked against the file alone.
-      if (patterns.length && (hasPathAlias || patterns.some(rule => rule.multiline || rule.source.includes('|') || !ABSOLUTE_PATH_PATTERN_RE.test(rule.source))))
-        return
+      // External entries can import application files through Node, bypassing the SSR transform.
+      for (const rule of new Set(patterns)) {
+        const path = externalPatternPath(rule)
+        if (!path || hasPathAlias || isWithin(root, path) || (existsSync(path) && !NODE_MODULES_RE.test(realpathSync(path))))
+          return
+      }
 
-      const externalIds = externals.filter((rule): rule is string => typeof rule === 'string' && !isAbsolute(rule))
+      const literals = [...new Set(externals.filter((rule): rule is string => typeof rule === 'string'))]
+      for (const path of literals.filter(isAbsolute)) {
+        if (isWithin(root, path) || (existsSync(path) && !NODE_MODULES_RE.test(realpathSync(path))))
+          return
+      }
+      const externalIds = literals.filter(id => !isAbsolute(id))
       if (externalIds.length) {
-        // The client may resolve a specifier that the SSR build leaves external.
         const resolveExternal = config.createResolver()
         const importer = join(root, 'index.html')
         const paths = await Promise.all(externalIds.map(id => resolveExternal(id, importer))).catch(() => {
@@ -171,11 +188,17 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
         if (!paths)
           return
         for (const path of paths) {
-          if (path && isAbsolute(path))
-            externals.push(splitTransformId(path).pathname)
+          if (!path || !isAbsolute(path))
+            continue
+          const { pathname } = splitTransformId(path)
+          if (pathname.endsWith('.json') || !existsSync(pathname))
+            continue
+          const file = realpathSync(pathname)
+          if (!NODE_MODULES_RE.test(file) && isWithin(owner?.directory ?? root, file) && nearestNamedPackage(file, packages) === owner)
+            return
         }
       }
-      app = { root, owner, preserveSymlinks, externals }
+      app = { root, owner, preserveSymlinks }
     },
     transform: {
       order: 'post',
@@ -197,10 +220,6 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
         const file = app.preserveSymlinks ? realpathSync(pathname) : resolve(pathname)
         if (!isWithin(app.root, file) || NODE_MODULES_RE.test(file) || nearestNamedPackage(dirname(file), packages) !== app.owner)
           return
-        const normalizedFile = file.replaceAll('\\', '/')
-        if (app.externals.some(rule => typeof rule === 'string' ? rule === pathname || rule === file || rule === normalizedFile : pathname.search(rule) !== -1 || normalizedFile.search(rule) !== -1))
-          return
-
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         let parsed: ReturnType<typeof parseAndWalkSource>
         try {

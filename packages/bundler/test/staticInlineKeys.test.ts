@@ -1,6 +1,6 @@
 import type { ResolvableHead } from 'unhead/types'
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -255,15 +255,13 @@ describe('static inline keys', () => {
     }
   })
 
-  it('applies SSR build external patterns to the affected source file', async () => {
+  it('keeps application source eligible with an unrelated absolute SSR external pattern', async () => {
     const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
     const file = join(appRoot, 'entry.ts')
-    const absolutePattern = (name: string) => new RegExp(`^${join(appRoot, name).replaceAll('\\', '/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
-    const baseline = await render(code)
-    const external = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: absolutePattern('entry.ts') })
-    const bundled = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: absolutePattern('other.ts') })
+    const outside = join(tmpdir(), 'unhead-external-build-only').replaceAll('\\', '/')
+    const buildExternal = new RegExp(`^${outside.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`)
+    const bundled = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal })
 
-    expect(external).toBe(baseline)
     expect(bundled).toMatch(/data-hid="~[\w-]{11}"/)
   })
 
@@ -279,6 +277,32 @@ describe('static inline keys', () => {
         linked: file,
         buildExternal,
         alias: { '#external-app': file },
+      })
+      expect(output).toBe(await render(code))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it.each(['alias', 'absolute path', 'absolute pattern', 'symlink'] as const)('preserves sibling input when SSR can load it through an external %s', async (kind) => {
+    const root = await mkdtemp(join(tmpdir(), 'unhead-app-'))
+    const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
+    const external = join(root, 'external.mjs')
+    const sibling = join(root, 'sibling.mjs')
+    const link = join(root, 'link.mjs')
+    try {
+      await writeFile(external, `import './sibling.mjs'`)
+      await writeFile(sibling, code)
+      await symlink(external, link, 'file')
+      const absolutePattern = new RegExp(`^${external.replaceAll('\\', '/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
+      const buildExternal = { 'alias': '#external-app', 'absolute path': external, 'absolute pattern': absolutePattern, 'symlink': link }[kind]
+      const output = await render(code, true, {}, undefined, {
+        bundled: false,
+        root,
+        linked: sibling,
+        buildExternal,
+        alias: { '#external-app': external },
       })
       expect(output).toBe(await render(code))
     }
