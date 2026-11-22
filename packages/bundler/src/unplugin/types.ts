@@ -39,13 +39,8 @@ export interface VitePluginOptions extends UnpluginOptions {
 }
 
 export interface ViteTreeshakeOptions extends TreeshakeServerComposablesOptions {
-  /** Omit unused features from buffered production client builds. */
-  client?: {
-    /** Remove default DOM event handlers. `useScript()` keeps its own handlers. */
-    domEvents?: boolean
-    /** Remove title templates. Plain titles still work. */
-    titleTemplate?: boolean
-  }
+  /** Detect static `useHead()` keys and omit unused features in buffered production client builds. */
+  client?: boolean
 }
 
 /**
