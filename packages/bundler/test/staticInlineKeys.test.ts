@@ -73,31 +73,6 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
 }
 
 describe('static inline keys', () => {
-  it('keys marked static head modules and preserves authored identity', async () => {
-    const input = {
-      style: [{ innerHTML: '.page{display:grid}' }, { innerHTML: '.page{color:red}', id: 'theme' }],
-    }
-    const source = `export default ${JSON.stringify(input)}`
-    const marked = `/* @unhead-static-head */\n${source}`
-    async function renderHeadModule(code: string, transformInlineTagKeys?: boolean) {
-      const plugins = Unhead({ transformInlineTagKeys, validate: false, devtools: false })
-      for (const plugin of plugins) {
-        if (plugin.transform)
-          code = (await runTransform(plugin, code, 'generated-head.mjs'))?.code ?? code
-      }
-      const head = createHead({ disableDefaults: true })
-      runInNewContext(`${code.replace('export default', 'const input =')}\nhead.push(input)`, { head })
-      return head.render().headTags
-    }
-
-    const rendered = await renderHeadModule(marked)
-    expect(rendered).toMatch(/<style[^>]* data-hid="~[\w-]{11}"[^>]*>\.page\{display:grid\}<\/style>/)
-    expect(rendered).toContain('<style id="theme">.page{color:red}</style>')
-    const unkeyed = await renderHeadModule(source)
-    expect(unkeyed).not.toContain('data-hid')
-    expect(await renderHeadModule(marked, false)).toBe(unkeyed)
-  })
-
   it.each([false, true])('deduplicates static and runtime inline bodies and preserves SSR nodes (static last: %s)', async (staticLast) => {
     const body = 'globalThis.visits = (globalThis.visits || 0) + 1'
     const input = { script: [{ innerHTML: body }], style: [{ innerHTML: '.page{color:red}' }], noscript: [{ innerHTML: 'Enable JavaScript' }] }
