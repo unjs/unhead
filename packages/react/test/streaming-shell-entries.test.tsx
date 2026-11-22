@@ -19,6 +19,64 @@ async function collectStream(stream: PassThrough): Promise<string> {
 }
 
 describe('react shell entries', () => {
+  it.each(['late template', 'shell template'] as const)('renders the final Suspense boundary and description when a %s throws', async (source) => {
+    const context = createStreamableHead()
+    const errors: unknown[] = []
+    const titleTemplate = (title?: string) => {
+      if (title !== 'Home')
+        throw new Error('Title failed')
+      return title
+    }
+    context.head.push({ title: 'Home', titleTemplate: source === 'shell template' ? titleTemplate : undefined })
+    let resolveData!: () => void
+    const data = new Promise<void>((resolve) => {
+      resolveData = resolve
+    })
+
+    function AsyncPage() {
+      use(data)
+      useHead({
+        title: 'Loaded',
+        titleTemplate: source === 'late template' ? titleTemplate : undefined,
+        meta: [{ name: 'description', content: 'Loaded description' }],
+      })
+      return (
+        <>
+          <HeadStream />
+          <main>Loaded boundary</main>
+        </>
+      )
+    }
+
+    const output = new PassThrough()
+    const shell = new Promise<void>(resolve => output.once('data', () => resolve()))
+    const done = collectStream(output)
+    const { pipe } = renderToPipeableStream(
+      <UnheadProvider value={context.head}>
+        <Suspense fallback={<p>Loading</p>}><AsyncPage /></Suspense>
+      </UnheadProvider>,
+      {
+        onShellReady: context.onShellReady,
+        onShellError: error => output.destroy(error as Error),
+        onError: (error) => {
+          errors.push(error)
+        },
+      },
+    )
+    context.wrap(pipe, TEMPLATE)(output)
+    await shell
+    resolveData()
+    const document = new JSDOM(await done).window.document
+    const patches = [...document.scripts].map(script => script.textContent).filter(content => content?.startsWith('window.__unhead__.push('))
+
+    expect(errors).toEqual([])
+    expect(document.querySelector('main')?.textContent).toBe('Loaded boundary')
+    expect(patches).toHaveLength(1)
+    expect(JSON.parse(patches[0]!.slice('window.__unhead__.push('.length, -1))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ meta: [{ name: 'description', content: 'Loaded description' }] })]),
+    )
+  })
+
   it('keeps initial and component tags in the shell when HeadStream renders', async () => {
     const context = createStreamableHead({
       init: [{ link: [{ id: 'plugin-preload', rel: 'preload', as: 'style', href: '/plugin.css' }] }],

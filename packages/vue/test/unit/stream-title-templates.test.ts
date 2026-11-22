@@ -18,7 +18,7 @@ describe('vue streamed title templates', () => {
     expect(renderSSRHeadSuspenseChunk(head)).toContain('Vue | Docs')
   })
 
-  it('preserves valid late entries when a title-template callback throws', () => {
+  it('flushes valid metadata immediately when an inherited title callback throws', () => {
     const { head } = createStreamableHead()
     head.push({ title: 'Docs', titleTemplate: (title) => {
       if (title === 'Late')
@@ -27,16 +27,14 @@ describe('vue streamed title templates', () => {
     } })
     renderSSRHeadShell(head, '<html><head></head><body>')
     head.push({ title: 'Late', meta: [{ name: 'description', content: 'Keep me' }] })
-    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('Title template failed')
     expect(renderSSRHeadSuspenseChunk(head)).toContain('Keep me')
   })
 
-  it('preserves the title when a callback from the same entry throws', () => {
+  it('flushes the title immediately when its new template callback throws', () => {
     const { head } = createStreamableHead()
     head.push({ title: 'Docs', titleTemplate: () => {
       throw new Error('Title template failed')
     } })
-    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('Title template failed')
     expect(renderSSRHeadSuspenseChunk(head)).toContain('"title":"Docs"')
   })
 

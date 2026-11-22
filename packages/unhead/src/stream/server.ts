@@ -401,7 +401,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   return renderPendingHead(head)
 }
 
-function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
+function renderPendingHead(head: Unhead<any>, onDiscard?: () => void, titleRetries = head.entries.size * 2): string {
   if (!head.entries.size)
     return ''
 
@@ -476,6 +476,10 @@ function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
           entry.input = { ...resolved, [templateUpdate ? 'titleTemplate' : 'title']: undefined }
           delete entry._tags
           onDiscard?.()
+          // React renders this patch inside its Suspense boundary. Flush the
+          // remaining fields now so a title failure cannot abort that boundary.
+          if (titleRetries > 0)
+            return renderPendingHead(head, onDiscard, titleRetries - 1)
         }
         throw error
       }
