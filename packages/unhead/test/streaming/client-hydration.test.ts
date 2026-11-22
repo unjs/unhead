@@ -16,7 +16,7 @@ afterEach(() => {
   globalThis.document = originalDocument
 })
 
-function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') {
+function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__', runScripts?: 'dangerously') {
   const dom = new JSDOM(`<!DOCTYPE html>
 <html>
 <head>
@@ -24,7 +24,7 @@ function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') 
 <script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>
 </head>
 <body></body>
-</html>`)
+</html>`, { runScripts })
 
   const win = dom.window as any
   // Simulate queued entries from SSR streaming (before iife runs)
@@ -48,6 +48,22 @@ function waitForDomUpdate() {
 }
 
 describe('streaming client hydration', () => {
+  it('attaches handlers when a streamed script adopts the head during a render', () => {
+    const { dom, window } = setupStreamingDom([], '__unhead__', 'dangerously')
+    try {
+      const onresize = vi.fn()
+      window.adoptStreamedHead = () => createStreamableHead({
+        init: [{ bodyAttrs: { onresize } }],
+      })
+      window.__unhead__.push([{ script: [{ innerHTML: 'window.adoptStreamedHead()' }] }])
+      window.dispatchEvent(new window.Event('resize'))
+      expect(onresize).toHaveBeenCalledOnce()
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
   it('replays a server script event when the hydrated head adds a handler', () => {
     const { document, window } = setupStreamingDom([
       { title: 'Streamed', titleTemplate: '%s | Site', script: [{ key: 'streamed', src: '/streamed.js' }] },

@@ -16,7 +16,7 @@ export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRende
 }
 
 export function renderStreamingDOMHead(head: Unhead<any>): boolean {
-  return _renderDOMHead(head, {}, head._domEvent)
+  return _renderDOMHead(head, {})
 }
 
 /** @deprecated Use `head.render()` instead */
@@ -52,7 +52,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions, renderEvent?: RenderDomEvent): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions, defaultRenderEvent?: RenderDomEvent): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
@@ -64,6 +64,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return false
+    const renderEvent = defaultRenderEvent ?? head._domEvent
     let state = activeState
     if (state?._d !== dom) {
       if (state) {
@@ -234,6 +235,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     head._du = false
   }
   if (didRender && (head.dirty || hasPendingEntries(head)))
-    _renderDOMHead(head, options, renderEvent)
+    _renderDOMHead(head, options, defaultRenderEvent)
   return didRender
 }
