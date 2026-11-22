@@ -2,11 +2,9 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps } from '../utils/normalize'
+import { CLASS_SEPARATOR_RE, normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 import { renderDomEvent } from './domEventHandlers'
-
-const WHITESPACE_RE = /\s+/
 
 type DomStateInternal = DomState & { _d: Document }
 
@@ -42,7 +40,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
       const cls = (entry._o as Record<string, any> | null | undefined)?.[t]?.class
       if (typeof cls === 'string') {
         const $el = state._e.get(t)!
-        for (const c of cls.split(WHITESPACE_RE)) {
+        for (const c of cls.split(CLASS_SEPARATOR_RE)) {
           if (c)
             state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
         }
