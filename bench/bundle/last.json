@@ -68,5 +68,15 @@
     "size": 13535,
     "gz": 5529,
     "br": 4974
+  },
+  "vueStreamingClient": {
+    "size": 1383,
+    "gz": 742,
+    "br": 662
+  },
+  "streamingBootstrap": {
+    "size": 12854,
+    "gz": 5291,
+    "br": 4848
   }
 }
