@@ -58,7 +58,7 @@ describe('static inline keys', () => {
     const code = `useHead({ script: [{ innerHTML: ${JSON.stringify(js)} }], style: [{ textContent: ${JSON.stringify(css)} }] })`
     const output = await render(`${code}\n${code}`, true)
 
-    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(2)
+    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
     expect(output.replace(/ data-hid="[^"]+"/g, '')).toBe(await render(code))
   })
 
@@ -89,8 +89,8 @@ describe('static inline keys', () => {
 
     const baseline = await render(code, false)
     const output = await render(code, true, {}, undefined, { bundled: true })
-    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(2)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/g, '')).toBe(baseline)
+    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/g, '')).toBe(baseline)
   })
 
   it.each([{ bundled: false }, { bundled: true, external: true }])('keeps an SSR-external dependency unkeyed', async (dependency) => {
@@ -120,8 +120,8 @@ describe('static inline keys', () => {
     coreUseHead(coreHead, { script: [{ innerHTML: ${JSON.stringify(js)} }] }, {})`
 
     const output = await render(code, true)
-    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
   })
 
   it('gives repeated static pushes on a known Unhead instance one content key', async () => {
@@ -133,8 +133,8 @@ describe('static inline keys', () => {
     mount(); mount()`
 
     const output = await render(code, true, {}, undefined, { bundled: true })
-    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code, false))
+    expect(output).toMatch(/data-hid="~[\w-]{11}"/)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
 
   it.each(['@unhead/vue', '#app/composables/head', '#unhead/composables', 'nuxt/app'])('keys static pushes from %s and keeps dynamic, keyed and patchable input', async (source) => {
@@ -149,8 +149,8 @@ describe('static inline keys', () => {
 
     const input = { dynamic: `${css} /* dynamic */`, dynamicPatch: `${css} /* dynamic patch */` }
     const output = await render(code, true, input)
-    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code, false, input))
+    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false, input))
   })
 
   it('leaves pushes on shadowed or foreign receivers alone', async () => {
@@ -173,8 +173,8 @@ describe('static inline keys', () => {
     const code = `const style = ${JSON.stringify(css)}; useHead({ style })`
 
     const output = await render(code, true)
-    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+    expect(output).toMatch(/data-hid="~[\w-]{11}"/)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
   })
 
   it('preserves entries that may be patched and tags with inherited IDs', async () => {
@@ -197,15 +197,15 @@ describe('static inline keys', () => {
     useHead({ style: [{ innerHTML: body }] })`
 
     const output = await render(code, true)
-    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
   })
 
   it('keys a static body from a callback without parameters', async () => {
     const code = `useHead(() => ({ style: [{ innerHTML: ${JSON.stringify(css)} }] }))`
 
     const output = await render(code, true)
-    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
-    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+    expect(output).toMatch(/data-hid="~[\w-]{11}"/)
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
   })
 })

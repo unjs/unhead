@@ -258,8 +258,8 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
                   || (name === 'script' && inline.body.includes('<!--'))) {
                   continue
                 }
-                const hash = createHash('sha256').update(name).update('\0').update(inline.body, 'utf16le').digest('hex').slice(0, 16)
-                const key = `key:"unhead:inline:${hash}",${inline.hasStrategy ? '' : 'tagDuplicateStrategy:"replace",'}`
+                const hash = createHash('sha256').update(`${name}\0`).update(inline.body, 'utf16le').digest().toString('base64url', 0, 8)
+                const key = `key:"~${hash}",${inline.hasStrategy ? '' : 'tagDuplicateStrategy:"replace",'}`
                 if (tag.type === 'ObjectExpression') {
                   s.appendLeft(tag.start + 1, key)
                 }
