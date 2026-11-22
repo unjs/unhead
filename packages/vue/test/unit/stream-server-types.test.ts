@@ -168,6 +168,26 @@ describe('vue streaming server types', () => {
     head.push({ link: [{ rel: maybePreload, href: '/docs.js' }] })
   })
 
+  it('checks every destination in a computed preload as value', () => {
+    const { head } = createStreamableHead()
+    const script = ref(true)
+    const destination = computed<'script' | 'style'>(() => script.value ? 'script' : 'style')
+    const entry = head.push({ link: [{ rel: 'preload', as: destination, href: '/docs' }] })
+    entry.patch({ link: [{ rel: 'preload', as: destination, href: '/docs' }] })
+
+    script.value = false
+    expect(renderSSRHeadShell(head, '<html><head></head><body>')).toContain('<link rel="preload" as="style" href="/docs">')
+
+    const imageOrScript = computed<'image' | 'script'>(() => script.value ? 'script' : 'image')
+    // @ts-expect-error The script destination does not support imagesrcset
+    entry.patch({ link: [{ rel: 'preload', as: imageOrScript, href: '/docs', imagesrcset: '/docs.png 1x' }] })
+
+    const fontOrScript = computed<'font' | 'script'>(() => script.value ? 'script' : 'font')
+    head.push({ link: [{ rel: 'preload', as: fontOrScript, href: '/docs', crossorigin: 'anonymous' }] })
+    // @ts-expect-error The font destination requires crossorigin
+    head.push({ link: [{ rel: 'preload', as: fontOrScript, href: '/docs' }] })
+  })
+
   it('checks values added to a custom link', () => {
     const { head } = createStreamableHead()
     const link = defineLink({ rel: 'EditURI', href: '/rsd.xml' })
