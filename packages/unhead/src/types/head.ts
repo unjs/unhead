@@ -324,7 +324,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * @internal
    */
-  _titleTemplate?: string
+  _titleTemplate?: string | ((title?: string) => string | null) | null
   /**
    * Per-response state for shell rendering and streamed body tags.
    *

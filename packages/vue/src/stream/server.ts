@@ -14,13 +14,12 @@ type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templatePar
 type VariableLink
   = | { rel: ResolvableValue<KnownLinkRel> }
     | { rel: ResolvableValue<string>, href: ResolvableValue<string> }
-type TitleTemplateTag = Extract<ResolvableTitleTemplate, { textContent: unknown }>
 type VueStreamableHeadSchema
   = Omit<ReactiveHead, StreamableHeadObjectKey | 'title' | 'titleTemplate' | 'link'>
     & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
     & {
       title?: ResolvableValue<Stringable | TitleTag>
-      titleTemplate?: ResolvableTitleTemplate | Ref<Exclude<ResolvableTitleTemplate, TitleTemplateTag> | (TitleTemplateTag & { textContent: string })>
+      titleTemplate?: ResolvableTitleTemplate | Ref<ResolvableTitleTemplate>
       link?: ResolvableArray<ResolvableLink | VariableLink>
     }
 type VueStreamableHeadInput = ResolvableHead | HeadInput<VueStreamableHeadSchema, true>

@@ -192,6 +192,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const frag: Partial<Record<string, DocumentFragment>> = {}
     head.dirty = false
     const rawTags = resolveTags(head, options)
+    if (head._title === '' && !rawTags.some(tag => tag.tag === 'title')) {
+      dom.head.querySelector('title')?.remove()
+      track('title:', () => dom.title = renderState._t)
+    }
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
