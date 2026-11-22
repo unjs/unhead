@@ -92,7 +92,7 @@ export function ClientFeatureTreeshake(options: VitePluginOptions['treeshake']):
     enforce: 'pre',
     configResolved(config) {
       // Nuxt emits the streaming bootstrap in a separate asset.
-      streaming = config.plugins.some(plugin => plugin.name === 'nuxt:streaming-iife-chunk')
+      streaming = config.plugins.some(plugin => plugin.api?.unheadStreaming === true || plugin.name === 'nuxt:streaming-iife-chunk')
     },
     applyToEnvironment({ name, config }) {
       return !streaming && name === 'client' && config.consumer === 'client' && !config.build.watch && !config.build.lib

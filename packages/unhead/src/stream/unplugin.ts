@@ -391,6 +391,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     },
 
     vite: {
+      api: { unheadStreaming: true },
       apply(_config: UserConfig, env: ConfigEnv): boolean {
         state.isVite = true
         if (env.isSsrBuild)

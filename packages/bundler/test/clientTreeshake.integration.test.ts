@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { JSDOM } from 'jsdom'
+import { createStreamingPlugin } from 'unhead/stream/unplugin'
 import { build } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { Unhead } from '../src/unplugin/vite'
@@ -16,7 +17,7 @@ const head = createHead()
 useHead(head, { title: 'Page' })`
 const detect = { client: true }
 
-async function bundle(source: string, treeshake?: VitePluginOptions['treeshake'], target: 'client' | 'server' | 'stream' = 'client', vendor?: string) {
+async function bundle(source: string, treeshake?: VitePluginOptions['treeshake'], target: 'client' | 'server' | 'nuxt-stream' | 'standalone-stream' = 'client', vendor?: string) {
   const root = await mkdtemp(join(tmpdir(), 'unhead-buffered-'))
   try {
     const entry = join(root, 'entry.mjs')
@@ -41,7 +42,12 @@ async function bundle(source: string, treeshake?: VitePluginOptions['treeshake']
       },
       plugins: [
         ...Unhead({ treeshake, devtools: false, validate: false }),
-        target === 'stream' && { name: 'nuxt:streaming-iife-chunk' },
+        target === 'nuxt-stream' && { name: 'nuxt:streaming-iife-chunk' },
+        target === 'standalone-stream' && createStreamingPlugin.vite({
+          framework: 'unhead',
+          name: 'test-custom-streaming',
+          mode: 'module',
+        }),
       ],
       build: {
         write: false,
@@ -122,11 +128,11 @@ useHead(head, { [key]: '%s | Dynamic' })`, detect)
     })
   })
 
-  it('retains title templates and listeners when Nuxt streaming is active', async () => {
+  it.each(['nuxt-stream', 'standalone-stream'] as const)('retains templates and listeners in %s builds', async (target) => {
     const code = await bundle(`${client}
 head.push({ titleTemplate: '%s | Site', bodyAttrs: {
   onresize: () => { document.body.dataset.resized = 'yes' },
-} })`, detect, 'stream')
+} })`, detect, target)
 
     await run(code, (window) => {
       expect(window.document.title).toBe('Page | Site')
