@@ -2,7 +2,7 @@ import type { UniversalUnheadProviderProps } from './context'
 import { createElement } from 'react'
 import { UnheadContext } from './context'
 
-export { createHead, type PreparedTemplate, prepareTemplate, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
+export { createHead, type PreparedTemplate, renderSSRHead } from 'unhead/server'
 
 export type UnheadProviderProps = UniversalUnheadProviderProps
 

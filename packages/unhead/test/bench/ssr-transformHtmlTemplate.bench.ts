@@ -4,7 +4,7 @@ import { it } from 'vitest'
 import {
   transformHtmlTemplate,
   transformHtmlTemplateRaw,
-} from '../../src/server/transformHtmlTemplate'
+} from '../../src/template'
 
 it('transformHtmlTemplate', async ({ bench }) => {
   const basicHtml = `<!DOCTYPE html>

@@ -17,6 +17,7 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/server', name: 'server' },
+    { input: 'src/template', name: 'template' },
     { input: 'src/client', name: 'client' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },

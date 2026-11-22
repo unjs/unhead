@@ -17,6 +17,7 @@ export default defineConfig({
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
       'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
+      'unhead/template': resolve(__dirname, '../unhead/src/template.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/minify': resolve(__dirname, '../unhead/src/minify/index.ts'),
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),

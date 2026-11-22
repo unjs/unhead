@@ -4,7 +4,8 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { UnheadProvider } from '../src/client'
 import { useHead, useHeadSafe, useSeoMeta } from '../src/composables'
-import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
+import { createHead, renderSSRHead } from '../src/server'
+import { transformHtmlTemplate } from '../src/template'
 import { SimpleHead } from './fixtures/SimpleHead'
 
 const HEAD_RE = /<head>(.*?)<\/head>/s

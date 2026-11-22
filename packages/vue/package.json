@@ -33,6 +33,10 @@
       "types": "./dist/server.d.ts",
       "default": "./dist/server.mjs"
     },
+    "./template": {
+      "types": "./dist/template.d.ts",
+      "default": "./dist/template.mjs"
+    },
     "./client": {
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
@@ -92,6 +96,9 @@
       ],
       "server": [
         "dist/server"
+      ],
+      "template": [
+        "dist/template"
       ],
       "client": [
         "dist/client"

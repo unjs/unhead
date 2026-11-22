@@ -55,13 +55,10 @@
   createServerRenderer: function
   escapeHtml: function
   prepareHeadInput: function
-  prepareTemplate: function
   propsToString: function
   renderSSRHead: function
   ssrRenderTags: function
   tagToString: function
-  transformHtmlTemplate: function
-  transformHtmlTemplateRaw: function
 ./stream/client:
   createStreamableHead: function
   DEFAULT_STREAM_KEY: string
@@ -89,6 +86,10 @@
   createStreamingPlugin: function
   VIRTUAL_CLIENT_ID: string
   VIRTUAL_IIFE_ID: string
+./template:
+  prepareTemplate: function
+  transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
 ./types: {}
 ./utils:
   dedupeKey: function

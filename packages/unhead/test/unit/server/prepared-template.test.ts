@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareTemplate } from '../../../src/parser'
-import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server/transformHtmlTemplate'
 import { prepareStreamingTemplate, renderSSRHeadShell, wrapStream } from '../../../src/stream/server'
+import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/template'
 import { createServerHeadWithContext, createStreamableServerHead } from '../../util'
 
 const fixtureHtml = readFileSync(join(__dirname, '../../fixtures/Markdown.html'), 'utf-8')

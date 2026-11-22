@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import express from 'express'
-import { transformHtmlTemplate } from "@unhead/vue/server";
+import { transformHtmlTemplate } from "@unhead/vue/template";
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'

@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../../../src'
 import { renderSSRHead } from '../../../src/server'
-import { transformHtmlTemplate } from '../../../src/server/transformHtmlTemplate'
+import { transformHtmlTemplate } from '../../../src/template'
 import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('ssr', () => {

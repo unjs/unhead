@@ -89,6 +89,27 @@ describe('package type paths', async () => {
 })
 
 describe('node compatibility exports', () => {
+  it('renders SSR tags without the optional HTML parser', async () => {
+    const result = await x(process.execPath, ['--input-type=module', '--eval', `
+      import { registerHooks } from 'node:module'
+
+      registerHooks({
+        resolve(specifier, context, nextResolve) {
+          if (specifier === 'parse5') throw new Error('parse5 is unavailable')
+          return nextResolve(specifier, context)
+        }
+      })
+
+      const { createHead, renderSSRHead } = await import('@unhead/vue/server')
+      const head = createHead({ disableDefaults: true })
+      head.push({ title: 'SSR without parse5' })
+      console.log(renderSSRHead(head).headTags)
+    `], { nodeOptions: { cwd: join(import.meta.dirname, '../packages/vue') } })
+
+    expect(result.exitCode, result.stderr).toBe(0)
+    expect(result.stdout.trim()).toBe('<title>SSR without parse5</title>')
+  })
+
   it('keeps the server entry traceable from unhead/scripts', () => {
     const packagePath = join(import.meta.dirname, '../packages/unhead')
     const packageJson = JSON.parse(readFileSync(join(packagePath, 'package.json'), 'utf8'))

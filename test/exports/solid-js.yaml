@@ -27,9 +27,7 @@
   ValidatePlugin: function
 ./server:
   createHead: function
-  prepareTemplate: function
   renderSSRHead: function
-  transformHtmlTemplate: function
   UnheadContext: object
 ./stream/client:
   createStreamableHead: function
@@ -50,6 +48,9 @@
   default: function
   unheadSolidPlugin: function
   unheadSolidStreamingPlugin: object
+./template:
+  prepareTemplate: function
+  transformHtmlTemplate: function
 ./utils:
   dedupeKey: function
   dedupeTags: function

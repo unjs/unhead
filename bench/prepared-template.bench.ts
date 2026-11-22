@@ -1,5 +1,6 @@
-import { createHead, prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { prepareStreamingTemplate } from 'unhead/stream/server'
+import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from 'unhead/template'
 import { it } from 'vitest'
 
 // Realistically large template (~100KB) with many head tags, similar to a

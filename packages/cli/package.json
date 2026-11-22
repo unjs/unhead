@@ -50,6 +50,9 @@
     "test": "vitest run",
     "prepack": "pnpm run build"
   },
+  "peerDependencies": {
+    "parse5": "catalog:"
+  },
   "dependencies": {
     "citty": "catalog:",
     "magic-string": "catalog:",

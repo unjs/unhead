@@ -498,6 +498,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       rxjs:
         specifier: ~7.8.2
         version: 7.8.2
@@ -544,6 +547,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       react:
         specifier: ^19.3.0
         version: 19.3.0
@@ -596,6 +602,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       react:
         specifier: ^19.3.0
         version: 19.3.0
@@ -642,6 +651,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       solid-js:
         specifier: ^1.9.15
         version: 1.9.15
@@ -682,6 +694,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       sirv:
         specifier: ^3.0.2
         version: 3.0.2
@@ -728,6 +743,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       sirv:
         specifier: ^3.0.2
         version: 3.0.2
@@ -771,6 +789,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       sirv:
         specifier: ^3.0.2
         version: 3.0.2
@@ -805,6 +826,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       sirv:
         specifier: ^3.0.2
         version: 3.0.2
@@ -909,6 +933,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       unhead:
         specifier: workspace:*
         version: link:../../packages/unhead
@@ -972,6 +999,9 @@ importers:
 
   packages/angular:
     dependencies:
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       tslib:
         specifier: 'catalog:'
         version: 2.8.1
@@ -1070,6 +1100,9 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       pathe:
         specifier: 'catalog:'
         version: 2.0.3
@@ -1283,9 +1316,6 @@ importers:
       hookable:
         specifier: 'catalog:'
         version: 6.1.1
-      parse5:
-        specifier: 'catalog:'
-        version: 7.3.0
       unplugin:
         specifier: 'catalog:'
         version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.3)(webpack@5.105.2(esbuild@0.28.2))
@@ -1293,6 +1323,9 @@ importers:
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
         version: 16.0.3(rollup@4.63.2)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       rollup:
         specifier: ^4.63.2
         version: 4.63.2

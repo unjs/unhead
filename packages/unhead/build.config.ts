@@ -127,6 +127,7 @@ export default defineBuildConfig({
     { input: 'src/index', name: 'index' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
+    { input: 'src/template', name: 'template' },
     { input: 'src/client/index', name: 'client' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },

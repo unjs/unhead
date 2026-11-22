@@ -15,6 +15,7 @@
     "@unhead/schema-org": "workspace:*",
     "compression": "^1.8.2",
     "express": "^5.2.1",
+    "parse5": "catalog:",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "sirv": "^3.0.2"

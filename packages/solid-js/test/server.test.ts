@@ -1,17 +1,8 @@
-import * as unheadServer from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { createHead, prepareTemplate, renderSSRHead, transformHtmlTemplate } from '../src/server'
+import { createHead, renderSSRHead } from '../src/server'
+import { prepareTemplate, transformHtmlTemplate } from '../src/template'
 
-// Guards src/server.ts: the entry must re-export the unhead/server helpers
-// unmodified and they must round-trip non-streaming SSR rendering end to end.
 describe('solid-js server entry', () => {
-  it('re-exports the unhead/server helpers as the same references', () => {
-    expect(createHead).toBe(unheadServer.createHead)
-    expect(renderSSRHead).toBe(unheadServer.renderSSRHead)
-    expect(prepareTemplate).toBe(unheadServer.prepareTemplate)
-    expect(transformHtmlTemplate).toBe(unheadServer.transformHtmlTemplate)
-  })
-
   it('renders pushed entries into an SSR payload', () => {
     const head = createHead({ disableDefaults: true })
     head.push({

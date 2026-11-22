@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import express from 'express'
-import { transformHtmlTemplate } from "@unhead/react/server";
+import { transformHtmlTemplate } from "@unhead/react/template";
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'

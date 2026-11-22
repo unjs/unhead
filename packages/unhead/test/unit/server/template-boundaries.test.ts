@@ -1,5 +1,5 @@
+import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from 'unhead/template'
 import { describe, expect, it } from 'vitest'
-import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server'
 import { prepareStreamingTemplate } from '../../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../../util'
 

@@ -23,9 +23,12 @@ app.use(createHead())
 app.mount('#app')
 ```
 
+Install the HTML parser with `npm install parse5@7` before rendering a template.
+
 ```ts
 // src/entry-server.ts
-import { createHead, transformHtmlTemplate } from '@unhead/vue/server'
+import { createHead } from '@unhead/vue/server'
+import { transformHtmlTemplate } from '@unhead/vue/template'
 import { renderToString } from 'vue/server-renderer'
 import { createApp } from './main'
 

@@ -47,10 +47,8 @@
 ./server:
   createHead: function
   prepareHeadInput: function
-  prepareTemplate: function
   propsToString: function
   renderSSRHead: function
-  transformHtmlTemplate: function
   VueHeadMixin: object
 ./stream/client:
   createStreamableHead: function
@@ -73,6 +71,9 @@
   default: function
   unheadVuePlugin: function
   unheadVueStreamingPlugin: object
+./template:
+  prepareTemplate: function
+  transformHtmlTemplate: function
 ./types: {}
 ./utils:
   dedupeKey: function

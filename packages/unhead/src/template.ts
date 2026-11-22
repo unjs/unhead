@@ -1,8 +1,10 @@
-import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
-import type { HeadTag, SSRHeadPayload, Unhead } from '../types'
-import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
-import { precomputeEntryTags } from './createHead'
-import { capoTagWeight } from './sort'
+import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from './parser'
+import type { HeadTag, SSRHeadPayload, Unhead } from './types'
+import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from './parser'
+import { precomputeEntryTags } from './server/createHead'
+import { capoTagWeight } from './server/sort'
+
+export { type PreparedTemplate, prepareTemplate } from './parser'
 
 interface ExtractedTemplateCache {
   template: PreparedHtmlTemplateWithIndexes

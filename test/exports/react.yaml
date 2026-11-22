@@ -30,9 +30,7 @@
   ValidatePlugin: function
 ./server:
   createHead: function
-  prepareTemplate: function
   renderSSRHead: function
-  transformHtmlTemplate: function
   UnheadProvider: function
 ./stream/client:
   createStreamableHead: function
@@ -53,6 +51,9 @@
   default: function
   unheadReactPlugin: function
   unheadReactStreamingPlugin: object
+./template:
+  prepareTemplate: function
+  transformHtmlTemplate: function
 ./utils:
   dedupeKey: function
   dedupeTags: function
