@@ -5,7 +5,7 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
-const CLASS_SEPARATOR_RE = /[\t\n\f\r ]+/
+export const CLASS_SEPARATOR_RE = /[\t\n\f\r ]+/
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -103,7 +103,7 @@ export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any
 
 // pushes onto `tags`: an array `content` expands to one tag per value
 function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag['props'] | string) {
-  const input = typeof _input === 'object' && typeof _input !== 'function'
+  const input = typeof _input === 'object'
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   // normalizeProps already stringifies an object `innerHTML` of a JSON script and drops any other
