@@ -1,8 +1,8 @@
 import { renderToStream } from 'solid-js/web'
-import { createStreamableHead, UnheadContext } from '@unhead/solid-js/stream/server'
+import { createStreamableHead, type PreparedTemplate, UnheadContext } from '@unhead/solid-js/stream/server'
 import App from './App'
 
-export function render(url: string, template: string) {
+export function render(url: string, template: string | PreparedTemplate) {
   const { head, onCompleteShell, wrapStream } = createStreamableHead()
 
   const { readable, writable } = new TransformStream()
