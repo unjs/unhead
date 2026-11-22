@@ -1,4 +1,5 @@
-import { writeFileSync } from 'node:fs'
+import type { OutputPlugin } from 'rollup'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { transform } from 'esbuild'
@@ -23,6 +24,34 @@ const IIFE_ROLLUP_TRANSFORM_TOKENS = [
   'typeof window',
 ] as const
 const IIFE_ROLLUP_TRANSFORM_RE = new RegExp(IIFE_ROLLUP_TRANSFORM_TOKENS.join('|'), 'g')
+const HTML_PARSER_PACKAGE_RE = /^(.*[/\\]node_modules[/\\](?:entities|parse5))[/\\]/
+
+function bundleHtmlParser(): OutputPlugin {
+  const licenses = new Set<string>()
+  return {
+    name: 'unhead-bundle-html-parser',
+    async renderChunk(code, chunk, options) {
+      const packages = chunk.moduleIds.flatMap(id => HTML_PARSER_PACKAGE_RE.exec(id)?.[1] ?? [])
+      if (!packages.length)
+        return
+
+      for (const directory of packages)
+        licenses.add(resolve(directory, 'LICENSE'))
+
+      return transform(code, { minify: true, target: 'es2022', sourcemap: !!options.sourcemap, legalComments: 'eof' })
+    },
+    generateBundle() {
+      if (!licenses.size)
+        return
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'parser.LICENSE.txt',
+        source: Array.from(licenses, path => readFileSync(path, 'utf8')).join('\n\n'),
+      })
+    },
+  }
+}
 
 function makeExecutableIifeCode(code: string) {
   return `${code}${code.endsWith(';') ? '' : ';'}${IIFE_INIT_CALL}`
@@ -97,8 +126,16 @@ async function buildIifeFromSource(rootDir: string) {
 export default defineBuildConfig({
   clean: true,
   declaration: true,
+  rollup: {
+    inlineDependencies: ['entities', 'parse5'],
+  },
   hooks: {
     'rollup:options': (_, options) => {
+      for (const output of [options.output].flat()) {
+        if (output)
+          output.plugins = [output.plugins, bundleHtmlParser()]
+      }
+
       options.experimentalLogSideEffects = true
       const onwarn = options.onwarn
       options.onwarn = (warning, warn) => {

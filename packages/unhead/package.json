@@ -177,12 +177,12 @@
   },
   "dependencies": {
     "hookable": "catalog:",
-    "parse5": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
     "esbuild": "catalog:",
+    "parse5": "catalog:",
     "rollup": "catalog:",
     "vite": "catalog:"
   }
