@@ -36,7 +36,9 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
         return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
     }
   }
-  if (key)
+  // The compiler marks generated inline keys in HTML too, so hydration uses
+  // the same content identity as unkeyed runtime declarations.
+  if (key && !(TagsWithInnerContent.has(t) && props['data-hid-generated'] === ''))
     return `${t}:key:${key}`
   if (props.id)
     return `${t}:id:${props.id}`

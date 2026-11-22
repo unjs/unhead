@@ -73,6 +73,52 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
 }
 
 describe('static inline keys', () => {
+  it.each([false, true])('deduplicates static and runtime inline bodies and preserves SSR nodes (static last: %s)', async (staticLast) => {
+    const body = 'globalThis.visits = (globalThis.visits || 0) + 1'
+    const input = { script: [{ innerHTML: body }], style: [{ innerHTML: '.page{color:red}' }], noscript: [{ innerHTML: 'Enable JavaScript' }] }
+    const literal = `useHead(${JSON.stringify(input)})`
+    const runtime = 'useHead(runtimeInput)'
+    const html = await render((staticLast ? [runtime, literal] : [literal, runtime]).join('\n'), true, { runtimeInput: input })
+    const dom = new JSDOM(`<!DOCTYPE html><html><head>${html}</head><body></body></html>`, { runScripts: 'dangerously' })
+    try {
+      const original = [...dom.window.document.querySelectorAll('script,style,noscript')]
+      expect(original.map(el => el.tagName)).toEqual(['SCRIPT', 'STYLE', 'NOSCRIPT'])
+      expect(dom.window.visits).toBe(1)
+      const client = createClientHead({ document: dom.window.document })
+      // Reverse registration order so the winning declaration can change during hydration.
+      const entries = (staticLast ? [keyInlineTags(input), input] : [input, keyInlineTags(input)])
+        .map(entry => client.push(entry))
+      client.render()
+      expect([...dom.window.document.querySelectorAll('script,style,noscript')]).toEqual(original)
+      expect(dom.window.visits).toBe(1)
+      entries[staticLast ? 0 : 1].dispose()
+      client.render()
+      expect([...dom.window.document.querySelectorAll('script,style,noscript')]).toEqual(original)
+      expect(dom.window.visits).toBe(1)
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
+  it('preserves authored keys that resemble generated keys', async () => {
+    const body = 'globalThis.visits = (globalThis.visits || 0) + 1'
+    const html = await render(`useHead({ script: [{ innerHTML: ${JSON.stringify(body)}, key: '~authoredKey' }] })\nuseHead({ script: [{ innerHTML: runtimeBody }] })`, true, { runtimeBody: body })
+    const dom = new JSDOM(`<!DOCTYPE html><head>${html}</head>`, { runScripts: 'dangerously' })
+    try {
+      const original = [...dom.window.document.querySelectorAll('script')]
+      expect(original).toHaveLength(2)
+      const client = createClientHead({ document: dom.window.document })
+      client.push({ script: [{ innerHTML: body, key: '~authoredKey' }, { innerHTML: body }] })
+      client.render()
+      expect([...dom.window.document.querySelectorAll('script')]).toEqual(original)
+      expect(dom.window.visits).toBe(2)
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
   it.each(['configs', 'builders', 'shared-config builders'] as const)('reuses SSR scripts with separate client and SSR %s and an SSR-only external callback', async (mode) => {
     const body = `globalThis.visits = (globalThis.visits || 0) + 1; /*${'static code '.repeat(350)}*/`
     const source = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ innerHTML: ${JSON.stringify(body)} }] })`
@@ -141,7 +187,7 @@ describe('static inline keys', () => {
     expect(html.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(3)
     expect(await render(`useHead(${JSON.stringify(input)})`)).toBe(html)
     expect(await render(push)).toBe(html)
-    expect(await render(push, false)).toBe(html.replace(/ data-hid="~[\w-]{11}"/g, ''))
+    expect(await render(push, false)).toBe(html.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, ''))
   })
 
   it('keeps authored IDs, keys and singleton tags in static head data', () => {
@@ -163,7 +209,7 @@ describe('static inline keys', () => {
     const output = await render(`${code}\n${code}`)
 
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
-    expect(output.replace(/ data-hid="[^"]+"/g, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="[^"]+"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 
   it('preserves empty bodies, explicit keys, dynamic bodies and template parameters', async () => {
@@ -224,7 +270,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 
   it('gives repeated static pushes on a known Unhead instance one content key', async () => {
@@ -237,7 +283,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 
   it.each(['@unhead/vue', '#app/composables/head', '#unhead/composables', 'nuxt/app'])('keys static pushes from %s and keeps dynamic, keyed and patchable input', async (source) => {
@@ -253,7 +299,7 @@ describe('static inline keys', () => {
     const input = { dynamic: `${css} /* dynamic */`, dynamicPatch: `${css} /* dynamic patch */` }
     const output = await render(code, true, input)
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false, input))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false, input))
   })
 
   it('leaves pushes on shadowed or foreign receivers alone', async () => {
@@ -277,7 +323,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 
   it('preserves entries that may be patched and tags with inherited IDs', async () => {
@@ -411,7 +457,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 
   it('keys a static body from a callback without parameters', async () => {
@@ -419,6 +465,6 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
+    expect(output.replace(/ data-hid="~[\w-]{11}"| data-hid-generated=""/g, '')).toBe(await render(code, false))
   })
 })

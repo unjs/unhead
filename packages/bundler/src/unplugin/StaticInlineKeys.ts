@@ -287,7 +287,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
                 const identity = inline && getInlineTagKey(name, inline)
                 if (!identity)
                   continue
-                const key = `key:"${identity.key}",${identity.tagDuplicateStrategy ? 'tagDuplicateStrategy:"replace",' : ''}`
+                const key = `key:"${identity.key}","data-hid-generated":"",${identity.tagDuplicateStrategy ? 'tagDuplicateStrategy:"replace",' : ''}`
                 if (tag.type === 'ObjectExpression') {
                   s.appendLeft(tag.start + 1, key)
                 }
