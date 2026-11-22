@@ -137,13 +137,23 @@ function externalPatternPath(pattern: RegExp): string | undefined {
 
 export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
   let app: { root: string, owner: NamedPackage | undefined, preserveSymlinks: boolean } | undefined
+  let sharedBuild = false
   const packages = new Map<string, NamedPackage | undefined>()
   return {
     name: 'unhead:static-inline-keys',
     apply: 'build',
     enforce: 'post',
+    async buildApp(builder) {
+      // Only one resolved configuration can establish parity across build environments.
+      sharedBuild = builder.config.builder?.sharedConfigBuild === true
+        && Object.values(builder.environments).some(env => env.config.consumer === 'client')
+        && Object.values(builder.environments).some(env => env.config.consumer === 'server')
+    },
     async configResolved(config) {
       app = undefined
+      sharedBuild = false
+      if (!config.builder?.sharedConfigBuild)
+        return
       const preserveSymlinks = config.resolve.preserveSymlinks
       const root = existsSync(config.root) ? realpathSync(config.root) : resolve(config.root)
       const owner = nearestNamedPackage(root, packages)
@@ -210,7 +220,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
         const { pathname, query } = splitTransformId(id)
         const isVueScript = isVueScriptRequest(pathname, query)
         const isSvelteModule = pathname.endsWith('.svelte') && !query
-        if (!app || code.length < MIN_INLINE_LENGTH || options.filter?.exclude?.some(pattern => id.match(pattern)))
+        if (!sharedBuild || !app || code.length < MIN_INLINE_LENGTH || options.filter?.exclude?.some(pattern => id.match(pattern)))
           return
         if (!isVueScript && !isSvelteModule && !JS_EXT_RE.test(pathname) && !options.filter?.include?.some(pattern => id.match(pattern)))
           return

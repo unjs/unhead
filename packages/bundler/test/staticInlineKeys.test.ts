@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
+import { JSDOM } from 'jsdom'
 import { useHead as coreUseHead } from 'unhead'
+import { createHead as createClientHead } from 'unhead/client'
 import { createHead } from 'unhead/server'
-import { resolveConfig } from 'vite'
+import { createBuilder, resolveConfig } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { keyInlineTags } from '../src/inlineKeys'
 import { Unhead } from '../src/unplugin/vite'
@@ -30,9 +32,18 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
     minify: minifyJs && { js: minifyJs },
   }, { framework: '@unhead/vue' })) {
     if (plugin.name === 'unhead:static-inline-keys' && plugin.configResolved) {
-      await resolveConfig({
+      const builder = await createBuilder({
         configFile: false,
         root: dependency?.root ?? appRoot,
+        environments: { ssr: { consumer: 'server' } },
+        builder: {
+          sharedConfigBuild: true,
+          async buildApp(builder) {
+            // These tests execute transformed head data directly instead of emitting bundles.
+            for (const environment of Object.values(builder.environments))
+              environment.isBuilt = true
+          },
+        },
         plugins: [plugin],
         resolve: { alias: dependency?.alias },
         build: { rollupOptions: { external: dependency?.buildExternal } },
@@ -40,7 +51,8 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
           noExternal: dependency?.bundled ? [packageName] : [],
           external: dependency?.external ? [dependency.external === true ? packageName : dependency.external] : [],
         },
-      }, 'build')
+      })
+      await builder.buildApp()
     }
     if (plugin.transform)
       code = (await runTransform(plugin, code, id))?.code ?? code
@@ -61,6 +73,60 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
 }
 
 describe('static inline keys', () => {
+  it.each(['configs', 'builders', 'shared-config builders'] as const)('reuses SSR scripts with separate client and SSR %s and an SSR-only external callback', async (mode) => {
+    const body = `globalThis.visits = (globalThis.visits || 0) + 1; /*${'static code '.repeat(350)}*/`
+    const source = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ innerHTML: ${JSON.stringify(body)} }] })`
+    const inputs: ResolvableHead[] = []
+    for (const ssr of [false, true]) {
+      const plugins = Unhead({ transformInlineTagKeys: true, transformInlineScripts: false, devtools: false, validate: false })
+      const config = {
+        configFile: false as const,
+        root: appRoot,
+        plugins,
+        build: {
+          ssr,
+          rollupOptions: { external: ssr ? (id: string) => id === 'node:fs' : undefined },
+        },
+      }
+      if (mode === 'configs') {
+        await resolveConfig(config, 'build')
+      }
+      else {
+        const builder = await createBuilder({
+          ...config,
+          builder: {
+            sharedConfigBuild: mode === 'shared-config builders',
+            async buildApp(builder) {
+              for (const environment of Object.values(builder.environments))
+                environment.isBuilt = true
+            },
+          },
+        }, true)
+        await builder.buildApp()
+      }
+      let code = source
+      for (const plugin of plugins) {
+        if (plugin.transform)
+          code = (await runTransform(plugin, code, join(appRoot, 'app.ts')))?.code ?? code
+      }
+      runInNewContext(code.replace(/^import .*\n/gm, ''), { useHead: (input: ResolvableHead) => inputs.push(input) })
+    }
+    const server = createHead({ disableDefaults: true })
+    server.push(inputs[1]!)
+    const dom = new JSDOM(`<!DOCTYPE html><html><head>${server.render().headTags}</head><body></body></html>`, { runScripts: 'dangerously' })
+    try {
+      const original = dom.window.document.querySelector('script')
+      const client = createClientHead({ document: dom.window.document })
+      client.push(inputs[0]!)
+      client.render()
+      expect(dom.window.visits).toBe(1)
+      expect([...dom.window.document.querySelectorAll('script')]).toEqual([original])
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
   it('uses the same key for static head data, useHead, and head.push', async () => {
     const input = {
       script: [{ textContent: js }],
