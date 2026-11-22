@@ -56,6 +56,47 @@ const scenarios = {
 
 export type CsrScenario = keyof typeof scenarios
 
+const hydrationMeta = [
+  { charset: 'utf-8' },
+  { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+  { name: 'description', content: 'Documentation and examples for a Nuxt site' },
+  ...Array.from({ length: 13 }, (_, index) => ({ property: `og:detail-${index}`, content: `Detail ${index}` })),
+]
+const hydrationLinks = [
+  { rel: 'canonical' as const, href: '/docs' },
+  { rel: 'alternate' as const, href: '/fr/docs', hreflang: 'fr' },
+  { rel: 'icon' as const, href: '/favicon.svg', type: 'image/svg+xml' },
+]
+const managedStyle = { key: 'page-skin', textContent: '.page{display:grid}' }
+const iconCss = '.icon{display:inline-block;--icon:url(/icon.svg)}\n'.repeat(1_000)
+const generatedCss = '.layout{display:grid;grid-template-columns:1fr 2fr}\n'.repeat(7_000)
+
+// Resource hints and inline payload sizes model the three Nuxt homepage samples.
+// Only the matching client entries are pushed. Nuxt's resource hints and data stay in the DOM.
+export const ssrHydrationHtml = `<!DOCTYPE html><html lang="en"><head>
+<title>Example Docs</title>
+${hydrationMeta.map(props => `<meta ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>`).join('\n')}
+${hydrationLinks.map(props => `<link ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>`).join('\n')}
+${Array.from({ length: 72 }, (_, index) => `<link rel="${index < 15 ? 'modulepreload' : 'prefetch'}" as="script" crossorigin href="/_nuxt/chunk-${index}.js">`).join('\n')}
+<link rel="stylesheet" href="/_nuxt/site.css" crossorigin>
+<style>${generatedCss}</style>
+<style id="ssr-icons">${iconCss}</style>
+<style data-hid="${managedStyle.key}">${managedStyle.textContent}</style>
+</head><body class="site"><div id="__nuxt">Example Docs</div>
+<script type="application/json" id="__NUXT_DATA__" data-nuxt-data="nuxt-app" data-ssr>["${'payload '.repeat(4_300)}"]</script>
+</body></html>`
+
+export function hydrateSsrHead(createHead: typeof CreateHead, document: Document) {
+  createHead({ document }).push({
+    title: 'Example Docs',
+    htmlAttrs: { lang: 'en' },
+    bodyAttrs: { class: 'site' },
+    meta: hydrationMeta,
+    link: hydrationLinks,
+    style: [managedStyle],
+  })
+}
+
 export function createCsrWorkload(createHead: typeof CreateHead, document: Document, scenario: CsrScenario) {
   if (scenario === 'router-fresh' || scenario === 'router-long' || scenario === 'large-fresh' || scenario === 'large-long') {
     const large = scenario === 'large-fresh' || scenario === 'large-long'
@@ -88,6 +129,36 @@ function stats(samples: number[]) {
   const value = samples.reduce((sum, sample) => sum + sample, 0) / samples.length
   const variance = samples.reduce((sum, sample) => sum + (sample - value) ** 2, 0) / (samples.length - 1)
   return { value, rme: value === 0 ? 0 : 1.96 * Math.sqrt(variance / samples.length) / value * 100 }
+}
+
+async function measureHydration(createHead: typeof CreateHead, JSDOM: typeof import('jsdom').JSDOM): Promise<PerfBench[]> {
+  const cpu: number[] = []
+  const wall: number[] = []
+  const runs = 32
+  const dom = new JSDOM(ssrHydrationHtml)
+  const clone = () => dom.window.document.cloneNode(true) as Document
+  try {
+    for (let i = 0; i < runs; i++) hydrateSsrHead(createHead, clone())
+    for (let rep = 0; rep < 12; rep++) {
+      await setImmediate()
+      // Exclude HTML parsing, DOM cloning, and the pre-sample collection from renderer CPU.
+      const documents = Array.from({ length: runs }, clone)
+      globalThis.gc!()
+      const beforeCpu = process.cpuUsage()
+      const beforeWall = performance.now()
+      for (const document of documents) hydrateSsrHead(createHead, document)
+      wall.push((performance.now() - beforeWall) / runs)
+      const usage = process.cpuUsage(beforeCpu)
+      cpu.push((usage.user + usage.system) / 1000 / runs)
+    }
+  }
+  finally {
+    dom.window.close()
+  }
+  return [
+    { id: 'csr-ssr-hydration-cpu', name: 'CSR first render, Nuxt-style SSR head (CPU / hydration)', kind: 'time', ...stats(cpu) },
+    { id: 'csr-ssr-hydration-wall', name: 'CSR first render, Nuxt-style SSR head (wall / hydration)', kind: 'time', ...stats(wall), informational: true },
+  ]
 }
 
 async function measureScenario(createHead: typeof CreateHead, JSDOM: typeof import('jsdom').JSDOM, scenario: CsrScenario): Promise<PerfBench[]> {
@@ -159,6 +230,8 @@ if (import.meta.main) {
   const { JSDOM } = require('jsdom') as typeof import('jsdom')
   const { createHead } = require(`${process.cwd()}/packages/unhead/dist/client.mjs`) as typeof import('unhead/client')
   const result: PerfRun = { benches: [] }
+  // eslint-disable-next-line antfu/no-top-level-await -- standalone Node benchmark entry point
+  result.benches.push(...await measureHydration(createHead, JSDOM))
   for (const scenario of Object.keys(scenarios) as CsrScenario[]) {
     // eslint-disable-next-line antfu/no-top-level-await -- standalone Node benchmark entry point
     result.benches.push(...await measureScenario(createHead, JSDOM, scenario))
