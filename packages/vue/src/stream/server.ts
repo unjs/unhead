@@ -1,6 +1,8 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload } from 'unhead/types'
-import type { VueHeadClient } from '../types'
+import type { ActiveHeadEntry, CreateStreamableServerHeadOptions, HeadEntryOptions, KnownLinkRel, ResolvableHead, ResolvableTitleTemplate, SSRHeadPayload, Stringable, Unhead } from 'unhead/types'
+import type { Plugin, Ref } from 'vue'
+import type { ReactiveHead, ResolvableArray, ResolvableLink, ResolvableProperties, ResolvableValue } from '../types'
+import type { CheckedHeadInput, HeadInput, TitleTag } from '../types/head-input'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream,
@@ -8,15 +10,41 @@ import {
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
+type StreamableHeadObjectKey = 'base' | 'bodyAttrs' | 'htmlAttrs' | 'templateParams'
+type VariableLink
+  = | { rel: ResolvableValue<KnownLinkRel> }
+    | { rel: ResolvableValue<string>, href: ResolvableValue<string> }
+type TitleTemplateTag = Extract<ResolvableTitleTemplate, { textContent: unknown }>
+type VueStreamableHeadSchema
+  = Omit<ReactiveHead, StreamableHeadObjectKey | 'title' | 'titleTemplate' | 'link'>
+    & ResolvableProperties<Pick<ReactiveHead, StreamableHeadObjectKey>>
+    & {
+      title?: ResolvableValue<Stringable | TitleTag>
+      titleTemplate?: ResolvableTitleTemplate | Ref<Exclude<ResolvableTitleTemplate, TitleTemplateTag> | (TitleTemplateTag & { textContent: string })>
+      link?: ResolvableArray<ResolvableLink | VariableLink>
+    }
+type VueStreamableHeadInput = ResolvableHead | HeadInput<VueStreamableHeadSchema, true>
+type CheckedStreamableHeadInput<Input> = CheckedHeadInput<Input, VueStreamableHeadSchema, ReactiveHead['link']>
+
+interface VueStreamableHeadEntry extends ActiveHeadEntry<VueStreamableHeadInput> {
+  /** Update the entry with new input. */
+  patch: <Input extends VueStreamableHeadInput>(input: CheckedStreamableHeadInput<Input>) => void
+}
+
+type VueStreamableHead = Omit<Unhead<any, SSRHeadPayload>, 'push'> & Plugin & {
+  /** Create a head entry. */
+  push: <Input extends VueStreamableHeadInput>(input: CheckedStreamableHeadInput<Input>, options?: HeadEntryOptions) => VueStreamableHeadEntry
+}
+
 /**
  * Vue-specific context returned by createStreamableHead.
  * Extends WebStreamableHeadContext with Vue-specific head type.
  */
-export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<ResolvableHead>, 'head'> {
+export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<VueStreamableHeadInput>, 'head'> {
   /**
    * The Vue head instance to use with app.use(head)
    */
-  head: VueHeadClient<any, SSRHeadPayload>
+  head: VueStreamableHead
 }
 
 /**
@@ -46,11 +74,11 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
 export function createStreamableHead(
   options: Omit<CreateStreamableServerHeadOptions, 'propResolvers'> = {},
 ): VueStreamableHeadContext {
-  const { head } = _createStreamableHead({
+  const { head } = _createStreamableHead<VueStreamableHeadInput>({
     ...options,
     propResolvers: [VueResolver],
   })
-  const vueHead = head as VueHeadClient<any, SSRHeadPayload>
+  const vueHead = head as VueStreamableHead
   vueHead.install = vueInstall(vueHead)
 
   return {
@@ -60,6 +88,7 @@ export function createStreamableHead(
   }
 }
 
+export type { VueHeadClient } from '../types'
 // Export streaming-specific items only (not the re-exports from unhead/server)
 export {
   createBootstrapScript,
@@ -75,4 +104,3 @@ export {
   type StreamingTemplateParts,
   wrapStream,
 } from 'unhead/stream/server'
-export type { VueHeadClient }

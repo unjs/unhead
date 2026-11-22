@@ -18,7 +18,7 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ## Lazy Head
 
-The [Lazy Head](/docs/head/api/lazy-head) queues entries for server-rendered pages. The framework calls `load()` to start applying them.
+[Lazy Head](/docs/head/api/lazy-head) queues client entries while the server tags stay in place. The app or framework calls `load()` to apply them.
 
 ## Plugins
 

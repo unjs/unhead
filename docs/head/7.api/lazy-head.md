@@ -37,7 +37,7 @@ A custom `render` option controls rendering from activation onward. The default 
 | `load()` | Load and return the full client head as a `Promise`. Concurrent calls share the load. |
 | `render()` | Forward to the client head when active. Before activation, return `false`. |
 
-`load()` rejects if activation fails. For streaming, the matching server bootstrap must be present when you call `load()`. If a plugin loader fails or the stream queue is missing, another `load()` can retry once the issue is resolved.
+For streaming, call `load()` once the matching server bootstrap is present. If the stream queue is missing or a plugin loader fails, `load()` rejects. Fix the cause, then call `load()` again.
 
 `finishHydration()` and `render()` leave activation to the caller. In development, `finishHydration()` can check for differences between queued client tags and the server tags on buffered SSR pages.
 

@@ -22,6 +22,7 @@ import type {
   UnheadMeta,
 } from 'unhead/types'
 import type { CSSProperties, Plugin, Ref } from 'vue'
+import type { HeadInput, TitleTag } from './head-input'
 import type { ResolvableArray, ResolvableProperties, ResolvableValue } from './util'
 
 export interface HtmlAttr extends Omit<HtmlAttributes, 'class' | 'style'> {
@@ -54,7 +55,7 @@ export interface BodyAttr extends Omit<BodyAttributesWithoutEvents, 'class' | 's
   style?: MaybeArray<ResolvableValue<Stringable> | ResolvableProperties<CSSProperties>>
 }
 
-export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
+export type ResolvableTitle = ResolvableValue<Stringable> | TitleTag
 export type ResolvableTitleTemplate = _ResolvableTitleTemplate | Ref<string>
 export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
 type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
@@ -144,6 +145,6 @@ export interface ReactiveHead {
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: Pick<VueHeadClient<any>, 'push' | 'ssr' | 'use'> }
 
-export type UseHeadInput<_Deprecated = never> = ResolvableValue<ReactiveHead>
+export type UseHeadInput<_Deprecated = never> = HeadInput<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<I = UseHeadInput, R = unknown> = Unhead<I, R> & Plugin
