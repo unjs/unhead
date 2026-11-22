@@ -5,6 +5,7 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
+const CLASS_SEPARATOR_RE = /[\t\n\f\r ]+/
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -20,7 +21,7 @@ function normalizeStyleClassProps(
           store.set(item.slice(0, colon).trim(), item.slice(colon + 1).trim())
       }
       else {
-        item.split(' ').forEach(name => name && store.add(name))
+        item.split(CLASS_SEPARATOR_RE).forEach(name => name && store.add(name))
       }
     }
     else if (Array.isArray(item)) {

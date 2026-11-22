@@ -91,7 +91,7 @@ describe('vue dom styles', () => {
 
   it('renders mixed class and style declarations in SSR and the browser', async () => {
     const bodyAttrs = {
-      class: ['root', { active: true, hidden: false }],
+      class: ['root', { 'active\twide': true, 'hidden': false }],
       style: [
         'background-image:url(data:image/png;base64,AAAA)',
         'font-size:18px',
@@ -103,7 +103,7 @@ describe('vue dom styles', () => {
       useHead({ bodyAttrs })
     })
     const { bodyAttrs: rendered } = renderSSRHead(ssr)
-    expect(rendered).toContain('class="root active"')
+    expect(rendered).toContain('class="root active wide"')
     expect(rendered).toContain('background-image:url(data:image/png;base64,AAAA)')
     expect(rendered).toContain('opacity:0')
 
@@ -113,7 +113,7 @@ describe('vue dom styles', () => {
     })
     const document = dom.window.document
     renderDOMHead(client, { document })
-    expect(document.body.className).toBe('root active')
+    expect(document.body.className).toBe('root active wide')
     expect(document.body.style.fontSize).toBe('18px')
     expect(document.body.style.color).toBe('blue')
     expect(document.body.style.opacity).toBe('0')
