@@ -1,7 +1,30 @@
 import { JSDOM } from 'jsdom'
 import { createHead } from 'unhead/client'
 import { expect, it } from 'vitest'
-import { createCsrWorkload, observeDomReads } from './csr-perf'
+import { createCsrWorkload, hydrateSsrHead, observeDomReads, ssrHydrationHtml } from './csr-perf'
+
+it('adopts the SSR head and preserves Nuxt resource hints', () => {
+  const dom = new JSDOM(ssrHydrationHtml)
+  try {
+    const document = dom.window.document
+    const nodes = [...document.head.children, ...document.body.children]
+    const hint = document.head.querySelector('link[rel="modulepreload"]')
+    const style = document.head.querySelector('style[data-hid]')
+
+    const entry = hydrateSsrHead(createHead, document)
+
+    expect([...document.head.children, ...document.body.children].map(node => nodes.indexOf(node))).toEqual(nodes.map((_, index) => index))
+    expect(document.head.querySelector('style[data-hid]')).toBe(style)
+
+    entry.dispose()
+
+    expect(document.head.querySelector('style[data-hid]')).toBeNull()
+    expect(document.head.querySelector('link[rel="modulepreload"]')).toBe(hint)
+  }
+  finally {
+    dom.window.close()
+  }
+})
 
 it.each(['idle', 'cached'] as const)('avoids DOM discovery for %s renders', (scenario) => {
   const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')

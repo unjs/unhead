@@ -3,6 +3,7 @@ import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { StaticJsonLdTransform } from './StaticJsonLdTransform'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
@@ -27,6 +28,12 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     plugins.push(TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
+  }
+  if (options.serverOnlyCrawlerTags) {
+    const { runtime, ...crawlerTagsOpts } = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    plugins.push(ServerOnlyCrawlerTags.vite({ filter: options.filter, sourcemap: options.sourcemap, ...crawlerTagsOpts }))
+    if (runtime)
+      plugins.push(ServerOnlyCrawlerTagsRuntime.vite({}))
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}

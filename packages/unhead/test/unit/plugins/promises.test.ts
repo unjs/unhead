@@ -96,6 +96,24 @@ describe('promisesPlugin', () => {
     expect(reads).toBe(1)
   })
 
+  it('resolves a thenable appended by a getter in a wide array', async () => {
+    const description = { name: 'description', content: 'synchronous' }
+    const meta: unknown[] = Array.from({ length: 300 }).fill(description)
+    Object.defineProperty(meta, meta.length - 1, {
+      get() {
+        meta.push(Promise.resolve({ name: 'keywords', content: 'appended' }))
+        return description
+      },
+    })
+    const head = createServerHead({ disableDefaults: true, plugins: [PromisesPlugin] })
+    head.push({ meta } as any)
+
+    expect(renderSSRHead(head).headTags).toBe('')
+    await flushPromises()
+
+    expect(renderSSRHead(head).headTags).toContain('<meta name="keywords" content="appended">')
+  })
+
   it('preserves an own __proto__ property after promise resolution', async () => {
     const head = createServerHead({
       disableDefaults: true,
