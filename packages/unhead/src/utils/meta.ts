@@ -32,6 +32,7 @@ const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
 }
 
 const CAPS_RE = /([A-Z])/g
+const HYPHEN_OR_CAP_RE = /[-A-Z]/
 const OG_TWITTER_RE = /^(?:og|twitter)/
 
 interface UnpackOptions {
@@ -78,15 +79,12 @@ const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
 }
 
 function fixKeyCase(key: string): string {
-  const updated = key.replace(CAPS_RE, '-$1').toLowerCase()
-  const prefixIndex = updated.indexOf('-')
-  return prefixIndex === -1
-    ? updated
-    : (
-        META_NAMESPACES.includes(updated.slice(0, prefixIndex)) || PROPERTY_NAMESPACES.includes(updated.slice(0, prefixIndex))
-          ? key.replace(CAPS_RE, ':$1').toLowerCase()
-          : updated
-      )
+  const prefixIndex = key.search(HYPHEN_OR_CAP_RE)
+  if (prefixIndex === -1)
+    return key.toLowerCase()
+  const prefix = key.slice(0, prefixIndex).toLowerCase()
+  const replacement = META_NAMESPACES.includes(prefix) || PROPERTY_NAMESPACES.includes(prefix) ? ':$1' : '-$1'
+  return key.replace(CAPS_RE, replacement).toLowerCase()
 }
 
 function sanitizeObject(input: Record<string, any>) {
@@ -161,18 +159,22 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
     .sort((a: any, b: any) => ((a[attr]?.length || 0) - (b[attr]?.length || 0)))
 }
 
-export function resolveMetaKeyType(key: string): MetaKeyType {
+function metaKeyType(key: string, fixed?: string): MetaKeyType {
   if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || HTTP_EQUIV_KEYS.includes(key)) {
     return 'http-equiv'
   }
 
-  const fixed = fixKeyCase(key)
+  fixed ??= fixKeyCase(key)
   const colonIndex = fixed.indexOf(':')
   return colonIndex === -1
     ? 'name'
     : PROPERTY_NAMESPACES.includes(fixed.slice(0, colonIndex))
       ? 'property'
       : 'name'
+}
+
+export function resolveMetaKeyType(key: string): MetaKeyType {
+  return metaKeyType(key)
 }
 
 export function resolveMetaKeyValue(key: string): string {
@@ -192,7 +194,7 @@ export function resolvePackedMetaObjectValue(value: any, key: string): string {
 }
 
 export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
-  const extras: UnheadMeta[] = []
+  const meta: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
   for (const [key, value] of Object.entries(input)) {
@@ -200,7 +202,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
       if (key === 'themeColor') {
         value.forEach((v) => {
           if (typeof v === 'object' && v !== null) {
-            extras.push({ name: 'theme-color', ...v })
+            meta.push({ name: 'theme-color', ...v })
           }
         })
         continue
@@ -216,10 +218,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
             const meta = unpackMeta({ [metaKey]: propValue })
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
           }
-          extras.push(...urlProps, ...otherProps)
+          meta.push(...urlProps, ...otherProps)
         }
         else {
-          extras.push(...(typeof v === 'string'
+          meta.push(...(typeof v === 'string'
             ? unpackMeta({ [key]: v })
             : handleObjectEntry(key, v)))
         }
@@ -234,13 +236,13 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
         const metaKey = prefix === 'twitter' ? 'name' : 'property'
 
         if (value.url) {
-          extras.push({
+          meta.push({
             [metaKey]: `${prefix}:${type}`,
             content: value.url,
           } as MetaGeneric as UnheadMeta)
         }
         if (value.secureUrl) {
-          extras.push({
+          meta.push({
             [metaKey]: `${prefix}:${type}:secure_url`,
             content: value.secureUrl,
           } as MetaGeneric as UnheadMeta)
@@ -248,7 +250,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
 
         for (const [propKey, propValue] of Object.entries(value)) {
           if (propKey !== 'url' && propKey !== 'secureUrl') {
-            extras.push({
+            meta.push({
               [metaKey]: `${prefix}:${type}:${propKey}`,
               content: propValue,
             } as MetaGeneric as UnheadMeta)
@@ -256,7 +258,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
         }
       }
       else if (MetaTagsArrayable.has(fixKeyCase(key) as keyof MetaFlat)) {
-        extras.push(...handleObjectEntry(key, value))
+        meta.push(...handleObjectEntry(key, value))
       }
       else {
         primitives[key] = sanitizeObject(key === 'robots' ? normalizeRobotsDirectives(value) : value)
@@ -267,12 +269,21 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
     }
   }
 
-  const meta = Object.entries(primitives).map(([key, value]): UnheadMeta => {
-    if (key === 'charset')
-      return { charset: value === null ? '_null' : value }
+  for (let i = 0; i < meta.length; i++) {
+    const tag = meta[i]
+    if ('content' in tag && tag.content === '_null')
+      meta[i] = { ...tag, content: null }
+  }
 
-    const metaKey = resolveMetaKeyType(key)
-    const keyValue = resolveMetaKeyValue(key)
+  for (const [key, value] of Object.entries(primitives)) {
+    if (key === 'charset') {
+      meta.push({ charset: value === null ? '_null' : value })
+      continue
+    }
+
+    const fixed = fixKeyCase(key)
+    const attr = metaKeyType(key, fixed)
+    const keyValue = META_ALIASES[key] || fixed
     const processedValue = value === null
       ? '_null'
       : typeof value === 'object'
@@ -281,16 +292,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
           ? value.toString()
           : value
 
-    return (metaKey === 'http-equiv'
-      ? { 'http-equiv': keyValue, 'content': processedValue }
-      : { [metaKey]: keyValue, content: processedValue }) as MetaGeneric as UnheadMeta
-  })
-
-  return [...extras, ...meta].map(m =>
-    !('content' in m)
-      ? m
-      : m.content === '_null'
-        ? { ...m, content: null }
-        : m,
-  )
+    meta.push({ [attr]: keyValue, content: processedValue === '_null' ? null : processedValue } as MetaGeneric as UnheadMeta)
+  }
+  return meta
 }

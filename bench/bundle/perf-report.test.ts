@@ -123,6 +123,25 @@ describe('renderPerfReport sections', () => {
     expect(report).not.toContain('Perf - CPU')
   })
 
+  it('shows SSR hydration CPU and wall timings outside the general CPU details', () => {
+    const benches = [
+      { id: 'cpu', name: 'Navigation CPU', kind: 'time' as const, value: 1 },
+      { id: 'hydration-cpu', name: 'First head render (CPU)', kind: 'time' as const, category: 'hydration' as const, value: 2 },
+      { id: 'hydration-wall', name: 'First head render (wall)', kind: 'time' as const, category: 'hydration' as const, value: 2, informational: true },
+    ]
+    const report = renderPerfReport({ benches }, {
+      benches: benches.map(bench => ({ ...bench, value: bench.informational ? 4 : bench.value })),
+    })
+    const [cpu, hydration] = report.split('### ⚡ Perf - SSR Hydration')
+
+    expect(cpu).toContain('Navigation CPU')
+    expect(cpu).not.toContain('First head render')
+    expect(hydration).toContain('No significant change')
+    expect(hydration).toContain('| First head render (CPU) | 2.000 ms | 2.000 ms | ~ noise |')
+    expect(hydration).toContain('| First head render (wall) | 2.000 ms | 4.000 ms | ℹ️ +100.0% |')
+    expect(hydration).not.toContain('<details>')
+  })
+
   it('does not add memory notes to a CPU-only report', () => {
     const report = renderPerfReport(null, {
       benches: [{ id: 'cpu', name: 'CPU time', kind: 'time', value: 1 }],

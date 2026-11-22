@@ -5,6 +5,7 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
+const NON_LOWERCASE_ATTR_RE = /[^a-z0-9_:.@-]/
 export const CLASS_SEPARATOR_RE = /[\t\n\f\r ]+/
 
 function normalizeStyleClassProps(
@@ -56,9 +57,13 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
       continue
     const isData = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
-    const key = isHtmlAttr && !isData ? prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase()) : prop
-    if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
-      continue
+    let key = prop
+    if (isHtmlAttr && (!prop || NON_LOWERCASE_ATTR_RE.test(prop))) {
+      if (!isData)
+        key = prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase())
+      if (!key || INVALID_ATTR_NAME_RE.test(key))
+        continue
+    }
     const value = input[prop]
     if (value === null) {
       tag.attrs[key] = null as any
