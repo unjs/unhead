@@ -13,6 +13,7 @@ const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte)|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
 const HEAD_FACTORY_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/(?:client|server)$/
 const HEAD_INJECT_IMPORTS = new Set(['@unhead/vue', '#app', '#app/composables/head', '#unhead/composables', 'nuxt/app'])
+const ABSOLUTE_PATH_PATTERN_RE = /^\^(?:[a-z]:)?\\[\\/](?![?*{])/i
 
 interface StaticInlineKeysOptions extends BaseTransformerTypes {
   framework?: string
@@ -119,6 +120,11 @@ function nearestNamedPackage(dir: string, cache: Map<string, NamedPackage | unde
   return result
 }
 
+function isWithin(root: string, file: string): boolean {
+  const fromRoot = relative(root, file)
+  return fromRoot !== '..' && !fromRoot.startsWith(`..${sep}`) && !isAbsolute(fromRoot)
+}
+
 export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
   let app: { root: string, owner: NamedPackage | undefined, preserveSymlinks: boolean, externals: (string | RegExp)[] } | undefined
   const packages = new Map<string, NamedPackage | undefined>()
@@ -144,6 +150,13 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
           externals.push(...(Array.isArray(buildExternal) ? buildExternal : [buildExternal]))
       }
       if (externals.some(rule => typeof rule === 'string' && (rule.startsWith('.') || (owner && (rule === owner.name || rule.startsWith(`${owner.name}/`))))))
+        return
+
+      const patterns = externals.filter((rule): rule is RegExp => typeof rule !== 'string')
+      const hasPathAlias = config.resolve.alias.some(({ find, replacement }) => (typeof find !== 'string' || isAbsolute(find))
+        && isAbsolute(replacement) && isWithin(root, replacement))
+      // Patterns that can match an unresolved import cannot be checked against the file alone.
+      if (patterns.length && (hasPathAlias || patterns.some(rule => rule.multiline || rule.source.includes('|') || !ABSOLUTE_PATH_PATTERN_RE.test(rule.source))))
         return
 
       const externalIds = externals.filter((rule): rule is string => typeof rule === 'string' && !isAbsolute(rule))
@@ -182,12 +195,10 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
           return
         // An SSR-external parent can load a dependency through Node, outside this transform.
         const file = app.preserveSymlinks ? realpathSync(pathname) : resolve(pathname)
-        const fromRoot = relative(app.root, file)
-        if (fromRoot === '..' || fromRoot.startsWith(`..${sep}`) || isAbsolute(fromRoot) || NODE_MODULES_RE.test(file)
-          || nearestNamedPackage(dirname(file), packages) !== app.owner) {
+        if (!isWithin(app.root, file) || NODE_MODULES_RE.test(file) || nearestNamedPackage(dirname(file), packages) !== app.owner)
           return
-        }
-        if (app.externals.some(rule => typeof rule === 'string' ? rule === pathname || rule === file : pathname.search(rule) !== -1 || file.search(rule) !== -1))
+        const normalizedFile = file.replaceAll('\\', '/')
+        if (app.externals.some(rule => typeof rule === 'string' ? rule === pathname || rule === file || rule === normalizedFile : pathname.search(rule) !== -1 || normalizedFile.search(rule) !== -1))
           return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })

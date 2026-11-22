@@ -258,15 +258,16 @@ describe('static inline keys', () => {
   it('applies SSR build external patterns to the affected source file', async () => {
     const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
     const file = join(appRoot, 'entry.ts')
+    const absolutePattern = (name: string) => new RegExp(`^${join(appRoot, name).replaceAll('\\', '/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
     const baseline = await render(code)
-    const external = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: /entry\.ts$/ })
-    const bundled = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: /other\.ts$/ })
+    const external = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: absolutePattern('entry.ts') })
+    const bundled = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: absolutePattern('other.ts') })
 
     expect(external).toBe(baseline)
     expect(bundled).toMatch(/data-hid="~[\w-]{11}"/)
   })
 
-  it('leaves an SSR-external alias unkeyed in application source', async () => {
+  it.each(['#external-app', /^#external-app$/])('leaves an SSR-external alias unkeyed in application source (%s)', async (buildExternal) => {
     const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
     const root = await mkdtemp(join(tmpdir(), 'unhead-app-'))
     const file = join(root, 'external.mjs')
@@ -276,7 +277,7 @@ describe('static inline keys', () => {
         bundled: false,
         root,
         linked: file,
-        buildExternal: '#external-app',
+        buildExternal,
         alias: { '#external-app': file },
       })
       expect(output).toBe(await render(code))
