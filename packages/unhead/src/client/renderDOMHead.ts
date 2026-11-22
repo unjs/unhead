@@ -230,9 +230,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const props: Record<string, any> = {}
         for (const n of el.getAttributeNames())
           props[n] = el.getAttribute(n)
-        // These HTML link attributes have the same identity before and after normalization.
-        // Only HTML links in an HTML document report LINK with a lowercase localName.
-        // Empty identity attributes need normalization because they become boolean true.
         const linkHasIdentity = tagName === 'LINK' && el.localName === 'link'
           && props.rel && props.href && props.hreflang !== '' && props.charset !== '' && props.id !== ''
         const next = { tag: elTag, props: linkHasIdentity ? props : {} } as HeadTag
@@ -267,7 +264,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.appendChild(frag.bodyClose)
     for (const k in previous) {
       previous[k]()
-      // Completed cleanups can capture detached elements and their content.
       delete previous[k]
     }
     head._dom = renderState
