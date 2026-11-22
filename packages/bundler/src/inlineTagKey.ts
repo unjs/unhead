@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { dedupeKey, normalizeProps } from 'unhead/utils'
 
 export type InlineTag = 'script' | 'style' | 'noscript'
-export const MIN_INLINE_LENGTH = 4096
 const UNSAFE_BODY_RE = /[\r\0]|<\/(?:script|style|noscript)/i
 const TEMPLATE_PARAM_RE = /%\w/
 const SPECIAL_SCRIPT_TYPE_RE = /^(?:importmap|speculationrules)$|json$/i
@@ -10,7 +9,7 @@ const SPECIAL_SCRIPT_TYPE_RE = /^(?:importmap|speculationrules)$|json$/i
 export function getInlineTagKey(tag: InlineTag, input: Readonly<Record<string, unknown>>) {
   const { innerHTML, textContent, ...attrs } = input
   const body = innerHTML ?? textContent
-  if (typeof body !== 'string' || body.length < MIN_INLINE_LENGTH
+  if (typeof body !== 'string' || !body
     || (Object.hasOwn(input, 'innerHTML') && Object.hasOwn(input, 'textContent'))
     || UNSAFE_BODY_RE.test(body) || (tag === 'script' && body.includes('<!--'))
     || (attrs.processTemplateParams !== false && TEMPLATE_PARAM_RE.test(body))

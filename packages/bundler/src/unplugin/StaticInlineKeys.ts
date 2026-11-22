@@ -5,7 +5,7 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, ScopeTrackerVariable, walk } from 'oxc-walker'
-import { getInlineTagKey, MIN_INLINE_LENGTH } from '../inlineTagKey'
+import { getInlineTagKey } from '../inlineTagKey'
 import { isMissingParserError, parseAndWalkSource } from './parser'
 import { isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, SOURCE_FILE_RE, splitTransformId } from './utils'
 
@@ -218,7 +218,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
         const { pathname, query } = splitTransformId(id)
         const isVueScript = isVueScriptRequest(pathname, query)
         const isSvelteModule = pathname.endsWith('.svelte') && !query
-        if (!sharedBuild || !app || code.length < MIN_INLINE_LENGTH || options.filter?.exclude?.some(pattern => id.match(pattern)))
+        if (!sharedBuild || !app || options.filter?.exclude?.some(pattern => id.match(pattern)))
           return
         if (!isVueScript && !isSvelteModule && !JS_EXT_RE.test(pathname) && !options.filter?.include?.some(pattern => id.match(pattern)))
           return

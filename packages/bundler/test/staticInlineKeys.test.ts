@@ -127,19 +127,20 @@ describe('static inline keys', () => {
     }
   })
 
-  it('uses the same key for static head data, useHead, and head.push', async () => {
+  it('keys short static head data consistently across useHead and head.push by default', async () => {
     const input = {
-      script: [{ textContent: js }],
-      style: [{ innerHTML: `${css}/* %23 */`, processTemplateParams: false }],
+      script: [{ textContent: 'globalThis.visits++' }],
+      style: [{ innerHTML: '.page{display:grid}/* %23 */', processTemplateParams: false }],
+      noscript: [{ innerHTML: 'Enable JavaScript' }],
     }
     const head = createHead({ disableDefaults: true })
     head.push(keyInlineTags(input))
     const html = head.render().headTags
     const push = `import { injectHead } from '@unhead/vue'\nconst head = injectHead()\nhead.push(${JSON.stringify(input)})`
 
-    expect(html.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
-    expect(await render(`useHead(${JSON.stringify(input)})`, true)).toBe(html)
-    expect(await render(push, true)).toBe(html)
+    expect(html.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(3)
+    expect(await render(`useHead(${JSON.stringify(input)})`)).toBe(html)
+    expect(await render(push)).toBe(html)
     expect(await render(push, false)).toBe(html.replace(/ data-hid="~[\w-]{11}"/g, ''))
   })
 
@@ -157,24 +158,25 @@ describe('static inline keys', () => {
     expect(head.render().headTags).toBe(baseline.render().headTags)
   })
 
-  it('emits stable keys for long static script and style tags when enabled', async () => {
+  it('emits stable keys for long static script and style tags by default', async () => {
     const code = `useHead({ script: [{ innerHTML: ${JSON.stringify(js)} }], style: [{ textContent: ${JSON.stringify(css)} }] })`
-    const output = await render(`${code}\n${code}`, true)
+    const output = await render(`${code}\n${code}`)
 
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
-    expect(output.replace(/ data-hid="[^"]+"/g, '')).toBe(await render(code))
+    expect(output.replace(/ data-hid="[^"]+"/g, '')).toBe(await render(code, false))
   })
 
-  it('leaves short tags, explicit keys, dynamic bodies and template parameters to the author', async () => {
+  it('preserves empty bodies, explicit keys, dynamic bodies and template parameters', async () => {
     const code = `useHead({ script: [
-      { innerHTML: "void 0" },
+      { innerHTML: "" },
       { innerHTML: ${JSON.stringify(js)}, key: "manual" },
       { innerHTML: dynamic },
       { innerHTML: ${JSON.stringify(`${js} /* %scriptParam */`)} },
       { innerHTML: ${JSON.stringify(`${js} /* unevaluated strategy */`)}, tagDuplicateStrategy: undefined },
     ] })`
 
-    expect(await render(code, true, { dynamic: `${js} /* dynamic */` })).toBe(await render(code, undefined, { dynamic: `${js} /* dynamic */` }))
+    const input = { dynamic: `${js} /* dynamic */` }
+    expect(await render(code, undefined, input)).toBe(await render(code, false, input))
   })
 
   it('keys the emitted script after minification', async () => {
@@ -222,7 +224,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
 
   it('gives repeated static pushes on a known Unhead instance one content key', async () => {
@@ -275,14 +277,14 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
 
   it('preserves entries that may be patched and tags with inherited IDs', async () => {
     const code = `const entry = useHead({ script: [${JSON.stringify(js)}] })
     useHead({ style: [{ __proto__: { id: 'theme' }, innerHTML: ${JSON.stringify(css)} }] })`
 
-    expect(await render(code, true)).toBe(await render(code))
+    expect(await render(code, true)).toBe(await render(code, false))
   })
 
   it.each([false, true])('preserves SSR-external linked modules with a type-only manifest set to %s', async (typeOnlyManifest) => {
@@ -297,7 +299,7 @@ describe('static inline keys', () => {
       if (typeOnlyManifest)
         await writeFile(join(dist, 'package.json'), '{"type":"module"}')
       const output = await render(code, true, {}, undefined, { bundled: false, external: true, linked: join(dist, 'index.js') })
-      expect(output).toBe(await render(code))
+      expect(output).toBe(await render(code, false))
     }
     finally {
       await rm(root, { recursive: true, force: true })
@@ -314,7 +316,7 @@ describe('static inline keys', () => {
       await writeFile(join(root, 'package.json'), '{"name":"@acme/app"}')
       await writeFile(join(linked, 'package.json'), '{"name":"@acme/linked"}')
       const output = await render(code, true, {}, undefined, { bundled: true, root, linked: join(linked, 'index.js') })
-      expect(output).toBe(await render(code))
+      expect(output).toBe(await render(code, false))
     }
     finally {
       await rm(root, { recursive: true, force: true })
@@ -344,7 +346,7 @@ describe('static inline keys', () => {
         buildExternal,
         alias: { '#external-app': file },
       })
-      expect(output).toBe(await render(code))
+      expect(output).toBe(await render(code, false))
     }
     finally {
       await rm(root, { recursive: true, force: true })
@@ -370,7 +372,7 @@ describe('static inline keys', () => {
         buildExternal,
         alias: { '#external-app': external },
       })
-      expect(output).toBe(await render(code))
+      expect(output).toBe(await render(code, false))
     }
     finally {
       await rm(root, { recursive: true, force: true })
@@ -395,7 +397,7 @@ describe('static inline keys', () => {
         buildExternal: '@acme/workspace',
         alias: { '@acme/workspace': external },
       })
-      expect(output).toBe(await render(code))
+      expect(output).toBe(await render(code, false))
     }
     finally {
       await rm(root, { recursive: true, force: true })
@@ -409,7 +411,7 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(1)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
 
   it('keys a static body from a callback without parameters', async () => {
@@ -417,6 +419,6 @@ describe('static inline keys', () => {
 
     const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code))
+    expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
 })
