@@ -32,7 +32,7 @@ function initStreamingHead(render: HeadRenderer<boolean>, options: StreamingOpti
   // Push an entry and tag it as streamed so devtools can distinguish
   // entries that arrived via inline streaming scripts from client pushes.
   function pushStreamed(entry: any) {
-    const active = head.push(entry)
+    const active = head.push(entry, { _streamed: true })
     const stored = head.entries.get(active._i) as any
     if (stored)
       stored._streamed = true
