@@ -6,6 +6,7 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
+import { deepStrictEqual } from 'node:assert'
 import { execFileSync } from 'node:child_process'
 import { Session } from 'node:inspector/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -17,6 +18,7 @@ const dist = name => packageDist('unhead', name)
 const schemaOrgDist = name => packageDist('schema-org', name)
 const { useHead, useSeoMeta } = await dist('index.mjs')
 const { createHead, renderSSRHead } = await dist('server.mjs')
+const { unpackMeta } = await dist('utils.mjs')
 const {
   defineOrganization,
   defineProduct,
@@ -210,6 +212,72 @@ async function measureAlloc(fn, { warmup = 50, reps = 5, runs = 200 } = {}) {
     }
   }
   return stats(samples)
+}
+
+async function seoMetaSsrBenches() {
+  const title = 'Fieldnote pricing'
+  const site = { ogSiteName: 'Fieldnote', twitterCard: 'summary_large_image' }
+  const page = {
+    description: 'Find a plan for your workspace.',
+    ogTitle: title,
+    ogDescription: 'Choose monthly or annual billing.',
+    ogImage: 'https://fieldnote.example/pricing.png',
+    ogImageAlt: 'The Fieldnote pricing page',
+    ogType: 'website',
+  }
+
+  const render = (addSeoMeta) => {
+    const head = createHead()
+    useHead(head, {
+      htmlAttrs: { lang: 'en' },
+      link: [{ rel: 'canonical', href: 'https://fieldnote.example/pricing' }],
+    })
+    addSeoMeta(head)
+    return renderSSRHead(head)
+  }
+
+  const runtime = () => render((head) => {
+    useSeoMeta(head, site)
+    useSeoMeta(head, { title, ...page })
+  })
+
+  // Equivalent to the useHead calls emitted by the Vite transform.
+  const compiled = () => render((head) => {
+    useHead(head, {
+      meta: [
+        { property: 'og:site_name', content: site.ogSiteName },
+        { name: 'twitter:card', content: site.twitterCard },
+      ],
+    })
+    useHead(head, {
+      title,
+      meta: [
+        { name: 'description', content: page.description },
+        { property: 'og:title', content: page.ogTitle },
+        { property: 'og:description', content: page.ogDescription },
+        { property: 'og:image', content: page.ogImage },
+        { property: 'og:image:alt', content: page.ogImageAlt },
+        { property: 'og:type', content: page.ogType },
+      ],
+    })
+  })
+
+  deepStrictEqual(runtime(), compiled())
+
+  const benches = []
+  for (const [id, name, run] of [
+    ['seo-meta-unpack', 'SEO metadata unpacking', () => unpackMeta(page)],
+    ['ssr-seo-meta-runtime', 'SSR head with runtime SEO metadata', runtime],
+    ['ssr-seo-meta-compiled', 'SSR head with compiled SEO metadata', compiled],
+  ]) {
+    const { cpu } = measureTimes(run, { warmup: 5000, reps: 30, runs: 4000 })
+    const alloc = await measureAlloc(run)
+    benches.push(
+      { id: `${id}-cpu`, name: `${name} (CPU)`, kind: 'time', value: cpu.value, rme: cpu.rme },
+      { id: `${id}-alloc`, name: `${name} (allocated)`, kind: 'alloc', value: alloc.value, rme: alloc.rme },
+    )
+  }
+  return benches
 }
 
 // async twins of measureTimes/measureAlloc for the streaming benches, which must be
@@ -409,6 +477,7 @@ const result = {
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
+    ...await seoMetaSsrBenches(),
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
