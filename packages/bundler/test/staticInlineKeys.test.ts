@@ -17,7 +17,7 @@ const js = `globalThis.visits++; /*${'static code '.repeat(350)}*/`
 const css = `.page { display: grid; } /*${'static style '.repeat(350)}*/`
 const appRoot = fileURLToPath(new URL('..', import.meta.url))
 
-async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean | string, linked?: string, root?: string, buildExternal?: RegExp }) {
+async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean | string, linked?: string, root?: string, buildExternal?: string | RegExp, alias?: Record<string, string> }) {
   const packageName = dependency?.linked ? '@acme/linked' : '@acme/head'
   const id = dependency?.linked ?? (dependency
     ? join(appRoot, 'node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js')
@@ -34,6 +34,7 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
         configFile: false,
         root: dependency?.root ?? appRoot,
         plugins: [plugin],
+        resolve: { alias: dependency?.alias },
         build: { rollupOptions: { external: dependency?.buildExternal } },
         ssr: {
           noExternal: dependency?.bundled ? [packageName] : [],
@@ -263,6 +264,26 @@ describe('static inline keys', () => {
 
     expect(external).toBe(baseline)
     expect(bundled).toMatch(/data-hid="~[\w-]{11}"/)
+  })
+
+  it('leaves an SSR-external alias unkeyed in application source', async () => {
+    const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
+    const root = await mkdtemp(join(tmpdir(), 'unhead-app-'))
+    const file = join(root, 'external.mjs')
+    try {
+      await writeFile(file, code)
+      const output = await render(code, true, {}, undefined, {
+        bundled: false,
+        root,
+        linked: file,
+        buildExternal: '#external-app',
+        alias: { '#external-app': file },
+      })
+      expect(output).toBe(await render(code))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 
   it('keeps callback parameter values independent of outer constants', async () => {

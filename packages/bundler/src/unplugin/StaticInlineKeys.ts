@@ -126,7 +126,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
     name: 'unhead:static-inline-keys',
     apply: 'build',
     enforce: 'post',
-    configResolved(config) {
+    async configResolved(config) {
       app = undefined
       const preserveSymlinks = config.resolve.preserveSymlinks
       const root = existsSync(config.root) ? realpathSync(config.root) : resolve(config.root)
@@ -145,6 +145,23 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
       }
       if (externals.some(rule => typeof rule === 'string' && (rule.startsWith('.') || (owner && (rule === owner.name || rule.startsWith(`${owner.name}/`))))))
         return
+
+      const externalIds = externals.filter((rule): rule is string => typeof rule === 'string' && !isAbsolute(rule))
+      if (externalIds.length) {
+        // The client may resolve a specifier that the SSR build leaves external.
+        const resolveExternal = config.createResolver()
+        const importer = join(root, 'index.html')
+        const paths = await Promise.all(externalIds.map(id => resolveExternal(id, importer))).catch(() => {
+          // Fail closed if the build cannot establish parity for an external specifier.
+          config.logger.warn('Unhead skipped automatic inline keys because an SSR external could not be resolved.')
+        })
+        if (!paths)
+          return
+        for (const path of paths) {
+          if (path && isAbsolute(path))
+            externals.push(splitTransformId(path).pathname)
+        }
+      }
       app = { root, owner, preserveSymlinks, externals }
     },
     transform: {
