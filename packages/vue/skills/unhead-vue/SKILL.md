@@ -23,7 +23,7 @@ app.use(createHead())
 app.mount('#app')
 ```
 
-If your installed package exports `@unhead/vue/template`, install `parse5@7` and use the imports below. In the published 3.4.2 and 3.4.3 packages, import `transformHtmlTemplate` from `@unhead/vue/server`.
+If your installed package exports `@unhead/vue/template`, install `parse5@8` and use the imports below. In the published 3.4.2 and 3.4.3 packages, import `transformHtmlTemplate` from `@unhead/vue/server`.
 
 ```ts
 // src/entry-server.ts
@@ -145,7 +145,7 @@ analytics.onLoaded(api => api.track('loaded'))
 
 ### Streaming SSR
 
-If your version exports `@unhead/vue/template`, install `parse5@7` before importing `@unhead/vue/stream/server`.
+If your version exports `@unhead/vue/template`, install `parse5@8` before importing `@unhead/vue/stream/server`.
 
 On the server, `createStreamableHead()` from `@unhead/vue/stream/server` returns `{ head, wrapStream }`; return `wrapStream(renderToWebStream(app), template)`. On the client, use `createStreamableHead()` from `@unhead/vue/stream/client`, and add `Unhead({ streaming: true })` to the Vite config.
 

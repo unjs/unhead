@@ -8,7 +8,7 @@ Command-line tools to audit and migrate unhead head usage in your codebase. Sour
 pnpm add -D @unhead/cli
 ```
 
-The CLI loads `parse5` at startup. If your package manager skips peer dependencies, add `parse5@7` as a dev dependency alongside `@unhead/cli`.
+The CLI loads `parse5` at startup. If your package manager skips peer dependencies, add `parse5@8` as a dev dependency alongside `@unhead/cli`.
 
 The binary is installed as `unhead`.
 

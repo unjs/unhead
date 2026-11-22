@@ -10,7 +10,7 @@
     "@unhead/bundler": "3.4.3",
     "@unhead/vue": "3.4.3",
     "nuxt": "4.6.4",
-    "parse5": "7.3.0",
+    "parse5": "8.0.1",
     "tailwindcss": "4.3.5",
     "unhead": "3.4.3",
     "vue": "3.5.44"
