@@ -94,7 +94,7 @@ export function renderBundleReport(data: BundleData[], fieldnote?: { before: num
       '',
       '| Bundle | Before | After | Δ |',
       '|---|---:|---:|---:|',
-      `| Fieldnote entry (Brotli) | ${formatBytes(before)} | ${formatBytes(after)} | ${change} |`,
+      `| Nuxt fixture entry (Brotli) | ${formatBytes(before)} | ${formatBytes(after)} | ${change} |`,
     )
   }
 
