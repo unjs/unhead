@@ -228,11 +228,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const elTag = el.tagName.toLowerCase() as HeadTag['tag']
         if (!HasElementTags.has(elTag) || tracked.has(el))
           continue
-        const props: Record<string, any> = { innerHTML: el.innerHTML }
+        const key = el.getAttribute('data-hid') || undefined
+        const props: Record<string, any> = key ? {} : { innerHTML: el.innerHTML }
         for (const n of el.getAttributeNames())
           props[n] = el.getAttribute(n)
         const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
-        next.key = el.getAttribute('data-hid') || undefined
+        next.key = key
         const dedupe = dedupeKey(next) || hashTag(next)
         let k = dedupe
         let c = 1

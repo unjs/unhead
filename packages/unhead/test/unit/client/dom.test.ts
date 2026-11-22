@@ -107,6 +107,33 @@ describe('dom', () => {
     expect(reads).toBe(0)
   })
 
+  it('reuses keyed SSR styles without reading their innerHTML', () => {
+    const style = [
+      { key: 'precomputed-style', textContent: '.keyed{color:red}' },
+      { textContent: '.unkeyed{color:blue}' },
+    ]
+    const serverHead = createServerHeadWithContext()
+    serverHead.push({ style })
+    const document = useDom(serverHead.render()).window.document
+    const [keyed, unkeyed] = document.head.querySelectorAll('style')
+    const innerHTML = Object.getOwnPropertyDescriptor(document.defaultView!.Element.prototype, 'innerHTML')!.get!
+    let reads = 0
+    Object.defineProperty(keyed, 'innerHTML', {
+      get(this: Element) {
+        reads++
+        return innerHTML.call(this)
+      },
+    })
+
+    useDOMHead({ document }).push({ style })
+
+    const hydrated = document.head.querySelectorAll('style')
+    expect(hydrated).toHaveLength(2)
+    expect(hydrated[0]).toBe(keyed)
+    expect(hydrated[1]).toBe(unkeyed)
+    expect(reads).toBe(0)
+  })
+
   it('basic', async () => {
     const head = useDOMHead()
 
