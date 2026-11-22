@@ -43,7 +43,9 @@ type DefinedLinkRelationKey = Exclude<keyof ReturnType<typeof defineLink<{ rel: 
 type DeclaredLink<Rel> = ResolveHeadValue<Rel> extends Record<DefinedLinkRelationKey, infer Input> ? Input : never
 type LinkWithAs<Tag, As> = As extends unknown ? Omit<Tag, 'as'> & { as: As } : never
 // Each resolved preload destination must satisfy its own variant.
-type ResolvePreloadAs<Tag> = Tag extends { rel: 'preload', as: infer As } ? LinkWithAs<Tag, ResolveHeadValue<As>> : Tag
+type ResolvePreloadAs<Tag> = Tag extends { rel: 'preload', as: infer As extends ResolvableValue<string> }
+  ? LinkWithAs<Tag, ResolveHeadValue<As>>
+  : Tag
 type LinkWithRelation<Input, Rel> = Rel extends KnownLinkRel ? ResolvePreloadAs<Omit<Input, 'rel'> & { rel: Rel }> : never
 type ResolvableCustomLink = ResolvableProperties<GenericLink & SchemaAugmentations['link']>
 type UnknownSharedLinkAttributes<Tag, Variants>

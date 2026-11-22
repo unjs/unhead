@@ -186,6 +186,9 @@ describe('vue streaming server types', () => {
     head.push({ link: [{ rel: 'preload', as: fontOrScript, href: '/docs', crossorigin: 'anonymous' }] })
     // @ts-expect-error The font destination requires crossorigin
     head.push({ link: [{ rel: 'preload', as: fontOrScript, href: '/docs' }] })
+
+    // @ts-expect-error The destination getter must return a resolved value
+    entry.patch({ link: [{ rel: 'preload', as: () => () => 'script' as const, href: '/docs' }] })
   })
 
   it('checks values added to a custom link', () => {
