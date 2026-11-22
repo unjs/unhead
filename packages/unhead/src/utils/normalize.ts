@@ -8,56 +8,16 @@ const ASCII_UPPER_RE = /[A-Z]/g
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
-  value: any,
+  value: unknown,
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
   const store: any = isStyle ? new Map() : new Set()
-  const addRule = (rule: string) => {
-    const colon = rule.indexOf(':')
-    if (colon > 0)
-      store.set(rule.slice(0, colon).trim(), rule.slice(colon + 1).trim())
-  }
   const add = (item: unknown) => {
     if (typeof item === 'string') {
       if (isStyle) {
-        let start = 0
-        let depth = 0
-        let quote = ''
-        for (let index = 0; index < item.length; index++) {
-          const ch = item[index]
-          if (ch === '\\') {
-            index++
-          }
-          else if (quote) {
-            if (ch === quote)
-              quote = ''
-          }
-          else if (ch === '"' || ch === '\'') {
-            quote = ch
-          }
-          else if (ch === '/' && item[index + 1] === '*') {
-            const end = item.indexOf('*/', index + 2)
-            if (end < 0)
-              break
-            if (index === start)
-              start = end + 2
-            index = end + 1
-          }
-          else if (ch === ';' && !depth) {
-            addRule(item.slice(start, index))
-            start = index + 1
-          }
-          else if ('([{'.includes(ch)) {
-            depth++
-          }
-          else if (depth && ')]}'.includes(ch)) {
-            depth--
-          }
-          else if (index === start && !ch.trim()) {
-            start++
-          }
-        }
-        addRule(item.slice(start))
+        const colon = item.indexOf(':')
+        if (colon > 0)
+          store.set(item.slice(0, colon).trim(), item.slice(colon + 1).trim())
       }
       else {
         item.split(' ').forEach(name => name && store.add(name))
@@ -68,13 +28,13 @@ function normalizeStyleClassProps(
     }
     else if (item && typeof item === 'object') {
       for (const name in item) {
-        const v = (item as Record<string, unknown>)[name]
-        if (v !== 'false' && (v || (isStyle && v === 0)))
-          isStyle ? store.set(name.trim(), String(v)) : add(name)
+        const value = (item as Record<string, unknown>)[name]
+        if (value !== 'false' && (value || (isStyle && value === 0)))
+          isStyle ? store.set(name.trim(), String(value)) : add(name)
       }
     }
   }
-  add(value)
+  add(isStyle && typeof value === 'string' ? value.split(';') : value)
   return store
 }
 

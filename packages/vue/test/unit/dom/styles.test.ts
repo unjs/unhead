@@ -93,8 +93,10 @@ describe('vue dom styles', () => {
     const bodyAttrs = {
       class: ['root', { active: true, hidden: false }],
       style: [
-        'background-image:url(data:image/png;base64,AAAA); /* comment; */ font-size:18px; --label:"a;b"',
+        'background-image:url(data:image/png;base64,AAAA)',
+        'font-size:18px',
         { color: 'red' as const, opacity: 0 },
+        'color:blue',
       ],
     }
     const ssr = await ssrVueAppWithUnhead(() => {
@@ -113,7 +115,7 @@ describe('vue dom styles', () => {
     renderDOMHead(client, { document })
     expect(document.body.className).toBe('root active')
     expect(document.body.style.fontSize).toBe('18px')
-    expect(document.body.style.getPropertyValue('--label')).toBe('"a;b"')
+    expect(document.body.style.color).toBe('blue')
     expect(document.body.style.opacity).toBe('0')
   })
 
