@@ -1192,6 +1192,9 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -1254,6 +1257,9 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -1288,6 +1294,9 @@ importers:
       oxc-walker:
         specifier: 'catalog:'
         version: 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.149.0)(rolldown@1.2.3)
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -1341,6 +1350,9 @@ importers:
       hookable:
         specifier: 'catalog:'
         version: 6.1.1
+      parse5:
+        specifier: 'catalog:'
+        version: 7.3.0
       unhead:
         specifier: workspace:*
         version: link:../unhead

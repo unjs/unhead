@@ -150,11 +150,15 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "parse5": "catalog:",
     "vite": ">=6.4.6",
     "vue": ">=3.5.18",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "parse5": {
+      "optional": true
+    },
     "vite": {
       "optional": true
     },

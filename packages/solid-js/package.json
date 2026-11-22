@@ -111,11 +111,15 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "parse5": "catalog:",
     "solid-js": ">=1.9.0",
     "vite": ">=6.4.6",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "parse5": {
+      "optional": true
+    },
     "vite": {
       "optional": true
     },
