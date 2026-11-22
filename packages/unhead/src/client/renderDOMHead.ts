@@ -90,11 +90,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const renderState = state
     const previous = renderState._p
 
-    function track(key: string, fn: () => void, fresh?: boolean) {
-      // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
-      // closure, so this avoids reallocating ~one closure per tracked prop every frame. `fresh` opts
-      // out for content closures, which capture a value that can change between renders.
-      renderState._s[key] = (!fresh && previous[key]) || fn
+    function track(key: string, fn: () => void) {
+      renderState._s[key] = fn
       delete previous[key]
     }
 
@@ -103,7 +100,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const prev = renderState._l.get(key)
       // same target/source: keep the existing listener, just re-track its cleanup
       if (prev && prev[0] === target && prev[1] === source) {
-        track(key, prev[3])
+        track(key, previous[key] || prev[3])
         return
       }
       prev?.[3]()
@@ -119,8 +116,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       target.addEventListener(ev, handler)
       renderState._l.set(key, [target, source, handler, cleanup])
       $el.setAttribute(dk, '')
-      // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
-      track(key, cleanup, true)
+      track(key, cleanup)
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
@@ -136,7 +132,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           track(`${id}:text`, () => {
             if ($el.textContent === text)
               $el.textContent = ''
-          }, true)
+          })
         }
         const html = tag.innerHTML
         if (html != null && html !== '') {
@@ -145,7 +141,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           track(`${id}:html`, () => {
             if ($el.innerHTML === html)
               $el.innerHTML = ''
-          }, true)
+          })
         }
         const elKey = `${id}:el`
         track(elKey, previous[elKey] || (() => {
@@ -202,7 +198,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       tags.push(ctx)
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
-        track('title:', () => dom.title = renderState._t)
+        track('title:', previous['title:'] || (() => dom.title = renderState._t))
         continue
       }
       ctx.$el = renderState._e.get(id)
@@ -223,15 +219,27 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           tracked.add($el)
       }
       for (const el of [...dom.body.children, ...dom.head.children]) {
-        const elTag = el.tagName.toLowerCase() as HeadTag['tag']
-        if (!HasElementTags.has(elTag) || tracked.has(el))
+        if (tracked.has(el))
           continue
-        const props: Record<string, any> = { innerHTML: el.innerHTML }
+        const tagName = el.tagName
+        const elTag = tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(elTag))
+          continue
+        const props: Record<string, any> = {}
         for (const n of el.getAttributeNames())
           props[n] = el.getAttribute(n)
-        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
-        next.key = el.getAttribute('data-hid') || undefined
-        const dedupe = dedupeKey(next) || hashTag(next)
+        const linkHasIdentity = tagName === 'LINK' && el.localName === 'link'
+          && props.rel && props.href && props.hreflang !== '' && props.charset !== '' && props.id !== ''
+        const next = { tag: elTag, props: linkHasIdentity ? props : {} } as HeadTag
+        if (!linkHasIdentity)
+          normalizeProps(next, props)
+        next.key = props['data-hid'] || undefined
+        let dedupe = dedupeKey(next)
+        if (!dedupe) {
+          if (props.innerHTML === undefined)
+            next.innerHTML = el.innerHTML
+          dedupe = dedupeKey(next) || hashTag(next)
+        }
         let k = dedupe
         let c = 1
         while (renderState._e.has(k))
@@ -252,8 +260,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    for (const k in previous)
+    for (const k in previous) {
       previous[k]()
+      delete previous[k]
+    }
     head._dom = renderState
     didRender = true
     callHook(head, 'dom:rendered', { renders: tags })
