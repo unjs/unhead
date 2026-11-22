@@ -1,8 +1,9 @@
 import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPluginInstance } from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
-import type { UnpluginOptions, VitePluginOptions } from './types'
+import type { VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
+import { GeneratedHeadTransform } from './GeneratedHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { StaticInlineKeys } from './StaticInlineKeys'
@@ -59,7 +60,7 @@ export interface UnheadBundlerFactory {
 
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
 
-function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
+function resolveCoreDefs(options: VitePluginOptions): CoreDef[] {
   const defs: CoreDef[] = []
   const common = { filter: options.filter, sourcemap: options.sourcemap }
 
@@ -78,6 +79,8 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
       options: { ...common, ...minifyTransformOptions },
     })
   }
+  if (options.transformInlineTagKeys !== false)
+    defs.push({ instance: GeneratedHeadTransform, options: common })
 
   return defs
 }

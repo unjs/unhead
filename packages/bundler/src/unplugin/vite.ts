@@ -2,6 +2,7 @@ import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
+import { GeneratedHeadTransform } from './GeneratedHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { StaticInlineKeys } from './StaticInlineKeys'
@@ -40,8 +41,10 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       ...minifyTransformOptions,
     }))
   }
-  if (options.transformInlineTagKeys !== false)
+  if (options.transformInlineTagKeys !== false) {
     plugins.push(StaticInlineKeys({ filter: options.filter, sourcemap: options.sourcemap, framework }))
+    plugins.push(GeneratedHeadTransform.vite({ filter: options.filter, sourcemap: options.sourcemap }))
+  }
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {
