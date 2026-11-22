@@ -1,4 +1,4 @@
-// Renders separate directional CPU and memory sections. A change is surfaced past a gate:
+// Renders separate CPU, SSR hydration, and memory sections. A change is surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
 //  - alloc: |Δ| > max(2%, 1 KiB). Synchronous bytes allocated per render is
@@ -9,7 +9,8 @@
 // Noisy metrics are `informational`: shown for reference but excluded from the verdict.
 // This includes wall time and async heap deltas, where GC/scheduling can false-alarm.
 
-type Category = 'cpu' | 'memory'
+const sectionNames = { cpu: 'CPU', hydration: 'SSR Hydration', memory: 'Memory' }
+type Category = keyof typeof sectionNames
 
 interface Measurement {
   id: string
@@ -22,8 +23,9 @@ interface Measurement {
 }
 
 export type PerfBench = Measurement & (
-  | { kind: 'time' | 'alloc' | 'memory' }
-  | { kind: 'count', category: Category }
+  | { kind: 'time', category?: 'hydration' }
+  | { kind: 'alloc' | 'memory' }
+  | { kind: 'count', category: 'cpu' | 'memory' }
 )
 
 export interface PerfRun {
@@ -185,29 +187,35 @@ function renderSection(category: Category, rows: Row[]): string {
   const highlighted = rows.filter(r => (r.status === 'slower' || r.status === 'faster') && (!r.bench.informational || r.bench.kind === 'count'))
   const slower = changed.filter(r => r.status === 'slower')
 
-  const out: string[] = [`### ⚡ Perf - ${category === 'cpu' ? 'CPU' : 'Memory'}`, '']
+  const isTiming = category !== 'memory'
+  const expanded = category === 'hydration'
+  const out: string[] = [`### ⚡ Perf - ${sectionNames[category]}`, '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} ${category === 'cpu' ? 'slower' : 'higher'}**`)
+    out.push(`⚠️ **${slower.length} ${isTiming ? 'slower' : 'higher'}**`)
   else if (changed.length)
-    out.push(`🟢 **${changed.length} ${category === 'cpu' ? 'faster' : 'lower'}**`)
+    out.push(`🟢 **${changed.length} ${isTiming ? 'faster' : 'lower'}**`)
   else if (category === 'cpu' && observedWork.length)
     out.push('✅ **No significant timing change**')
   else
     out.push('✅ **No significant change**')
 
-  if (highlighted.length) {
+  if (!expanded && highlighted.length) {
     out.push('', '| Benchmark | base → PR | Δ |', '|---|---|---|')
     for (const row of highlighted)
       out.push(`| **${row.bench.name}** | ${fmtValue(row.base!)} → ${fmtValue(row.bench)} | ${deltaCell(row)} |`)
   }
 
-  out.push('', `<details><summary>All benchmarks (${rows.length})</summary>`, '')
+  out.push('')
+  if (!expanded)
+    out.push(`<details><summary>All benchmarks (${rows.length})</summary>`, '')
   out.push('| Benchmark | Base | PR | Δ | RME |', '|---|---|---|---|---|')
   for (const row of rows) {
     const rme = row.bench.rme != null ? `±${row.bench.rme.toFixed(1)}%` : '—'
     out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
-  if (category === 'cpu')
+  if (expanded)
+    out.push('', 'The hydration timer starts after HTML parsing and document setup.')
+  if (isTiming)
     out.push('', 'Timing results are directional measurements from a shared CI runner.')
   if (rows.some(row => row.bench.kind === 'count' && row.bench.informational))
     out.push('', 'DOM read counts use a separate untimed run.')
@@ -216,18 +224,19 @@ function renderSection(category: Category, rows: Row[]): string {
   if (rows.some(row => row.bench.kind === 'memory')) {
     out.push('', 'Process memory measurements run after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
   }
-  out.push('', '</details>')
+  if (!expanded)
+    out.push('', '</details>')
 
   return out.join('\n')
 }
 
 export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
-  const sections: Record<Category, Row[]> = { cpu: [], memory: [] }
+  const sections: Record<Category, Row[]> = { cpu: [], hydration: [], memory: [] }
   for (const bench of pr.benches) {
-    const category = bench.kind === 'count' ? bench.category : bench.kind === 'time' ? 'cpu' : 'memory'
+    const category = bench.kind === 'time' || bench.kind === 'count' ? bench.category ?? 'cpu' : 'memory'
     sections[category].push(classify(bench, base?.benches.find(candidate => candidate.id === bench.id)))
   }
-  return [renderSection('cpu', sections.cpu), renderSection('memory', sections.memory)]
+  return [renderSection('cpu', sections.cpu), renderSection('hydration', sections.hydration), renderSection('memory', sections.memory)]
     .filter(Boolean)
     .join('\n\n---\n\n')
 }
