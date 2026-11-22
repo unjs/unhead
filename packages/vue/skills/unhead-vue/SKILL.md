@@ -23,7 +23,7 @@ app.use(createHead())
 app.mount('#app')
 ```
 
-If your version exports `@unhead/vue/template`, install `parse5@7` and use the imports below. With 3.4.2 or 3.4.3, import `transformHtmlTemplate` from `@unhead/vue/server`.
+If your installed package exports `@unhead/vue/template`, install `parse5@7` and use the imports below. In the published 3.4.2 and 3.4.3 packages, import `transformHtmlTemplate` from `@unhead/vue/server`.
 
 ```ts
 // src/entry-server.ts
