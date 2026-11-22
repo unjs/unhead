@@ -5,36 +5,37 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
+export const CLASS_SEPARATOR_RE = /[\t\n\f\r ]+/
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
-  value: any,
+  value: unknown,
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
   const store: any = isStyle ? new Map() : new Set()
-  const add = (v: string) => {
-    if (!v)
-      return
-    if (isStyle) {
-      const i = v.indexOf(':')
-      i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
+  const add = (item: unknown) => {
+    if (typeof item === 'string') {
+      if (isStyle) {
+        const colon = item.indexOf(':')
+        if (colon > 0)
+          store.set(item.slice(0, colon).trim(), item.slice(colon + 1).trim())
+      }
+      else {
+        item.split(CLASS_SEPARATOR_RE).forEach(name => name && store.add(name))
+      }
     }
-    else {
-      v.split(' ').forEach(c => c && store.add(c))
+    else if (Array.isArray(item)) {
+      item.forEach(add)
+    }
+    else if (item && typeof item === 'object') {
+      for (const name in item) {
+        const value = (item as Record<string, unknown>)[name]
+        if (value !== 'false' && (value || (isStyle && value === 0)))
+          isStyle ? store.set(name.trim(), String(value)) : add(name)
+      }
     }
   }
-  if (typeof value === 'string') {
-    (isStyle ? value.split(';') : [value]).forEach(add)
-  }
-  else if (Array.isArray(value)) {
-    value.forEach(add)
-  }
-  else if (value && typeof value === 'object') {
-    for (const k in value) {
-      const v = value[k]
-      v && v !== 'false' && (isStyle ? store.set(k.trim(), String(v)) : add(k))
-    }
-  }
+  add(isStyle && typeof value === 'string' ? value.split(';') : value)
   return store
 }
 
@@ -102,7 +103,7 @@ export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any
 
 // pushes onto `tags`: an array `content` expands to one tag per value
 function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag['props'] | string) {
-  const input = typeof _input === 'object' && typeof _input !== 'function'
+  const input = typeof _input === 'object'
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
   // normalizeProps already stringifies an object `innerHTML` of a JSON script and drops any other

@@ -13,6 +13,7 @@ export default defineProject({
       '@unhead/schema-org/vue': resolve(__dirname, '../schema-org/src/vue/index.ts'),
       '@unhead/vue/server': resolve(__dirname, 'src/server.ts'),
       '@unhead/vue/client': resolve(__dirname, 'src/client.ts'),
+      '@unhead/vue/stream/server': resolve(__dirname, 'src/stream/server.ts'),
       '@unhead/vue': resolve(__dirname, 'src/index.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
