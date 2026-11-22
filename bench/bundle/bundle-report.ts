@@ -63,7 +63,18 @@ function deltaCell(item: BundleData, status: Status): string {
   return `${emoji} ${formatDelta(gzDiff)}${pct(gzDiff, item.baseGzippedSize)}`
 }
 
-export function renderBundleReport(data: BundleData[]): string {
+function formatBytes(bytes: number | null): string {
+  return bytes === null ? 'Unavailable' : `${bytes.toLocaleString('en-US')} B`
+}
+
+function formatByteChange(before: number | null, after: number | null): string {
+  if (before === null || after === null)
+    return '—'
+  const delta = after - before
+  return `${delta < 0 ? '−' : delta > 0 ? '+' : ''}${formatBytes(Math.abs(delta))}`
+}
+
+export function renderBundleReport(data: BundleData[], fieldnote?: { before: number | null, after: number | null }): string {
   const rows = data.map(item => ({ item, status: statusOf(item) }))
   const changed = rows.filter(r => r.status === 'grew' || r.status === 'shrank')
   const grew = changed.filter(r => r.status === 'grew')
@@ -82,10 +93,37 @@ export function renderBundleReport(data: BundleData[]): string {
 
   const out: string[] = ['### 📦 Bundle Size', '', verdict.join(' · ')]
 
-  // surface only the bundles that actually moved
-  if (changed.length) {
+  if (fieldnote) {
+    const { before, after } = fieldnote
+    out.push(
+      '',
+      '| Bundle | Before | After | Δ |',
+      '|---|---:|---:|---:|',
+      `| Nuxt fixture entry (Brotli) | ${formatBytes(before)} | ${formatBytes(after)} | ${formatByteChange(before, after)} |`,
+    )
+  }
+
+  const streaming = data.filter(item => item.category === 'Streaming')
+  if (streaming.length) {
+    out.push(
+      '',
+      '| Streaming bundle | Gzip before → after | Δ gzip | Brotli before → after | Δ Brotli |',
+      '|---|---:|---:|---:|---:|',
+    )
+    for (const item of streaming) {
+      const baseGzip = item.baseGzippedSize || null
+      const baseBrotli = item.baseBrotliSize || null
+      const gzip = `${formatBytes(baseGzip)} → ${formatBytes(item.gzippedSize)}`
+      const brotli = `${formatBytes(baseBrotli)} → ${formatBytes(item.brotliSize)}`
+      out.push(`| ${item.name} | ${gzip} | ${formatByteChange(baseGzip, item.gzippedSize)} | ${brotli} | ${formatByteChange(baseBrotli, item.brotliSize)} |`)
+    }
+  }
+
+  // Surface other bundles only when they change.
+  const otherChanges = changed.filter(({ item }) => item.category !== 'Streaming')
+  if (otherChanges.length) {
     out.push('', '| Bundle | Gzipped | Δ |', '|---|---|---|')
-    for (const { item, status } of changed)
+    for (const { item, status } of otherChanges)
       out.push(`| **${item.name}** | ${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)} | ${deltaCell(item, status)} |`)
   }
 
