@@ -10,12 +10,12 @@ const SepSub = '%separator'
 // for each %<word> token replace it with the corresponding runtime config or an empty value
 function sub(p: TemplateParams, token: string, isJson?: boolean): string | undefined {
   // TOKEN_RE allows one `.`, for a nested param such as %site.name
-  const [key, nested] = token.split('.') as [string, string | undefined]
+  const dot = token.indexOf('.')
   const val = (token === 's' || token === 'pageTitle')
     ? p.pageTitle
-    : nested
-      ? (p[key] as Record<string, unknown> | undefined)?.[nested]
-      : p[key]
+    : dot === -1
+      ? p[token]
+      : (p[token.slice(0, dot)] as Record<string, unknown> | undefined)?.[token.slice(dot + 1)]
   if (val === undefined)
     return
   // numbers are kept, including 0, while null and false still render as empty
@@ -39,31 +39,32 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
       // Malformed encoded input should fall back to token matching against the original string.
     }
   }
-  // find all tokens in decoded
-  const tokens = decoded.match(TOKEN_RE)
-
-  if (!tokens) {
+  // Only decoding can change which tokens are eligible for replacement.
+  const tokens = decoded === s ? undefined : decoded.match(TOKEN_RE)
+  if (tokens === null)
     return s
-  }
 
-  const hasSepSub = s.includes(SepSub)
-
-  s = s.replace(TOKEN_RE, (token) => {
-    if (token === SepSub || !tokens.includes(token)) {
+  let hasTokens = tokens !== undefined
+  const replaced = s.replace(TOKEN_RE, (token) => {
+    hasTokens = true
+    if (token === SepSub || (tokens && !tokens.includes(token))) {
       return token
     }
 
     return sub(p, token.slice(1), isJson) ?? token
-  }).trim()
+  })
+  if (!hasTokens)
+    return s
+  const rendered = replaced.trim()
 
   // we wait to transform the separator as we need to transform all other tokens first
   // we need to remove separators if they're next to each other or if they're at the start or end of the string
   // for example: %separator %separator %title should return %title
-  if (hasSepSub) {
-    s = s.split(SepSub)
+  if (s.includes(SepSub)) {
+    return rendered.split(SepSub)
       .map(part => part.trim())
       .filter(Boolean)
       .join(sep ? ` ${sep} ` : ' ')
   }
-  return s
+  return rendered
 }

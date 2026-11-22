@@ -6,7 +6,7 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { execFileSync } from 'node:child_process'
 import { Session } from 'node:inspector/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -18,7 +18,7 @@ const dist = name => packageDist('unhead', name)
 const schemaOrgDist = name => packageDist('schema-org', name)
 const { useHead, useSeoMeta } = await dist('index.mjs')
 const { createHead, renderSSRHead } = await dist('server.mjs')
-const { unpackMeta } = await dist('utils.mjs')
+const { processTemplateParams, unpackMeta } = await dist('utils.mjs')
 const {
   defineOrganization,
   defineProduct,
@@ -280,6 +280,24 @@ async function seoMetaSsrBenches() {
   return benches
 }
 
+async function titleTemplateBenches() {
+  const template = '%s | Fieldnote'
+  const params = { pageTitle: 'Pricing' }
+  const calls = 100
+  const substitute = () => {
+    for (let i = 0; i < calls; i++)
+      processTemplateParams(template, params)
+  }
+  strictEqual(processTemplateParams(template, params), 'Pricing | Fieldnote')
+
+  const { cpu } = measureTimes(substitute, { warmup: 1000, reps: 30, runs: 400 })
+  const alloc = await measureAlloc(substitute, { runs: 60 })
+  return [
+    { id: 'title-template-cpu', name: `Title template substitution (CPU / ${calls} calls)`, kind: 'time', value: cpu.value, rme: cpu.rme },
+    { id: 'title-template-alloc', name: `Title template substitution (allocated / ${calls} calls)`, kind: 'alloc', value: alloc.value, rme: alloc.rme },
+  ]
+}
+
 // async twins of measureTimes/measureAlloc for the streaming benches, which must be
 // awaited per run; kept separate so the sync render benches don't pay the microtask
 // overhead of a conditional await inside their hot loop. Async heap deltas are only
@@ -478,6 +496,7 @@ const result = {
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
     ...await seoMetaSsrBenches(),
+    ...await titleTemplateBenches(),
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
