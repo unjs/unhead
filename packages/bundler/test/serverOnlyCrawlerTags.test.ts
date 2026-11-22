@@ -1,3 +1,4 @@
+import type { ResolvableHead } from 'unhead/types'
 import type { RspackCompiler, WebpackCompiler } from 'unplugin'
 import { JSDOM } from 'jsdom'
 import { useSeoMeta } from 'unhead'
@@ -336,6 +337,42 @@ useSeoMeta({ ogTitle: () => post.value.title, ogDescription: c(() => post.value.
       expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page description')
       expect(document.title).toBe('Page')
       expect(sideEffects).toEqual(defaults.includes('sideEffect()') ? ['read'] : [])
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
+  it.each([
+    {
+      source: `useHead({ meta: [{ name: 'robots', content: defaults.robots }, { name: 'robots', content: 'noindex' }] })`,
+      selector: 'meta[name="robots"]',
+      expected: 'noindex',
+    },
+    {
+      source: `useSeoMeta({ ogImage: '/page.png', ogImageUrl: defaults.image })`,
+      selector: 'meta[property="og:image"]',
+      expected: '/page.png',
+    },
+  ])('preserves the first server tag for $selector during hydration', async ({ source, selector, expected }) => {
+    const run = (code: string, head: ReturnType<typeof createServerHead<ResolvableHead>> | ReturnType<typeof createClientHead<ResolvableHead>>) => {
+      // eslint-disable-next-line no-new-func
+      new Function('useHead', 'useSeoMeta', 'defaults', code)(
+        head.push,
+        (input: Parameters<typeof useSeoMeta>[1]) => useSeoMeta(head, input),
+        { robots: 'index', image: '/default.png' },
+      )
+    }
+    const server = createServerHead()
+    run(source, server)
+    const dom = new JSDOM(`<html><head>${server.render().headTags}</head><body></body></html>`)
+    try {
+      const document = dom.window.document
+      expect(document.querySelector(selector)?.getAttribute('content')).toBe(expected)
+      const client = createClientHead({ document })
+      run(await transform(source) ?? source, client)
+      client.render()
+      expect(document.querySelector(selector)?.getAttribute('content')).toBe(expected)
     }
     finally {
       dom.window.close()

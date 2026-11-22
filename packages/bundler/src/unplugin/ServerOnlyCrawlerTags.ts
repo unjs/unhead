@@ -242,6 +242,35 @@ function isInertOptions(arg: any, isDroppableCall: IsDroppableCall): boolean {
 
 type StripResult = 'unchanged' | 'stripped' | 'empty'
 
+function metaIdentity(value: string | undefined): string | undefined {
+  if (typeof value !== 'string')
+    return
+  // Media dimensions and URLs can belong to the same arrayable tag.
+  const key = value.toLowerCase()
+  return key.match(/^((?:og|twitter):(?:image|video|audio))(?::|$)/)?.[1] ?? key
+}
+
+function staticMetaIdentity(element: any): string | undefined {
+  const node = unwrap(element)
+  if (node?.type !== 'ObjectExpression')
+    return
+  const props = new Map<string, any>()
+  for (const prop of node.properties) {
+    const key = staticKey(prop)
+    if (key === undefined || key === '__proto__')
+      return
+    const lower = key.toLowerCase()
+    if (lower === 'charset')
+      return
+    if (lower === 'name' || lower === 'property') {
+      if (key !== lower || prop.kind !== 'init')
+        return
+      props.set(key, prop.value)
+    }
+  }
+  return metaIdentity(staticString(props.get(props.has('name') ? 'name' : 'property')))
+}
+
 /** Strips crawler tags from a `useHead` input object. */
 function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
   const removeProps = new Set<any>()
@@ -261,6 +290,14 @@ function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableC
     if (arr?.type !== 'ArrayExpression' || !arr.elements.length || arr.elements.includes(null))
       continue
     const removeEls = new Set(arr.elements.filter((el: any) => el.type !== 'SpreadElement' && isCrawlerTag(key, el, isDroppableCall)))
+    if (key === 'meta' && removeEls.size < arr.elements.length) {
+      // A retained tag can claim the SSR element during hydration.
+      const retained = new Set(arr.elements.filter((el: any) => !removeEls.has(el)).map(staticMetaIdentity))
+      for (const element of removeEls) {
+        if (retained.has(undefined) || retained.has(staticMetaIdentity(element)))
+          removeEls.delete(element)
+      }
+    }
     if (!removeEls.size)
       continue
     changed = true
@@ -279,11 +316,14 @@ function stripHeadObject(s: MagicString, obj: any, isDroppableCall: IsDroppableC
 function stripSeoMetaObject(s: MagicString, obj: any, isDroppableCall: IsDroppableCall): StripResult {
   const removeProps = new Set<any>()
   const retainedKeys = new Set<string | undefined>()
+  const droppable = new Set(obj.properties.filter((p: any) => isCrawlerSeoMetaProp(p, isDroppableCall)))
+  const identity = (key: string | undefined) => key === undefined ? undefined : metaIdentity(resolveMetaKeyValue(key))
+  const retained = new Set(obj.properties.filter((p: any) => !droppable.has(p)).map((p: any) => identity(staticKey(p))))
   for (const prop of obj.properties) {
     const key = staticKey(prop)
     // A retained spread, computed key, or duplicate can supply a default.
     // Keep the override so stripping cannot activate that earlier value.
-    if (isCrawlerSeoMetaProp(prop, isDroppableCall) && !retainedKeys.has(undefined) && !retainedKeys.has(key))
+    if (droppable.has(prop) && !retained.has(undefined) && !retained.has(identity(key)) && !retainedKeys.has(key))
       removeProps.add(prop)
     else
       retainedKeys.add(key)
