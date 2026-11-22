@@ -4,6 +4,8 @@
   InferSeoMetaPlugin: function
 ./framework:
   createFrameworkPlugin: function
+./inline-keys:
+  keyInlineTags: function
 ./minify/esbuild:
   createJSMinifier: function
 ./minify/lightningcss:
