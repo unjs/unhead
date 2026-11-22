@@ -3,22 +3,25 @@ import type { MinifyFn } from '../src/unplugin/MinifyTransform'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { useHead as coreUseHead } from 'unhead'
 import { createHead } from 'unhead/server'
 import { resolveConfig } from 'vite'
 import { describe, expect, it } from 'vitest'
+import { keyInlineTags } from '../src/inlineKeys'
 import { Unhead } from '../src/unplugin/vite'
 import { runTransform } from './utils'
 
 const js = `globalThis.visits++; /*${'static code '.repeat(350)}*/`
 const css = `.page { display: grid; } /*${'static style '.repeat(350)}*/`
+const appRoot = fileURLToPath(new URL('..', import.meta.url))
 
-async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean, linked?: string }) {
+async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean | string, linked?: string, root?: string, buildExternal?: RegExp }) {
   const packageName = dependency?.linked ? '@acme/linked' : '@acme/head'
   const id = dependency?.linked ?? (dependency
-    ? '/app/node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js'
-    : '/app/App.vue?vue&type=script&setup=true&lang.ts')
+    ? join(appRoot, 'node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js')
+    : join(appRoot, 'App.vue?vue&type=script&setup=true&lang.ts'))
   for (const plugin of Unhead({
     transformInlineTagKeys: enabled,
     transformInlineScripts: false,
@@ -26,13 +29,15 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
     validate: false,
     minify: minifyJs && { js: minifyJs },
   }, { framework: '@unhead/vue' })) {
-    if (dependency && plugin.name === 'unhead:static-inline-keys' && plugin.configResolved) {
+    if (plugin.name === 'unhead:static-inline-keys' && plugin.configResolved) {
       await resolveConfig({
         configFile: false,
+        root: dependency?.root ?? appRoot,
         plugins: [plugin],
+        build: { rollupOptions: { external: dependency?.buildExternal } },
         ssr: {
-          noExternal: dependency.bundled ? [packageName] : [],
-          external: dependency.external ? [packageName] : [],
+          noExternal: dependency?.bundled ? [packageName] : [],
+          external: dependency?.external ? [dependency.external === true ? packageName : dependency.external] : [],
         },
       }, 'build')
     }
@@ -55,6 +60,36 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
 }
 
 describe('static inline keys', () => {
+  it('uses the same key for static head data, useHead, and head.push', async () => {
+    const input = {
+      script: [{ textContent: js }],
+      style: [{ innerHTML: `${css}/* %23 */`, processTemplateParams: false }],
+    }
+    const head = createHead({ disableDefaults: true })
+    head.push(keyInlineTags(input))
+    const html = head.render().headTags
+    const push = `import { injectHead } from '@unhead/vue'\nconst head = injectHead()\nhead.push(${JSON.stringify(input)})`
+
+    expect(html.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
+    expect(await render(`useHead(${JSON.stringify(input)})`, true)).toBe(html)
+    expect(await render(push, true)).toBe(html)
+    expect(await render(push, false)).toBe(html.replace(/ data-hid="~[\w-]{11}"/g, ''))
+  })
+
+  it('keeps authored IDs, keys and singleton tags in static head data', () => {
+    const input = {
+      title: 'Example',
+      script: [{ textContent: js, key: 'author' }],
+      style: [{ innerHTML: css, id: 'theme' }],
+    }
+    const baseline = createHead({ disableDefaults: true })
+    baseline.push(input)
+    const head = createHead({ disableDefaults: true })
+    head.push(keyInlineTags(input))
+
+    expect(head.render().headTags).toBe(baseline.render().headTags)
+  })
+
   it('emits stable keys for long static script and style tags when enabled', async () => {
     const code = `useHead({ script: [{ innerHTML: ${JSON.stringify(js)} }], style: [{ textContent: ${JSON.stringify(css)} }] })`
     const output = await render(`${code}\n${code}`, true)
@@ -82,16 +117,14 @@ describe('static inline keys', () => {
     expect(await render(code, true, {}, async () => js)).toBe(await render(emitted, true))
   })
 
-  it('keys content-only tags from a dependency bundled for SSR', async () => {
+  it('keeps dependency tags unkeyed when an SSR-external parent can load their original code', async () => {
     const code = `import * as headApi from 'nuxt/app'
     const css = ${JSON.stringify(css)}
     headApi.useHead({ style: [{ innerHTML: css, media: 'print' }], script: [${JSON.stringify(js)}] })
     headApi.useHead({ style: [{ textContent: css, media: 'screen' }] })`
 
     const baseline = await render(code, false)
-    const output = await render(code, true, {}, undefined, { bundled: true })
-    expect(output.match(/data-hid="~[\w-]{11}"/g)).toHaveLength(2)
-    expect(output.replace(/ data-hid="~[\w-]{11}"/g, '')).toBe(baseline)
+    expect(await render(code, true, {}, undefined, { bundled: true, external: '@acme/parent' })).toBe(baseline)
   })
 
   it.each([{ bundled: false }, { bundled: true, external: true }])('keeps an SSR-external dependency unkeyed', async (dependency) => {
@@ -133,7 +166,7 @@ describe('static inline keys', () => {
     const head = server.createHead()
     mount(); mount()`
 
-    const output = await render(code, true, {}, undefined, { bundled: true })
+    const output = await render(code, true)
     expect(output).toMatch(/data-hid="~[\w-]{11}"/)
     expect(output.replace(/ data-hid="~[\w-]{11}"/, '')).toBe(await render(code, false))
   })
@@ -202,6 +235,34 @@ describe('static inline keys', () => {
     finally {
       await rm(root, { recursive: true, force: true })
     }
+  })
+
+  it('keeps linked workspace packages inside the project root unkeyed', async () => {
+    const code = `import { useHead } from '@unhead/vue'
+    useHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
+    const root = await mkdtemp(join(tmpdir(), 'unhead-app-'))
+    try {
+      const linked = join(root, 'packages', 'linked')
+      await mkdir(linked, { recursive: true })
+      await writeFile(join(root, 'package.json'), '{"name":"@acme/app"}')
+      await writeFile(join(linked, 'package.json'), '{"name":"@acme/linked"}')
+      const output = await render(code, true, {}, undefined, { bundled: true, root, linked: join(linked, 'index.js') })
+      expect(output).toBe(await render(code))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('applies SSR build external patterns to the affected source file', async () => {
+    const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
+    const file = join(appRoot, 'entry.ts')
+    const baseline = await render(code)
+    const external = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: /entry\.ts$/ })
+    const bundled = await render(code, true, {}, undefined, { bundled: false, linked: file, buildExternal: /other\.ts$/ })
+
+    expect(external).toBe(baseline)
+    expect(bundled).toMatch(/data-hid="~[\w-]{11}"/)
   })
 
   it('keeps callback parameter values independent of outer constants', async () => {

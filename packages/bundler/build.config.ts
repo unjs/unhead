@@ -11,6 +11,7 @@ export default defineBuildConfig([
       { input: 'src/index', name: 'index' },
       { input: 'src/unplugin/vite', name: 'vite' },
       { input: 'src/unplugin/framework', name: 'framework' },
+      { input: 'src/inlineKeys', name: 'inline-keys' },
       { input: 'src/minify/rolldown', name: 'minify/rolldown' },
       { input: 'src/minify/esbuild', name: 'minify/esbuild' },
       { input: 'src/minify/lightningcss', name: 'minify/lightningcss' },

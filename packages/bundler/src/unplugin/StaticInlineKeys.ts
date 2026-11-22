@@ -1,22 +1,18 @@
 import type { CallExpression, Expression, ObjectExpression, ObjectProperty } from 'oxc-parser'
-import type { Plugin, ResolvedConfig } from 'vite'
+import type { Plugin } from 'vite'
 import type { BaseTransformerTypes } from './types'
-import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, ScopeTrackerVariable, walk } from 'oxc-walker'
-import { dedupeKey, normalizeProps } from 'unhead/utils'
+import { getInlineTagKey, MIN_INLINE_LENGTH } from '../inlineTagKey'
 import { isMissingParserError, parseAndWalkSource } from './parser'
 import { isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, SOURCE_FILE_RE, splitTransformId } from './utils'
 
-const MIN_INLINE_LENGTH = 4096
 const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte)|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
 const HEAD_FACTORY_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/(?:client|server)$/
 const HEAD_INJECT_IMPORTS = new Set(['@unhead/vue', '#app', '#app/composables/head', '#unhead/composables', 'nuxt/app'])
-const VARIABLE_CONTENT_RE = /%\w|[\r\0]|<\/(?:script|style|noscript)/i
-const PACKAGE_NAME_RE = /^(?:@[^/]+\/)?[^./][^/]*/
 
 interface StaticInlineKeysOptions extends BaseTransformerTypes {
   framework?: string
@@ -87,89 +83,69 @@ function headInputIndex(callee: CallExpression['callee'], scope: ScopeTracker, h
     return declaration.importNode.source.value === 'unhead' ? 1 : 0
 }
 
-function inlineBody(tag: ObjectExpression, name: 'script' | 'style' | 'noscript', scope: ScopeTracker) {
-  const fields = new Map<string, Expression>()
+function inlineInput(tag: ObjectExpression, scope: ScopeTracker) {
+  const input: Record<string, unknown> = {}
   for (const field of tag.properties) {
     const prop = field.type === 'Property' ? propertyName(field) : undefined
-    if (prop === undefined || prop === '__proto__' || fields.has(prop) || field.type !== 'Property')
+    if (prop === undefined || prop === '__proto__' || Object.hasOwn(input, prop) || field.type !== 'Property')
       return
-    fields.set(prop, field.value)
+    if (prop === 'innerHTML' || prop === 'textContent' || prop === 'tagDuplicateStrategy' || prop.toLowerCase() === 'type')
+      input[prop] = resolveStaticText(field.value, scope)
+    else if (prop === 'processTemplateParams' && field.value.type === 'Literal' && field.value.value === false)
+      input[prop] = false
+    else
+      input[prop] = 'present'
   }
-  const html = fields.get('innerHTML')
-  const text = fields.get('textContent')
-  const content = html || text
-  if (!content || (html && text) || fields.has('key'))
-    return
-  const strategy = fields.get('tagDuplicateStrategy')
-  const strategyValue = strategy && resolveStaticText(strategy, scope)
-  if (strategy && strategyValue !== 'merge' && strategyValue !== 'replace')
-    return
-
-  // Check existing identity through the same normalization as the renderer.
-  // Treat a present attribute as nonempty because it can resolve at runtime.
-  const attrs = Object.fromEntries([...fields.keys()]
-    .filter(field => field !== 'innerHTML' && field !== 'textContent')
-    .map(field => [field, 'present']))
-  const normalized = normalizeProps({ tag: name, props: {} }, attrs)
-  if (dedupeKey(normalized) || normalized.props.src || normalized.props.hid || normalized.props.vmid
-    || [...fields.keys()].some(field => field.toLowerCase() === 'data-hid')) {
-    return
-  }
-  if (name === 'script') {
-    for (const [field, type] of fields) {
-      if (field.toLowerCase() !== 'type')
-        continue
-      const value = resolveStaticText(type, scope)?.trim().toLowerCase()
-      if (value === undefined || value === 'importmap' || value === 'speculationrules' || value.endsWith('json'))
-        return
-    }
-  }
-  return { body: resolveStaticText(content, scope), hasStrategy: !!strategy }
+  return input
 }
 
-function packageName(pathname: string): string | undefined {
-  return pathname.replaceAll('\\', '/').split('/node_modules/').at(-1)?.match(PACKAGE_NAME_RE)?.[0]
+interface NamedPackage {
+  directory: string
+  name: string
 }
 
-function nearestPackageName(dir: string, cache: Map<string, string | undefined>): string | undefined {
+function nearestNamedPackage(dir: string, cache: Map<string, NamedPackage | undefined>): NamedPackage | undefined {
   if (cache.has(dir))
     return cache.get(dir)
   const manifest = join(dir, 'package.json')
   const parent = dirname(dir)
   const name: unknown = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8'))?.name : undefined
-  let result: string | undefined
+  let result: NamedPackage | undefined
   if (typeof name === 'string' && name)
-    result = name
+    result = { directory: dir, name }
   else if (dir !== parent)
-    result = nearestPackageName(parent, cache)
+    result = nearestNamedPackage(parent, cache)
   cache.set(dir, result)
   return result
 }
 
-function isExternalDependency(environment: ResolvedConfig['environments'][string], name: string) {
-  const { external } = environment.resolve
-  return external === true || external?.some(id => id === name || id.startsWith(`${name}/`))
-}
-
-function bundlesDependency(environment: ResolvedConfig['environments'][string], name: string) {
-  if (isExternalDependency(environment, name))
-    return false
-  const { noExternal } = environment.resolve
-  if (noExternal === true)
-    return true
-  const rules = Array.isArray(noExternal) ? noExternal : noExternal ? [noExternal] : []
-  return rules.some(rule => typeof rule === 'string' ? rule === name : name.match(rule) !== null)
-}
-
 export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
-  let serverEnvironments: ResolvedConfig['environments'][string][] = []
-  const packageNames = new Map<string, string | undefined>()
+  let app: { root: string, owner: NamedPackage | undefined, preserveSymlinks: boolean, externals: (string | RegExp)[] } | undefined
+  const packages = new Map<string, NamedPackage | undefined>()
   return {
     name: 'unhead:static-inline-keys',
     apply: 'build',
     enforce: 'post',
     configResolved(config) {
-      serverEnvironments = Object.values(config.environments).filter(env => env.consumer === 'server')
+      app = undefined
+      const preserveSymlinks = config.resolve.preserveSymlinks
+      const root = existsSync(config.root) ? realpathSync(config.root) : resolve(config.root)
+      const owner = nearestNamedPackage(root, packages)
+      const externals: (string | RegExp)[] = []
+      for (const env of Object.values(config.environments)) {
+        if (env.consumer !== 'server')
+          continue
+        const buildExternal = env.build.rolldownOptions?.external ?? env.build.rollupOptions?.external
+        const { external } = env.resolve
+        if (external === true || typeof buildExternal === 'function')
+          return
+        externals.push(...(external || []))
+        if (buildExternal)
+          externals.push(...(Array.isArray(buildExternal) ? buildExternal : [buildExternal]))
+      }
+      if (externals.some(rule => typeof rule === 'string' && (rule.startsWith('.') || (owner && (rule === owner.name || rule.startsWith(`${owner.name}/`))))))
+        return
+      app = { root, owner, preserveSymlinks, externals }
     },
     transform: {
       order: 'post',
@@ -181,22 +157,21 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
         const { pathname, query } = splitTransformId(id)
         const isVueScript = isVueScriptRequest(pathname, query)
         const isSvelteModule = pathname.endsWith('.svelte') && !query
-        if (code.length < MIN_INLINE_LENGTH || options.filter?.exclude?.some(pattern => id.match(pattern)))
+        if (!app || code.length < MIN_INLINE_LENGTH || options.filter?.exclude?.some(pattern => id.match(pattern)))
           return
         if (!isVueScript && !isSvelteModule && !JS_EXT_RE.test(pathname) && !options.filter?.include?.some(pattern => id.match(pattern)))
           return
-        const dependency = NODE_MODULES_RE.test(pathname)
-        if (dependency) {
-          const name = packageName(pathname)
-          if (!name || !serverEnvironments.length || !serverEnvironments.every(env => bundlesDependency(env, name)))
-            return
+        if (!isAbsolute(pathname) || NODE_MODULES_RE.test(pathname) || (app.preserveSymlinks && !existsSync(pathname)))
+          return
+        // An SSR-external parent can load a dependency through Node, outside this transform.
+        const file = app.preserveSymlinks ? realpathSync(pathname) : resolve(pathname)
+        const fromRoot = relative(app.root, file)
+        if (fromRoot === '..' || fromRoot.startsWith(`..${sep}`) || isAbsolute(fromRoot) || NODE_MODULES_RE.test(file)
+          || nearestNamedPackage(dirname(file), packages) !== app.owner) {
+          return
         }
-        else if (serverEnvironments.some(env => env.resolve.external === true || env.resolve.external?.length)) {
-          // Linked workspace packages may resolve outside node_modules.
-          const name = nearestPackageName(dirname(pathname), packageNames)
-          if (name && serverEnvironments.some(env => isExternalDependency(env, name)))
-            return
-        }
+        if (app.externals.some(rule => typeof rule === 'string' ? rule === pathname || rule === file : pathname.search(rule) !== -1 || file.search(rule) !== -1))
+          return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         let parsed: ReturnType<typeof parseAndWalkSource>
@@ -229,7 +204,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
             // A caller can patch a returned entry with a new input.
             if (node.type !== 'CallExpression' || parent?.type !== 'ExpressionStatement')
               return
-            const index = headInputIndex(node.callee, scopeTracker, heads, !dependency && options.framework === '@unhead/vue' && isVueScript)
+            const index = headInputIndex(node.callee, scopeTracker, heads, options.framework === '@unhead/vue' && isVueScript)
             // Entry options can override the normalized tag identity.
             if (index === undefined || node.arguments.length !== index + 1)
               return
@@ -253,15 +228,11 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
               for (const tag of tags) {
                 if (!tag || tag.type === 'SpreadElement')
                   continue
-                const inline = tag.type === 'ObjectExpression'
-                  ? inlineBody(tag, name, scopeTracker)
-                  : { body: resolveStaticText(tag, scopeTracker), hasStrategy: false }
-                if (!inline?.body || inline.body.length < MIN_INLINE_LENGTH || VARIABLE_CONTENT_RE.test(inline.body)
-                  || (name === 'script' && inline.body.includes('<!--'))) {
+                const inline = tag.type === 'ObjectExpression' ? inlineInput(tag, scopeTracker) : { innerHTML: resolveStaticText(tag, scopeTracker) }
+                const identity = inline && getInlineTagKey(name, inline)
+                if (!identity)
                   continue
-                }
-                const hash = createHash('sha256').update(`${name}\0`).update(inline.body, 'utf16le').digest().toString('base64url', 0, 8)
-                const key = `key:"~${hash}",${inline.hasStrategy ? '' : 'tagDuplicateStrategy:"replace",'}`
+                const key = `key:"${identity.key}",${identity.tagDuplicateStrategy ? 'tagDuplicateStrategy:"replace",' : ''}`
                 if (tag.type === 'ObjectExpression') {
                   s.appendLeft(tag.start + 1, key)
                 }
