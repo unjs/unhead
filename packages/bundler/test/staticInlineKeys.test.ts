@@ -1,5 +1,8 @@
 import type { ResolvableHead } from 'unhead/types'
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { useHead as coreUseHead } from 'unhead'
 import { createHead } from 'unhead/server'
@@ -11,13 +14,11 @@ import { runTransform } from './utils'
 const js = `globalThis.visits++; /*${'static code '.repeat(350)}*/`
 const css = `.page { display: grid; } /*${'static style '.repeat(350)}*/`
 
-async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean, linked?: boolean }) {
-  const packageName = dependency?.linked ? '@unhead/bundler' : '@acme/head'
-  const id = dependency?.linked
-    ? new URL('./linked-fixture.js', import.meta.url).pathname
-    : dependency
-      ? '/app/node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js'
-      : '/app/App.vue?vue&type=script&setup=true&lang.ts'
+async function render(code: string, enabled?: boolean, input = {}, minifyJs?: MinifyFn, dependency?: { bundled: boolean, external?: boolean, linked?: string }) {
+  const packageName = dependency?.linked ? '@acme/linked' : '@acme/head'
+  const id = dependency?.linked ?? (dependency
+    ? '/app/node_modules/.pnpm/@acme+head@1.0.0/node_modules/@acme/head/dist/index.js'
+    : '/app/App.vue?vue&type=script&setup=true&lang.ts')
   for (const plugin of Unhead({
     transformInlineTagKeys: enabled,
     transformInlineScripts: false,
@@ -184,11 +185,23 @@ describe('static inline keys', () => {
     expect(await render(code, true)).toBe(await render(code))
   })
 
-  it('preserves linked modules explicitly externalized in SSR', async () => {
-    const code = `import { useHead } from 'nuxt/app'
+  it.each([false, true])('preserves SSR-external linked modules with a type-only manifest set to %s', async (typeOnlyManifest) => {
+    const code = `import { useHead } from '@unhead/vue'
     useHead({ script: [${JSON.stringify(js)}] })`
 
-    expect(await render(code, true, {}, undefined, { bundled: false, external: true, linked: true })).toBe(await render(code))
+    const root = await mkdtemp(join(tmpdir(), 'unhead-linked-'))
+    try {
+      const dist = join(root, 'dist')
+      await mkdir(dist)
+      await writeFile(join(root, 'package.json'), '{"name":"@acme/linked"}')
+      if (typeOnlyManifest)
+        await writeFile(join(dist, 'package.json'), '{"type":"module"}')
+      const output = await render(code, true, {}, undefined, { bundled: false, external: true, linked: join(dist, 'index.js') })
+      expect(output).toBe(await render(code))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 
   it('keeps callback parameter values independent of outer constants', async () => {

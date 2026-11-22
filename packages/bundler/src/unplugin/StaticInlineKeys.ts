@@ -136,10 +136,12 @@ function nearestPackageName(dir: string, cache: Map<string, string | undefined>)
     return cache.get(dir)
   const manifest = join(dir, 'package.json')
   const parent = dirname(dir)
-  const name: unknown = existsSync(manifest)
-    ? JSON.parse(readFileSync(manifest, 'utf8')).name
-    : dir === parent ? undefined : nearestPackageName(parent, cache)
-  const result = typeof name === 'string' ? name : undefined
+  const name: unknown = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8'))?.name : undefined
+  let result: string | undefined
+  if (typeof name === 'string' && name)
+    result = name
+  else if (dir !== parent)
+    result = nearestPackageName(parent, cache)
   cache.set(dir, result)
   return result
 }
