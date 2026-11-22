@@ -1,4 +1,4 @@
-import { renderDOMHead } from '@unhead/dom'
+import { createHead, renderDOMHead } from '@unhead/dom'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../../../src'
 import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
@@ -36,6 +36,18 @@ describe('dom', () => {
     expect(document.title).toBe('Server title')
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Server description')
     expect(renderDOMHead(head, { document })).toBe(false)
+  })
+
+  it('cleans up a server-rendered class containing a non-breaking space', () => {
+    const original = 'before\u00A0after'
+    const document = useDom({ bodyAttrs: `class="before ${original} other"` }).window.document
+    const head = createHead({ document, render: () => false })
+    const entry = head.push({ bodyAttrs: { class: original } })
+
+    entry.patch({ bodyAttrs: { class: 'next' } })
+    renderDOMHead(head, { document })
+
+    expect([...document.body.classList]).toEqual(['before', 'other', 'next'])
   })
 
   it('releases removed untracked elements from the dom cache', () => {

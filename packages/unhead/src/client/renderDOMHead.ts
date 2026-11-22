@@ -2,10 +2,8 @@ import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, H
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
-import { normalizeProps } from '../utils/normalize'
+import { CLASS_SEPARATOR_RE, normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
-
-const WHITESPACE_RE = /\s+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
@@ -87,7 +85,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
           if (!(classes instanceof Set))
             continue
           for (const value of classes) {
-            for (const name of value.split(WHITESPACE_RE)) {
+            for (const name of value.split(CLASS_SEPARATOR_RE)) {
               if (name)
                 state._p[`${cleanupKey}:${name}`] = () => el.classList.remove(name)
             }

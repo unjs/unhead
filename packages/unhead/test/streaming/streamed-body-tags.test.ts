@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom'
+import { useHeadSafe } from 'unhead'
 import { createHead as createClientHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
 import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
@@ -39,6 +40,23 @@ describe('noscript registered after the shell', () => {
 })
 
 describe('body-positioned tags registered after the shell', () => {
+  it('keeps safe filtering when rendering late body tags', () => {
+    const head = createStreamableServerHead({ writesBodyTags: true })
+    head.hooks.hook('tags:resolve', ({ tags }) => {
+      for (const tag of tags) {
+        if (tag.tag === 'style')
+          tag.textContent = 'p { color: blue }'
+      }
+    })
+    renderShell(head)
+    const style = { media: 'print', tagPosition: 'bodyClose' } as const
+    useHeadSafe(head, { style: [style] })
+
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS)).toBe('</div><style media="print"></style></body></html>')
+  })
+
   it('writes a body-close script as a streamed body tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
@@ -68,6 +86,37 @@ describe('body-positioned tags registered after the shell', () => {
 })
 
 describe('an entry with patch tags and streamed body tags', () => {
+  it('drops a safe entry when the safe input plugin is absent', () => {
+    const head = createStreamableServerHead({ writesBodyTags: true })
+    renderShell(head)
+    head.push({ title: 'Safe title', style: [{ media: 'print', tagPosition: 'bodyClose' }] }, { _safe: true })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
+  it.each([false, true])('filters safe entries before writing a client patch with writesBodyTags=%s', async (writesBodyTags) => {
+    const head = createStreamableServerHead({ writesBodyTags })
+    renderShell(head)
+    const meta = { 'name': 'description', 'content': 'Late description', 'http-equiv': 'content-language' }
+    const style = { media: 'print', textContent: 'p { color: blue }', tagPosition: 'bodyClose' } as const
+    useHeadSafe(head, { htmlAttrs: { class: ['late'] }, meta: [meta], style: [style] })
+
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    const doc = new JSDOM('').window.document
+    const client = createClientHead({ document: doc })
+    const inputs = JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')')))
+    for (const input of inputs)
+      client.push(input)
+    await client.render()
+
+    expect(doc.documentElement.classList.contains('late')).toBe(true)
+    const description = doc.querySelector('meta[name="description"]')
+    expect(description?.getAttribute('content')).toBe('Late description')
+    expect(description?.hasAttribute('http-equiv')).toBe(false)
+    expect(doc.body.textContent).toBe('')
+  })
+
   it('splits each tag into the correct output', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({

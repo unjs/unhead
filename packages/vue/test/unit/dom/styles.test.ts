@@ -89,6 +89,36 @@ describe('vue dom styles', () => {
     expect(dom.window.document.body.getAttribute('style')).toEqual('color: white; background-color: red;')
   })
 
+  it('renders mixed class and style declarations in SSR and the browser', async () => {
+    const bodyAttrs = {
+      class: ['root', { 'active\twide': true, 'hidden': false }],
+      style: [
+        'background-image:url(data:image/png;base64,AAAA)',
+        'font-size:18px',
+        { color: 'red' as const, opacity: 0 },
+        'color:blue',
+      ],
+    }
+    const ssr = await ssrVueAppWithUnhead(() => {
+      useHead({ bodyAttrs })
+    })
+    const { bodyAttrs: rendered } = renderSSRHead(ssr)
+    expect(rendered).toContain('class="root active wide"')
+    expect(rendered).toContain('background-image:url(data:image/png;base64,AAAA)')
+    expect(rendered).toContain('opacity:0')
+
+    const dom = useDom()
+    const client = csrVueAppWithUnhead(dom, () => {
+      useHead({ bodyAttrs })
+    })
+    const document = dom.window.document
+    renderDOMHead(client, { document })
+    expect(document.body.className).toBe('root active wide')
+    expect(document.body.style.fontSize).toBe('18px')
+    expect(document.body.style.color).toBe('blue')
+    expect(document.body.style.opacity).toBe('0')
+  })
+
   // Issue #530 - demonstrates working reactivity with functions
   it('style tag reactive update undefined to value', async () => {
     const dom = useDom()

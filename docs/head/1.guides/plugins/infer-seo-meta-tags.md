@@ -10,7 +10,7 @@ The plugin generates these tags from existing content:
 
 - `og:title`: Inferred from your page title
 - `og:description`: Inferred from your description meta
-- `twitter:card`: `summary_large_image` when the resolved head has an `og:image` or `twitter:image`, otherwise `summary`. A `twitter:card` that you set always wins.
+- `twitter:card`: `summary_large_image` when the resolved head has an `og:image` or `twitter:image`, otherwise `summary`. A `twitter:card` that you set always wins. On the client, an image tag that only the server rendered, such as one from a server only entry, still counts.
 
 ## Generated output
 
