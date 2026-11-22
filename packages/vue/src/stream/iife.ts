@@ -1,1 +1,1 @@
-export { streamingIifeCode, streamingIifeSize } from 'unhead/stream/iife'
+export { streamingIifeCode, streamingIifeCodeWithDeferredEvents, streamingIifeSize } from 'unhead/stream/iife'

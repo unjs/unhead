@@ -9,7 +9,13 @@ const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
 const WHITESPACE_RE = /\s+/g
 const IIFE_GLOBAL_NAME = '__unhead_iife__'
 const IIFE_INIT_CALL = `${IIFE_GLOBAL_NAME}.init();`
-const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
+const IIFE_TYPES = `export declare const streamingIifeCode: string;
+/** Use with a client adapter from the same Unhead version. */
+export declare const streamingIifeCodeWithDeferredEvents: string;
+export declare const streamingIifeSize: number;
+`
+const IIFE_ENTRY = 'virtual:unhead-streaming-iife'
+type IifeInitializer = 'init' | 'initWithDeferredEvents'
 // Rollup transform plugins use text prefilters and replacements before parsing.
 // Escape their trigger text in the module source so the IIFE remains opaque data.
 const IIFE_ROLLUP_TRANSFORM_TOKENS = [
@@ -44,21 +50,36 @@ function isFirstSideEffectWarning(warning: { message?: string }) {
   return warning.message?.startsWith('First side effect in ') === true
 }
 
-function writeIifeArtifacts(rootDir: string, code: string) {
+function writeIifeArtifacts(rootDir: string, code: string, codeWithDeferredEvents: string) {
   writeFileSync(resolve(rootDir, 'dist/stream/iife.global.js'), code)
   writeFileSync(
     resolve(rootDir, 'dist/stream/iife.mjs'),
-    `export const streamingIifeCode = ${serializeIifeCode(code)};\nexport const streamingIifeSize = ${code.length};\n`,
+    `export const streamingIifeCode = ${serializeIifeCode(code)};\nexport const streamingIifeCodeWithDeferredEvents = ${serializeIifeCode(codeWithDeferredEvents)};\nexport const streamingIifeSize = ${code.length};\n`,
   )
   writeFileSync(resolve(rootDir, 'dist/stream/iife.d.ts'), IIFE_TYPES)
   writeFileSync(resolve(rootDir, 'dist/stream/iife.d.mts'), IIFE_TYPES)
   writeFileSync(resolve(rootDir, 'dist/stream/iife.d.cts'), IIFE_TYPES)
 }
 
-async function buildIifeFromDist(rootDir: string) {
+function iifeEntry(entry: string, path: string, initializer: IifeInitializer) {
+  const id = `\0${entry}`
+  return {
+    name: 'unhead-streaming-iife',
+    resolveId(source: string) {
+      if (source === entry)
+        return id
+    },
+    load(source: string) {
+      if (source === id)
+        return `export { ${initializer} as init } from ${JSON.stringify(path)}`
+    },
+  }
+}
+
+async function buildIifeFromDist(rootDir: string, initializer: IifeInitializer) {
   const bundle = await rollup({
-    input: resolve(rootDir, 'dist/stream/iife.mjs'),
-    plugins: [nodeResolve()],
+    input: IIFE_ENTRY,
+    plugins: [iifeEntry(IIFE_ENTRY, resolve(rootDir, 'dist/stream/iife.mjs'), initializer), nodeResolve()],
   })
   try {
     const { output } = await bundle.generate({ format: 'iife', name: IIFE_GLOBAL_NAME })
@@ -72,12 +93,13 @@ async function buildIifeFromDist(rootDir: string) {
   }
 }
 
-async function buildIifeFromSource(rootDir: string) {
+async function buildIifeFromSource(rootDir: string, initializer: IifeInitializer) {
+  const entry = resolve(rootDir, IIFE_ENTRY)
   const result = await viteBuild({
     build: {
       emptyOutDir: false,
       lib: {
-        entry: resolve(rootDir, 'src/stream/iife.ts'),
+        entry,
         formats: ['iife'],
         name: IIFE_GLOBAL_NAME,
       },
@@ -86,6 +108,7 @@ async function buildIifeFromSource(rootDir: string) {
     },
     configFile: false,
     logLevel: 'silent',
+    plugins: [iifeEntry(entry, resolve(rootDir, 'src/stream/iife.ts'), initializer)],
     root: rootDir,
   })
   const output = (Array.isArray(result) ? result : [result]).flatMap((item) => {
@@ -115,12 +138,17 @@ export default defineBuildConfig({
       }
     },
     'build:done': async function (ctx) {
-      const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
-        ? await buildIifeFromSource(ctx.options.rootDir)
-        : await buildIifeFromDist(ctx.options.rootDir)))
+      const { rootDir, stub } = ctx.options
+      const buildIife = stub ? buildIifeFromSource : buildIifeFromDist
+      const [full, deferred] = await Promise.all([
+        buildIife(rootDir, 'init'),
+        buildIife(rootDir, 'initWithDeferredEvents'),
+      ])
+      const code = makeExecutableIifeCode(minifyIifeCode(full))
+      const codeWithDeferredEvents = makeExecutableIifeCode(minifyIifeCode(deferred))
 
-      writeIifeArtifacts(ctx.options.rootDir, code)
-      console.log(`Built streaming IIFE: ${code.length} bytes`)
+      writeIifeArtifacts(rootDir, code, codeWithDeferredEvents)
+      console.log(`Built streaming IIFE: ${code.length} bytes (${codeWithDeferredEvents.length} with deferred events)`)
     },
   },
   entries: [

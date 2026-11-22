@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom'
 import { createStreamableHead } from 'unhead/stream/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { init as initIife } from '../../src/stream/iife'
+import { init, initWithDeferredEvents } from '../../src/stream/iife'
 
 let originalWindow: any
 let originalDocument: any
@@ -16,7 +16,7 @@ afterEach(() => {
   globalThis.document = originalDocument
 })
 
-function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__', runScripts?: 'dangerously') {
+function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__', runScripts?: 'dangerously', initialize = initWithDeferredEvents) {
   const dom = new JSDOM(`<!DOCTYPE html>
 <html>
 <head>
@@ -38,9 +38,9 @@ function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__', 
   globalThis.document = win.document
 
   // Simulate iife running - this creates _head and processes queue
-  initIife({ streamKey })
+  const head = initialize({ streamKey })!
 
-  return { dom, window: win, document: win.document }
+  return { dom, window: win, document: win.document, head }
 }
 
 function waitForDomUpdate() {
@@ -48,6 +48,20 @@ function waitForDomUpdate() {
 }
 
 describe('streaming client hydration', () => {
+  it('renders live listeners through the default streaming head', () => {
+    const { dom, window, head } = setupStreamingDom([], '__unhead__', undefined, init)
+    try {
+      const onresize = vi.fn()
+      head.push({ bodyAttrs: { onresize } })
+      head.render()
+      window.dispatchEvent(new window.Event('resize'))
+      expect(onresize).toHaveBeenCalledOnce()
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
   it('attaches handlers when a streamed script adopts the head during a render', () => {
     const { dom, window } = setupStreamingDom([], '__unhead__', 'dangerously')
     try {
@@ -64,24 +78,31 @@ describe('streaming client hydration', () => {
     }
   })
 
-  it('replays a server script event when the hydrated head adds a handler', () => {
-    const { document, window } = setupStreamingDom([
+  it.each(['load', 'error'] as const)('replays a server script %s when the hydrated head adds a handler', (event) => {
+    const { document, window, dom } = setupStreamingDom([
       { title: 'Streamed', titleTemplate: '%s | Site', script: [{ key: 'streamed', src: '/streamed.js' }] },
     ])
-    expect(document.title).toBe('Streamed | Site')
-    const script = document.querySelector('script[src="/streamed.js"]')!
-    script.dataset.onloadfired = 'true'
+    try {
+      expect(document.title).toBe('Streamed | Site')
+      const script = document.querySelector('script[src="/streamed.js"]')!
+      script.setAttribute(`data-on${event}fired`, 'true')
 
-    const onload = vi.fn()
-    const entry = createStreamableHead()!.push({ script: [{ key: 'streamed', src: '/streamed.js', onload }] })
-    expect(onload).toHaveBeenCalledOnce()
-    expect(document.querySelector('script[src="/streamed.js"]')).toBe(script)
+      const handler = vi.fn()
+      const entry = createStreamableHead()!.push({
+        script: [{ key: 'streamed', src: '/streamed.js', [`on${event}`]: handler }],
+      })
+      expect(handler).toHaveBeenCalledOnce()
+      expect(document.querySelector('script[src="/streamed.js"]')).toBe(script)
 
-    script.dispatchEvent(new window.Event('load'))
-    expect(onload).toHaveBeenCalledTimes(2)
-    entry.dispose()
-    script.dispatchEvent(new window.Event('load'))
-    expect(onload).toHaveBeenCalledTimes(2)
+      script.dispatchEvent(new window.Event(event))
+      expect(handler).toHaveBeenCalledTimes(2)
+      entry.dispose()
+      script.dispatchEvent(new window.Event(event))
+      expect(handler).toHaveBeenCalledTimes(2)
+    }
+    finally {
+      dom.window.close()
+    }
   })
 
   describe('queue consumption', () => {
@@ -346,7 +367,7 @@ describe('streaming client hydration', () => {
       })
 
       try {
-        initIife({})
+        initWithDeferredEvents({})
       }
       finally {
         Object.defineProperty(proto, 'title', original)

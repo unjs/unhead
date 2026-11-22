@@ -5,13 +5,18 @@
  *
  * @module unhead/stream/iife
  */
+import type { HeadRenderer } from '../types'
 import type { StreamingGlobal } from './types'
-import { renderStreamingDOMHead } from '../client/renderDOMHead'
+import { createDomRenderer, renderStreamingDOMHead } from '../client/renderDOMHead'
 import { createUnhead } from '../unhead'
 
 const DEFAULT_STREAM_KEY = '__unhead__'
 
-function init(options: { streamKey?: string } = {}) {
+interface StreamingOptions {
+  streamKey?: string
+}
+
+function initStreamingHead(render: HeadRenderer<boolean>, options: StreamingOptions = {}) {
   const { streamKey = DEFAULT_STREAM_KEY } = options
   const win = typeof window !== 'undefined' ? window as any : undefined
   if (!win)
@@ -22,8 +27,7 @@ function init(options: { streamKey?: string } = {}) {
     return queue._head
 
   const doc = typeof document !== 'undefined' ? document : undefined
-  // Streamed entries are JSON. The client adapter installs handlers for live inputs.
-  const head = createUnhead(renderStreamingDOMHead, { document: doc })
+  const head = createUnhead(render, { document: doc })
 
   // Push an entry and tag it as streamed so devtools can distinguish
   // entries that arrived via inline streaming scripts from client pushes.
@@ -70,4 +74,10 @@ function init(options: { streamKey?: string } = {}) {
   return head
 }
 
-export { init }
+export function init(options?: StreamingOptions) {
+  return initStreamingHead(createDomRenderer(), options)
+}
+
+export function initWithDeferredEvents(options?: StreamingOptions) {
+  return initStreamingHead(renderStreamingDOMHead, options)
+}

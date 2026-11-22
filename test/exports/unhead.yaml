@@ -67,6 +67,7 @@
   DEFAULT_STREAM_KEY: string
 ./stream/iife:
   streamingIifeCode: string
+  streamingIifeCodeWithDeferredEvents: string
   streamingIifeSize: number
 ./stream/server:
   createBootstrapScript: function
