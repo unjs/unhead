@@ -44,7 +44,7 @@ type DeclaredLink<Rel> = ResolveHeadValue<Rel> extends Record<DefinedLinkRelatio
 type LinkWithAs<Tag, As> = As extends unknown ? Omit<Tag, 'as'> & { as: As } : never
 // Each resolved preload destination must satisfy its own variant.
 type ResolvePreloadAs<Tag> = Tag extends { rel: 'preload', as: infer As extends ResolvableValue<string> }
-  ? LinkWithAs<Tag, ResolveHeadValue<As>>
+  ? [ResolveHeadValue<As>] extends [string] ? LinkWithAs<Tag, ResolveHeadValue<As>> : Tag
   : Tag
 type LinkWithRelation<Input, Rel> = Rel extends KnownLinkRel ? ResolvePreloadAs<Omit<Input, 'rel'> & { rel: Rel }> : never
 type ResolvableCustomLink = ResolvableProperties<GenericLink & SchemaAugmentations['link']>

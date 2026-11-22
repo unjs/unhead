@@ -189,6 +189,10 @@ describe('vue streaming server types', () => {
 
     // @ts-expect-error The destination getter must return a resolved value
     entry.patch({ link: [{ rel: 'preload', as: () => () => 'script' as const, href: '/docs' }] })
+
+    const optionalDestination = computed(() => script.value ? destination.value : undefined)
+    // @ts-expect-error A union of destinations must always supply a destination
+    entry.patch({ link: [{ rel: 'preload', as: optionalDestination, href: '/docs' }] })
   })
 
   it('checks values added to a custom link', () => {
