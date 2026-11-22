@@ -7,7 +7,7 @@ export interface BundleSpec {
   id: string
   /** display name in the report */
   name: string
-  category: 'Core' | 'Vue' | 'React' | 'Schema.org'
+  category: 'Core' | 'Vue' | 'Streaming' | 'React' | 'Schema.org'
   /** path under bench/bundle/dist */
   file: string
   /** build must emit it; throw if missing (catches a broken build instead of hiding it) */
@@ -25,6 +25,9 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'vueClientLazy', name: 'Vue Client (Lazy head, eager)', category: 'Vue', file: 'vue-client-lazy/vue-client/lazy.mjs' },
   { id: 'vueClientLazyRuntime', name: 'Vue Client (Lazy head, runtime chunk)', category: 'Vue', file: 'vue-client-lazy/chunks/runtime.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
+  { id: 'vueStreamingClient', name: 'Vue Streaming Client', category: 'Streaming', file: 'streaming/vue-client.mjs', required: true },
+  { id: 'streamingBootstrap', name: 'Streaming Bootstrap', category: 'Streaming', file: 'streaming/bootstrap.js', required: true },
+  { id: 'streamingBootstrapDeferredEvents', name: 'Streaming Bootstrap (Deferred Events)', category: 'Streaming', file: 'streaming/bootstrap-deferred-events.js' },
   { id: 'reactClient', name: 'React Client (Minimal)', category: 'React', file: 'react-client/react-client/minimal.mjs' },
   { id: 'reactClientFull', name: 'React Client (Full)', category: 'React', file: 'react-client-full/react-client/full.mjs' },
   { id: 'reactServer', name: 'React Server (Minimal)', category: 'React', file: 'react-server/react-server/minimal.mjs' },
