@@ -5,6 +5,7 @@ import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CompileTransform, resolveCompileOptions } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -66,6 +67,12 @@ function resolveCoreDefs(options: UnpluginOptions, framework: string): CoreDef[]
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
+  }
+  if (options.serverOnlyCrawlerTags) {
+    const { runtime, ...crawlerTagsOpts } = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    defs.push({ instance: ServerOnlyCrawlerTags, options: { ...common, ...crawlerTagsOpts } })
+    if (runtime)
+      defs.push({ instance: ServerOnlyCrawlerTagsRuntime, options: {} })
   }
   const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
   const seoMeta = options.transformSeoMeta !== false && { instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } }

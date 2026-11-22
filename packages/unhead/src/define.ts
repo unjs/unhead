@@ -1,10 +1,16 @@
-import type { InferLink, InferScript, Link, Script } from './types'
+import type { InferLink, InferScript, KnownLinkRel, Link, Script } from './types'
+
+// Preserve known alternatives and mark custom relations widened to the Link union.
+declare const definedLinkRelation: unique symbol
+type WidenedLink<T extends { rel: string }> = Link & Omit<T, 'rel'> & (
+  [T['rel']] extends [KnownLinkRel] ? { rel: T['rel'] } : { rel: { readonly [definedLinkRelation]: T } }
+)
 
 type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
 type DefinedLink<T extends { rel: string }> = T extends { rel: infer U }
   ? IsUnion<U> extends false
-    ? T extends Link ? T : Link & Omit<T, 'rel'>
-    : Link & Omit<T, 'rel'>
+    ? T extends Link ? T : WidenedLink<T>
+    : WidenedLink<T>
   : never
 type DefinedScript<T extends object> = T extends { type: infer U }
   ? IsUnion<U> extends false

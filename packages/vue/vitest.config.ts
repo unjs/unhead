@@ -14,6 +14,7 @@ export default defineProject({
       '@unhead/vue/compiled/server': resolve(__dirname, 'src/compiled/server.ts'),
       '@unhead/vue/server': resolve(__dirname, 'src/server.ts'),
       '@unhead/vue/client': resolve(__dirname, 'src/client.ts'),
+      '@unhead/vue/stream/server': resolve(__dirname, 'src/stream/server.ts'),
       '@unhead/vue': resolve(__dirname, 'src/index.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
