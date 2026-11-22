@@ -2,10 +2,14 @@ import type { DefaultTreeAdapterTypes } from 'parse5'
 import { defaultTreeAdapter, parse } from 'parse5'
 
 type HeadSlotKind = 'title' | 'description' | 'charset'
-export type HeadSlot = Readonly<{ offset: number } & (
+export type HeadSlot = Readonly<{ offset: number, end: number } & (
   { kind: 'title', openTag?: string, emptyMarkup?: string }
-  | { kind: 'description' | 'charset' }
+  | { kind: 'description' | 'charset' | undefined }
 )>
+export interface HeadSlots {
+  readonly ranges: readonly HeadSlot[]
+  readonly count: number
+}
 
 export function streamingMetadataKind(node: DefaultTreeAdapterTypes.Element): HeadSlotKind | undefined {
   if (node.tagName === 'title')
@@ -30,10 +34,10 @@ interface RenderedHeadSlot {
 // shapes go through the HTML parser so attributes and inert markup stay safe.
 const RENDERED_METADATA_RE = /<title>[^<]*<\/title>|<meta (charset)="[^"]+">|<meta name="([a-z][\w:-]*)" content="[^"]*">/y
 
-function matchRenderedHeadSlots(headTags: string, slots: readonly HeadSlot[]): RenderedHeadSlot[] {
+function matchRenderedHeadSlots(headTags: string, { ranges, count }: HeadSlots): RenderedHeadSlot[] {
   const matches: RenderedHeadSlot[] = []
   let start = 0
-  while (matches.length < slots.length) {
+  while (matches.length < count) {
     while (start < headTags.length && ' \t\n\f\r'.includes(headTags[start]))
       start++
     RENDERED_METADATA_RE.lastIndex = start
@@ -45,11 +49,10 @@ function matchRenderedHeadSlots(headTags: string, slots: readonly HeadSlot[]): R
     if (name !== undefined && name !== 'description')
       continue
     const kind = charset ? 'charset' : (name ?? 'title')
-    const slot = slots.find(slot => slot.kind === kind)
-    if (slot && !matches.some(match => match.kind === slot.kind))
-      matches.push({ kind: slot.kind, start: match.index, end: start })
+    if (ranges.some(slot => slot.kind === kind) && !matches.some(match => match.kind === kind))
+      matches.push({ kind, start: match.index, end: start })
   }
-  if (!headTags || matches.length === slots.length)
+  if (!headTags || matches.length === count)
     return matches
 
   matches.length = 0
@@ -61,38 +64,38 @@ function matchRenderedHeadSlots(headTags: string, slots: readonly HeadSlot[]): R
     if (!defaultTreeAdapter.isElementNode(child) || !child.sourceCodeLocation?.startTag)
       continue
     const kind = streamingMetadataKind(child)
-    if (!kind || !slots.some(slot => slot.kind === kind) || matches.some(slot => slot.kind === kind))
+    if (!kind || !ranges.some(slot => slot.kind === kind) || matches.some(slot => slot.kind === kind))
       continue
     const { startTag, endTag } = child.sourceCodeLocation
     if (kind === 'title' && !endTag)
       continue
     matches.push({ kind, start: startTag.startOffset, end: (endTag ?? startTag).endOffset })
-    if (matches.length === slots.length)
+    if (matches.length === count)
       break
   }
   return matches
 }
 
-export function placeStreamingMetadata(slots: readonly HeadSlot[], headTags: string) {
+export function renderStreamingHead(slots: HeadSlots, headTags: string, html: string, offset: number, end: number, bootstrap: string) {
   const matches = matchRenderedHeadSlots(headTags, slots)
-  const inserts: { offset: number, html: string }[] = []
-  for (const slot of slots) {
+  let result = ''
+  for (const slot of slots.ranges) {
     const match = matches.find(match => match.kind === slot.kind)
-    let html = match ? headTags.slice(match.start, match.end) : undefined
+    let tag = match ? headTags.slice(match.start, match.end) : undefined
     // The resolver represents a title as text. Preserve its template attributes.
     if (slot.kind === 'title') {
-      if (html?.startsWith('<title>') && slot.openTag)
-        html = slot.openTag + html.slice('<title>'.length)
-      html ??= slot.emptyMarkup
+      if (tag?.startsWith('<title>') && slot.openTag)
+        tag = slot.openTag + tag.slice('<title>'.length)
+      tag ??= slot.emptyMarkup
     }
-    if (html)
-      inserts.push({ offset: slot.offset, html })
+    result += html.slice(offset, slot.offset) + (tag ?? '')
+    offset = slot.end
   }
   let cursor = 0
-  let remaining = ''
+  result += html.slice(offset, end) + bootstrap
   for (const { start, end } of matches) {
-    remaining += headTags.slice(cursor, start)
+    result += headTags.slice(cursor, start)
     cursor = end
   }
-  return { inserts, headTags: remaining + headTags.slice(cursor) }
+  return result + headTags.slice(cursor)
 }

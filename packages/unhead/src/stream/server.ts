@@ -1,12 +1,11 @@
-import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
+import type { PreparedTemplate } from '../parser'
+import type { StreamingHtmlTemplate } from '../parser/template'
 import type { ServerUnhead } from '../server/createHead'
-import type { ExtractedTemplateCache } from '../server/transformHtmlTemplate'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
-import { placeStreamingMetadata } from '../parser/streamingMetadata'
+import { renderStreamingHead } from '../parser/streamingMetadata'
 import { parseHtmlForStreamingExtraction } from '../parser/template'
 import { createHead, renderWithoutDefaultCharset } from '../server/createHead'
-import { extractPreparedTemplate, pushExtractedTemplateEntry } from '../server/transformHtmlTemplate'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
@@ -21,8 +20,7 @@ const AMP_RE = /&/g
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
-let preparedStreamingExtractions: WeakMap<PreparedTemplate, ExtractedTemplateCache> | undefined
-let preparedStreamingLayouts: WeakMap<PreparedHtmlTemplateWithIndexes, StreamingTemplateLayout | null> | undefined
+let preparedStreamingExtractions: WeakMap<PreparedTemplate, StreamingHtmlTemplate> | undefined
 
 /**
  * Base context with just the head instance.
@@ -191,16 +189,18 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
   return result
 }
 
-function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: PreparedHtmlTemplateWithIndexes): string {
+function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: StreamingHtmlTemplate, end?: number): string {
   const bootstrap = createBootstrapScript(getStreamKey(head), head._stream?.nonce)
-  const metadata = parsed.headSlots ? placeStreamingMetadata(parsed.headSlots, ssr.headTags) : undefined
+  const headContent = parsed.headSlots
+    ? renderStreamingHead(parsed.headSlots, ssr.headTags, parsed.html, Math.max(0, parsed.indexes.htmlTagEnd), parsed.indexes.headTagEnd, bootstrap)
+    : undefined
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
-    headTags: bootstrap + (metadata?.headTags ?? ssr.headTags),
+    headTags: headContent === undefined ? bootstrap + ssr.headTags : '',
     bodyAttrs: ssr.bodyAttrs,
     bodyTagsOpen: ssr.bodyTagsOpen,
-    bodyTags: ssr.bodyTags,
-  }, metadata?.inserts)
+    bodyTags: end === undefined ? ssr.bodyTags : '',
+  }, headContent, end)
 }
 
 /**
@@ -631,46 +631,6 @@ export interface StreamingTemplateParts {
   bodyTagsAt?: number
 }
 
-interface StreamingTemplateLayout {
-  shellTemplate: PreparedHtmlTemplateWithIndexes
-  endBeforeBodyTags: string
-  endAfterBodyTags: string
-}
-
-function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const { html, indexes, bodyOutlet, headSlots } = parsed
-  const { bodyTagEnd, bodyCloseTagStart } = indexes
-  if (bodyTagEnd < 0 || bodyCloseTagStart < bodyTagEnd)
-    return
-
-  // The shell is a prefix of the original document, so its offsets still match.
-  return {
-    shellTemplate: {
-      html: html.slice(0, bodyOutlet?.start ?? bodyTagEnd),
-      input: parsed.input,
-      indexes: { ...indexes, bodyCloseTagStart: -1 },
-      headSlots,
-    },
-    endBeforeBodyTags: html.slice(bodyOutlet?.end ?? bodyTagEnd, bodyCloseTagStart),
-    endAfterBodyTags: html.slice(bodyCloseTagStart),
-  }
-}
-
-function getPreparedStreamingLayout(template: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
-  const cache = preparedStreamingLayouts ||= new WeakMap()
-  let layout = cache.get(template)
-  if (layout === undefined) {
-    layout = createStreamingTemplateLayout(template) || null
-    if (layout) {
-      Object.freeze(layout.shellTemplate.indexes)
-      Object.freeze(layout.shellTemplate)
-      Object.freeze(layout)
-    }
-    cache.set(template, layout)
-  }
-  return layout || undefined
-}
-
 /**
  * @experimental
  *
@@ -708,6 +668,16 @@ export function prepareStreamingTemplate(
   return renderStreamingTemplate(head, template, preRenderedState, true)
 }
 
+function getPreparedStreamingExtraction(template: PreparedTemplate) {
+  const cache = preparedStreamingExtractions ||= new WeakMap()
+  let extracted = cache.get(template)
+  if (!extracted) {
+    extracted = parseHtmlForStreamingExtraction(template)
+    cache.set(template, extracted)
+  }
+  return extracted
+}
+
 function renderStreamingTemplate(
   head: Unhead<any>,
   template: string | PreparedTemplate,
@@ -715,15 +685,28 @@ function renderStreamingTemplate(
   useTemplateCharset: boolean,
 ): StreamingTemplateParts {
   const cached = typeof template !== 'string' && !preRenderedState
-    ? extractPreparedTemplate(template, preparedStreamingExtractions ||= new WeakMap(), parseHtmlForStreamingExtraction)
+    ? getPreparedStreamingExtraction(template)
     : undefined
-  let parsed = typeof template === 'string'
+  let parsed: StreamingHtmlTemplate = typeof template === 'string'
     ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForStreamingExtraction(template))
-    : cached?.template ?? template
+    : cached ?? template
 
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
   const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined
-  const templateEntry = shouldPushTemplate ? pushExtractedTemplateEntry(head, cached, parsed) : undefined
+  if (shouldPushTemplate) {
+    const input = parsed.input
+    // Give hooks a request-local copy of the cached metadata and attributes.
+    const templateInput = cached
+      ? {
+          ...input,
+          ...(input.meta && { meta: input.meta.map(meta => ({ ...meta })) }),
+          ...(input.htmlAttrs && { htmlAttrs: { ...input.htmlAttrs } }),
+          ...(input.bodyAttrs && { bodyAttrs: { ...input.bodyAttrs } }),
+        }
+      : input
+    head.push(templateInput, { _index: 0 })
+  }
+  const templateEntry = shouldPushTemplate ? head.entries.get(0) : undefined
   // Without hooks, the server renderer cannot skip via ssr:beforeRender.
   let rendered = !head.hooks
   const stopTrackingRender = templateEntry
@@ -739,23 +722,19 @@ function renderStreamingTemplate(
       : head.render() as SSRHeadPayload)
     // A skipped render returns an empty payload and cannot replace the extracted markup.
     if (templateEntry && !rendered && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
-      parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-    const layout = typeof template === 'string'
-      ? createStreamingTemplateLayout(parsed)
-      : getPreparedStreamingLayout(parsed)
-    if (layout) {
-      const shell = applyShellToTemplate(head, { ...ssr, bodyTags: '' }, layout.shellTemplate)
+      parsed = { ...parsed, headSlots: undefined }
+    const { html, indexes, bodyOutlet } = parsed
+    const { bodyTagEnd, bodyCloseTagStart } = indexes
+    if (bodyTagEnd >= 0 && bodyCloseTagStart >= bodyTagEnd) {
+      const endStart = bodyOutlet?.end ?? bodyTagEnd
       parts = {
-        shell,
-        end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
-        bodyTagsAt: layout.endBeforeBodyTags.length,
+        shell: applyShellToTemplate(head, ssr, parsed, bodyOutlet?.start ?? bodyTagEnd),
+        end: html.slice(endStart, bodyCloseTagStart) + ssr.bodyTags + html.slice(bodyCloseTagStart),
+        bodyTagsAt: bodyCloseTagStart - endStart,
       }
     }
     else {
-      parts = {
-        shell: applyShellToTemplate(head, ssr, parsed),
-        end: '',
-      }
+      parts = { shell: applyShellToTemplate(head, ssr, parsed), end: '' }
     }
   }
   catch (error) {

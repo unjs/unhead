@@ -1,6 +1,6 @@
 import type { DefaultTreeAdapterMap, DefaultTreeAdapterTypes, Token, TreeAdapter } from 'parse5'
 import type { SerializableHead } from '../types'
-import type { HeadSlot } from './streamingMetadata'
+import type { HeadSlot, HeadSlots } from './streamingMetadata'
 import { defaultTreeAdapter, parse, html as parse5Html } from 'parse5'
 import { hasOwn } from '../utils/hasOwn'
 import { streamingMetadataKind } from './streamingMetadata'
@@ -50,8 +50,11 @@ export interface PreparedHtmlTemplateWithIndexes {
     bodyCloseTagStart: number
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
-  headSlots?: readonly HeadSlot[]
-  hasLegacyCharset?: boolean
+}
+
+export interface StreamingHtmlTemplate extends PreparedHtmlTemplateWithIndexes {
+  readonly headSlots?: HeadSlots
+  readonly hasLegacyCharset?: boolean
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -365,42 +368,26 @@ export function parseHtmlForIndexes(html: string, mode: 'stream' | 'body-close' 
   }
 }
 
-type ReplaceTemplateRange = (start: number, end: number, replacement?: string) => number
+type ReplaceTemplateRange = (start: number, end: number, replacement?: string) => void
 interface StreamingHeadMetadata {
-  headSlots: readonly HeadSlot[]
+  headSlots: HeadSlots
   hasLegacyCharset: boolean
 }
-type HeadExtractor = (
-  html: string,
-  head: DefaultTreeAdapterTypes.Element,
-  headTagEnd: number,
-  input: SerializableHead,
-  replace: ReplaceTemplateRange,
-) => StreamingHeadMetadata | void
-
-function extractTemplate(
-  template: string | PreparedTemplate,
-  deferBodyClose: boolean,
-  extractHead: HeadExtractor,
-  includeBodyOutlet = false,
-): PreparedHtmlTemplateWithIndexes {
+/** Extract managed elements from the document head while preserving other markup. */
+/* @__PURE__ */
+export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate, deferBodyClose = false): PreparedHtmlTemplateWithIndexes {
   const html = typeof template === 'string' ? template : template.html
   const prepared = typeof template !== 'string' && preparedTemplates?.has(template) ? template : undefined
   const { root, rootStart, head, body, bodyStart, indexes, partial } = readTemplate(html, deferBodyClose, prepared?.indexes)
-  const bodyOutlet = includeBodyOutlet
-    ? (prepared ? prepared.bodyOutlet : findBodyOutlet(html, body, indexes))
-    : undefined
   const input: SerializableHead = {}
   const parts: string[] = []
   let cursor = 0
   let removed = 0
 
   function replace(start: number, end: number, replacement = '') {
-    const offset = start - removed
     parts.push(html.slice(cursor, start), replacement)
     cursor = end
     removed += end - start - replacement.length
-    return offset
   }
 
   if (root && rootStart) {
@@ -412,10 +399,10 @@ function extractTemplate(
     }
   }
 
-  const hasExplicitHead = head !== undefined && indexes.headTagEnd >= 0
-  const headMetadata = hasExplicitHead ? extractHead(html, head, indexes.headTagEnd, input, replace) : undefined
-  if (hasExplicitHead)
+  if (head && indexes.headTagEnd >= 0) {
+    extractDocumentHead(html, head, indexes.headTagEnd, input, replace)
     indexes.headTagEnd -= removed
+  }
 
   if (body && bodyStart) {
     indexes.bodyTagStart -= removed
@@ -429,22 +416,20 @@ function extractTemplate(
   if (indexes.bodyCloseTagStart >= 0)
     indexes.bodyCloseTagStart -= removed
 
-  const result: PreparedHtmlTemplateWithIndexes = {
+  return {
     html: parts.length ? parts.join('') + html.slice(cursor) : html,
     input,
     indexes: partial ? withDeferredBodyClose(html, indexes, removed) : indexes,
   }
-  if (bodyOutlet)
-    result.bodyOutlet = Object.freeze({ start: bodyOutlet.start - removed, end: bodyOutlet.end - removed })
-  if (headMetadata) {
-    result.headSlots = headMetadata.headSlots
-    if (headMetadata.hasLegacyCharset)
-      result.hasLegacyCharset = true
-  }
-  return result
 }
 
-const extractDocumentHead: HeadExtractor = (html, head, headTagEnd, input, replace) => {
+function extractDocumentHead(
+  html: string,
+  head: DefaultTreeAdapterTypes.Element,
+  headTagEnd: number,
+  input: SerializableHead,
+  replace: ReplaceTemplateRange,
+) {
   let whitespaceStart: number | undefined
   for (const node of head.childNodes) {
     if (defaultTreeAdapter.isTextNode(node)) {
@@ -505,8 +490,9 @@ const extractDocumentHead: HeadExtractor = (html, head, headTagEnd, input, repla
   }
 }
 
-const extractStreamingHead: HeadExtractor = (html, head, headTagEnd, input, replace) => {
+function extractStreamingHead(html: string, head: DefaultTreeAdapterTypes.Element, headTagEnd: number, input: SerializableHead): StreamingHeadMetadata | undefined {
   let headSlots: HeadSlot[] | undefined
+  let count = 0
   let hasLegacyCharset = false
   for (const node of head.childNodes) {
     if (!defaultTreeAdapter.isElementNode(node) || !node.sourceCodeLocation?.startTag)
@@ -519,20 +505,26 @@ const extractStreamingHead: HeadExtractor = (html, head, headTagEnd, input, repl
     if (!kind || (kind === 'title' && !endTag))
       continue
 
-    const offset = replace(startTag.startOffset, end)
-    const firstSlot = !headSlots?.some(slot => slot.kind === kind)
+    const offset = startTag.startOffset
+    const slots = headSlots ||= []
+    const firstSlot = !slots.some(slot => slot.kind === kind)
+    if (firstSlot)
+      count++
+    else
+      slots.push({ kind: undefined, offset, end })
     if (kind === 'title') {
       const text = node.childNodes.find(defaultTreeAdapter.isTextNode)?.value
       const title = text ? trimHtmlWhitespace(text) : ''
       if (title)
         input.title ||= title
       if (firstSlot) {
-        (headSlots ||= []).push(Object.freeze({
+        slots.push({
           kind,
           offset,
+          end,
           openTag: node.attrs.length ? html.slice(startTag.startOffset, startTag.endOffset) : undefined,
           emptyMarkup: title ? undefined : html.slice(startTag.startOffset, end),
-        }))
+        })
       }
     }
     else {
@@ -542,22 +534,32 @@ const extractStreamingHead: HeadExtractor = (html, head, headTagEnd, input, repl
       }
       (input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
       if (firstSlot)
-        (headSlots ||= []).push(Object.freeze({ kind, offset }))
+        slots.push({ kind, offset, end })
     }
   }
   if (headSlots)
-    return { headSlots: Object.freeze(headSlots), hasLegacyCharset }
-}
-
-/** Extract managed elements from the document head while preserving other markup. */
-/* @__PURE__ */
-export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate, deferBodyClose = false): PreparedHtmlTemplateWithIndexes {
-  return extractTemplate(template, deferBodyClose, extractDocumentHead)
+    return { headSlots: { ranges: headSlots, count }, hasLegacyCharset }
 }
 
 /* @__PURE__ */
-export function parseHtmlForStreamingExtraction(template: string | PreparedTemplate): PreparedHtmlTemplateWithIndexes {
-  return extractTemplate(template, false, extractStreamingHead, true)
+export function parseHtmlForStreamingExtraction(template: string | PreparedTemplate): StreamingHtmlTemplate {
+  const html = typeof template === 'string' ? template : template.html
+  const prepared = typeof template !== 'string' && preparedTemplates?.has(template) ? template : undefined
+  const { root, rootStart, head, body, bodyStart, indexes } = readTemplate(html, false, prepared?.indexes)
+  const input: SerializableHead = {}
+  if (root && rootStart) {
+    const attrs = readAttributes(root, rootStart, false)
+    if (Object.keys(attrs).length)
+      input.htmlAttrs = attrs
+  }
+  if (body && bodyStart) {
+    const attrs = readAttributes(body, bodyStart, false)
+    if (Object.keys(attrs).length)
+      input.bodyAttrs = attrs
+  }
+  // The shell renderer applies metadata edits against the original offsets.
+  const metadata = head && indexes.headTagEnd >= 0 ? extractStreamingHead(html, head, indexes.headTagEnd, input) : undefined
+  return { html, input, indexes, bodyOutlet: prepared ? prepared.bodyOutlet : findBodyOutlet(html, body, indexes), ...metadata }
 }
 
 function withDeferredBodyClose(
@@ -638,7 +640,8 @@ function findBodyOutlet(
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },
-  headInserts?: readonly { offset: number, html: string }[],
+  headContent?: string,
+  end?: number,
 ): string {
   const { html, indexes } = template
   const parts: string[] = []
@@ -653,13 +656,7 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
-    if (headInserts) {
-      for (const insert of headInserts) {
-        parts.push(html.slice(lastIndex, insert.offset), insert.html)
-        lastIndex = insert.offset
-      }
-    }
-    parts.push(html.substring(lastIndex, indexes.headTagEnd), headHtml.headTags)
+    parts.push(headContent ?? html.substring(lastIndex, indexes.headTagEnd), headHtml.headTags)
     lastIndex = indexes.headTagEnd
   }
 
@@ -684,7 +681,7 @@ export function applyHeadToHtml(
   }
   else {
     // No closing body tag found, just append the rest
-    parts.push(html.substring(lastIndex))
+    parts.push(html.substring(lastIndex, end))
   }
 
   return parts.join('')
