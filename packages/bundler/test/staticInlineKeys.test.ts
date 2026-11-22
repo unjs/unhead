@@ -377,6 +377,31 @@ describe('static inline keys', () => {
     }
   })
 
+  it('leaves app input unkeyed if an SSR-external workspace package can import it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'unhead-app-'))
+    const workspace = join(root, 'workspace')
+    const external = join(workspace, 'index.mjs')
+    const sibling = join(root, 'sibling.mjs')
+    const code = `import { useHead } from '@unhead/vue'\nuseHead({ script: [{ textContent: ${JSON.stringify(js)} }] })`
+    try {
+      await mkdir(workspace)
+      await writeFile(join(workspace, 'package.json'), '{"name":"@acme/workspace"}')
+      await writeFile(external, `import '../sibling.mjs'`)
+      await writeFile(sibling, code)
+      const output = await render(code, true, {}, undefined, {
+        bundled: false,
+        root,
+        linked: sibling,
+        buildExternal: '@acme/workspace',
+        alias: { '@acme/workspace': external },
+      })
+      expect(output).toBe(await render(code))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('keeps callback parameter values independent of outer constants', async () => {
     const code = `const body = ${JSON.stringify(css)}
     useHead((body = ${JSON.stringify(`${css} /* first */`)}) => ({ style: [{ innerHTML: body }] }))

@@ -102,7 +102,6 @@ function inlineInput(tag: ObjectExpression, scope: ScopeTracker) {
 }
 
 interface NamedPackage {
-  directory: string
   name: string
 }
 
@@ -114,7 +113,7 @@ function nearestNamedPackage(dir: string, cache: Map<string, NamedPackage | unde
   const name: unknown = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8'))?.name : undefined
   let result: NamedPackage | undefined
   if (typeof name === 'string' && name)
-    result = { directory: dir, name }
+    result = { name }
   else if (dir !== parent)
     result = nearestNamedPackage(parent, cache)
   cache.set(dir, result)
@@ -203,8 +202,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
           const { pathname } = splitTransformId(path)
           if (pathname.endsWith('.json') || !existsSync(pathname))
             continue
-          const file = realpathSync(pathname)
-          if (!NODE_MODULES_RE.test(file) && isWithin(owner?.directory ?? root, file) && nearestNamedPackage(file, packages) === owner)
+          if (!NODE_MODULES_RE.test(realpathSync(pathname)))
             return
         }
       }
