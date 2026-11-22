@@ -63,7 +63,11 @@ function deltaCell(item: BundleData, status: Status): string {
   return `${emoji} ${formatDelta(gzDiff)}${pct(gzDiff, item.baseGzippedSize)}`
 }
 
-export function renderBundleReport(data: BundleData[]): string {
+function formatBytes(bytes: number | null): string {
+  return bytes === null ? 'Unavailable' : `${bytes.toLocaleString('en-US')} B`
+}
+
+export function renderBundleReport(data: BundleData[], fieldnote?: { before: number | null, after: number | null }): string {
   const rows = data.map(item => ({ item, status: statusOf(item) }))
   const changed = rows.filter(r => r.status === 'grew' || r.status === 'shrank')
   const grew = changed.filter(r => r.status === 'grew')
@@ -81,6 +85,18 @@ export function renderBundleReport(data: BundleData[]): string {
     verdict.push(`🆕 ${newly.length} new bundle${newly.length > 1 ? 's' : ''} tracked`)
 
   const out: string[] = ['### 📦 Bundle Size', '', verdict.join(' · ')]
+
+  if (fieldnote) {
+    const { before, after } = fieldnote
+    const delta = before === null || after === null ? null : after - before
+    const change = delta === null ? '—' : `${delta < 0 ? '−' : delta > 0 ? '+' : ''}${formatBytes(Math.abs(delta))}`
+    out.push(
+      '',
+      '| Bundle | Before | After | Δ |',
+      '|---|---:|---:|---:|',
+      `| Fieldnote entry (Brotli) | ${formatBytes(before)} | ${formatBytes(after)} | ${change} |`,
+    )
+  }
 
   // surface only the bundles that actually moved
   if (changed.length) {
