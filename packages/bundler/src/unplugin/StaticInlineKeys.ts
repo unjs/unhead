@@ -1,5 +1,5 @@
 import type { CallExpression, Expression, ObjectExpression, ObjectProperty } from 'oxc-parser'
-import type { ResolvedConfig } from 'vite'
+import type { Plugin, ResolvedConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
@@ -7,13 +7,14 @@ import { dirname, join } from 'node:path'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, ScopeTrackerVariable, walk } from 'oxc-walker'
 import { dedupeKey, normalizeProps } from 'unhead/utils'
-import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
 import { isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, SOURCE_FILE_RE, splitTransformId } from './utils'
 
 const MIN_INLINE_LENGTH = 4096
 const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte)|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
+const HEAD_FACTORY_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/(?:client|server)$/
+const HEAD_INJECT_IMPORTS = new Set(['@unhead/vue', '#app', '#app/composables/head', '#unhead/composables', 'nuxt/app'])
 const VARIABLE_CONTENT_RE = /%\w|[\r\0]|<\/(?:script|style|noscript)/i
 const PACKAGE_NAME_RE = /^(?:@[^/]+\/)?[^./][^/]*/
 
@@ -48,19 +49,41 @@ function resolveStaticText(value: Expression, scope: ScopeTracker): string | und
   return staticText(value)
 }
 
-function headInputIndex(callee: CallExpression['callee'], scope: ScopeTracker, allowAutoImport: boolean): 0 | 1 | undefined {
+function calleeDeclaration(callee: CallExpression['callee'], scope: ScopeTracker) {
   const binding = callee.type === 'MemberExpression' ? callee.object : callee
-  if (binding.type !== 'Identifier')
-    return
-  const declaration = scope.getDeclaration(binding.name)
+  if (binding.type === 'Identifier')
+    return scope.getDeclaration(binding.name)
+}
+
+function importedFunctionName(callee: CallExpression['callee'], declaration: ScopeTrackerImport) {
+  const name = declaration.node.type === 'ImportNamespaceSpecifier' && callee.type === 'MemberExpression' && !callee.computed
+    ? callee.property
+    : declaration.node.type === 'ImportSpecifier' && callee.type === 'Identifier' ? declaration.node.imported : undefined
+  return name?.type === 'Identifier' ? name.name : undefined
+}
+
+function createsHead(callee: CallExpression['callee'], scope: ScopeTracker): boolean {
+  const declaration = calleeDeclaration(callee, scope)
+  if (!(declaration instanceof ScopeTrackerImport))
+    return false
+  const source = declaration.importNode.source.value
+  const name = importedFunctionName(callee, declaration)
+  return (name === 'createHead' && HEAD_FACTORY_IMPORT_RE.test(source))
+    || (name === 'injectHead' && HEAD_INJECT_IMPORTS.has(source))
+}
+
+function headInputIndex(callee: CallExpression['callee'], scope: ScopeTracker, heads: Set<ScopeTrackerVariable['node']>, allowAutoImport: boolean): 0 | 1 | undefined {
+  const declaration = calleeDeclaration(callee, scope)
+  if (callee.type === 'MemberExpression' && !callee.computed && callee.property.type === 'Identifier' && callee.property.name === 'push'
+    && declaration instanceof ScopeTrackerVariable && heads.has(declaration.node)) {
+    return 0
+  }
   if (!declaration)
     return allowAutoImport && callee.type === 'Identifier' && HEAD_FUNCTIONS.has(callee.name) ? 0 : undefined
   if (!(declaration instanceof ScopeTrackerImport) || !HEAD_IMPORT_RE.test(declaration.importNode.source.value))
     return
-  const name = declaration.node.type === 'ImportNamespaceSpecifier' && callee.type === 'MemberExpression' && !callee.computed
-    ? callee.property
-    : declaration.node.type === 'ImportSpecifier' && callee.type === 'Identifier' ? declaration.node.imported : undefined
-  if (name?.type === 'Identifier' && HEAD_FUNCTIONS.has(name.name))
+  const name = importedFunctionName(callee, declaration)
+  if (name && HEAD_FUNCTIONS.has(name))
     return declaration.importNode.source.value === 'unhead' ? 1 : 0
 }
 
@@ -136,21 +159,20 @@ function bundlesDependency(environment: ResolvedConfig['environments'][string], 
   return rules.some(rule => typeof rule === 'string' ? rule === name : name.match(rule) !== null)
 }
 
-export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((options) => {
+export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
   let serverEnvironments: ResolvedConfig['environments'][string][] = []
   const packageNames = new Map<string, string | undefined>()
   return {
     name: 'unhead:static-inline-keys',
+    apply: 'build',
     enforce: 'post',
-    vite: {
-      apply: 'build',
-      configResolved(config) {
-        serverEnvironments = Object.values(config.environments).filter(env => env.consumer === 'server')
-      },
+    configResolved(config) {
+      serverEnvironments = Object.values(config.environments).filter(env => env.consumer === 'server')
     },
     transform: {
+      order: 'post',
       filter: {
-        code: /\buse(?:Server)?Head\b/,
+        code: /\b(?:use(?:Server)?Head|createHead|injectHead)\b/,
         id: { include: [SOURCE_FILE_RE, ...(options.filter?.include ?? [])], exclude: options.filter?.exclude },
       },
       handler(code, id) {
@@ -186,6 +208,18 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
           return
         }
         scopeTracker.freeze()
+        const heads = new Set<ScopeTrackerVariable['node']>()
+        if (code.includes('push') && /\b(?:createHead|injectHead)\b/.test(code)) {
+          walk(parsed.program, {
+            scopeTracker,
+            enter(node, parent) {
+              if (node.type === 'VariableDeclarator' && node.id.type === 'Identifier' && node.init?.type === 'CallExpression'
+                && parent?.type === 'VariableDeclaration' && parent.kind === 'const' && createsHead(node.init.callee, scopeTracker)) {
+                heads.add(node.id)
+              }
+            },
+          })
+        }
         const s = new MagicString(code)
         walk(parsed.program, {
           scopeTracker,
@@ -193,7 +227,7 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
             // A caller can patch a returned entry with a new input.
             if (node.type !== 'CallExpression' || parent?.type !== 'ExpressionStatement')
               return
-            const index = headInputIndex(node.callee, scopeTracker, !dependency && options.framework === '@unhead/vue' && isVueScript)
+            const index = headInputIndex(node.callee, scopeTracker, heads, !dependency && options.framework === '@unhead/vue' && isVueScript)
             // Entry options can override the normalized tag identity.
             if (index === undefined || node.arguments.length !== index + 1)
               return
@@ -243,4 +277,4 @@ export const StaticInlineKeys = createUnplugin<StaticInlineKeysOptions, false>((
       },
     },
   }
-})
+}

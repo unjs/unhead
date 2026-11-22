@@ -41,7 +41,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     }))
   }
   if (options.transformInlineTagKeys)
-    plugins.push(StaticInlineKeys.vite({ filter: options.filter, sourcemap: options.sourcemap, framework }))
+    plugins.push(StaticInlineKeys({ filter: options.filter, sourcemap: options.sourcemap, framework }))
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {

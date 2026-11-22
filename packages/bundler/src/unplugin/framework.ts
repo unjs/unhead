@@ -145,7 +145,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
         if (options.transformInlineTagKeys)
-          plugins.push(StaticInlineKeys.vite({ filter: options.filter, sourcemap: options.sourcemap, framework }))
+          plugins.push(StaticInlineKeys({ filter: options.filter, sourcemap: options.sourcemap, framework }))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {

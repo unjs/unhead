@@ -22,6 +22,7 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
     transformInlineTagKeys: enabled,
     transformInlineScripts: false,
     devtools: false,
+    validate: false,
     minify: minifyJs && { js: minifyJs },
   }, { framework: '@unhead/vue' })) {
     if (dependency && plugin.name === 'unhead:static-inline-keys' && plugin.configResolved) {
@@ -39,7 +40,16 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
   }
   const head = createHead({ disableDefaults: true })
   const useHead = (entry: ResolvableHead) => head.push(entry)
-  runInNewContext(code.replace(/^import .*\n/gm, ''), { useHead, headApi: { useHead }, coreUseHead, coreHead: head, ...input })
+  const getHead = () => head
+  runInNewContext(code.replace(/^import .*\n/gm, ''), {
+    useHead,
+    headApi: { useHead },
+    coreUseHead,
+    coreHead: head,
+    server: { createHead: getHead },
+    injectHead: getHead,
+    ...input,
+  })
   return head.render().headTags
 }
 
@@ -112,6 +122,51 @@ describe('static inline keys', () => {
     const output = await render(code, true)
     expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
     expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code))
+  })
+
+  it('gives repeated static pushes on a known Unhead instance one content key', async () => {
+    const code = `import * as server from 'unhead/server'
+    function mount(server) {
+      head.push({ style: [{ innerHTML: ${JSON.stringify(css)} }] })
+    }
+    const head = server.createHead()
+    mount(); mount()`
+
+    const output = await render(code, true, {}, undefined, { bundled: true })
+    expect(output).toMatch(/data-hid="unhead:inline:[^"]+"/)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code, false))
+  })
+
+  it.each(['@unhead/vue', '#app/composables/head', '#unhead/composables', 'nuxt/app'])('keys static pushes from %s and keeps dynamic, keyed and patchable input', async (source) => {
+    const code = `import { injectHead } from '${source}'
+    const head = injectHead()
+    head.push({ style: [{ innerHTML: ${JSON.stringify(css)} }] })
+    head.push({ style: [{ innerHTML: dynamic, key: 'author' }] })
+    head.push({ style: [{ innerHTML: dynamic }] })
+    head.push({ style: [{ innerHTML: ${JSON.stringify(`${css} /* options */`)} }] }, { tagPriority: 'low' })
+    const entry = head.push({ style: [{ innerHTML: ${JSON.stringify(`${css} /* patchable */`)} }] })
+    entry.patch({ style: [{ innerHTML: dynamicPatch }] })`
+
+    const input = { dynamic: `${css} /* dynamic */`, dynamicPatch: `${css} /* dynamic patch */` }
+    const output = await render(code, true, input)
+    expect(output.match(/data-hid="unhead:inline:[^"]+"/g)).toHaveLength(1)
+    expect(output.replace(/ data-hid="unhead:inline:[^"]+"/, '')).toBe(await render(code, false, input))
+  })
+
+  it('leaves pushes on shadowed or foreign receivers alone', async () => {
+    const code = `import * as server from 'unhead/server'
+    const head = server.createHead()
+    function register(head) {
+      head.push({ style: [{ innerHTML: ${JSON.stringify(css)} }] })
+    }
+    register(head)
+    function registerForeign(server) {
+      const head = server.createHead()
+      head.push({ style: [{ innerHTML: ${JSON.stringify(`${css} /* foreign */`)} }] })
+    }
+    registerForeign({ createHead: () => coreHead })`
+
+    expect(await render(code, true)).toBe(await render(code, false))
   })
 
   it('keys an inline string passed as a shorthand property', async () => {
