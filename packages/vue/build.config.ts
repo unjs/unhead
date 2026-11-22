@@ -16,7 +16,6 @@ export default defineBuildConfig({
     { input: 'src/components', name: 'components' },
     { input: 'src/server', name: 'server' },
     { input: 'src/client', name: 'client' },
-    { input: 'src/client/lean', name: 'client/lean' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/types/index', name: 'types' },

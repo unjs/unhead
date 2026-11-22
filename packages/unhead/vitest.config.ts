@@ -16,7 +16,6 @@ export default defineProject({
       // has a real module to intercept; see `@unhead/vue`'s vitest config.
       'unhead/stream/iife': resolve(__dirname, 'src/stream/iife.ts'),
       'unhead/server': resolve(__dirname, 'src/server/index.ts'),
-      'unhead/client/lean': resolve(__dirname, 'src/client/lean.ts'),
       'unhead/client': resolve(__dirname, 'src/client/index.ts'),
       'unhead/types': resolve(__dirname, 'src/types/index.ts'),
       'unhead/plugins': resolve(__dirname, 'src/plugins/index.ts'),

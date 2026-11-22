@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { createStreamableHead } from 'unhead/stream/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
 
 let originalWindow: any
@@ -48,6 +48,26 @@ function waitForDomUpdate() {
 }
 
 describe('streaming client hydration', () => {
+  it('replays a server script event when the hydrated head adds a handler', () => {
+    const { document, window } = setupStreamingDom([
+      { title: 'Streamed', titleTemplate: '%s | Site', script: [{ key: 'streamed', src: '/streamed.js' }] },
+    ])
+    expect(document.title).toBe('Streamed | Site')
+    const script = document.querySelector('script[src="/streamed.js"]')!
+    script.dataset.onloadfired = 'true'
+
+    const onload = vi.fn()
+    const entry = createStreamableHead()!.push({ script: [{ key: 'streamed', src: '/streamed.js', onload }] })
+    expect(onload).toHaveBeenCalledOnce()
+    expect(document.querySelector('script[src="/streamed.js"]')).toBe(script)
+
+    script.dispatchEvent(new window.Event('load'))
+    expect(onload).toHaveBeenCalledTimes(2)
+    entry.dispose()
+    script.dispatchEvent(new window.Event('load'))
+    expect(onload).toHaveBeenCalledTimes(2)
+  })
+
   describe('queue consumption', () => {
     it('processes queued entries on creation', async () => {
       const { document } = setupStreamingDom([

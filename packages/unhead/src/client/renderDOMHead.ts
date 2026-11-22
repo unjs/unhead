@@ -15,19 +15,13 @@ export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRende
   return head => _renderDOMHead(head, options, renderDomEvent)
 }
 
-/* @__NO_SIDE_EFFECTS__ */
-export function createLeanDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
-  return head => _renderDOMHead(head, options)
+export function renderStreamingDOMHead(head: Unhead<any>): boolean {
+  return _renderDOMHead(head, {}, head._domEvent)
 }
 
 /** @deprecated Use `head.render()` instead */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   return _renderDOMHead(head, options, renderDomEvent)
-}
-
-/** @deprecated Use `head.render()` instead */
-export function renderLeanDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
-  return _renderDOMHead(head, options)
 }
 
 function hasPendingEntries<T extends Unhead<any>>(head: T) {
@@ -133,7 +127,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       for (const k in tag.props) {
         const v = tag.props[k]
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
-          (head._domEvent ?? renderEvent)?.(renderState, id, tag.tag, $el, k, v, track)
+          renderEvent?.(renderState, id, tag.tag, $el, k, v, track)
           continue
         }
         const ck = `${id}:attr:${k}`

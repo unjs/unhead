@@ -9,7 +9,6 @@
     "paths": {
       "unhead": ["./packages/unhead/src/index"],
       "unhead/client": ["./packages/unhead/src/client/index"],
-      "unhead/client/lean": ["./packages/unhead/src/client/lean"],
       "unhead/server": ["./packages/unhead/src/server/index"],
       "unhead/plugins": ["./packages/unhead/src/plugins/index"],
       "unhead/legacy": ["./packages/unhead/src/legacy/index"],
@@ -27,7 +26,6 @@
       "@unhead/dom": ["./packages/unhead/src/client/index"],
       "@unhead/vue": ["./packages/vue/src/index"],
       "@unhead/vue/client": ["./packages/vue/src/client"],
-      "@unhead/vue/client/lean": ["./packages/vue/src/client/lean"],
       "@unhead/vue/server": ["./packages/vue/src/server"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
