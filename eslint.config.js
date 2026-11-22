@@ -36,4 +36,16 @@ export default antfu(
       'harlanzw/vue-no-nested-reactivity': 'off',
     },
   },
+  {
+    files: ['bench/fixtures/fieldnote/package.json'],
+    rules: {
+      'pnpm/json-enforce-catalog': 'off',
+    },
+  },
+  {
+    files: ['bench/fixtures/fieldnote/app/**/*.vue'],
+    rules: {
+      'vue/singleline-html-element-content-newline': 'off',
+    },
+  },
 )

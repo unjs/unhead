@@ -32,9 +32,20 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
+      - name: Install Fieldnote dependencies
+        id: fieldnote
+        continue-on-error: true
+        run: |
+          fixture="$RUNNER_TEMP/fieldnote"
+          mkdir "$fixture"
+          cp -R bench/fixtures/fieldnote/. "$fixture/"
+          cd "$fixture"
+          pnpm install --frozen-lockfile --ignore-scripts
+
       - name: Build base branch bundles
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          FIELDNOTE_READY: ${{ steps.fieldnote.outcome == 'success' }}
         run: |
           pnpm install --frozen-lockfile
           VITEST_VERSION=$(node -p "require('vitest/package.json').version")
@@ -50,13 +61,17 @@ jobs:
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
           git diff --stat
-          git checkout -f "$BASE_REF"
+          git checkout -f "$BASE_SHA"
           pnpm install
           # Use the PR runner for both measurements, including across Vitest major upgrades.
           pnpm add -Dw --save-exact --ignore-scripts "vitest@$VITEST_VERSION"
           cp /tmp/unplugin-transform.bench.ts bench/unplugin-transform.bench.ts
           node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json
           pnpm build
+          if [[ "$FIELDNOTE_READY" == 'true' ]]; then
+            node "$RUNNER_TEMP/fieldnote/measure-entry.ts" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/fieldnote/base-entry.json" ||
+              echo "::warning title=Fieldnote bundle size::Could not measure the base entry."
+          fi
           # the base ref may predate some bundle configs (react, full, schema-org);
           # tolerate their absence so the other baselines are still produced and the
           # new bundles surface as fresh rather than failing the run
@@ -75,10 +90,16 @@ jobs:
           git checkout -f -
 
       - name: Build PR bundles
+        env:
+          FIELDNOTE_READY: ${{ steps.fieldnote.outcome == 'success' }}
         run: |
           pnpm install
           node bench/bundle/dependency-analyze.mjs > /tmp/pr-dependencies.json
           pnpm build
+          if [[ "$FIELDNOTE_READY" == 'true' ]]; then
+            node "$RUNNER_TEMP/fieldnote/measure-entry.ts" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/fieldnote/pr-entry.json" ||
+              echo "::warning title=Fieldnote bundle size::Could not measure the PR entry."
+          fi
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
           pnpm test:react-bundle-size
@@ -98,19 +119,19 @@ jobs:
         id: analyze
         env:
           BASE_DIST: /tmp/base-dist
+          BASE_FIELDNOTE_ENTRY: ${{ runner.temp }}/fieldnote/base-entry.json
           BASE_DEPENDENCIES: /tmp/base-dependencies.json
           BASE_PERF: /tmp/base-perf.json
           BASE_TRANSFORM_PERF: /tmp/base-transform-perf.json
           PR_DEPENDENCIES: /tmp/pr-dependencies.json
+          PR_FIELDNOTE_ENTRY: ${{ runner.temp }}/fieldnote/pr-entry.json
           PR_PERF: /tmp/pr-perf.json
           PR_TRANSFORM_PERF: /tmp/pr-transform-perf.json
         run: |
           output=$(bun bench/bundle/report.ts)
           echo "$output"
           printf '%s\n' "$output" >> "$GITHUB_STEP_SUMMARY"
-          echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$output" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          printf 'result<<EOF\n%s\nEOF\n' "$output" >> "$GITHUB_OUTPUT"
 
       - name: Post comment on PR
         if: github.event.pull_request.head.repo.full_name == github.repository
