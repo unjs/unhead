@@ -1,6 +1,7 @@
 import type { StreamingGlobal } from 'unhead/stream/client'
 import { JSDOM } from 'jsdom'
 import { createHead } from 'unhead/lazy'
+import { ServerOnlyCrawlerTagsPlugin } from 'unhead/plugins'
 import { createBootstrapScript } from 'unhead/stream/server'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -14,6 +15,26 @@ function createStreamDocument() {
 }
 
 describe('lazy head with streaming SSR', () => {
+  it('keeps crawler tags from the server stream when client crawler tags are filtered', async () => {
+    const { document, queue } = createStreamDocument()
+    const head = createHead({ document, streamKey: 'pageHead', plugins: [ServerOnlyCrawlerTagsPlugin] })
+    const description = () => document.querySelector('meta[name="description"]')?.getAttribute('content')
+
+    try {
+      queue.push([{ meta: [{ name: 'description', content: 'Queued on the server' }] }])
+      head.finishHydration()
+      await head.load()
+      await vi.waitFor(() => expect(description()).toBe('Queued on the server'))
+
+      head.push({ meta: [{ name: 'description', content: 'Client override' }] })
+      queue.push([{ meta: [{ name: 'description', content: 'Streamed after load' }] }])
+      await vi.waitFor(() => expect(description()).toBe('Streamed after load'))
+    }
+    finally {
+      document.defaultView?.close()
+    }
+  })
+
   it('retries activation after a failing replay leaves the route', async () => {
     const { document, queue } = createStreamDocument()
     queue.push([{ title: 'Obsolete' }])

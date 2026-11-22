@@ -1293,6 +1293,9 @@ importers:
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
         version: 16.0.3(rollup@4.63.2)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       rollup:
         specifier: ^4.63.2
         version: 4.63.2

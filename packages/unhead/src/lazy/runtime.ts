@@ -36,7 +36,7 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
   attachStreamHead(stream, head, (input) => {
     if (wasDiscarded())
       return
-    const entry = head.push(input as T, { _index: index++ })
+    const entry = head.push(input as T, { _index: index++, _streamed: true })
     replayShell()
     // A user hook can leave the route in the middle of replay.
     if (wasDiscarded())

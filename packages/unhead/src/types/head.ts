@@ -233,6 +233,11 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
    */
   _index?: number
   /**
+   * Entry arrived through the server stream.
+   * @internal
+   */
+  _streamed?: true
+  /**
    * Source location for devtools tracing.
    * @internal
    */

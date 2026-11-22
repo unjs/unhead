@@ -5,6 +5,7 @@ import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { callHook } from '../utils/callHook'
 import { dedupeKey, hashTag } from '../utils/dedupe'
+import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
@@ -276,6 +277,14 @@ function unwrapEntryInput(input: any): any {
   return typeof input === 'function' ? input() : input
 }
 
+function unpackStreamMeta(input: any): any {
+  // The IIFE renders before any client composables can register FlatMetaPlugin.
+  if (!input?._flatMeta)
+    return input
+  const { _flatMeta, meta, ...rest } = input
+  return { ...rest, meta: [...(Array.isArray(meta) ? meta : meta ? [meta] : []), ...unpackMeta(_flatMeta)] }
+}
+
 function rememberShellBodyTags(head: Unhead<any>): void {
   const state = streamState(head)
   let seen = state.seen
@@ -428,6 +437,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
         if (!input)
           continue
       }
+      input = unpackStreamMeta(input)
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
         inputs.push(input)
@@ -453,7 +463,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     // poison every subsequent chunk render with the same error.
     for (const [key, entry] of head.entries) {
       try {
-        safeJsonStringify(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers))
+        safeJsonStringify(unpackStreamMeta(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)))
       }
       catch {
         head.entries.delete(key)

@@ -5,7 +5,7 @@ import type { StreamingGlobal } from './types'
 export function attachStreamHead(
   queue: Pick<StreamingGlobal, '_q'> & Partial<StreamingGlobal>,
   head: Unhead<any>,
-  push: (input: SerializableHead) => number | undefined = input => head.push(input)._i,
+  push: (input: SerializableHead) => number | undefined = input => head.push(input, { _streamed: true })._i,
 ): void {
   const backlog = queue._q
   const previousHead = queue._head
