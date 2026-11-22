@@ -87,7 +87,7 @@ ${Array.from({ length: 72 }, (_, index) => `<link rel="${index < 15 ? 'modulepre
 </body></html>`
 
 export function hydrateSsrHead(createHead: typeof CreateHead, document: Document) {
-  createHead({ document }).push({
+  return createHead({ document }).push({
     title: 'Example Docs',
     htmlAttrs: { lang: 'en' },
     bodyAttrs: { class: 'site' },

@@ -11,11 +11,15 @@ it('adopts the SSR head and preserves Nuxt resource hints', () => {
     const hint = document.head.querySelector('link[rel="modulepreload"]')
     const style = document.head.querySelector('style[data-hid]')
 
-    hydrateSsrHead(createHead, document)
+    const entry = hydrateSsrHead(createHead, document)
 
     expect([...document.head.children, ...document.body.children].map(node => nodes.indexOf(node))).toEqual(nodes.map((_, index) => index))
-    expect(document.head.querySelector('link[rel="modulepreload"]')).toBe(hint)
     expect(document.head.querySelector('style[data-hid]')).toBe(style)
+
+    entry.dispose()
+
+    expect(document.head.querySelector('style[data-hid]')).toBeNull()
+    expect(document.head.querySelector('link[rel="modulepreload"]')).toBe(hint)
   }
   finally {
     dom.window.close()
