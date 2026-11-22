@@ -146,7 +146,10 @@ describe.each([
       },
     })
     head.push({ title: 'App', link: [{ rel: 'canonical', href: '/app' }] })
-    const source = templateWithTags.replace('</head>', '<link rel="icon" href="/icon.svg"></head>')
+    const source = templateWithTags
+      .replace('<html>', '<html lang="fr" dir="rtl">')
+      .replace('<body>', '<body class="ready">')
+      .replace('</head>', '<link rel="icon" href="/icon.svg"></head>')
 
     const { shell, end } = prepareStreamingTemplate(head, template(source))
     const { document } = new JSDOM(shell + end).window
@@ -155,6 +158,9 @@ describe.each([
     expect(document.head.querySelector('meta[charset]')?.getAttribute('charset')).toBe('UTF-8')
     expect(document.head.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/icon.svg')
     expect(document.head.querySelector('link[rel="canonical"]')).toBeNull()
+    expect(document.documentElement.lang).toBe('fr')
+    expect(document.documentElement.dir).toBe('rtl')
+    expect(document.body.className).toBe('ready')
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
     expect(renders).toBe(1)
   })
@@ -206,6 +212,22 @@ describe.each([
     expect(Array.from(document.head.querySelectorAll('meta[charset]'), meta => meta.getAttribute('charset'))).toEqual(['windows-1252'])
   })
 
+  it.each([
+    ['utf-8', 'windows-1252', 'utf8'],
+    ['windows-1252', 'utf-8', 'latin1'],
+  ] as const)('keeps the first template charset %s ahead of a duplicate %s', (first, second, encoding) => {
+    const { head } = createStreamableHead()
+    const source = templateWithTags.replace('<meta charset="UTF-8">', `<meta charset="${first}"><meta charset="${second}">`)
+    head.push({ title: 'café' })
+
+    const { shell, end } = prepareStreamingTemplate(head, template(source))
+    const { window } = new JSDOM(Buffer.from(shell + end, encoding))
+
+    expect(window.document.title).toBe('café')
+    expect(Array.from(window.document.head.querySelectorAll('meta[charset]'), meta => meta.getAttribute('charset')?.toLowerCase())).toEqual([first])
+    window.close()
+  })
+
   it('keeps the UTF-8 byte wrapper aligned with its output', async () => {
     const { head } = createStreamableHead()
     head.push({ title: 'café' })
@@ -223,6 +245,22 @@ describe.each([
     expect(document.characterSet).toBe('UTF-8')
     expect(document.title).toBe('café')
     expect(document.querySelector('#app > p')?.textContent).toBe('piñata')
+  })
+
+  it.each([false, true])('keeps wrapped bytes UTF-8 when a legacy charset is supplied by %s', async (byApp) => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    const source = byApp ? templateWithTags : templateWithTags.replace('charset="UTF-8"', 'charset="windows-1252"')
+    head.push({ title: 'café', meta: byApp ? [{ charset: 'windows-1252', id: 'app-charset' }] : undefined })
+
+    const input = new Response('piñata').body!
+    const bytes = await new Response(wrapStream(head, input, template(source))).arrayBuffer()
+    const { window } = new JSDOM(Buffer.from(bytes))
+
+    expect(window.document.characterSet).toBe('UTF-8')
+    expect(window.document.title).toBe('café')
+    expect(window.document.querySelector('#app')?.textContent).toBe('piñata')
+    expect(window.document.head.querySelector('meta[charset]')?.id).toBe(byApp ? 'app-charset' : '')
+    window.close()
   })
 
   it('keeps the template CSP before the bootstrap script', () => {
@@ -350,10 +388,16 @@ describe.each([
         return 'App'
       },
     })
+    head.hooks.hook('entries:normalize', ({ tags }) => {
+      for (const tag of tags) {
+        if (tag.props.content === 'Previous')
+          tag.props.content = 'Previous, normalized'
+      }
+    })
 
     expect(() => prepareStreamingTemplate(head, template(templateWithTags))).toThrow('Shell render failed')
     fail = false
 
-    expect(head.render().headTags).toBe('<title>App</title>\n<meta name="description" content="Previous">')
+    expect(head.render().headTags).toBe('<title>App</title>\n<meta name="description" content="Previous, normalized">')
   })
 })

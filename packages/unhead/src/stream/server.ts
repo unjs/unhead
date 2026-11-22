@@ -544,7 +544,7 @@ export function wrapStream(
       const activeReader = stream.getReader()
       let prepared: StreamingTemplateParts
       try {
-        prepared = renderStreamingTemplate(head, template, preRenderedState, false)
+        prepared = renderStreamingTemplate(head, template, preRenderedState, renderUtf8Head)
       }
       catch (error) {
         activeReader.releaseLock()
@@ -611,6 +611,22 @@ export function wrapStream(
   })
 }
 
+function renderUtf8Head(head: Unhead<any>): SSRHeadPayload {
+  const stop = head.hooks?.hook('ssr:render', ({ tags }) => {
+    const index = tags.findIndex(tag => tag.tag === 'meta' && tag.props.charset && !/^utf-8$/i.test(tag.props.charset))
+    if (index >= 0) {
+      const tag = tags[index]
+      tags[index] = { ...tag, props: { ...tag.props, charset: 'utf-8' } }
+    }
+  })
+  try {
+    return head.render() as SSRHeadPayload
+  }
+  finally {
+    stop?.()
+  }
+}
+
 /**
  * Result from prepareStreamingTemplate containing the shell and end parts
  */
@@ -665,7 +681,13 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  return renderStreamingTemplate(head, template, preRenderedState, true)
+  return renderStreamingTemplate(head, template, preRenderedState, renderManualHead)
+}
+
+function renderManualHead(head: Unhead<any>, { charset }: StreamingHtmlTemplate): SSRHeadPayload {
+  return charset && charset.trim().toLowerCase() !== 'utf-8'
+    ? renderWithoutDefaultCharset(head)
+    : head.render() as SSRHeadPayload
 }
 
 function getPreparedStreamingExtraction(template: PreparedTemplate) {
@@ -682,7 +704,7 @@ function renderStreamingTemplate(
   head: Unhead<any>,
   template: string | PreparedTemplate,
   preRenderedState: SSRHeadPayload | undefined,
-  useTemplateCharset: boolean,
+  renderHead: (head: Unhead<any>, template: StreamingHtmlTemplate) => SSRHeadPayload,
 ): StreamingTemplateParts {
   const cached = typeof template !== 'string' && !preRenderedState
     ? getPreparedStreamingExtraction(template)
@@ -716,13 +738,15 @@ function renderStreamingTemplate(
     : undefined
   let parts: StreamingTemplateParts
   try {
-    // The byte wrapper writes UTF-8. Manual streaming can use the template's encoding.
-    const ssr = preRenderedState ?? (useTemplateCharset && parsed.hasLegacyCharset
-      ? renderWithoutDefaultCharset(head)
-      : head.render() as SSRHeadPayload)
+    const ssr = preRenderedState ?? renderHead(head, parsed)
     // A skipped render returns an empty payload and cannot replace the extracted markup.
-    if (templateEntry && !rendered && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs)
-      parsed = { ...parsed, headSlots: undefined }
+    if (templateEntry && !rendered && !ssr.headTags && !ssr.bodyTags && !ssr.bodyTagsOpen && !ssr.htmlAttrs && !ssr.bodyAttrs) {
+      parsed = {
+        ...parsed,
+        headSlots: undefined,
+        indexes: { ...parsed.indexes, htmlTagStart: -1, bodyTagStart: -1 },
+      }
+    }
     const { html, indexes, bodyOutlet } = parsed
     const { bodyTagEnd, bodyCloseTagStart } = indexes
     if (bodyTagEnd >= 0 && bodyCloseTagStart >= bodyTagEnd) {
@@ -739,10 +763,14 @@ function renderStreamingTemplate(
   }
   catch (error) {
     if (templateEntry && head.entries.get(0) === templateEntry) {
-      if (previousEntry)
+      if (previousEntry) {
+        // It was detached when the resolver invalidated its hook-dependent cache.
+        delete previousEntry._tags
         head.entries.set(0, previousEntry)
-      else
+      }
+      else {
         head.entries.delete(0)
+      }
     }
     throw error
   }

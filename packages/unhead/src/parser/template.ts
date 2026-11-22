@@ -54,7 +54,7 @@ export interface PreparedHtmlTemplateWithIndexes {
 
 export interface StreamingHtmlTemplate extends PreparedHtmlTemplateWithIndexes {
   readonly headSlots?: HeadSlots
-  readonly hasLegacyCharset?: boolean
+  readonly charset?: string
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -371,7 +371,7 @@ export function parseHtmlForIndexes(html: string, mode: 'stream' | 'body-close' 
 type ReplaceTemplateRange = (start: number, end: number, replacement?: string) => void
 interface StreamingHeadMetadata {
   headSlots: HeadSlots
-  hasLegacyCharset: boolean
+  charset: string | undefined
 }
 /** Extract managed elements from the document head while preserving other markup. */
 /* @__PURE__ */
@@ -493,7 +493,7 @@ function extractDocumentHead(
 function extractStreamingHead(html: string, head: DefaultTreeAdapterTypes.Element, headTagEnd: number, input: SerializableHead): StreamingHeadMetadata | undefined {
   let headSlots: HeadSlot[] | undefined
   let count = 0
-  let hasLegacyCharset = false
+  let charset: string | undefined
   for (const node of head.childNodes) {
     if (!defaultTreeAdapter.isElementNode(node) || !node.sourceCodeLocation?.startTag)
       continue
@@ -528,9 +528,11 @@ function extractStreamingHead(html: string, head: DefaultTreeAdapterTypes.Elemen
       }
     }
     else {
+      if (kind === 'charset' && !firstSlot)
+        continue
       const attrs = readAttributes(node, startTag)
-      if (kind === 'charset' && attrs.charset.trim().toLowerCase() !== 'utf-8') {
-        hasLegacyCharset = true
+      if (kind === 'charset') {
+        charset = attrs.charset
       }
       (input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
       if (firstSlot)
@@ -538,7 +540,7 @@ function extractStreamingHead(html: string, head: DefaultTreeAdapterTypes.Elemen
     }
   }
   if (headSlots)
-    return { headSlots: { ranges: headSlots, count }, hasLegacyCharset }
+    return { headSlots: { ranges: headSlots, count }, charset }
 }
 
 /* @__PURE__ */
