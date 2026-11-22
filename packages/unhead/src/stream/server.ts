@@ -1,6 +1,6 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, HeadEntry, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -395,13 +395,7 @@ export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts
   return parts.end.slice(0, at) + bodyTags + parts.end.slice(at)
 }
 
-type StreamedTitleUpdate = [entry: HeadEntry<any>, original: unknown, resolved: Record<string, unknown>]
-
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
-  return renderPendingHead(head)
-}
-
-function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
   if (!head.entries.size)
     return ''
 
@@ -421,16 +415,11 @@ function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
     let bodyTags: typeof state.bodyTags
-    let title = head._title
-    let titleTemplate = head._titleTemplate
-    let titleUpdate: StreamedTitleUpdate | undefined
-    let templateUpdate: StreamedTitleUpdate | undefined
     for (const entry of head.entries.values()) {
-      const original = entry.input
       const normalized = normalizedEntries?.get(entry._i)
-      let input = normalized && normalized.input === original
+      let input = normalized && normalized.input === entry.input
         ? normalized.resolved
-        : resolveHeadInput(unwrapEntryInput(original), propResolvers)
+        : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       // Streamed patches are replayed without the server head's plugins.
       const options = entry.options
       const safe = options?._safe
@@ -438,14 +427,6 @@ function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
         input = head.plugins.get('safe')?._filterStreamInput?.(input)
         if (!input)
           continue
-      }
-      if (input?.title !== undefined) {
-        title = typeof input.title === 'object' ? input.title?.textContent : input.title
-        titleUpdate = [entry, original, input]
-      }
-      if (input?.titleTemplate !== undefined) {
-        titleTemplate = input.titleTemplate?.textContent ?? input.titleTemplate
-        templateUpdate = [entry, original, input]
       }
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
@@ -459,46 +440,12 @@ function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
       if (buffered)
         (bodyTags ||= []).push([buffered, safe])
     }
-    const titleChange = templateUpdate ?? titleUpdate
-    let flushed: [HeadEntry<any>, unknown][] | undefined
-    // The replay queue only accepts JSON. Preserve the raw title for later callbacks.
-    if (typeof titleTemplate === 'function' && titleChange) {
-      flushed = Array.from(head.entries.values(), entry => [entry, entry.input])
-      try {
-        let text = titleTemplate(title ?? undefined)
-        if (text != null && !head.plugins.has('template-params'))
-          text = text.replace('%s', title || '')
-        inputs.push({ title: text ?? '', titleTemplate: null })
-      }
-      catch (error) {
-        const [entry, original, resolved] = titleChange
-        if (head.entries.get(entry._i) === entry && entry.input === original) {
-          entry.input = { ...resolved, [templateUpdate ? 'titleTemplate' : 'title']: undefined }
-          delete entry._tags
-          onDiscard?.()
-        }
-        throw error
-      }
-    }
-    else if (templateUpdate && !titleUpdate && typeof head._titleTemplate === 'function') {
-      inputs.push({ title: title ?? '' })
-    }
     const serialized = safeJsonStringify(inputs)
-    head._title = title
-    head._titleTemplate = titleTemplate
     if (nextSeen)
       state.seen = nextSeen
     if (bodyTags)
       (state.bodyTags ||= []).push(...bodyTags)
-    if (flushed) {
-      for (const [entry, input] of flushed) {
-        if (head.entries.get(entry._i) === entry && entry.input === input)
-          head.entries.delete(entry._i)
-      }
-    }
-    else {
-      head.entries.clear()
-    }
+    head.entries.clear()
     return inputs.length ? `window.${streamKey}.push(${serialized})` : ''
   }
   catch (error) {
@@ -510,7 +457,6 @@ function renderPendingHead(head: Unhead<any>, onDiscard?: () => void): string {
       }
       catch {
         head.entries.delete(key)
-        onDiscard?.()
       }
     }
     throw error
@@ -567,19 +513,13 @@ export function wrapStream(
   streamState(head).writesBodyTags = true
   // Preserve late entries when no custom chunk renderer exists.
   const flushChunk = options?.flushChunk ?? (() => {
-    let chunk: string | undefined
-    // An entry can lose a title and a template before its other tags are safe to send.
-    for (let retry = true, attempts = head.entries.size * 2 + 1; retry && attempts--;) {
-      retry = false
-      try {
-        chunk = renderPendingHead(head, () => {
-          retry = true
-        })
-        break
-      }
-      catch {
-        // Retry only if a failing input was isolated.
-      }
+    let chunk: string
+    try {
+      chunk = renderSSRHeadSuspenseChunk(head)
+    }
+    catch {
+      // The response already started. Skip this patch.
+      return ''
     }
     if (!chunk)
       return ''

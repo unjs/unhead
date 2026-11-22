@@ -28,11 +28,7 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
     let next: Record<string, any> | undefined
     for (const k in v) {
       const unsafe = isUnsafeKey(k)
-      const r = unsafe
-        ? undefined
-        : key === 'titleTemplate' && k === 'textContent'
-          ? resolve ? resolve(k, v[k]) : v[k]
-          : walkResolver(v[k], resolve, k)
+      const r = unsafe ? undefined : walkResolver(v[k], resolve, k)
       // Diverge from `v` on the first unsafe key (which must be dropped) or changed
       // child: clone the safe keys already visited. This keeps the walked result free
       // of __proto__/constructor/prototype (matching the old deep-clone) while still

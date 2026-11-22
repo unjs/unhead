@@ -87,7 +87,8 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
             if (typeof title === 'function') {
-              title = title(head._title) ?? undefined
+              // @ts-expect-error untyped
+              title = title(head._title)
             }
             title = hasContent(title) ? String(title) : undefined
             ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
