@@ -11,6 +11,7 @@ export { MinifyPlugin } from './minify' // optional
 export type { MinifyPluginOptions } from './minify'
 export { PromisesPlugin } from './promises' // optional
 export { SafeInputPlugin } from './safe' // optional
+export { ServerOnlyCrawlerTagsPlugin } from './serverOnlyCrawlerTags' // bundler option
 export { TemplateParamsPlugin } from './templateParams' // optional
 export { ValidatePlugin } from './validate' // optional
 export type { HeadValidationRule, RuleConfig, RulesConfig, RuleSeverity, ValidatePluginOptions, ValidationRuleId, ValidationRuleOptions } from './validate'
