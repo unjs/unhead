@@ -156,6 +156,29 @@ describe('dom', () => {
     expect(hydrated.map(el => ssrLinks.indexOf(el))).toEqual([0, 1, 2, 3])
   })
 
+  it('reuses a stylesheet when an earlier element detaches during the scan', () => {
+    const style = [{ key: 'route-style', textContent: '.route{color:red}' }]
+    const serverHead = createServerHeadWithContext()
+    serverHead.push({ style })
+    const document = useDom(serverHead.render()).window.document
+    const ssrStyle = document.head.querySelector('style')
+    const link = document.createElement('link')
+    link.rel = 'prefetch'
+    link.href = '/asset.js'
+    const getAttributeNames = link.getAttributeNames.bind(link)
+    link.getAttributeNames = () => {
+      link.remove()
+      return getAttributeNames()
+    }
+    document.head.prepend(link)
+
+    useDOMHead({ document }).push({ style })
+
+    const hydrated = document.head.querySelectorAll('style')
+    expect(hydrated).toHaveLength(1)
+    expect(hydrated[0]).toBe(ssrStyle)
+  })
+
   it('does not replay completed style cleanup when switching documents', () => {
     const document = useDom().window.document
     const head = useDOMHead({ document })

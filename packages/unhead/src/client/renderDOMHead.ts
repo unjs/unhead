@@ -221,36 +221,34 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           tracked.add($el)
       }
       const htmlDocument = dom.contentType === 'text/html'
-      for (const parent of [dom.body, dom.head]) {
-        for (const el of parent.children) {
-          if (tracked.has(el))
-            continue
-          const elTag = el.tagName.toLowerCase() as HeadTag['tag']
-          if (!HasElementTags.has(elTag))
-            continue
-          const props: Record<string, any> = {}
-          for (const n of el.getAttributeNames())
-            props[n] = el.getAttribute(n)
-          // These HTML link attributes have the same identity before and after normalization.
-          // Empty identity attributes need normalization because they become boolean true.
-          const linkHasIdentity = elTag === 'link' && htmlDocument && el.namespaceURI === 'http://www.w3.org/1999/xhtml'
-            && props.rel && props.href && props.hreflang !== '' && props.charset !== '' && props.id !== ''
-          const next = { tag: elTag, props: linkHasIdentity ? props : {} } as HeadTag
-          if (!linkHasIdentity)
-            normalizeProps(next, props)
-          next.key = props['data-hid'] || undefined
-          let dedupe = dedupeKey(next)
-          if (!dedupe) {
-            if (props.innerHTML === undefined)
-              next.innerHTML = el.innerHTML
-            dedupe = dedupeKey(next) || hashTag(next)
-          }
-          let k = dedupe
-          let c = 1
-          while (renderState._e.has(k))
-            k = `${dedupe}:${c++}`
-          renderState._e.set(k, el)
+      for (const el of [...dom.body.children, ...dom.head.children]) {
+        if (tracked.has(el))
+          continue
+        const elTag = el.tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(elTag))
+          continue
+        const props: Record<string, any> = {}
+        for (const n of el.getAttributeNames())
+          props[n] = el.getAttribute(n)
+        // These HTML link attributes have the same identity before and after normalization.
+        // Empty identity attributes need normalization because they become boolean true.
+        const linkHasIdentity = elTag === 'link' && htmlDocument && el.namespaceURI === 'http://www.w3.org/1999/xhtml'
+          && props.rel && props.href && props.hreflang !== '' && props.charset !== '' && props.id !== ''
+        const next = { tag: elTag, props: linkHasIdentity ? props : {} } as HeadTag
+        if (!linkHasIdentity)
+          normalizeProps(next, props)
+        next.key = props['data-hid'] || undefined
+        let dedupe = dedupeKey(next)
+        if (!dedupe) {
+          if (props.innerHTML === undefined)
+            next.innerHTML = el.innerHTML
+          dedupe = dedupeKey(next) || hashTag(next)
         }
+        let k = dedupe
+        let c = 1
+        while (renderState._e.has(k))
+          k = `${dedupe}:${c++}`
+        renderState._e.set(k, el)
       }
     }
     for (const ctx of pending) {
