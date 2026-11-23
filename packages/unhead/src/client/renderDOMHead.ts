@@ -10,9 +10,9 @@ declare const __UNHEAD_LAZY_RENDERER__: boolean
 
 type DomEventHandler = (this: Element, e: Event) => any
 
-// [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
+// [target, source, cleanup]: a tuple over an object keeps the renderer small.
 // The event type needs no slot: the key holds the prop name it comes from.
-type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => void]
+type DomEventSideEffect = [EventTarget, DomEventHandler, () => void]
 type StyleDeclarations = ReadonlyMap<string, string>
 type StyleCleanup = (next?: StyleDeclarations) => void
 
@@ -65,6 +65,13 @@ function staticRootProps(input: Record<string, unknown>) {
     }
   }
   return props
+}
+
+function clearEffects(effects: DomState['_s']) {
+  for (const key in effects) {
+    effects[key]()
+    delete effects[key]
+  }
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
@@ -120,38 +127,30 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     return false
   const defaultView = dom.defaultView
   head._du = true
-  let didRender = false
   try {
     const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return false
     let state = activeState
-    if (state?._d !== dom) {
-      if (state) {
-        for (const k in state._s) state._s[k]()
-        for (const k in state._p) state._p[k]()
-        state._s = state._p = {}
-        state._e.clear()
-        state._l.clear()
-      }
+    if (state && state._d !== dom) {
+      clearEffects(state._s)
+      clearEffects(state._p)
+      state._e.clear()
+      state._l.clear()
       state = undefined
     }
-    const keepEffects = adoption && !!state
-    if (!state) {
-      state = createDomState(head, dom)
+    if (state) {
+      // Adoption adds SSR cleanups to the active effects. A live render retires unused ones.
+      state._p = adoption ? {} : state._s
+      if (!adoption)
+        state._s = {}
     }
-    else {
-      // Adoption adds SSR cleanups to the active effects. A live render then retires unused ones.
-      state._p = keepEffects ? {} : state._s
-    }
-    if (!keepEffects)
-      state._s = {}
-    const renderState = state
+    const renderState = state || createDomState(head, dom)
     const previous = renderState._p
 
     function track(key: string, fn: () => void) {
-      if (keepEffects && renderState._s[key])
+      if (adoption && state && renderState._s[key])
         return
       renderState._s[key] = fn
       delete previous[key]
@@ -180,21 +179,21 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const prev = renderState._l.get(key)
       // same target/source: keep the existing listener, just re-track its cleanup
       if (prev && prev[0] === target && prev[1] === source) {
-        track(key, previous[key] || prev[3])
+        track(key, previous[key] || prev[2])
         return
       }
-      prev?.[3]()
+      prev?.[2]()
       const dk = `data-${k}`
       const handler = ((e: Event) => source.call($el, e)) as EventListener
       const cleanup = () => {
         target.removeEventListener(ev, handler)
         if ($el.getAttribute(dk) === '')
           $el.removeAttribute(dk)
-        if (renderState._l.get(key)?.[2] === handler)
+        if (renderState._l.get(key)?.[2] === cleanup)
           renderState._l.delete(key)
       }
       target.addEventListener(ev, handler)
-      renderState._l.set(key, [target, source, handler, cleanup])
+      renderState._l.set(key, [target, source, cleanup])
       $el.setAttribute(dk, '')
       track(key, cleanup)
     }
@@ -230,17 +229,17 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           renderState._p[`${id}:text`] ||= () => { $el.textContent = '' }
         const elKey = `${id}:el`
         track(elKey, previous[elKey] || (() => {
-          $el?.remove()
+          $el.remove()
           renderState._e.delete(id)
         }))
       }
       for (const k in tag.props) {
         const v = tag.props[k]
-        if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
+        if (k.startsWith('on') && typeof v === 'function') {
           if (adoption)
             continue
           const ev = k.slice(2)
-          if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
+          if (($el as HTMLScriptElement).dataset?.[`${k}fired`])
             (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
           trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
           continue
@@ -312,6 +311,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
+      const needsContentKey = pending.some(({ id }) => id?.includes(':content:'))
       const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
@@ -341,7 +341,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (!dedupe) {
           if (props.innerHTML === undefined)
             next.innerHTML = el.innerHTML
-          dedupe = dedupeKey(next) || hashTag(next)
+          dedupe = dedupeKey(next)
+          // Only a content-based identity can appear after reading innerHTML.
+          if (dedupe && !needsContentKey)
+            continue
+          dedupe ||= hashTag(next)
         }
         let k = dedupe
         let c = 1
@@ -369,15 +373,16 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       if (frag.bodyClose)
         dom.body.appendChild(frag.bodyClose)
     }
-    for (const k in previous) {
-      if (adoption)
+    if (adoption) {
+      for (const k in previous) {
         renderState._s[k] ||= previous[k]
-      else
-        previous[k]()
-      delete previous[k]
+        delete previous[k]
+      }
+    }
+    else {
+      clearEffects(previous)
     }
     head._dom = renderState
-    didRender = true
     if (!adoption)
       callHook(head, 'dom:rendered', { renders: tags })
   }
@@ -388,9 +393,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   finally {
     head._du = false
   }
-  if (!adoption && didRender && (head.dirty || hasPendingEntries(head)))
+  if (!adoption && (head.dirty || hasPendingEntries(head)))
     _renderDOMHead(head, options)
-  return didRender
+  return true
 }
 
 // Internal: the lazy runtime renders through this. An adoption render records the cleanups

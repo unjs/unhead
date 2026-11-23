@@ -166,6 +166,7 @@
   },
   "files": [
     "*.d.ts",
+    "THIRD-PARTY-NOTICES",
     "dist"
   ],
   "scripts": {
