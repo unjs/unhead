@@ -21,7 +21,7 @@ export function rootPropsToString(props: Record<string, any>) {
 }
 
 /* @__PURE__ */
-function stringifyProps(props: Record<string, any>, escapeAmpersands: boolean) {
+export function stringifyProps(props: Record<string, any>, escapeAmpersands: boolean | ReadonlySet<string>) {
   let attrs = ''
 
   for (const key in props) {
@@ -45,7 +45,8 @@ function stringifyProps(props: Record<string, any>, escapeAmpersands: boolean) {
     }
 
     if (value !== false && value !== null) {
-      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value, escapeAmpersands)}"`
+      const escape = typeof escapeAmpersands === 'boolean' ? escapeAmpersands : escapeAmpersands.has(key)
+      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value, escape)}"`
     }
   }
 

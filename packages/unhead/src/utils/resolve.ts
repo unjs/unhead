@@ -73,7 +73,7 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
     tags.sort(sortTags)
 }
 
-export function dedupeTags(ctx: ResolveTagsContext): boolean {
+export function dedupeTags(ctx: ResolveTagsContext, trackSafeProps = false): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
     const k = next._d || hashTag(next)
@@ -93,7 +93,17 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
           ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
           : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      const merged = { ...next, props }
+      if (trackSafeProps && (prev._safeProps || next._safeProps || !!prev._safe !== !!next._safe)) {
+        const safeProps = new Set<string>()
+        for (const prop in props) {
+          const source = Object.hasOwn(next.props, prop) ? next : prev
+          if (source._safeProps?.has(prop) ?? source._safe)
+            safeProps.add(prop)
+        }
+        merged._safeProps = safeProps
+      }
+      ctx.tagMap.set(k, merged)
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -234,7 +244,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       break
     }
   }
-  const hasFlatMeta = dedupeTags(ctx)
+  const hasFlatMeta = dedupeTags(ctx, head.ssr)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
