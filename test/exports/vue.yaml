@@ -22,6 +22,11 @@
   VueHeadMixin: object
 ./components:
   Head: object
+./lazy:
+  createDeferredHead: function
+  createHead: function
+  createHeadAfterHydration: function
+  createStreamableHeadAfterHydration: function
 ./legacy:
   createClientHead: function
   createHead: function
@@ -39,6 +44,7 @@
   MinifyPlugin: function
   PromisesPlugin: function
   SafeInputPlugin: object
+  ServerOnlyCrawlerTagsPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
 ./scripts:
@@ -81,6 +87,8 @@
   HasElementTags: object
   hashTag: function
   hasOwn: function
+  isCrawlerMetaKey: function
+  isCrawlerTag: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function

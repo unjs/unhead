@@ -3,7 +3,9 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
+import { LazyHeadPreload } from './LazyHeadPreload'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
+import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -65,6 +67,12 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
     defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
+  }
+  if (options.serverOnlyCrawlerTags) {
+    const { runtime, ...crawlerTagsOpts } = typeof options.serverOnlyCrawlerTags === 'object' ? options.serverOnlyCrawlerTags : {}
+    defs.push({ instance: ServerOnlyCrawlerTags, options: { ...common, ...crawlerTagsOpts } })
+    if (runtime)
+      defs.push({ instance: ServerOnlyCrawlerTagsRuntime, options: {} })
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
@@ -135,7 +143,7 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
  */
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
-    const { streaming, validate, devtools, ...coreOpts } = options
+    const { streaming, validate, devtools, lazyHeadPreload, ...coreOpts } = options
     const defs = resolveCoreDefs(coreOpts)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming
@@ -143,6 +151,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (lazyHeadPreload !== false)
+          plugins.push(LazyHeadPreload(framework))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {

@@ -1,4 +1,5 @@
 import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
+import type { ServerOnlyCrawlerTagsOptions } from './ServerOnlyCrawlerTags'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 
@@ -13,6 +14,17 @@ export interface BaseTransformerTypes {
 export interface UnpluginOptions extends BaseTransformerTypes {
   treeshake?: TreeshakeServerComposablesOptions | false
   transformSeoMeta?: UseSeoMetaTransformOptions | false
+  /**
+   * Remove crawler-only tags (`og:*`, `twitter:*`, `description`, canonical,
+   * JSON-LD and others) from statically analysable `useHead()` and
+   * `useSeoMeta()` calls in client builds. The server still renders them.
+   *
+   * Disabled by default.
+   */
+  serverOnlyCrawlerTags?: boolean | (ServerOnlyCrawlerTagsOptions & {
+    /** Filter crawler tags from client entries at runtime. Disabled by default. */
+    runtime?: boolean
+  })
   minify?: MinifyTransformOptions | false
   /**
    * Transpile static inline scripts to the bundler's browser target.
@@ -25,6 +37,8 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
+  /** Preload the lazy head runtime at low priority in production Vite HTML. Defaults to true. */
+  lazyHeadPreload?: boolean
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */

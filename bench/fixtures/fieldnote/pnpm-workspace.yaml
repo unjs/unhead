@@ -1,0 +1,13 @@
+nodeLinker: hoisted
+packageImportMethod: copy
+overrides:
+  '@unhead/bundler': 3.4.3
+  '@unhead/vue': 3.4.3
+  unhead: 3.4.3
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  unrs-resolver: true
+  vue-demi: true
+minimumReleaseAgeExclude:
+  - '@iconify-json/lucide@1.2.158'
