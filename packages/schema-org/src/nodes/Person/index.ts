@@ -31,7 +31,7 @@ export interface PersonSimple extends Thing {
    */
   identifier?: NodeRelations<PropertyValue | string>
   /**
-   * The user bio, truncated to 250 characters.
+   * The user bio.
    */
   description?: string
   /**

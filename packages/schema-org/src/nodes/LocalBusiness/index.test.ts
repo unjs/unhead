@@ -237,4 +237,37 @@ describe('defineLocalBusiness', () => {
       })
     })
   })
+
+  it('accepts specific and multiple business types', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          '@type': ['Plumber', 'Electrician'],
+          'name': 'Fix-It',
+          'address': { streetAddress: '12 Main St' },
+        }),
+      ])
+      const business = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Fix-It')
+      expect(business!['@type']).toEqual(['Organization', 'LocalBusiness', 'Plumber', 'Electrician'])
+    })
+  })
+
+  it('writes seasonal opening hours as calendar dates', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          name: 'Holiday Shop',
+          address: { streetAddress: '12 Main St' },
+          openingHoursSpecification: [{
+            opens: '00:00',
+            closes: '00:00',
+            validFrom: new Date(2026, 11, 25),
+            validThrough: '2026-12-26',
+          }],
+        }),
+      ])
+      const business = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Holiday Shop')
+      expect(business!.openingHoursSpecification).toMatchObject({ validFrom: '2026-12-25', validThrough: '2026-12-26' })
+    })
+  })
 })

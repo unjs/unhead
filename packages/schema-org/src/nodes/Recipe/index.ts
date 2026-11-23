@@ -49,11 +49,11 @@ export interface RecipeSimple extends Thing {
    */
   description?: string
   /**
-   * The cooking time in ISO 8601 format.
+   * The cooking time in ISO 8601 format. Google asks for it together with `prepTime`, or for `totalTime` alone.
    */
   cookTime?: string
   /**
-   * The time required to prepare the recipe.
+   * The time required to prepare the recipe, in ISO 8601 format. Google asks for it together with `cookTime`.
    */
   prepTime?: string
   /**
@@ -80,7 +80,7 @@ export interface RecipeSimple extends Thing {
   /**
    * An array of keywords describing the recipe.
    */
-  keywords?: string[]
+  keywords?: Arrayable<string>
   /**
    * A string describing the cuisine type (e.g., "American" or "Spanish").
    */

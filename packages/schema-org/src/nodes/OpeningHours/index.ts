@@ -1,6 +1,6 @@
 import type { Arrayable, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
-import { resolvableDateToIso } from '../../utils'
+import { resolvableDateToDate } from '../../utils'
 
 type DayOfWeek = OptionalSchemaOrgPrefix<'Friday'
   | 'Monday'
@@ -45,8 +45,11 @@ export const openingHoursResolver = defineSchemaOrgResolver<OpeningHoursSpecific
     '@type': 'OpeningHoursSpecification',
   },
   resolve(node) {
-    node.validFrom = resolvableDateToIso(node.validFrom)
-    node.validThrough = resolvableDateToIso(node.validThrough)
+    // Google reads seasonal hours as calendar dates (YYYY-MM-DD).
+    if (node.validFrom)
+      node.validFrom = resolvableDateToDate(node.validFrom)
+    if (node.validThrough)
+      node.validThrough = resolvableDateToDate(node.validThrough)
     return node
   },
 })

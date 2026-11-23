@@ -6,6 +6,7 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { Comment } from '../Comment'
 import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
 import type { SpeakableSpecification, WebPageElement } from '../WebPage'
@@ -18,8 +19,8 @@ import {
   resolveDefaultType,
   resolveWithBase,
   setIfEmpty,
-  trimLength,
 } from '../../utils'
+import { commentResolver } from '../Comment'
 import { isImageObject } from '../Image'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
@@ -32,7 +33,6 @@ export interface ArticleSimple extends Thing {
   ['@type']?: Arrayable<ValidArticleSubTypes>
   /**
    * The headline of the article (falling back to the title of the WebPage).
-   * Headlines should not exceed 110 characters.
    */
   headline?: string
   /**
@@ -65,8 +65,9 @@ export interface ArticleSimple extends Thing {
   video?: NodeRelations<VideoObject>
   /**
    * An image object or referenced by ID.
-   * - Must be at least 696 pixels wide.
-   * - Must be of the following formats+file extensions: .jpg, .png, .gif ,or .webp.
+   * - Google recommends at least 50K pixels (width multiplied by height).
+   * - Provide 16x9, 4x3, and 1x1 versions for best results.
+   * - Use a format that Google Images supports.
    *
    * Must have markup of it somewhere on the page.
    */
@@ -168,6 +169,7 @@ export const articleResolver = defineSchemaOrgResolver<Article>({
     }, {
       root: true,
     })
+    node.comment = resolveRelation(node.comment, ctx, commentResolver)
     node.hasPart = resolveRelation(node.hasPart, ctx, webPageElementResolver)
     node.speakable = resolveRelation(node.speakable, ctx, speakableSpecificationResolver)
     node.video = resolveRelation(node.video, ctx, videoResolver)
@@ -175,8 +177,6 @@ export const articleResolver = defineSchemaOrgResolver<Article>({
     node.datePublished = resolvableDateToIso(node.datePublished)
     resolveDefaultType(node, 'Article')
 
-    // Headlines should not exceed 110 characters.
-    node.headline = trimLength(node.headline, 110)
     return node
   },
   resolveRootNode(node, { find, meta }) {

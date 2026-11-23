@@ -105,4 +105,21 @@ describe('defineJobPosting', () => {
       expect(job).not.toHaveProperty('jobLocation')
     })
   })
+
+  it('accepts a hybrid remote job with an office location', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          title: 'Maintainer',
+          description: 'Maintain Unhead',
+          datePosted: '2026-01-01',
+          hiringOrganization: { name: 'Unhead' },
+          jobLocationType: 'TELECOMMUTE',
+          jobLocation: { name: 'Sydney office', address: { addressCountry: 'AU' } },
+        }),
+      ])
+      const job = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'JobPosting')
+      expect(job).toMatchObject({ jobLocationType: 'TELECOMMUTE', jobLocation: { name: 'Sydney office' } })
+    })
+  })
 })

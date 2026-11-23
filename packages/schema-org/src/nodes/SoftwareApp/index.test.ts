@@ -48,4 +48,22 @@ describe('defineSoftwareApp', () => {
       `)
     })
   })
+
+  it('resolves several reviews', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineSoftwareApp({
+        name: 'Todo',
+        offers: { price: 0 },
+        review: [
+          { author: { name: 'Ada' }, reviewRating: { ratingValue: 5 } },
+          { author: { name: 'Grace' }, reviewRating: { ratingValue: 4 } },
+        ],
+      })])
+      const app = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Todo')
+      expect(app!.review).toEqual([
+        expect.objectContaining({ '@type': 'Review' }),
+        expect.objectContaining({ '@type': 'Review' }),
+      ])
+    })
+  })
 })

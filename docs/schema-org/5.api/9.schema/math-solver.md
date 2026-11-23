@@ -32,11 +32,12 @@ defineMathSolver({
 })
 ```
 
-Google requires `potentialAction`, `url`, `usageInfo`, `potentialAction.target`, and the annotated `mathExpression-input` property. Add the `LearningResource` type and `learningResourceType: 'Math Solver'` when the page also represents a learning resource.
+Google requires `potentialAction`, `url`, `usageInfo`, `potentialAction.target`, and the annotated `mathExpression-input` property. Google also requires the `LearningResource` type and `learningResourceType`. Unhead adds both.
 
 ## Defaults and resolves
 
-- `@type` includes `MathSolver`.
+- `@type` includes `MathSolver` and `LearningResource`.
+- `learningResourceType` defaults to `Math Solver`.
 - `@id` defaults to `${canonicalUrl}#math-solver`.
 - Relative `url`, `usageInfo`, and action targets resolve against the configured host.
 - `inLanguage` inherits from Schema.org params.

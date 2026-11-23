@@ -69,8 +69,9 @@ export interface Thing {
   'mainEntity'?: NodeRelations<Thing>
   /**
    * An image object or referenced by ID.
-   * - Must be at least 696 pixels wide.
-   * - Must be of the following formats+file extensions: .jpg, .png, .gif ,or .webp.
+   * - Google recommends at least 50K pixels (width multiplied by height).
+   * - Provide 16x9, 4x3, and 1x1 versions for best results.
+   * - Use a format that Google Images supports.
    */
   'image'?: NodeRelations<ImageObject | string>
 
@@ -108,8 +109,14 @@ export interface PropertyValue extends Thing {
 
 export interface GeoCoordinates extends Thing {
   '@type'?: 'GeoCoordinates'
-  'latitude': number
-  'longitude': number
+  /**
+   * Google asks for at least 5 decimal places. Pass a string, such as `'37.42000'`, to keep trailing zeros.
+   */
+  'latitude': number | string
+  /**
+   * Google asks for at least 5 decimal places. Pass a string to keep trailing zeros.
+   */
+  'longitude': number | string
 }
 
 export interface SchemaOrgNode extends Thing {

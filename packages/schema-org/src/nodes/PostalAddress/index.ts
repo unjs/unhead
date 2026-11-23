@@ -11,7 +11,7 @@ export interface PostalAddressSimple extends Thing {
    */
   postalCode: string
   /**
-   * The two-digit country-code representing the country (e.g., US ).
+   * The country, as a two-letter ISO 3166-1 alpha-2 code (e.g., US).
    */
   addressCountry: string
   /**
