@@ -147,11 +147,9 @@ export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | str
   },
   defaults: {
     '@type': 'Offer',
-    'availability': 'InStock',
   },
   resolve(node, ctx) {
     setIfEmpty(node, 'priceCurrency', ctx.meta.currency)
-    setIfEmpty(node, 'priceValidUntil', new Date(Date.UTC(new Date().getFullYear() + 1, 12, -1, 0, 0, 0)))
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
 
