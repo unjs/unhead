@@ -208,6 +208,42 @@ describe('schema.org e2e', () => {
     expect(renderSSRHead(head).bodyTags).not.toContain('"name": "Second"')
   })
 
+  it.each(['getter', 'ref', 'computed'] as const)('resolves %s arrays and nullable array patches', (kind) => {
+    const head = createServerHead({ disableDefaults: true })
+    const initialNodes = [
+      defineWebPage({ name: 'First' }),
+      defineWebPage({ 'name': 'Second', '@id': '#second' }),
+    ]
+    const nodes = ref<typeof initialNodes | null | undefined | false>(initialNodes)
+    const source = kind === 'getter' ? () => nodes.value : kind === 'ref' ? nodes : computed(() => nodes.value)
+    const entry = useSchemaOrg(source, { head })
+
+    const initial = renderSSRHead(head).bodyTags
+    expect(initial).toContain('"name": "First"')
+    expect(initial).toContain('"name": "Second"')
+    nodes.value = [defineWebPage({ name: 'Updated' })]
+    const updated = renderSSRHead(head).bodyTags
+    expect(updated).toContain('"name": "Updated"')
+    expect(updated).not.toContain('"name": "First"')
+    expect(updated).not.toContain('"name": "Second"')
+
+    for (const empty of [null, undefined, false] as const) {
+      nodes.value = empty
+      expect(renderSSRHead(head).bodyTags).toBe('')
+      nodes.value = [defineWebPage({ name: 'Restored' })]
+      expect(renderSSRHead(head).bodyTags).toContain('"name": "Restored"')
+    }
+
+    const patchedNodes = ref([defineWebPage({ name: 'Patched' })])
+    const patch = kind === 'getter' ? () => patchedNodes.value : kind === 'ref' ? patchedNodes : computed(() => patchedNodes.value)
+    entry.patch(patch)
+    const patched = renderSSRHead(head).bodyTags
+    expect(patched).toContain('"name": "Patched"')
+    expect(patched).not.toContain('"name": "Restored"')
+    patchedNodes.value = []
+    expect(renderSSRHead(head).bodyTags).toBe('')
+  })
+
   it.each([null, undefined, false] as const)('resolves a getter returning %s without a script', (empty) => {
     const head = createServerHead({ disableDefaults: true })
     const show = ref(false)
