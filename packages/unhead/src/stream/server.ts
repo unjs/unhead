@@ -9,6 +9,7 @@ import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
+import { createPatchBoundary } from './patchBoundary'
 
 const LT_RE = /</g
 const GT_RE = />/g
@@ -499,9 +500,9 @@ function safeJsonStringify(obj: any): string {
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
- * @param options.flushChunk - Returns extra HTML to emit after each app
- * chunk and once before the closing HTML (used by framework packages to
- * interleave head-update scripts)
+ * @param options.flushChunk - Returns extra HTML to emit after an app chunk
+ * that ends in body content, and once before the closing HTML (used by
+ * framework packages to interleave head-update scripts)
  * @returns A new ReadableStream with shell and closing HTML included
  *
  * @example
@@ -539,6 +540,7 @@ export function wrapStream(
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let parts: StreamingTemplateParts | undefined
+  const boundary = createPatchBoundary()
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -585,16 +587,25 @@ export function wrapStream(
       if (result.done) {
         reader = undefined
         activeReader.releaseLock()
-        const extra = flushChunk?.()
-        if (extra)
-          controller.enqueue(enc.encode(extra))
-        const closing = parts ? renderStreamEnd(head, parts) : ''
-        if (closing)
-          controller.enqueue(enc.encode(closing))
+        // Late output after unfinished app markup would change how the browser parses it.
+        if (boundary.end()) {
+          const extra = flushChunk?.()
+          if (extra)
+            controller.enqueue(enc.encode(extra))
+          const closing = parts ? renderStreamEnd(head, parts) : ''
+          if (closing)
+            controller.enqueue(enc.encode(closing))
+        }
+        else if (parts) {
+          controller.enqueue(enc.encode(parts.end))
+        }
         controller.close()
         return
       }
       controller.enqueue(result.value)
+      // A patch inside app markup would change how the browser parses it.
+      if (!boundary.write(result.value))
+        return
       const extra = flushChunk?.()
       if (extra)
         controller.enqueue(enc.encode(extra))
