@@ -177,6 +177,7 @@ describe.each([false, true])('streaming without a verified body close, prepared:
     '<textarea>Content',
     '<table><tr><td>Cell',
     '<svg><g>Label</g>',
+    '<svg><circle cx="2" /><meta name="example" content="label" /><rect width="3" /></svg></body></html>',
     '<select><option><meter></meter></option></select></body></html>',
   ])('rejects a template with an unverified end: %s', async (content) => {
     const template = `<html><head></head><body>${content}`

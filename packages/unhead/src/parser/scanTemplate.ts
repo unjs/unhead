@@ -144,6 +144,7 @@ const HTML_IN_FOREIGN = /* @__PURE__ */ new Set([
   'li',
   'listing',
   'menu',
+  'meta',
   'nobr',
   'ol',
   'p',
