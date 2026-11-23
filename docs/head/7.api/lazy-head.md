@@ -1,5 +1,6 @@
 ---
 title: Lazy Head
+since: 3.5.0
 description: API reference for queuing head entries and loading the client head on demand.
 ---
 
@@ -12,6 +13,9 @@ The lazy head is experimental. Its API may change in a minor release.
 | Entry point | Exports |
 | --- | --- |
 | `@unhead/vue/lazy` | `createHead`, `LazyHeadOptions`, and `LazyVueHead`. The shell also installs as a Vue plugin. |
+| `@unhead/react/lazy` | `createHead` and `UnheadProvider`. |
+| `@unhead/svelte/lazy` | `createHead` and `UnheadContextKey`. |
+| `@unhead/solid-js/lazy` | `createHead` and `UnheadContext`. |
 | `unhead/lazy` | `createHead`, `LazyHeadOptions`, and `LazyUnhead`. Use this entry point for framework adapters. |
 
 ## Options
@@ -45,4 +49,8 @@ Vue's `useScript()` can register scripts before the runtime loads. Framework int
 
 Use the full client head returned by `load()` for other runtime APIs.
 
-See the [Vue setup guide](/docs/vue/head/guides/core-concepts/lazy-head) for hydration, streaming, and client-only pages.
+## Preload the runtime
+
+The framework Vite plugin adds a low-priority `modulepreload` hint to production HTML that uses the lazy head. Use `Unhead({ lazyHeadPreload: false })` to fetch the runtime when your app calls `load()`.
+
+See the setup guides for [Vue](/docs/vue/head/guides/core-concepts/lazy-head), [React](/docs/react/head/guides/core-concepts/lazy-head), [Svelte](/docs/svelte/head/guides/core-concepts/lazy-head), and [Solid](/docs/solid-js/head/guides/core-concepts/lazy-head).

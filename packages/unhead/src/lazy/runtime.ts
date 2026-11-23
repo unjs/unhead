@@ -114,7 +114,7 @@ export async function activate<T>(
   let render: HeadRenderer<boolean> = () => false
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
   const hooks = shell.hooks = activateHooks(shell.hooks)
-  const head = createClientHeadAdapter(core, hooks, head => render(head))
+  const head = createClientHeadAdapter(core, hooks)
   head._b = true
   const hydrated = new Map<number, HeadEntry<T>>()
   // Apply one hydration policy to replayed entries and entries registered after load.

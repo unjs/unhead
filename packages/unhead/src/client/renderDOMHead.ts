@@ -33,6 +33,13 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
   return false
 }
 
+function clearEffects(effects: DomState['_s']) {
+  for (const key in effects) {
+    effects[key]()
+    delete effects[key]
+  }
+}
+
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {} }
   // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
@@ -60,7 +67,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
     return false
   head._du = true
-  let didRender = false
   try {
     const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
@@ -68,30 +74,24 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       return false
     const renderEvent = defaultRenderEvent ?? head._domEvent
     let state = activeState
-    if (state?._d !== dom) {
-      if (state) {
-        for (const k in state._s) state._s[k]()
-        for (const k in state._p) state._p[k]()
-        state._s = state._p = {}
-        state._e.clear()
-      }
+    if (state && state._d !== dom) {
+      clearEffects(state._s)
+      clearEffects(state._p)
+      state._e.clear()
+      state._l?.clear()
       state = undefined
     }
-    const keepEffects = adoption && !!state
-    if (!state) {
-      state = createDomState(head, dom)
+    if (state) {
+      // Adoption adds SSR cleanups to the active effects. A live render retires unused ones.
+      state._p = adoption ? {} : state._s
+      if (!adoption)
+        state._s = {}
     }
-    else {
-      // Adoption adds SSR cleanups to the active effects. A live render then retires unused ones.
-      state._p = keepEffects ? {} : state._s
-    }
-    if (!keepEffects)
-      state._s = {}
-    const renderState = state
+    const renderState = state || createDomState(head, dom)
     const previous = renderState._p
 
     function track(key: string, fn: () => void) {
-      if (keepEffects && renderState._s[key])
+      if (adoption && state && renderState._s[key])
         return
       renderState._s[key] = fn
       delete previous[key]
@@ -123,13 +123,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         const elKey = `${id}:el`
         track(elKey, previous[elKey] || (() => {
-          $el?.remove()
+          $el.remove()
           renderState._e.delete(id)
         }))
       }
       for (const k in tag.props) {
         const v = tag.props[k]
-        if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
+        if (k.startsWith('on') && typeof v === 'function') {
           if (!adoption)
             renderEvent?.(renderState, id, tag.tag, $el, k, v, track)
           continue
@@ -190,6 +190,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
+      const needsContentKey = pending.some(({ id }) => id?.includes(':content:'))
       const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
@@ -219,7 +220,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (!dedupe) {
           if (props.innerHTML === undefined)
             next.innerHTML = el.innerHTML
-          dedupe = dedupeKey(next) || hashTag(next)
+          dedupe = dedupeKey(next)
+          // Only a content-based identity can appear after reading innerHTML.
+          if (dedupe && !needsContentKey)
+            continue
+          dedupe ||= hashTag(next)
         }
         let k = dedupe
         let c = 1
@@ -243,12 +248,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    for (const k in previous) {
-      previous[k]()
-      delete previous[k]
-    }
+    clearEffects(previous)
     head._dom = renderState
-    didRender = true
     if (!adoption)
       callHook(head, 'dom:rendered', { renders: tags })
   }
@@ -259,9 +260,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   finally {
     head._du = false
   }
-  if (!adoption && didRender && (head.dirty || hasPendingEntries(head)))
+  if (!adoption && (head.dirty || hasPendingEntries(head)))
     _renderDOMHead(head, options, defaultRenderEvent)
-  return didRender
+  return true
 }
 
 // Internal: the lazy runtime renders through this. An adoption render records the cleanups

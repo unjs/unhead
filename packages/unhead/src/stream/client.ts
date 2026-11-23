@@ -40,9 +40,8 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
     return wrapped
   }
 
-  const coreRender = core.render
   const hooks = createHooks<ClientHeadHooks>(rest.hooks)
-  const head = createClientHeadAdapter(core as Unhead<T, boolean>, hooks, () => coreRender() as boolean)
+  const head = createClientHeadAdapter(core as Unhead<T, boolean>, hooks)
   installDomEventHandlers(head)
 
   // Mark as wrapped to avoid double-wrapping

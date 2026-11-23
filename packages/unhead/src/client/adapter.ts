@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, HeadEntryOptions, ResolvableHead, Unhead } from '../types'
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   hooks: HookableCore<ClientHeadHooks>
@@ -7,13 +7,12 @@ export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   invalidate: () => void
 }
 
-export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>): ClientUnhead<T> {
+export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>): ClientUnhead<T> {
   const corePush = core.push
   const head = core as ClientUnhead<T>
   head.ssr = false
   head.hooks = hooks
   head.dirty = !!head.dirty
-  head.render = () => render(head)
   // Every change marks the head dirty first.
   // Render here because an async hook listener could break batching.
   function notify() {

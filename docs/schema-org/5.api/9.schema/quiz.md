@@ -1,5 +1,6 @@
 ---
 title: Quiz Schema
+since: 3.3.0
 description: Add Google Education Q&A structured data with defineQuiz(), including flashcard questions, answers, subjects, and grade alignments.
 ---
 

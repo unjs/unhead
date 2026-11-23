@@ -1,7 +1,7 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
-import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
+import { DupeableTags, HasElementTags, isJsonScriptType, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
 const ASCII_UPPER_RE = /[A-Z]/g
@@ -72,7 +72,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
-        if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
+        if (isJsonScriptType(type)) {
           tag.props.type = type
           tag[prop] = JSON.stringify(value)
         }
