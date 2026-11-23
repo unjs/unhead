@@ -9,7 +9,7 @@ import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
-import { createScriptTracker } from './scriptBoundary'
+import { createPatchBoundary } from './patchBoundary'
 
 const LT_RE = /</g
 const GT_RE = />/g
@@ -559,7 +559,7 @@ export function wrapStream(
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let parts: StreamingTemplateParts | undefined
   const decoder = new TextDecoder()
-  const outsideScript = createScriptTracker()
+  const atBoundary = createPatchBoundary()
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -607,7 +607,7 @@ export function wrapStream(
         reader = undefined
         activeReader.releaseLock()
         // Late output inside an unclosed app script would end that script early.
-        if (outsideScript(decoder.decode())) {
+        if (atBoundary(decoder.decode())) {
           const extra = flushChunk?.()
           if (extra)
             controller.enqueue(enc.encode(extra))
@@ -622,9 +622,9 @@ export function wrapStream(
         return
       }
       controller.enqueue(result.value)
-      // A patch inside an app script would end it early. A chunk that ends with
-      // `>` cannot split a UTF-8 character or a character reference.
-      if (!outsideScript(decoder.decode(result.value, { stream: true })) || result.value.at(-1) !== 0x3E)
+      // A patch inside an app script would end it early, and one inside text would
+      // show. A chunk that ends with `>` cannot split a UTF-8 character.
+      if (!atBoundary(decoder.decode(result.value, { stream: true })) || result.value.at(-1) !== 0x3E)
         return
       const extra = flushChunk?.()
       if (extra)
