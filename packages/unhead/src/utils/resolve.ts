@@ -1,6 +1,6 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
-import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
@@ -149,8 +149,7 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
-      const type = String(props.type)
-      const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
+      const isJsonLike = isJsonScriptType(String(props.type))
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
         : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
