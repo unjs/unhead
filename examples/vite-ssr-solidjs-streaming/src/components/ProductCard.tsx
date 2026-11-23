@@ -1,4 +1,4 @@
-import { createResource, Show } from 'solid-js'
+import { createMemo, Show } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
 interface Product {
@@ -29,26 +29,32 @@ const fetchProduct = async (id: number, delay: number): Promise<Product> => {
 }
 
 export default function ProductCard(props: ProductCardProps) {
-  const [product] = createResource(() => fetchProduct(props.id, props.delay))
-  const progress = 3 + props.id
+  const product = createMemo(() => fetchProduct(props.id, props.delay))
+
+  return (
+    <Show when={product()} keyed>
+      {product => <ProductCardContent product={product} />}
+    </Show>
+  )
+}
+
+function ProductCardContent(props: { product: Product }) {
+  const id = props.product.id
+  const progress = 3 + id
 
   useHead({
     title: `StreamShop ${progress}/11 - Loading...`,
-    meta: [{ name: `product-${props.id}-loaded`, content: 'true' }],
+    meta: [{ name: `product-${id}-loaded`, content: 'true' }],
     style: [{ key: 'progress', innerHTML: `.stream-progress::after{width:${Math.round(progress / 11 * 100)}%}` }],
   })
 
   return (
-    <Show when={product()}>
-      {p => (
-        <div class="product-card" data-product-id={props.id}>
-          <div class="product-image">{p().image}</div>
-          <h4>{p().name}</h4>
-          <div class="product-rating">{'★'.repeat(Math.floor(p().rating))}{'☆'.repeat(5 - Math.floor(p().rating))} ({p().rating})</div>
-          <div class="product-price">${p().price}</div>
-          <button class="add-to-cart">Add to Cart</button>
-        </div>
-      )}
-    </Show>
+    <div class="product-card" data-product-id={id}>
+      <div class="product-image">{props.product.image}</div>
+      <h4>{props.product.name}</h4>
+      <div class="product-rating">{'★'.repeat(Math.floor(props.product.rating))}{'☆'.repeat(5 - Math.floor(props.product.rating))} ({props.product.rating})</div>
+      <div class="product-price">${props.product.price}</div>
+      <button class="add-to-cart">Add to Cart</button>
+    </div>
   )
 }

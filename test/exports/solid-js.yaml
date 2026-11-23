@@ -12,10 +12,10 @@
 ./client:
   createHead: function
   renderDOMHead: function
-  UnheadContext: object
+  UnheadContext: function
 ./lazy:
   createHead: function
-  UnheadContext: object
+  UnheadContext: function
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
@@ -34,11 +34,11 @@
   prepareTemplate: function
   renderSSRHead: function
   transformHtmlTemplate: function
-  UnheadContext: object
+  UnheadContext: function
 ./stream/client:
   createStreamableHead: function
   HeadStream: function
-  UnheadContext: object
+  UnheadContext: function
 ./stream/server:
   createStreamableHead: function
   HeadStream: function
@@ -48,7 +48,7 @@
   renderSSRHeadSuspenseChunk: function
   renderStreamBodyTags: function
   renderStreamEnd: function
-  UnheadContext: object
+  UnheadContext: function
   wrapStream: function
 ./stream/vite:
   default: function

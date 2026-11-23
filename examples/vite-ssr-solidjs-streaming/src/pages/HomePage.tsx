@@ -1,4 +1,4 @@
-import { Suspense } from 'solid-js'
+import { Loading } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
@@ -22,46 +22,46 @@ export default function HomePage() {
 
   return (
     <>
-      <Suspense fallback={<div class="skeleton header-skeleton">Loading header...</div>}>
+      <Loading fallback={<div class="skeleton header-skeleton">Loading header...</div>}>
         <Header />
-      </Suspense>
+      </Loading>
       <div class="main-layout">
-        <Suspense fallback={<div class="skeleton sidebar-skeleton">Loading categories...</div>}>
+        <Loading fallback={<div class="skeleton sidebar-skeleton">Loading categories...</div>}>
           <Sidebar />
-        </Suspense>
+        </Loading>
         <main class="content">
-          <Suspense fallback={<div class="skeleton hero-skeleton">Loading banner...</div>}>
+          <Loading fallback={<div class="skeleton hero-skeleton">Loading banner...</div>}>
             <HeroBanner />
-          </Suspense>
+          </Loading>
           <section class="products-section">
             <h2>Featured Products</h2>
             <div class="product-grid">
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={1} delay={1375} />
-              </Suspense>
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              </Loading>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={2} delay={1500} />
-              </Suspense>
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              </Loading>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={3} delay={1625} />
-              </Suspense>
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              </Loading>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={4} delay={1750} />
-              </Suspense>
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              </Loading>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={5} delay={1875} />
-              </Suspense>
-              <Suspense fallback={<div class="skeleton product-skeleton">Loading...</div>}>
+              </Loading>
+              <Loading fallback={<div class="skeleton product-skeleton">Loading...</div>}>
                 <ProductCard id={6} delay={2000} />
-              </Suspense>
+              </Loading>
             </div>
           </section>
-          <Suspense fallback={<div class="skeleton reviews-skeleton">Loading reviews...</div>}>
+          <Loading fallback={<div class="skeleton reviews-skeleton">Loading reviews...</div>}>
             <Reviews />
-          </Suspense>
-          <Suspense fallback={<div class="skeleton newsletter-skeleton">Loading newsletter...</div>}>
+          </Loading>
+          <Loading fallback={<div class="skeleton newsletter-skeleton">Loading newsletter...</div>}>
             <Newsletter />
-          </Suspense>
+          </Loading>
         </main>
       </div>
     </>

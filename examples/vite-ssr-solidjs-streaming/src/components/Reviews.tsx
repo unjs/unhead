@@ -1,4 +1,4 @@
-import { createResource, For, Show } from 'solid-js'
+import { createMemo, For, Show } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
 const DATA = {
@@ -11,14 +11,22 @@ const DATA = {
 }
 
 const fetchData = async () => {
-  await new Promise(r => setTimeout(r, 1500))
+  await new Promise(r => setTimeout(r, 2125))
   return DATA
 }
 
 export default function Reviews() {
-  const [data] = createResource(fetchData)
+  const data = createMemo(fetchData)
 
-  const avgStars = () => '★'.repeat(Math.floor(data()?.avgRating || 0))
+  return (
+    <Show when={data()} keyed>
+      {data => <ReviewsContent data={data} />}
+    </Show>
+  )
+}
+
+function ReviewsContent(props: { data: typeof DATA }) {
+  const avgStars = () => '★'.repeat(Math.floor(props.data.avgRating))
 
   useHead({
     title: 'StreamShop 10/11 - Almost there...',
@@ -37,25 +45,23 @@ export default function Reviews() {
   })
 
   return (
-    <Show when={data()}>
-      <div class="reviews-section">
-        <h3>Customer Reviews</h3>
-        <div class="avg-rating">Average: {avgStars()} {data()?.avgRating}/5</div>
-        <div class="reviews-list">
-          <For each={data()?.reviews}>
-            {review => (
-              <div class="review">
-                <div class="review-header">
-                  <strong>{review.author}</strong>
-                  <span class="review-rating">{'★'.repeat(review.rating)}</span>
-                  <span class="review-date">{review.date}</span>
-                </div>
-                <p>{review.text}</p>
+    <div class="reviews-section">
+      <h3>Customer Reviews</h3>
+      <div class="avg-rating">Average: {avgStars()} {props.data.avgRating}/5</div>
+      <div class="reviews-list">
+        <For each={props.data.reviews}>
+          {review => (
+            <div class="review">
+              <div class="review-header">
+                <strong>{review.author}</strong>
+                <span class="review-rating">{'★'.repeat(review.rating)}</span>
+                <span class="review-date">{review.date}</span>
               </div>
-            )}
-          </For>
-        </div>
+              <p>{review.text}</p>
+            </div>
+          )}
+        </For>
       </div>
-    </Show>
+    </div>
   )
 }

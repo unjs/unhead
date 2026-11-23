@@ -1,4 +1,4 @@
-import { createResource, For } from 'solid-js'
+import { createMemo, For, Show } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
 const DATA = { categories: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books'] }
@@ -9,8 +9,16 @@ const fetchData = async () => {
 }
 
 export default function Sidebar() {
-  const [data] = createResource(fetchData)
+  const data = createMemo(fetchData)
 
+  return (
+    <Show when={data()} keyed>
+      {data => <SidebarContent data={data} />}
+    </Show>
+  )
+}
+
+function SidebarContent(props: { data: typeof DATA }) {
   useHead({
     title: 'StreamShop 2/11 - Loading...',
     meta: [
@@ -24,7 +32,7 @@ export default function Sidebar() {
     <aside class="sidebar">
       <h3>Categories</h3>
       <ul>
-        <For each={data()?.categories}>{cat => <li><a href="#">{cat}</a></li>}</For>
+        <For each={props.data.categories}>{cat => <li><a href="#">{cat}</a></li>}</For>
       </ul>
       <div class="filters">
         <h4>Price Range</h4>

@@ -1,14 +1,16 @@
-import { hydrate } from 'solid-js/web'
+import { hydrate } from '@solidjs/web'
 import { createStreamableHead, UnheadContext } from '@unhead/solid-js/stream/client'
 import App from './App'
 
 const head = createStreamableHead()
+if (!head)
+  throw new Error('Unhead streaming bootstrap state is missing')
 
 hydrate(
   () => (
-    <UnheadContext.Provider value={head}>
+    <UnheadContext value={head}>
       <App url={window.location.pathname} />
-    </UnheadContext.Provider>
+    </UnheadContext>
   ),
   document.getElementById('root')!
 )

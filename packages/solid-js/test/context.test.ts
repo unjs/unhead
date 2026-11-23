@@ -1,4 +1,4 @@
-import { createRoot, useContext } from 'solid-js'
+import { children, createRoot, useContext } from 'solid-js'
 import { describe, expect, it } from 'vitest'
 import { UnheadContext as clientContext } from '../src/client'
 import { UnheadContext } from '../src/context'
@@ -8,21 +8,21 @@ import { createHead, UnheadContext as serverContext } from '../src/server'
 // default to null and hand the exact provided instance to nested consumers.
 describe('unheadContext', () => {
   it('resolves to null when used outside a provider', () => {
-    expect(useContext(UnheadContext)).toBe(null)
+    expect(createRoot(() => useContext(UnheadContext))).toBe(null)
   })
 
   it('provides the head instance to consumers within the provider tree', () => {
     const head = createHead({ disableDefaults: true })
     let resolved: unknown = 'unset'
-    createRoot(() => {
-      UnheadContext.Provider({
+    createRoot((dispose) => {
+      children(() => UnheadContext({
         value: head,
-        // function children are supported at runtime, the JSX.Element type
-        // just cannot express them for a non-JSX call site
-        children: (() => {
+        get children() {
           resolved = useContext(UnheadContext)
-        }) as unknown as Element,
-      })
+          return null
+        },
+      }))()
+      dispose()
     })
     expect(resolved).toBe(head)
   })
@@ -32,19 +32,21 @@ describe('unheadContext', () => {
     const inner = createHead({ disableDefaults: true })
     let resolvedOuter: unknown = 'unset'
     let resolvedInner: unknown = 'unset'
-    createRoot(() => {
-      UnheadContext.Provider({
+    createRoot((dispose) => {
+      children(() => UnheadContext({
         value: outer,
-        children: (() => {
+        get children() {
           resolvedOuter = useContext(UnheadContext)
-          UnheadContext.Provider({
+          return UnheadContext({
             value: inner,
-            children: (() => {
+            get children() {
               resolvedInner = useContext(UnheadContext)
-            }) as unknown as Element,
+              return null
+            },
           })
-        }) as unknown as Element,
-      })
+        },
+      }))()
+      dispose()
     })
     expect(resolvedOuter).toBe(outer)
     expect(resolvedInner).toBe(inner)
