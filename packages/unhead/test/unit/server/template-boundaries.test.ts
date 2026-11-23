@@ -70,7 +70,10 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
 
   it.each([
     '<svg><foreignObject><div>Illustration label</div></foreignObject></svg>',
+    '<svg><foreignObject><div><p>Illustration label</div></foreignObject></svg>',
     '<table><tr><td>Table cell</table>',
+    '<math><semantics><mi>x</mi><annotation-xml encoding="text/html"><div>Label</div></annotation-xml></semantics></math>',
+    '<main>Article</main></frameset>',
   ])('inserts body tags after %s', (body) => {
     const head = createServerHeadWithContext()
     head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
@@ -78,6 +81,15 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
 
     expect(render(head, `${prefix}</body></html>`)).toBe(
       `${prefix}<style>p { color: black }</style></body></html>`,
+    )
+  })
+
+  it('recognizes document whitespace written as a character reference', () => {
+    const head = createServerHeadWithContext()
+    head.push({ title: 'Document title' })
+
+    expect(render(head, '&#32;<html><head>&Tab;</head><body></body></html>')).toBe(
+      '&#32;<html><head>&Tab;<title>Document title</title></head><body></body></html>',
     )
   })
 })

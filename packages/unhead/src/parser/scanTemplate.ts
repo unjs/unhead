@@ -1,13 +1,14 @@
 import { hasOwn } from '../utils/hasOwn'
+import { decodeAttribute } from './decodeAttribute'
 
 const WHITESPACE = /[\t\n\f\r ]*/y
 const TAG_NAME = /<(\/?)([a-z][^\t\n\f\r /<>="'`]*)(?=[\t\n\f\r />])/iy
-const ATTRIBUTE_NAME = /=?[^\t\n\f\r /=>]+/y
+const ATTRIBUTE_NAME = /=[^\t\n\f\r /=>]*|[^\t\n\f\r /=>]+/y
 const UNQUOTED_VALUE = /[^\t\n\f\r >]*/y
 const COMMENT_END = /--!?>/g
-const SCRIPT_COMMENT_RESET = /-*>/y
 const OUTLET = /^<!--\s*(?:app-html|ssr-outlet)\s*-->$/
 const ASCII_ALPHA = /[a-z]/i
+const TAG_DELIMITER = /[\t\n\f\r />]/
 const ASCII_UPPER = /[A-Z]/g
 const NON_WHITESPACE = /[^\t\n\f\r ]/
 
@@ -20,8 +21,40 @@ const SVG_INTEGRATION = /* @__PURE__ */ new Set(['desc', 'foreignobject', 'title
 const MATH_INTEGRATION = /* @__PURE__ */ new Set(['mi', 'mn', 'mo', 'ms', 'mtext'])
 const VOID_HTML = /* @__PURE__ */ new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
 const DOCUMENT_SCOPES = /* @__PURE__ */ new Set(['body', 'frameset', 'head', 'html', 'plaintext', 'select', 'table', 'template'])
+const IMPLIED_END = /* @__PURE__ */ new Set(['dd', 'dt', 'li', 'optgroup', 'option', 'p', 'rb', 'rp', 'rt', 'rtc'])
+const CLOSES_IMPLIED_CHILDREN = /* @__PURE__ */ new Set([
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'center',
+  'dd',
+  'details',
+  'dialog',
+  'dir',
+  'div',
+  'dl',
+  'dt',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'header',
+  'hgroup',
+  'li',
+  'listing',
+  'main',
+  'menu',
+  'nav',
+  'ol',
+  'p',
+  'pre',
+  'search',
+  'section',
+  'summary',
+  'ul',
+])
 const HTML_IN_FOREIGN = /* @__PURE__ */ new Set([
-  'annotation-xml',
   'b',
   'big',
   'blockquote',
@@ -85,7 +118,7 @@ interface HeadElement {
 
 interface ForeignElement {
   name: string
-  context: 'svg' | 'math' | 'html'
+  context: 'svg' | 'math' | 'math-html' | 'html'
 }
 
 export interface TemplateScan {
@@ -115,7 +148,7 @@ function readTag(html: string, start: number, collectAttributes = false): Source
 
   const name = asciiLower(match[2])
   const closing = !!match[1]
-  const attributes: Record<string, string> | undefined = collectAttributes && !closing ? {} : undefined
+  const attributes: Record<string, string> | undefined = !closing && (collectAttributes || name === 'annotation-xml') ? {} : undefined
   let cursor = TAG_NAME.lastIndex
   while (cursor < html.length) {
     cursor = skipSpace(html, cursor)
@@ -176,38 +209,65 @@ function endComment(html: string, start: number) {
 function isHtmlIntegration(parent: ForeignElement, child: string) {
   if (parent.context === 'svg')
     return SVG_INTEGRATION.has(parent.name)
-  return parent.context === 'math' && MATH_INTEGRATION.has(parent.name)
-    && child !== 'mglyph' && child !== 'malignmark'
+  if (parent.context === 'math-html' || (parent.context === 'math' && parent.name === 'annotation-xml' && child === 'svg'))
+    return true
+  return parent.context === 'math' && MATH_INTEGRATION.has(parent.name) && child !== 'mglyph' && child !== 'malignmark'
+}
+
+function matchesScriptName(html: string, start: number) {
+  return TAG_DELIMITER.test(html[start + 6] ?? '') && asciiLower(html.slice(start, start + 6)) === 'script'
+}
+
+function closeScript(html: string, start: number) {
+  let scriptData: 'normal' | 'escaped' | 'double-escaped' = 'normal'
+  for (let cursor = start; cursor < html.length; cursor++) {
+    if (scriptData !== 'normal' && html.startsWith('-->', cursor)) {
+      scriptData = 'normal'
+      cursor += 2
+    }
+    else if (html[cursor] !== '<') {
+      continue
+    }
+    else if (html[cursor + 1] === '/' && matchesScriptName(html, cursor + 2)) {
+      if (scriptData !== 'double-escaped')
+        return readTag(html, cursor)
+      scriptData = 'escaped'
+      cursor += 7
+    }
+    else if (scriptData === 'normal' && html.startsWith('<!--', cursor)) {
+      scriptData = 'escaped'
+    }
+    else if (scriptData === 'escaped' && matchesScriptName(html, cursor + 1)) {
+      scriptData = 'double-escaped'
+      cursor += 6
+    }
+  }
 }
 
 /** Find the actual end tag of an HTML text element. */
 export function closeTextElement(html: string, name: string, start: number) {
-  const pattern = name === 'script'
-    ? /<!--|-->|<\/?script(?=[\t\n\f\r />])/gi
-    : new RegExp(`</${name}(?=[\\t\\n\\f\\r />])`, 'gi')
+  if (name === 'script')
+    return closeScript(html, start)
+  const pattern = new RegExp(`</${name}(?=[\\t\\n\\f\\r />])`, 'gi')
   pattern.lastIndex = start
-  let scriptData: 'normal' | 'escaped' | 'double-escaped' = 'normal'
-  for (const match of html.matchAll(pattern)) {
-    const token = match[0]
-    if (token.startsWith('</')) {
-      if (scriptData !== 'double-escaped')
-        return readTag(html, match.index)
-      scriptData = 'escaped'
-    }
-    else if (token === '<!--') {
-      if (scriptData === 'normal')
-        scriptData = 'escaped'
-      SCRIPT_COMMENT_RESET.lastIndex = match.index + token.length
-      if (SCRIPT_COMMENT_RESET.test(html))
-        scriptData = 'normal'
-    }
-    else if (token === '-->') {
-      scriptData = 'normal'
-    }
-    else if (token[1] !== '!' && scriptData === 'escaped') {
-      scriptData = 'double-escaped'
+  const close = pattern.exec(html)
+  return close ? readTag(html, close.index) : undefined
+}
+
+function closeForeignElement(stack: ForeignElement[], name: string): boolean {
+  let depth = stack.length
+  if (CLOSES_IMPLIED_CHILDREN.has(name)) {
+    while (depth > 0) {
+      const current = stack[depth - 1]
+      if (current.name === name || current.context !== 'html' || !IMPLIED_END.has(current.name))
+        break
+      depth--
     }
   }
+  if (stack[depth - 1]?.name !== name)
+    return false
+  stack.length = depth - 1
+  return true
 }
 
 /**
@@ -229,8 +289,10 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       break
 
     const text = html.slice(cursor, start)
-    if (phase !== 'body' && !scopes.length && NON_WHITESPACE.test(text))
+    if (phase !== 'body' && !scopes.length && NON_WHITESPACE.test(text)
+      && (!text.includes('&') || NON_WHITESPACE.test(decodeAttribute(text)))) {
       phase = 'body'
+    }
 
     if (html.startsWith('<!--', start)) {
       const end = endComment(html, start + 4)
@@ -238,7 +300,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         break
       if (phase === 'body' && !templateDepth && !foreign.length && !result.outlet
         && OUTLET.test(html.slice(start, end))) {
-        result.outlet = { start, end }
+        result.outlet = Object.freeze({ start, end })
       }
       cursor = end
       continue
@@ -268,6 +330,8 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     if (!tag) {
       if (next === '/' || ASCII_ALPHA.test(next ?? ''))
         break
+      if (!scopes.length && !foreign.length)
+        phase = 'body'
       cursor = start + 1
       continue
     }
@@ -277,9 +341,8 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     if (parent) {
       if (closing) {
-        if (parent.name !== name)
+        if (!closeForeignElement(foreign, name))
           break
-        foreign.pop()
       }
       else if (parent.context === 'html' || isHtmlIntegration(parent, name)) {
         if (DOCUMENT_SCOPES.has(name))
@@ -301,8 +364,12 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       else {
         if (HTML_IN_FOREIGN.has(name))
           break
-        if (!selfClosing)
-          foreign.push({ name, context: parent.context })
+        if (!selfClosing) {
+          const encoding = tag.attributes?.encoding
+          const isAnnotation = parent.context === 'math' && name === 'annotation-xml'
+            && encoding !== undefined && /^(?:text\/html|application\/xhtml\+xml)$/i.test(decodeAttribute(encoding))
+          foreign.push({ name, context: isAnnotation ? 'math-html' : parent.context })
+        }
       }
       continue
     }
@@ -363,7 +430,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         result.bodyClose = start
       break
     }
-    if (name === 'frameset' || (!closing && name === 'plaintext'))
+    if (!closing && (name === 'frameset' || name === 'plaintext'))
       break
 
     // HTML can ignore starts inside a select or exit the select implicitly.
