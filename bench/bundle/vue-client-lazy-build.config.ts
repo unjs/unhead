@@ -36,10 +36,7 @@ function shellBuild(name: 'lazy' | 'lazy-switch' | 'lazy-stream-switch' | 'lazy-
         ],
       },
     },
-    externals: [
-      'hookable',
-      'vue',
-    ],
+    externals: ['vue'],
     declaration: false,
     hooks: {
       'rollup:options': (ctx, config) => {
