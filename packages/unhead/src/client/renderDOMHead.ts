@@ -4,13 +4,14 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { CLASS_SEPARATOR_RE, normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
+import { domEvents } from './buildFeatures'
 import { renderDomEvent } from './domEventHandlers'
 
 type DomStateInternal = DomState & { _d: Document }
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
-  return head => _renderDOMHead(head, options, renderDomEvent)
+  return head => _renderDOMHead(head, options, domEvents ? renderDomEvent : undefined)
 }
 
 export function renderStreamingDOMHead(head: Unhead<any>): boolean {
@@ -19,7 +20,7 @@ export function renderStreamingDOMHead(head: Unhead<any>): boolean {
 
 /** @deprecated Use `head.render()` instead */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
-  return _renderDOMHead(head, options, renderDomEvent)
+  return _renderDOMHead(head, options, domEvents ? renderDomEvent : undefined)
 }
 
 function hasPendingEntries<T extends Unhead<any>>(head: T) {

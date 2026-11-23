@@ -37,6 +37,7 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 }
 
 export interface VitePluginOptions extends UnpluginOptions {
+  treeshake?: ViteTreeshakeOptions | false
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
@@ -47,6 +48,11 @@ export interface VitePluginOptions extends UnpluginOptions {
    * Retained as a passthrough so existing framework wrappers keep working.
    */
   _framework?: string
+}
+
+export interface ViteTreeshakeOptions extends TreeshakeServerComposablesOptions {
+  /** Detect static `useHead()` keys and omit unused features in buffered production client builds. */
+  client?: boolean
 }
 
 /**

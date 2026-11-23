@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
+import { ClientFeatureTreeshake } from './ClientFeatureTreeshake'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
@@ -20,7 +21,7 @@ export type { InternalFrameworkContext, VitePluginOptions }
  * `_framework` correctly without exposing it on public options.
  */
 export function Unhead(options: VitePluginOptions = {}, internal: InternalFrameworkContext = {}): Plugin[] {
-  const plugins: Plugin[] = []
+  const plugins = ClientFeatureTreeshake(options.treeshake)
   const ctx = createHeadTransformContext()
   const framework = internal.framework ?? options._framework
 

@@ -1,4 +1,5 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
+import { titleTemplate } from '../client/buildFeatures'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
@@ -234,7 +235,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
-  resolveTitleTemplate(ctx, head)
+  if (titleTemplate)
+    resolveTitleTemplate(ctx, head)
+  else
+    head._title = ctx.tagMap.get('title')?.textContent
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)

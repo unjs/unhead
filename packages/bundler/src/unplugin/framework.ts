@@ -2,6 +2,7 @@ import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPlugi
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
+import { ClientFeatureTreeshake } from './ClientFeatureTreeshake'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
@@ -150,6 +151,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (!wantStreaming)
+          plugins.push(...ClientFeatureTreeshake(coreOpts.treeshake))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
