@@ -109,6 +109,37 @@ describe('wrapStream late entries', () => {
   })
 
   it.each([
+    { name: 'script', start: ['<script>const message = "'], text: 'hello ', end: ['";</', 'script', '>'] },
+    {
+      name: 'script with an HTML example',
+      start: ['<script>const example = `<!', '-- <scr', 'ipt>'],
+      text: 'guide ',
+      end: ['</scr', 'ipt>', '--', '>', '`;</', 'script', '>'],
+    },
+    { name: 'style', start: ['<style>/* '], text: 'style notes ', end: [' */</', 'style', '>'] },
+    { name: 'textarea', start: ['<textarea>'], text: 'notes ', end: ['</', 'textarea', '>'] },
+  ])('preserves a large $name across app chunks', async ({ start, text, end }) => {
+    const { head } = createStreamableHead()
+    const block = text.repeat(16 * 1024)
+    const chunks = [...start, block, block, block, ...end]
+    const appHtml = chunks.join('')
+    const encoder = new TextEncoder()
+    const source = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(encoder.encode(chunks.shift()!))
+        if (!chunks.length)
+          controller.close()
+      },
+    }, { highWaterMark: 0 })
+
+    const html = await new Response(wrapStream(head, source, TEMPLATE, undefined, {
+      flushChunk: () => '<!-- Late update -->',
+    })).text()
+
+    expect(html).toContain(`${appHtml}<!-- Late update -->`)
+  })
+
+  it.each([
     '<select><option><meter value="1" max="2">Half</meter></option></select>',
     '<select><option><svg><text>Choice</text></svg>Choice</option></select>',
   ])('preserves customizable select markup in app content: %s', async (appHtml) => {

@@ -199,7 +199,16 @@ export interface TemplateScan {
 interface StreamBodyState {
   foreign: ForeignElement[]
   scopes: string[]
+  text?: TextElementState
 }
+
+type TextElementState
+  = | { kind: 'script', mode: 'normal' | 'escaped' | 'double-escaped' }
+    | { kind: 'text', name: string }
+
+type TextElementScan
+  = | { kind: 'closed', tag: SourceTag }
+    | { kind: 'pending', restAt: number }
 
 function skipSpace(html: string, start: number) {
   WHITESPACE.lastIndex = start
@@ -289,40 +298,69 @@ function matchesScriptName(html: string, start: number) {
   return TAG_DELIMITER.test(html[start + 6] ?? '') && asciiLower(html.slice(start, start + 6)) === 'script'
 }
 
-function closeScript(html: string, start: number) {
-  let scriptData: 'normal' | 'escaped' | 'double-escaped' = 'normal'
+function startTextElement(name: string): TextElementState {
+  return name === 'script' ? { kind: 'script', mode: 'normal' } : { kind: 'text', name }
+}
+
+function scanTextEndTag(html: string, cursor: number): TextElementScan {
+  const tag = readTag(html, cursor)
+  return tag ? { kind: 'closed', tag } : { kind: 'pending', restAt: cursor }
+}
+
+function scanScriptText(html: string, start: number, state: Extract<TextElementState, { kind: 'script' }>): TextElementScan {
   for (let cursor = start; cursor < html.length; cursor++) {
-    if (scriptData !== 'normal' && html.startsWith('-->', cursor)) {
-      scriptData = 'normal'
-      cursor += 2
+    if (state.mode !== 'normal' && html[cursor] === '-') {
+      if (html.startsWith('-->', cursor)) {
+        state.mode = 'normal'
+        cursor += 2
+      }
+      else if (html.length - cursor < 3 && '-->'.startsWith(html.slice(cursor))) {
+        return { kind: 'pending', restAt: cursor }
+      }
     }
     else if (html[cursor] !== '<') {
       continue
     }
     else if (html[cursor + 1] === '/' && matchesScriptName(html, cursor + 2)) {
-      if (scriptData !== 'double-escaped')
-        return readTag(html, cursor)
-      scriptData = 'escaped'
+      if (state.mode !== 'double-escaped')
+        return scanTextEndTag(html, cursor)
+      state.mode = 'escaped'
       cursor += 7
     }
-    else if (scriptData === 'normal' && html.startsWith('<!--', cursor)) {
-      scriptData = 'escaped'
+    else if (state.mode === 'normal' && html.startsWith('<!--', cursor)) {
+      state.mode = 'escaped'
     }
-    else if (scriptData === 'escaped' && matchesScriptName(html, cursor + 1)) {
-      scriptData = 'double-escaped'
+    else if (state.mode === 'escaped' && matchesScriptName(html, cursor + 1)) {
+      state.mode = 'double-escaped'
       cursor += 6
     }
+    else if (html.length - cursor <= '</script'.length) {
+      // The next chunk may complete a transition or supply the tag delimiter.
+      const tail = asciiLower(html.slice(cursor))
+      if ('</script'.startsWith(tail) || (state.mode === 'normal' && '<!--'.startsWith(tail))
+        || (state.mode === 'escaped' && '<script'.startsWith(tail))) {
+        return { kind: 'pending', restAt: cursor }
+      }
+    }
   }
+  return { kind: 'pending', restAt: html.length }
+}
+
+function scanTextElement(html: string, start: number, state: TextElementState): TextElementScan {
+  if (state.kind === 'script')
+    return scanScriptText(html, start, state)
+  const { name } = state
+  const pattern = new RegExp(`</${name}(?=[\\t\\n\\f\\r />])`, 'gi')
+  pattern.lastIndex = start
+  const close = pattern.exec(html)
+  // Only a partial end tag can carry into the next chunk.
+  return close ? scanTextEndTag(html, close.index) : { kind: 'pending', restAt: Math.max(start, html.length - name.length - 2) }
 }
 
 /** Find the actual end tag of an HTML text element. */
 export function closeTextElement(html: string, name: string, start: number) {
-  if (name === 'script')
-    return closeScript(html, start)
-  const pattern = new RegExp(`</${name}(?=[\\t\\n\\f\\r />])`, 'gi')
-  pattern.lastIndex = start
-  const close = pattern.exec(html)
-  return close ? readTag(html, close.index) : undefined
+  const scan = scanTextElement(html, start, startTextElement(name))
+  return scan.kind === 'closed' ? scan.tag : undefined
 }
 
 function selectToken(name: string, closing: boolean, streamBody: boolean): 'skip' | 'scan' | 'stop' {
@@ -425,6 +463,15 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
   let cursor = html.charCodeAt(0) === 0xFEFF ? 1 : 0
 
   while (true) {
+    if (streamBody?.text) {
+      const scan = scanTextElement(html, cursor, streamBody.text)
+      if (scan.kind === 'pending') {
+        result.streamRestAt = scan.restAt
+        break
+      }
+      streamBody.text = undefined
+      cursor = scan.tag.end
+    }
     const start = html.indexOf('<', cursor)
     if (streamBody)
       result.streamRestAt = start < 0 ? html.length : start
@@ -516,6 +563,10 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         if (DOCUMENT_SCOPES.has(name))
           break
         if (HEAD_TEXT.has(name) || BODY_TEXT.has(name)) {
+          if (streamBody) {
+            streamBody.text = startTextElement(name)
+            continue
+          }
           const close = closeTextElement(html, name, cursor)
           if (!close)
             break
@@ -638,6 +689,10 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     }
 
     if (!closing && (HEAD_TEXT.has(name) || BODY_TEXT.has(name))) {
+      if (streamBody) {
+        streamBody.text = startTextElement(name)
+        continue
+      }
       const close = closeTextElement(html, name, cursor)
       if (!close)
         break
