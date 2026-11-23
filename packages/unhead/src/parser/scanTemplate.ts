@@ -17,7 +17,7 @@ const HEAD_TEXT = /* @__PURE__ */ new Set(['title', 'style', 'script', 'noscript
 const BODY_TEXT = /* @__PURE__ */ new Set(['textarea', 'xmp', 'iframe', 'noembed'])
 const BODY_SCOPE_BARRIERS = /* @__PURE__ */ new Set(['applet', 'marquee', 'object'])
 const SCOPED = /* @__PURE__ */ new Set(['applet', 'marquee', 'object', 'select', 'table', 'template'])
-const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent', 'svg'])
+const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent'])
 const SELECT_FORMATTING = /* @__PURE__ */ new Set([
   'abbr',
   'b',
@@ -57,10 +57,34 @@ const SELECT_FORMATTING = /* @__PURE__ */ new Set([
 ])
 const TABLE_SECTIONS = /* @__PURE__ */ new Set(['tbody', 'tfoot', 'thead'])
 const SVG_INTEGRATION = /* @__PURE__ */ new Set(['desc', 'foreignobject', 'title'])
+const SELECT_SVG_ELEMENTS = /* @__PURE__ */ new Set([
+  'circle',
+  'clippath',
+  'defs',
+  'desc',
+  'ellipse',
+  'g',
+  'image',
+  'line',
+  'lineargradient',
+  'mask',
+  'path',
+  'pattern',
+  'polygon',
+  'polyline',
+  'radialgradient',
+  'rect',
+  'stop',
+  'svg',
+  'symbol',
+  'title',
+  'use',
+])
 const MATH_INTEGRATION = /* @__PURE__ */ new Set(['mi', 'mn', 'mo', 'ms', 'mtext'])
 const VOID_HTML = /* @__PURE__ */ new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
 const DOCUMENT_SCOPES = /* @__PURE__ */ new Set(['body', 'frameset', 'head', 'html', 'plaintext'])
 const IMPLIED_END = /* @__PURE__ */ new Set(['dd', 'dt', 'li', 'optgroup', 'option', 'p', 'rb', 'rp', 'rt', 'rtc'])
+const RUBY_TEXT = /* @__PURE__ */ new Set(['rb', 'rp', 'rt', 'rtc'])
 const CLOSES_IMPLIED_CHILDREN = /* @__PURE__ */ new Set([
   'address',
   'article',
@@ -107,7 +131,6 @@ const HTML_IN_FOREIGN = /* @__PURE__ */ new Set([
   'dt',
   'em',
   'embed',
-  'font',
   'h1',
   'h2',
   'h3',
@@ -186,7 +209,7 @@ function readTag(html: string, start: number, collectAttributes = false): Source
 
   const name = asciiLower(match[2])
   const closing = !!match[1]
-  const attributes: Record<string, string> | undefined = !closing && (collectAttributes || name === 'annotation-xml') ? {} : undefined
+  const attributes: Record<string, string> | undefined = !closing && (collectAttributes || name === 'annotation-xml' || name === 'font') ? {} : undefined
   let cursor = TAG_NAME.lastIndex
   while (cursor < html.length) {
     cursor = skipSpace(html, cursor)
@@ -300,6 +323,41 @@ function selectToken(name: string, closing: boolean): 'skip' | 'scan' | 'stop' {
   return (name === 'select' ? closing : SELECT_CONTENT.has(name)) ? 'scan' : 'stop'
 }
 
+function closeSelectSvg(html: string, cursor: number): number | undefined {
+  // Older browsers ignore SVG tags in a select. Only consume balanced icons
+  // whose contents keep both the HTML and SVG tokenizers in the data state.
+  const stack = ['svg']
+  while (stack.length) {
+    const start = html.indexOf('<', cursor)
+    if (start < 0)
+      return
+    const current = stack[stack.length - 1]
+    if (html.startsWith('<!--', start)) {
+      const end = endComment(html, start + 4)
+      if (end < 0)
+        return
+      cursor = end
+      continue
+    }
+    const tag = readTag(html, start)
+    if (!tag)
+      return
+    if (tag.closing) {
+      if (tag.name !== current)
+        return
+      stack.pop()
+    }
+    else {
+      if (SVG_INTEGRATION.has(current) || !SELECT_SVG_ELEMENTS.has(tag.name))
+        return
+      if (!tag.selfClosing)
+        stack.push(tag.name)
+    }
+    cursor = tag.end
+  }
+  return cursor
+}
+
 function closeForeignElement(stack: ForeignElement[], name: string): boolean {
   const parent = stack.at(-1)
   const scope = parent?.context === 'html' ? parent.scope : -1
@@ -315,9 +373,11 @@ function closeForeignElement(stack: ForeignElement[], name: string): boolean {
   const scopeName = stack[scope]?.name
   const tableSection = scopeName === 'table' && TABLE_SECTIONS.has(name)
   const tableRow = scopeName === 'table' && name === 'tr'
+  const tableCell = scopeName === 'table' && (name === 'td' || name === 'th')
   const optionGroup = scopeName === 'select' && name === 'optgroup'
-  const impliedChildren = CLOSES_IMPLIED_CHILDREN.has(name)
-  if (tableSection || tableRow || optionGroup || impliedChildren) {
+  const ruby = name === 'ruby'
+  const impliedChildren = tableCell || CLOSES_IMPLIED_CHILDREN.has(name)
+  if (tableSection || tableRow || optionGroup || ruby || impliedChildren) {
     while (depth > 0) {
       const current = stack[depth - 1]
       if (current.name === name || current.context !== 'html')
@@ -326,7 +386,8 @@ function closeForeignElement(stack: ForeignElement[], name: string): boolean {
       if (!(impliedChildren && IMPLIED_END.has(child))
         && !((tableRow || tableSection) && (child === 'td' || child === 'th'))
         && !(tableSection && child === 'tr')
-        && !(optionGroup && child === 'option')) {
+        && !(optionGroup && child === 'option')
+        && !(ruby && RUBY_TEXT.has(child))) {
         break
       }
       depth--
@@ -406,16 +467,24 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     cursor = tag.end
     const { name, closing, selfClosing } = tag
+    const foreignScope = parent?.context === 'html' ? parent.scope : -1
+    const scopeName = parent ? foreign[foreignScope]?.name : scopes.at(-1)
+    if (scopeName === 'select') {
+      if (name === 'svg' && !closing) {
+        const end = selfClosing ? cursor : closeSelectSvg(html, cursor)
+        if (end === undefined)
+          break
+        cursor = end
+        continue
+      }
+      const action = selectToken(name, closing)
+      if (action === 'stop')
+        break
+      if (action === 'skip')
+        continue
+    }
 
     if (parent) {
-      const scope = parent.context === 'html' ? parent.scope : -1
-      if (foreign[scope]?.name === 'select') {
-        const action = selectToken(name, closing)
-        if (action === 'stop')
-          break
-        if (action === 'skip')
-          continue
-      }
       if (closing) {
         if (!closeForeignElement(foreign, name))
           break
@@ -434,12 +503,15 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
             foreign.push({ name, context: name })
         }
         else if (!VOID_HTML.has(name)) {
-          foreign.push({ name, context: 'html', scope: SCOPED.has(name) ? foreign.length : scope })
+          foreign.push({ name, context: 'html', scope: SCOPED.has(name) ? foreign.length : foreignScope })
         }
       }
       else {
-        if (HTML_IN_FOREIGN.has(name))
+        const fontAttributes = name === 'font' ? tag.attributes : undefined
+        if (HTML_IN_FOREIGN.has(name) || (fontAttributes
+          && (hasOwn(fontAttributes, 'color') || hasOwn(fontAttributes, 'face') || hasOwn(fontAttributes, 'size')))) {
           break
+        }
         if (!selfClosing) {
           const encoding = tag.attributes?.encoding
           const isAnnotation = parent.context === 'math' && name === 'annotation-xml'
@@ -508,15 +580,6 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     }
     if (!closing && (name === 'frameset' || name === 'plaintext'))
       break
-
-    // Stop when markup could implicitly close the select or change the tokenizer.
-    if (scopes.at(-1) === 'select') {
-      const action = selectToken(name, closing)
-      if (action === 'stop')
-        break
-      if (action === 'skip')
-        continue
-    }
 
     if (SCOPED.has(name)) {
       if (!closing) {

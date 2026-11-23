@@ -14,7 +14,9 @@ const integrationScopes = [
   '<table><tbody><tr><td>Cell</td></tr></tbody></table>',
   '<table><tbody><tr><td>First<td>Second</tr></tbody></table>',
   '<table><thead><tr><th>Heading</thead><tbody><tr><td>Cell</tbody></table>',
+  '<table><tr><td><p>Label</td></tr></table>',
   '<table><tr><td>Cell</table>',
+  '<ruby>漢<rt>kan</ruby>',
   '<select><option>Choice</option></select>',
   '<select><optgroup label="Group"><option>First<option>Second</optgroup></select>',
   '<select><option><strong>Choice</strong> <em>details</em></option></select>',
@@ -110,6 +112,7 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
   it.each([
     '<svg><foreignObject><div>Illustration label</div></foreignObject></svg>',
     '<svg><foreignObject><div><p>Illustration label</div></foreignObject></svg>',
+    '<svg><defs><font id="logo"><font-face font-family="Logo"/><glyph unicode="A" /></font></defs></svg>',
     '<table><tr><td>Table cell</table>',
     '<math><semantics><mi>x</mi><annotation-xml encoding="text/html"><div>Label</div></annotation-xml></semantics></math>',
     '<main>Article</main></frameset>',
@@ -206,6 +209,7 @@ describe.each([false, true])('customizable select streaming, prepared: %s', (pre
   it.each([
     '<select><optgroup label="Group"><legend>Group</legend><option>Choice</option></optgroup></select>',
     '<select><option><svg viewBox="0 0 10 10"><title>Icon</title><g><path d="M0 0h10"/></g></svg>Choice</option></select>',
+    '<select><option><svg><desc>Icon<!-- app-html --></desc><use href="#icon" /></svg>Choice</option></select>',
     '<select><optgroup label="Group"><legend>Group</legend><option><svg><title>Icon</title><path d="M0 0h10"/></svg>Choice</option></optgroup></select>',
   ])('mounts streamed content and inserts initial body-close tags after %s', async (select) => {
     for (const [open, close] of [['', ''], ...integrationPoints]) {
@@ -226,6 +230,14 @@ describe.each([false, true])('customizable select streaming, prepared: %s', (pre
       expect(html).toContain('</main><script src="/initial.js"></script></body>')
     }
   })
+})
+
+it('keeps the template intact when a select icon uses CDATA', () => {
+  const head = createServerHeadWithContext()
+  head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+  const template = '<html><head></head><body><select><option><svg><![CDATA[Icon label]]></svg>Choice</option></select></body></html>'
+
+  expect(transformHtmlTemplateRaw(head, template)).toBe(template)
 })
 
 it('splits the stream at a comment in the document instead of marker text in a textarea', () => {
