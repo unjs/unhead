@@ -16,7 +16,11 @@ export function validateHtml(html: string, source: string): ValidationOutput {
   const { input } = parseHtmlForUnheadExtraction(html)
   const captured: HeadValidationRule[] = []
   const head = createHead({
-    plugins: [ValidatePlugin({ onReport: rs => captured.push(...rs) })],
+    plugins: [ValidatePlugin({
+      // Rendered HTML carries data-hid but cannot establish the client entry's key.
+      rules: { 'large-inline-content-without-key': 'off' },
+      onReport: rs => captured.push(...rs),
+    })],
   })
   head.push(input)
   renderSSRHead(head)
