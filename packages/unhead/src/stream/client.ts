@@ -2,6 +2,7 @@ import type { ClientUnhead } from '../client/adapter'
 import type { ClientHeadHooks, CreateClientHeadOptions, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
+import { installDomEventHandlers } from '../client/domEventHandlers'
 import { createHooks } from '../utils/hooks'
 
 export type { StreamingGlobal, UnheadStreamQueue }
@@ -41,6 +42,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   const coreRender = core.render
   const hooks = createHooks<ClientHeadHooks>(rest.hooks)
   const head = createClientHeadAdapter(core as Unhead<T, boolean>, hooks, () => coreRender() as boolean)
+  installDomEventHandlers(head)
 
   // Mark as wrapped to avoid double-wrapping
   ;(head as any)._wrapped = true

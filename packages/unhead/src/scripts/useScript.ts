@@ -18,6 +18,7 @@ import type {
   UseScriptScopeReturn,
   WarmupStrategy,
 } from './types'
+import { installDomEventHandlers } from '../client/domEventHandlers'
 import { hasOwn } from '../utils/hasOwn'
 import { callHook } from '../utils/hooks'
 import { createScriptProxy } from './proxy'
@@ -485,6 +486,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     script._triggerPromises = []
   }
   function pushScript(key?: string) {
+    installDomEventHandlers(head)
     script.entry = head.push({
       script: [{ defer: true, fetchpriority: 'low', ...input, ...(key && { key }) }],
     }, entryOptions)
