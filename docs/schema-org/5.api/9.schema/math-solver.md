@@ -1,5 +1,6 @@
 ---
 title: MathSolver Schema
+since: 3.3.0
 description: Add Google Math solver structured data with defineMathSolver(), including SolveMathAction URL templates and learning resource metadata.
 ---
 

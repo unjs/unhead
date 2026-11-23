@@ -1,5 +1,6 @@
 ---
 title: "Validate"
+since: 3.0.0
 description: "Catch common SEO, resource-loading, and head-tag mistakes. Validate URLs, metadata, Open Graph fields, and likely typos."
 navigation.title: "Validate"
 ---

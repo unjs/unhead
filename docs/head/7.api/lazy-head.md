@@ -1,5 +1,6 @@
 ---
 title: Lazy Head
+since: 3.5.0
 description: API reference for queuing head entries and loading the client head on demand.
 ---
 

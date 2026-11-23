@@ -1,5 +1,6 @@
 ---
 title: "ESLint Plugin"
+since: 3.1.0
 description: "Catch unhead misuse, type-narrowing gaps, and v2-to-v3 migration problems at the source level. Pairs with the runtime ValidatePlugin and the unhead CLI."
 navigation.title: "ESLint Plugin"
 ---
