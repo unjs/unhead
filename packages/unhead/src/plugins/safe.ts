@@ -8,7 +8,7 @@ import { defineHeadPlugin } from './defineHeadPlugin'
 const WhitelistAttributes = {
   htmlAttrs: /* @__PURE__ */ new Set(['class', 'style', 'lang', 'dir']),
   bodyAttrs: /* @__PURE__ */ new Set(['class', 'style']),
-  meta: /* @__PURE__ */ new Set(['name', 'property', 'charset', 'content', 'media']),
+  meta: /* @__PURE__ */ new Set(['name', 'property', 'content', 'media']),
   noscript: /* @__PURE__ */ new Set([] as string[]),
   style: /* @__PURE__ */ new Set(['media', 'nonce', 'title', 'blocking']),
   script: /* @__PURE__ */ new Set(['type', 'textContent', 'nonce', 'blocking']),
@@ -136,11 +136,12 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
     // title: textContent is escaped in rendering (tagToString), no props needed
     case 'title':
       break
-    // virtual tags, not rendered to HTML — but sanitize to prevent injection if rendered
     case 'titleTemplate':
-    case 'templateParams':
       next = prev
       break
+    case 'templateParams':
+      // Parameters affect tags from every entry, including executable content.
+      return false
     case 'htmlAttrs':
     case 'bodyAttrs':
       WhitelistAttributes[type].forEach((attr) => {
@@ -247,7 +248,7 @@ function sanitizeStreamedInput(input: ResolvableHead): Record<string, unknown> |
   let safe: Record<string, any> | undefined
   for (const tag of normalizeEntryToTags(input, [])) {
     const name = tag.tag
-    if (!ValidHeadTags.has(name) && name !== 'titleTemplate' && name !== 'templateParams')
+    if (!ValidHeadTags.has(name) && name !== 'titleTemplate')
       continue
     if (!makeTagSafe(tag))
       continue

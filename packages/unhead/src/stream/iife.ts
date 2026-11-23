@@ -5,7 +5,7 @@
  *
  * @module unhead/stream/iife
  */
-import type { StreamingGlobal } from './types'
+import type { StreamedHeadEntry, StreamingGlobal } from './types'
 import { createDomRenderer } from '../client/renderDOMHead'
 import { createUnhead } from '../unhead'
 
@@ -26,15 +26,17 @@ function init(options: { streamKey?: string } = {}) {
 
   // Push an entry and tag it as streamed so devtools can distinguish
   // entries that arrived via inline streaming scripts from client pushes.
-  function pushStreamed(entry: any) {
-    const active = head.push(entry, { _streamed: true })
+  function pushStreamed(entry: StreamedHeadEntry) {
+    const safe = entry?._safe === true
+    const input = safe ? { ...entry, _safe: undefined } : entry
+    const active = head.push(input, { _streamed: true, _safe: safe })
     const stored = head.entries.get(active._i) as any
     if (stored)
       stored._streamed = true
   }
 
   // Push each streamed batch with one render.
-  function pushBatch(entries: any[]) {
+  function pushBatch(entries: StreamedHeadEntry[]) {
     // Let the outer batch own renders from nested pushes.
     const nested = head._b
     head._b = true

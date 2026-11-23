@@ -1,6 +1,7 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { StreamedHeadEntry } from './types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
@@ -422,7 +423,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     }
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
-    const inputs: any[] = []
+    const inputs: StreamedHeadEntry[] = []
     let bodyTags: typeof state.bodyTags
     for (const entry of head.entries.values()) {
       const normalized = normalizedEntries?.get(entry._i)
@@ -440,13 +441,13 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       input = unpackStreamMeta(input)
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
-        inputs.push(input)
+        inputs.push(safe ? { ...input, _safe: true } : input)
         continue
       }
       const [patch, buffered, seen] = split
       nextSeen = seen
       if (patch)
-        inputs.push(patch)
+        inputs.push(safe ? { ...patch, _safe: true } : patch)
       if (buffered)
         (bodyTags ||= []).push([buffered, safe])
     }

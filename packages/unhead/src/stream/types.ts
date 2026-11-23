@@ -1,5 +1,7 @@
 import type { SerializableHead, Unhead } from '../types'
 
+export type StreamedHeadEntry = SerializableHead & { _safe?: true }
+
 /**
  * Shape of the streaming queue written to `window[streamKey]` (default
  * `window.__unhead__`) by the server-emitted bootstrap script. The client
@@ -11,11 +13,11 @@ import type { SerializableHead, Unhead } from '../types'
  */
 export interface StreamingGlobal {
   /** Queued entry batches pushed before the client IIFE took over. */
-  _q: SerializableHead[][]
+  _q: StreamedHeadEntry[][]
   /** Resolved Unhead instance, populated once the IIFE initialises. */
   _head?: Unhead<any>
   /** Push an entry batch onto the queue (pre-init) or the head (post-init). */
-  push: (entries: SerializableHead[]) => void
+  push: (entries: StreamedHeadEntry[]) => void
 }
 
 /**

@@ -1,7 +1,13 @@
+import { runInNewContext } from 'node:vm'
 import { JSDOM } from 'jsdom'
-import { createStreamableHead, wrapStream } from 'unhead/stream/server'
+import { useHeadSafe } from 'unhead'
+import { createHead } from 'unhead/client'
+import { TemplateParamsPlugin } from 'unhead/plugins'
+import { createStreamableHead as createClientStreamableHead } from 'unhead/stream/client'
+import { createStreamableHead, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
+import { buildStreamingPluginOptions, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
 
@@ -37,6 +43,37 @@ async function serveAndRun(late: Record<string, unknown>) {
 }
 
 describe('the patch a bare wrapStream emits', () => {
+  it.each(['inline', 'module'] as const)('preserves the safe title boundary when replaying %s entries', (mode) => {
+    const { head } = createStreamableHead()
+    useHeadSafe(head, { title: 'Guest guide' })
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    const updates: unknown[] = JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')')))
+    const dom = new JSDOM('')
+    const window = dom.window as any
+    const { document } = window
+    globalThis.window = window
+    globalThis.document = document
+    window.__unhead__ = { _q: [updates], push: (batch: unknown[]) => window.__unhead__._q.push(batch) }
+
+    if (mode === 'inline') {
+      initIife()
+    }
+    else {
+      const plugin = buildStreamingPluginOptions({ framework: 'unhead', mode: 'module' })
+      const { code } = (plugin.load as any).handler.call({}, `\0${VIRTUAL_CLIENT_ID}`)
+      runInNewContext(code.slice(code.indexOf('\n') + 1), { createHead, window, document })
+    }
+
+    const client = createClientStreamableHead({ plugins: [TemplateParamsPlugin] })!
+    client.push({ script: [{ textContent: '// %pageTitle', processTemplateParams: true }] })
+    client.render()
+
+    expect({ title: document.title, script: document.querySelector('script')?.textContent }).toEqual({
+      title: 'Guest guide',
+      script: '//',
+    })
+  })
+
   it('applies to the document once the browser runs it', async () => {
     const { html, document } = await serveAndRun({
       title: 'Streamed late',

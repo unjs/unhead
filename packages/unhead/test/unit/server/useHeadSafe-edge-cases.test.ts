@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
-import { createServerHeadWithContext } from '../../util'
+import { createServerHeadWithContext, useDom } from '../../util'
 
 // Note: SafeInputPlugin must be registered via useHeadSafe() — calling
 // head.push() with _safe:true alone does NOT activate the safe plugin.
@@ -14,6 +14,61 @@ async function safeRender(input: any) {
 }
 
 describe('useHeadSafe edge cases', () => {
+  it('keeps the document encoding app-owned while accepting other safe metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ charset: 'windows-1252' }] })
+    const visitor = { meta: [{ charset: 'utf-8', name: 'description', content: 'Visitor guide' }] }
+    useHeadSafe(head, visitor)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      encoding: document.querySelector('meta[charset]')?.getAttribute('charset'),
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+    }).toEqual({ encoding: 'windows-1252', description: 'Visitor guide' })
+  })
+
+  it('keeps app template parameters when a safe entry defines the same names', () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({ templateParams: { site: 'Documentation' } })
+    const guest = { title: '%site', templateParams: { site: 'Guest page' } }
+    useHeadSafe(head, guest)
+
+    expect(renderSSRHead(head).headTags).toContain('<title>Documentation</title>')
+  })
+
+  it.each([true, false])('uses the page title only in permitted template contexts, safe=%s', (safe) => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({
+      titleTemplate: '%s | Example',
+      meta: [
+        { name: 'description', content: '%pageTitle' },
+        { 'http-equiv': 'content-language', 'content': '%pageTitle' },
+      ],
+      link: [{ rel: 'stylesheet', href: '/assets/%pageTitle/guide.css' }],
+      script: [{ textContent: '// %pageTitle', processTemplateParams: true }],
+    })
+    const input = { title: 'Guide' }
+    if (safe)
+      useHeadSafe(head, input)
+    else
+      head.push(input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      title: document.title,
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+      directive: document.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content'),
+      stylesheet: document.querySelector('link')?.getAttribute('href'),
+      script: document.querySelector('script')?.textContent,
+    }).toEqual({
+      title: 'Guide | Example',
+      description: 'Guide',
+      directive: safe ? '' : 'Guide',
+      stylesheet: safe ? '/assets//guide.css' : '/assets/Guide/guide.css',
+      script: safe ? '//' : '// Guide',
+    })
+  })
+
   // ─── 1. Attribute Name Injection ───────────────────────────────────
   describe('attribute name injection', () => {
     const maliciousKeys = [
@@ -327,11 +382,9 @@ describe('useHeadSafe edge cases', () => {
       const head = createServerHeadWithContext({
         plugins: [TemplateParamsPlugin],
       })
+      head.push({ templateParams: { href: 'data:text/css,p%7Bcolor%3Ablue%7D' } })
       useHeadSafe(head, {
         link: [{ rel: 'stylesheet', href: '%href' }],
-        templateParams: {
-          href: 'data:text/css,body{display:none}',
-        },
       })
       const ctx = renderSSRHead(head)
       expect(ctx.headTags).toBe('')
