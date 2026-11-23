@@ -1,7 +1,8 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { StreamingGlobal } from '../stream/types'
 import type { ActiveHeadEntry, ClientHeadHooks, HeadEntry, HeadRenderer } from '../types'
-import type { HeadQueue, LazyHeadOptions, LazyUnhead } from './index'
+import type { DeferredHead } from './deferred'
+import type { HeadQueue, LazyHeadOptions } from './index'
 import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
@@ -80,7 +81,7 @@ function resolveStream(document: Document | undefined, streamKey: string) {
 export async function activate<T>(
   options: LazyHeadOptions,
   queue: HeadQueue<T>,
-  shell: LazyUnhead<T>,
+  shell: DeferredHead<T>,
   connect: (head: ClientUnhead<T>) => void,
 ): Promise<ClientUnhead<T>> {
   const document = shell.resolvedOptions.document
@@ -250,4 +251,28 @@ export async function activate<T>(
   connect(head)
   head.render()
   return head
+}
+
+// Keep the installed object stable. Composables can keep using it after replay.
+export async function hydrate<T>(options: LazyHeadOptions, queue: HeadQueue<T>, shell: DeferredHead<T>): Promise<void> {
+  if (queue.head)
+    return
+  const streamKey = options.streamKey ?? options.experimentalStreamKey ?? '__unhead__'
+  const view = shell.resolvedOptions.document?.defaultView as unknown as Record<string, StreamingGlobal> | undefined
+  await activate({ ...options, streamKey: view?.[streamKey] ? streamKey : undefined }, queue, shell, (head) => {
+    for (const key of Object.keys(head) as (keyof typeof head)[]) {
+      // The installed push can be wrapped by the framework. The other fields
+      // are shared with the adapter while the runtime replays queued entries.
+      if (key === 'push' || key === '_dom' || key === '_scripts' || key === 'hooks')
+        continue
+      Object.defineProperty(shell, key, {
+        configurable: true,
+        enumerable: true,
+        get: () => head[key],
+        set: value => Reflect.set(head, key, value),
+      })
+    }
+    queue.entries.clear()
+    queue.plugins.length = 0
+  })
 }

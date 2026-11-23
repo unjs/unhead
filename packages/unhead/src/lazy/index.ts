@@ -1,6 +1,9 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntry, HeadEntryOptions, HeadPluginInput, ResolvableHead } from '../types'
-import { copyInput } from './same'
+import { pushQueuedEntry } from './push'
+
+export { createDeferredHead, deferredHeadLifecycle } from './deferred'
+export type { DeferredHeadLifecycle } from './deferred'
 
 /**
  * @experimental
@@ -103,37 +106,7 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
     push(input, entryOptions) {
       if (active)
         return active.push(input, entryOptions)
-      const _i = entryOptions?._index ?? queue.index++
-      const entry: QueuedEntry<T> = { input, options: entryOptions, hydrated: queue.hydrating }
-      if (queue.hydrating && !options.render)
-        entry.baseline = { input: copyInput(input) }
-      // eslint-disable-next-line node/prefer-global/process
-      if (process.env.NODE_ENV !== 'production')
-        entry.source = options._entrySource?.()
-      queue.entries.set(_i, entry)
-      return {
-        _i,
-        patch(next) {
-          if (!queue.hydrating)
-            entry.hydrated = false
-          // A component may populate the same object during its hydration render.
-          // Read it outside the render so Vue does not subscribe to that input.
-          const baseline = entry.baseline
-          if (baseline && queue.hydrating && next === entry.input) {
-            queueMicrotask(() => {
-              if (entry.input === next && !entry.disposed && !entry.active)
-                baseline.input = copyInput(next)
-            })
-          }
-          entry.input = next
-          entry.disposed = false
-          entry.active?.patch(next)
-        },
-        dispose() {
-          entry.disposed = true
-          entry.active?.dispose()
-        },
-      }
+      return pushQueuedEntry(queue, options, input, entryOptions)
     },
     load() {
       return loading ||= active

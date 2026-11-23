@@ -12,11 +12,13 @@ export function injectHead() {
   throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
 }
 
+export function installHead(app: App, head: Pick<VueHeadClient<any>, 'push' | 'ssr' | 'use'>) {
+  // `$head` is for the @vueuse/head polyfill
+  app.config.globalProperties.$unhead = app.config.globalProperties.$head = head
+  app.provide(headSymbol, head)
+}
+
 /* @__NO_SIDE_EFFECTS__ */
 export function vueInstall(head: Pick<VueHeadClient<any>, 'push' | 'ssr' | 'use'>): (app: App) => void {
-  return (app) => {
-    // `$head` is for the @vueuse/head polyfill
-    app.config.globalProperties.$unhead = app.config.globalProperties.$head = head
-    app.provide(headSymbol, head)
-  }
+  return app => installHead(app, head)
 }

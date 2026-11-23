@@ -9,16 +9,16 @@ const root = resolve(__dirname, 'fixtures/lazy-preload')
 const vue = resolve(__dirname, '../src')
 const core = resolve(__dirname, '../../unhead/src')
 
-async function buildPages(base = '/site/', lazyHeadPreload?: boolean) {
+async function buildPages(base = '/site/', lazyHeadPreload?: boolean, lazyHead = false) {
   const result = await build({
     root,
     base,
     configFile: false,
     logLevel: 'silent',
-    plugins: Unhead({ lazyHeadPreload, devtools: false, validate: false }),
+    plugins: Unhead({ lazyHead, lazyHeadPreload, devtools: false, validate: false }),
     resolve: {
       alias: [
-        { find: /^@unhead\/vue\/(client|lazy)$/, replacement: `${vue}/$1.ts` },
+        ...lazyHead ? [] : [{ find: /^@unhead\/vue\/(client|lazy)$/, replacement: `${vue}/$1.ts` }],
         { find: /^unhead\/(client|lazy)$/, replacement: `${core}/$1/index.ts` },
       ],
     },
@@ -61,6 +61,11 @@ describe('lazy head preload', () => {
       throw new Error('Missing the lazy HTML entry.')
     expect(lazyEntry.dynamicImports.map(file => new URL(file, site).href)).toContain(request.href)
     expect(eager).toEqual([])
+  })
+
+  it('hints the renderer when the Vite build switch replaces the normal client factory', async () => {
+    const { eager } = await buildPages('/site/', true, true)
+    expect(eager).toHaveLength(1)
   })
 
   it('leaves the deferred runtime unhinted when preload is disabled', async () => {

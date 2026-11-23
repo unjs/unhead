@@ -23,7 +23,10 @@
 ./components:
   Head: object
 ./lazy:
+  createDeferredHead: function
   createHead: function
+  createHeadAfterHydration: function
+  createStreamableHeadAfterHydration: function
 ./legacy:
   createClientHead: function
   createHead: function

@@ -17,7 +17,7 @@ export function LazyHeadPreload(framework?: string): Plugin {
       if (!config.isProduction)
         return
       // Resolve from the framework package so strict installs can find its unhead dependency.
-      const frameworkEntry = framework && await this.resolve(`${framework}/client`)
+      const frameworkEntry = framework && (await this.resolve(`${framework}/lazy`) || await this.resolve(`${framework}/client`))
       lazyEntry = (await this.resolve('unhead/lazy', frameworkEntry ? frameworkEntry.id : undefined))?.id
     },
     generateBundle: {
