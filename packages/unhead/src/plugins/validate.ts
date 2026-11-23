@@ -306,6 +306,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const root = options.root
   const only = options.only && new Set<string>(options.only)
   const pluginKey = options.key || 'validate'
+  const { minLength: inlineKeyMinLength } = resolveOptions(ruleConfig, 'large-inline-content-without-key', { minLength: 32_768 })
 
   function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
     if (only && !only.has(id))
@@ -546,22 +547,21 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low' && props.as !== 'script')
               report('preload-fetchpriority-conflict', `This preload uses fetchpriority="low". Check whether the resource needs a higher priority.`, 'off', tag)
 
-            // Inline style size check (14KB critical CSS budget)
-            if (tag.tag === 'style' && (tag.innerHTML || tag.textContent)) {
-              const content = tag.innerHTML || tag.textContent || ''
+            const content = tag.innerHTML || tag.textContent
+            if (content && (tag.tag === 'style' || (tag.tag === 'script' && !props.src && isExecutableScript(props.type)))) {
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
-              const { maxKB: styleMaxKB } = resolveOptions(ruleConfig, 'inline-style-size', { maxKB: 14 })
-              if (sizeKB > styleMaxKB)
-                report('inline-style-size', `Inline <style> is ${sizeKB.toFixed(1)}KB — exceeds ${styleMaxKB}KB critical CSS budget. Consider moving to an external stylesheet for cacheability.`, 'info', tag)
-            }
-
-            // Inline script size check (2KB threshold)
-            if (tag.tag === 'script' && isExecutableScript(props.type) && !props.src && (tag.innerHTML || tag.textContent)) {
-              const content = tag.innerHTML || tag.textContent || ''
-              const sizeKB = new TextEncoder().encode(content).byteLength / 1024
-              const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
-              if (sizeKB > scriptMaxKB)
-                report('inline-script-size', `Inline <script> is ${sizeKB.toFixed(1)}KB — consider moving to an external file for cacheability.`, 'info', tag)
+              if (tag.tag === 'style') {
+                const { maxKB: styleMaxKB } = resolveOptions(ruleConfig, 'inline-style-size', { maxKB: 14 })
+                if (sizeKB > styleMaxKB)
+                  report('inline-style-size', `Inline <style> is ${sizeKB.toFixed(1)}KB — exceeds ${styleMaxKB}KB critical CSS budget. Consider moving to an external stylesheet for cacheability.`, 'info', tag)
+              }
+              else {
+                const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
+                if (sizeKB > scriptMaxKB)
+                  report('inline-script-size', `Inline <script> is ${sizeKB.toFixed(1)}KB — consider moving to an external file for cacheability.`, 'info', tag)
+              }
+              if (content.length >= inlineKeyMinLength && !tag.key && !props.id && !props['data-hid'])
+                report('large-inline-content-without-key', `Large inline <${tag.tag}> has no key or ID. If it represents one logical tag, add a stable key. This skips the body read during hydration lookup.`, 'info', tag)
             }
           }
 

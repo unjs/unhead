@@ -992,6 +992,51 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'inline-script-size')).toBeFalsy()
     })
 
+    it('recommends stable keys for large resolved styles and scripts', () => {
+      const { head, rules } = createValidationHead()
+      const content = 'a'.repeat(32_769)
+      head.push({
+        style: () => [{ textContent: `/*${content}*/` }],
+        script: () => [{ innerHTML: `/*${content}*/` }],
+      })
+      renderSSRHead(head)
+
+      const messages = rules.filter(rule => rule.id === 'large-inline-content-without-key').map(rule => rule.message)
+      expect(messages.sort()).toEqual([
+        expect.stringMatching(/<script>.*stable key/),
+        expect.stringMatching(/<style>.*stable key/),
+      ])
+    })
+
+    it('skips identities, short styles, external scripts and script data blocks', () => {
+      const { head, rules } = createValidationHead({ rules: { 'large-inline-content-without-key': ['info', { minLength: 5 }] } })
+      head.push({
+        style: [
+          { innerHTML: 'a {}' },
+          { innerHTML: '.by-key {}', key: 'theme' },
+          { innerHTML: '.by-id {}', id: 'colors' },
+          { 'innerHTML': '.by-data-hid {}', 'data-hid': 'colors-secondary' },
+          { innerHTML: 'b  {}' },
+        ],
+        script: [
+          { src: '/app.js' },
+          { type: 'application/json', innerHTML: '{"data":123}' },
+        ],
+      })
+      renderSSRHead(head)
+
+      const reports = rules.filter(rule => rule.id === 'large-inline-content-without-key')
+      expect(reports.map(rule => rule.tag?.innerHTML)).toEqual(['b  {}'])
+    })
+
+    it('allows disabling the hydration hint', () => {
+      const { head, rules } = createValidationHead({ rules: { 'large-inline-content-without-key': 'off' } })
+      head.push({ style: [{ innerHTML: 'a'.repeat(32_769) }] })
+      renderSSRHead(head)
+
+      expect(rules.some(rule => rule.id === 'large-inline-content-without-key')).toBe(false)
+    })
+
     it('warns when more than 4 preconnects exist', () => {
       const { head, rules } = createValidationHead()
       head.push({

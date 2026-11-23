@@ -166,6 +166,7 @@ These rules encode conservative heuristics rather than universal browser limits.
 | `prefetch-preload-conflict` | `warn` | Same resource has both `preload` and `prefetch`; use preload for current page, prefetch for future navigation |
 | `inline-style-size` | `info` | Inline `<style>` exceeds the plugin's default 14KB threshold |
 | `inline-script-size` | `info` | Inline JavaScript exceeds 2KB. Excludes data blocks, JSON-LD, import maps, and speculation rules |
+| `large-inline-content-without-key` | `info` | Inline CSS or JavaScript has at least 32,768 UTF-16 code units and no key or ID. A stable key skips the body read when hydration looks up the tag |
 | `meta-beyond-1mb` | `warn` | The plugin's serialized-size estimate places a `<meta>` tag beyond its default 1MB inspection threshold |
 
 ## Rule configuration
