@@ -24,7 +24,7 @@ export function createDeferredHead<T = ResolvableHead>(
     ssr: false,
     hooks: options.hookable || setupHooks(),
     resolvedOptions: { document: options.document ?? globalThis.document },
-    render: () => queue.head?.render() ?? false,
+    render: () => !!queue.head?.render(),
     use: plugin => queue.plugins.push(plugin),
     push(input, entryOptions) {
       return queue.head ? queue.head.push(input, entryOptions) : pushQueuedEntry(queue, options, input, entryOptions)
@@ -45,7 +45,7 @@ function setupHooks() {
       list.push(callback!)
       return () => {
         const index = list.indexOf(callback!)
-        if (index !== -1)
+        if (index >= 0)
           list.splice(index, 1)
         callback = undefined
       }
