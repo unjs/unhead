@@ -18,6 +18,7 @@ const AMP_RE = /&/g
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
 let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
+let unsplitStreamingParts: WeakSet<StreamingTemplateParts> | undefined
 
 /**
  * Base context with just the head instance.
@@ -397,6 +398,8 @@ export function renderStreamBodyTags(head: Unhead<any>): string {
  * ```
  */
 export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
+  if (unsplitStreamingParts?.has(parts))
+    return parts.end
   const bodyTags = renderStreamBodyTags(head)
   if (!bodyTags)
     return parts.end
@@ -585,7 +588,7 @@ export function wrapStream(
       if (result.done) {
         reader = undefined
         activeReader.releaseLock()
-        const extra = flushChunk?.()
+        const extra = parts?.bodyTagsAt === undefined ? '' : flushChunk()
         if (extra)
           controller.enqueue(enc.encode(extra))
         const closing = parts ? renderStreamEnd(head, parts) : ''
@@ -595,7 +598,7 @@ export function wrapStream(
         return
       }
       controller.enqueue(result.value)
-      const extra = flushChunk?.()
+      const extra = parts?.bodyTagsAt === undefined ? '' : flushChunk()
       if (extra)
         controller.enqueue(enc.encode(extra))
     },
@@ -730,11 +733,13 @@ export function prepareStreamingTemplate(
     }
   }
   else {
-    // Can't split, return full template as shell
+    // Keep the full shell and omit late tags when there is no verified split.
     parts = {
       shell: applyShellToTemplate(head, ssr, parsed),
       end: '',
     }
+    const unsplitParts = unsplitStreamingParts ??= new WeakSet()
+    unsplitParts.add(parts)
   }
 
   // Only clear entries once the shell/end parts have been successfully

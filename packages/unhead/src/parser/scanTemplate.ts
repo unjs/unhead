@@ -15,8 +15,46 @@ const NON_WHITESPACE = /[^\t\n\f\r ]/
 const HEAD_VOID = /* @__PURE__ */ new Set(['base', 'basefont', 'bgsound', 'link', 'meta'])
 const HEAD_TEXT = /* @__PURE__ */ new Set(['title', 'style', 'script', 'noscript', 'noframes'])
 const BODY_TEXT = /* @__PURE__ */ new Set(['textarea', 'xmp', 'iframe', 'noembed'])
-const SCOPED = /* @__PURE__ */ new Set(['table', 'template', 'select'])
-const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent', 'span'])
+const BODY_SCOPE_BARRIERS = /* @__PURE__ */ new Set(['applet', 'marquee', 'object'])
+const SCOPED = /* @__PURE__ */ new Set(['applet', 'marquee', 'object', 'select', 'table', 'template'])
+const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent'])
+const SELECT_FORMATTING = /* @__PURE__ */ new Set([
+  'abbr',
+  'b',
+  'bdi',
+  'bdo',
+  'br',
+  'cite',
+  'code',
+  'data',
+  'del',
+  'dfn',
+  'div',
+  'em',
+  'i',
+  'img',
+  'ins',
+  'kbd',
+  'mark',
+  'picture',
+  'q',
+  'rp',
+  'rt',
+  'ruby',
+  's',
+  'samp',
+  'small',
+  'source',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'time',
+  'u',
+  'var',
+  'wbr',
+])
+const TABLE_SECTIONS = /* @__PURE__ */ new Set(['tbody', 'tfoot', 'thead'])
 const SVG_INTEGRATION = /* @__PURE__ */ new Set(['desc', 'foreignobject', 'title'])
 const MATH_INTEGRATION = /* @__PURE__ */ new Set(['mi', 'mn', 'mo', 'ms', 'mtext'])
 const VOID_HTML = /* @__PURE__ */ new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
@@ -116,10 +154,9 @@ interface HeadElement {
   start: number
 }
 
-interface ForeignElement {
-  name: string
-  context: 'svg' | 'math' | 'math-html' | 'html'
-}
+type ForeignElement
+  = | { name: string, context: 'svg' | 'math' | 'math-html' }
+    | { name: string, context: 'html', scope: number }
 
 export interface TemplateScan {
   root?: SourceTag
@@ -254,20 +291,18 @@ export function closeTextElement(html: string, name: string, start: number) {
   return close ? readTag(html, close.index) : undefined
 }
 
-function foreignHtmlScope(stack: ForeignElement[]) {
-  for (let index = stack.length - 1; index >= 0; index--) {
-    const element = stack[index]
-    if (element.context !== 'html')
-      break
-    if (SCOPED.has(element.name))
-      return index
-  }
-  return -1
+function selectToken(name: string, closing: boolean): 'skip' | 'scan' | 'stop' {
+  // These elements cannot change the tokenizer or close the select. Some
+  // browsers ignore them and others retain them in a customizable option.
+  if (SELECT_FORMATTING.has(name))
+    return 'skip'
+  return (name === 'select' ? closing : SELECT_CONTENT.has(name)) ? 'scan' : 'stop'
 }
 
 function closeForeignElement(stack: ForeignElement[], name: string): boolean {
-  if (stack.at(-1)?.context === 'html' && SCOPED.has(name)) {
-    const scope = foreignHtmlScope(stack)
+  const parent = stack.at(-1)
+  const scope = parent?.context === 'html' ? parent.scope : -1
+  if (parent?.context === 'html' && SCOPED.has(name)) {
     if (scope < 0 || stack[scope].name !== name)
       return false
     // Closing an HTML scope also closes its remaining HTML descendants.
@@ -276,11 +311,23 @@ function closeForeignElement(stack: ForeignElement[], name: string): boolean {
     return true
   }
   let depth = stack.length
-  if (CLOSES_IMPLIED_CHILDREN.has(name)) {
+  const scopeName = stack[scope]?.name
+  const tableSection = scopeName === 'table' && TABLE_SECTIONS.has(name)
+  const tableRow = scopeName === 'table' && name === 'tr'
+  const optionGroup = scopeName === 'select' && name === 'optgroup'
+  const impliedChildren = CLOSES_IMPLIED_CHILDREN.has(name)
+  if (tableSection || tableRow || optionGroup || impliedChildren) {
     while (depth > 0) {
       const current = stack[depth - 1]
-      if (current.name === name || current.context !== 'html' || !IMPLIED_END.has(current.name))
+      if (current.name === name || current.context !== 'html')
         break
+      const child = current.name
+      if (!(impliedChildren && IMPLIED_END.has(child))
+        && !((tableRow || tableSection) && (child === 'td' || child === 'th'))
+        && !(tableSection && child === 'tr')
+        && !(optionGroup && child === 'option')) {
+        break
+      }
       depth--
     }
   }
@@ -360,12 +407,13 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     const { name, closing, selfClosing } = tag
 
     if (parent) {
-      const scope = foreignHtmlScope(foreign)
-      // Apply the same conservative select rules inside integration points.
-      // A nested template supplies its own scope until its end tag.
-      if (scope >= 0 && foreign[scope].name === 'select'
-        && (name === 'select' ? !closing : !SELECT_CONTENT.has(name))) {
-        break
+      const scope = parent.context === 'html' ? parent.scope : -1
+      if (foreign[scope]?.name === 'select') {
+        const action = selectToken(name, closing)
+        if (action === 'stop')
+          break
+        if (action === 'skip')
+          continue
       }
       if (closing) {
         if (!closeForeignElement(foreign, name))
@@ -385,7 +433,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
             foreign.push({ name, context: name })
         }
         else if (!VOID_HTML.has(name)) {
-          foreign.push({ name, context: 'html' })
+          foreign.push({ name, context: 'html', scope: SCOPED.has(name) ? foreign.length : scope })
         }
       }
       else {
@@ -460,10 +508,14 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     if (!closing && (name === 'frameset' || name === 'plaintext'))
       break
 
-    // HTML can ignore starts inside a select or exit the select implicitly.
-    // Leave later offsets unset if the source needs either recovery path.
-    if (scopes.at(-1) === 'select' && (name === 'select' ? !closing : !SELECT_CONTENT.has(name)))
-      break
+    // Stop when markup could implicitly close the select or change the tokenizer.
+    if (scopes.at(-1) === 'select') {
+      const action = selectToken(name, closing)
+      if (action === 'stop')
+        break
+      if (action === 'skip')
+        continue
+    }
 
     if (SCOPED.has(name)) {
       if (!closing) {
@@ -474,13 +526,21 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         }
         scopes.push(name)
       }
-      else if (scopes.at(-1) === name) {
-        scopes.pop()
-        if (name === 'template')
-          templateDepth--
-      }
       else {
-        break
+        let scope = scopes.length - 1
+        if (name === 'template') {
+          // Closing a template also closes HTML scope barriers inside it.
+          while (scope >= 0 && BODY_SCOPE_BARRIERS.has(scopes[scope]))
+            scope--
+        }
+        if (scopes[scope] === name) {
+          scopes.length = scope
+          if (name === 'template')
+            templateDepth--
+        }
+        else if (!BODY_SCOPE_BARRIERS.has(name)) {
+          break
+        }
       }
       continue
     }

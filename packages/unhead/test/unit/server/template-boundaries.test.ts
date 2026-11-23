@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server'
-import { prepareStreamingTemplate, wrapStream } from '../../../src/stream/server'
+import { prepareStreamingTemplate, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../../util'
 
 const renderers = [
@@ -12,8 +12,12 @@ const renderers = [
 
 const integrationScopes = [
   '<table><tbody><tr><td>Cell</td></tr></tbody></table>',
+  '<table><tbody><tr><td>First<td>Second</tr></tbody></table>',
+  '<table><thead><tr><th>Heading</thead><tbody><tr><td>Cell</tbody></table>',
   '<table><tr><td>Cell</table>',
   '<select><option>Choice</option></select>',
+  '<select><optgroup label="Group"><option>First<option>Second</optgroup></select>',
+  '<select><option><strong>Choice</strong> <em>details</em></option></select>',
   '<template><!-- app-html --><table><tr><td>Cell</table></template>',
   '<select><template><option>Choice</option></template><option>Last</option></select>',
 ]
@@ -58,6 +62,16 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
     withBodyEnd.push(state)
     expect(render(withBodyEnd, `${prefix}<svg></svg></body></html>`)).toBe(
       `${prefix}<svg></svg><style>p { color: black }</style></body></html>`,
+    )
+  })
+
+  it('locates the document body end after object fallback content', () => {
+    const head = createServerHeadWithContext()
+    head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+    const prefix = '<html><head></head><body><object><p>Fallback</p></body></object><main>Content</main>'
+
+    expect(render(head, `${prefix}</body></html>`)).toBe(
+      `${prefix}<style>p { color: black }</style></body></html>`,
     )
   })
 
@@ -119,7 +133,7 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
   })
 })
 
-it.each([false, true])('streams a table inside SVG foreignObject before the main outlet, prepared: %s', (prepared) => {
+it.each([false, true])('streams after HTML scopes inside foreign content, prepared: %s', (prepared) => {
   for (const content of integrationScopes) {
     for (const [open, close] of integrationPoints) {
       const head = createStreamableServerHead()
@@ -132,6 +146,32 @@ it.each([false, true])('streams a table inside SVG foreignObject before the main
       expect(end).toBe('</main><style>p { color: black }</style></body></html>')
     }
   }
+})
+
+it('leaves an unsplit stream shell and its app content in source order', async () => {
+  const head = createStreamableServerHead()
+  const template = '<html><head></head><body>'
+  const app = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode('<main>Content</main>'))
+      controller.close()
+    },
+  })
+
+  const html = await new Response(wrapStream(head, app, template, undefined, {
+    flushChunk: () => '<!-- Late update -->',
+  })).text()
+
+  expect(html.slice(html.indexOf('</head>'))).toBe('</head><body><main>Content</main>')
+})
+
+it('leaves body tags out when a stream template has no body end', () => {
+  const head = createStreamableServerHead({ writesBodyTags: true })
+  const parts = prepareStreamingTemplate(head, '<html><head></head><body>')
+  head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+  renderSSRHeadSuspenseChunk(head)
+
+  expect(renderStreamEnd(head, parts)).toBe('')
 })
 
 it.each([false, true])('mounts streamed content after a foreignObject table, prepared: %s', async (prepared) => {
@@ -154,6 +194,15 @@ it.each([false, true])('mounts streamed content after a foreignObject table, pre
 
 it.each([false, true])('splits the stream after a select containing a template, prepared: %s', (prepared) => {
   const select = '<select><template><!-- app-html --><option>Example</option></template><option>Last</option></select>'
+  const template = `<html><head></head><body>${select}<main><!-- app-html --></main></body></html>`
+  const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), prepared ? prepareTemplate(template) : template)
+
+  expect(shell.endsWith(`${select}<main>`)).toBe(true)
+  expect(end).toBe('</main></body></html>')
+})
+
+it.each([false, true])('splits the stream after formatted select options, prepared: %s', (prepared) => {
+  const select = '<select><option><div><strong>Choice</strong> <em>details</em></div></option></select>'
   const template = `<html><head></head><body>${select}<main><!-- app-html --></main></body></html>`
   const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), prepared ? prepareTemplate(template) : template)
 
