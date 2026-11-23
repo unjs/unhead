@@ -169,6 +169,8 @@ These rules encode conservative heuristics rather than universal browser limits.
 | `large-inline-content-without-key` | `info` | Inline CSS or JavaScript has at least 32,768 UTF-16 code units and no key or ID. A stable key skips the body read when hydration looks up the tag |
 | `meta-beyond-1mb` | `warn` | The plugin's serialized-size estimate places a `<meta>` tag beyond its default 1MB inspection threshold |
 
+The hydration key hint runs on head entries. The HTML validation CLI skips it because HTML alone cannot show the client entry's key.
+
 ## Rule configuration
 
 Rules can be disabled or have their severity overridden, similar to ESLint's flat config:

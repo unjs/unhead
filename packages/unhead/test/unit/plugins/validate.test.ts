@@ -1026,7 +1026,7 @@ describe('validatePlugin', () => {
       renderSSRHead(head)
 
       const reports = rules.filter(rule => rule.id === 'large-inline-content-without-key')
-      expect(reports.map(rule => rule.tag?.innerHTML)).toEqual(['b  {}'])
+      expect(reports.map(rule => rule.tag?.innerHTML).sort()).toEqual(['.by-data-hid {}', 'b  {}'])
     })
 
     it('allows disabling the hydration hint', () => {

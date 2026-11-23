@@ -560,7 +560,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 if (sizeKB > scriptMaxKB)
                   report('inline-script-size', `Inline <script> is ${sizeKB.toFixed(1)}KB — consider moving to an external file for cacheability.`, 'info', tag)
               }
-              if (content.length >= inlineKeyMinLength && !tag.key && !props.id && !props['data-hid'])
+              if (content.length >= inlineKeyMinLength && !tag.key && !props.id)
                 report('large-inline-content-without-key', `Large inline <${tag.tag}> has no key or ID. If it represents one logical tag, add a stable key. This skips the body read during hydration lookup.`, 'info', tag)
             }
           }
