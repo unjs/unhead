@@ -4,9 +4,11 @@ import type {
   GenericScript,
   HeadEntryOptions,
   SchemaAugmentations,
+  Unhead,
 } from 'unhead/types'
 import type { Ref, WatchHandle } from 'vue'
-import type { ResolvableProperties, VueHeadClient } from '../types'
+import type { ResolvableProperties } from '../types'
+import { HookableCore } from 'hookable'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, getCurrentScope, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
@@ -38,7 +40,7 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   /**
    * Unhead instance.
    */
-  head?: VueHeadClient<any>
+  head?: Unhead<any>
 }
 
 export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'resolve' | 'use'> & {
@@ -99,8 +101,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // we may be re-using an existing script
   // sync the status, need to register before useScript
+  const hooks = head.hooks ??= new HookableCore()
   // @ts-expect-error untyped
-  head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
+  head._scriptStatusWatcher = head._scriptStatusWatcher || hooks.hook('script:updated', ({ script: s }) => {
     // @ts-expect-error untyped
     if (s._statusRef) {
       // @ts-expect-error untyped
