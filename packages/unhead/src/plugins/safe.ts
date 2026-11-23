@@ -131,6 +131,9 @@ function hasBlockedRel(rel: string): boolean {
 function makeTagSafe(tag: HeadTag): HeadTag | false {
   let next: Record<string, any> = {}
   const { tag: type, props: prev } = tag
+  // User metadata must not push encoding and policy declarations out of order.
+  if (!tag.tagPosition || tag.tagPosition === 'head')
+    delete tag.tagPriority
 
   switch (type) {
     // title: textContent is escaped in rendering (tagToString), no props needed
@@ -226,6 +229,8 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
         }
       })
       break
+    default:
+      return false
   }
 
   // never allow innerHTML in safe mode

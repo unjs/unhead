@@ -21,7 +21,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
-        const safeTitle = !params.pageTitle && tagMap.get('title')?._safe
+        const safeTitle = !params.pageTitle && head._titleSafe
         const pageTitle = processTemplateParams(params.pageTitle as string || head._title || '', params, sep)
         // Safe titles are display text. Keep them out of directives, URLs, and raw content.
         textParams = safeTitle ? { ...params, pageTitle } : params

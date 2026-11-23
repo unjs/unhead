@@ -14,6 +14,56 @@ async function safeRender(input: any) {
 }
 
 describe('useHeadSafe edge cases', () => {
+  it('keeps a suppressed safe title in display fields', () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({
+      titleTemplate: () => null,
+      meta: [{ name: 'description', content: '%pageTitle' }],
+      script: [{ textContent: '// %pageTitle', processTemplateParams: true }],
+    })
+    useHeadSafe(head, { title: 'Guide' })
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      title: document.title,
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+      script: document.querySelector('script')?.textContent,
+    }).toEqual({ title: '', description: 'Guide', script: '//' })
+  })
+
+  it.each(['name', 'property'])('keeps app pragmas separate from safe %s metadata', (selector) => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ 'http-equiv': 'content-type', 'content': 'text/html; charset=utf-8' }] })
+    const input = { meta: [{ [selector]: 'content-type', content: 'Documentation', tagDuplicateStrategy: 'merge' as const }] }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      encoding: document.querySelector('meta[http-equiv="content-type"]')?.getAttribute('content'),
+      metadata: document.querySelector(`meta[${selector}="content-type"]`)?.getAttribute('content'),
+    }).toEqual({ encoding: 'text/html; charset=utf-8', metadata: 'Documentation' })
+  })
+
+  it('orders an app encoding pragma before prioritized safe metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ 'http-equiv': 'Content-Type', 'content': 'text/html; charset=utf-8' }] })
+    const input = { title: 'Guide', meta: [{ name: 'description', content: 'Documentation', tagPriority: -100 }] }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect(document.head.firstElementChild?.getAttribute('http-equiv')).toBe('Content-Type')
+  })
+
+  it('keeps the app base URL when safe input includes base metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ base: { href: '/guide/' } })
+    const input = { title: 'Guide', base: { id: 'visitor' } }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect(document.querySelector('base')?.getAttribute('href')).toBe('/guide/')
+  })
+
   it('keeps the document encoding app-owned while accepting other safe metadata', () => {
     const head = createServerHeadWithContext()
     head.push({ meta: [{ charset: 'windows-1252' }] })

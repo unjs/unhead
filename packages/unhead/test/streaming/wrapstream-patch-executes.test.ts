@@ -43,12 +43,12 @@ async function serveAndRun(late: Record<string, unknown>) {
 }
 
 describe('the patch a bare wrapStream emits', () => {
-  it.each(['inline', 'module'] as const)('preserves the safe title boundary when replaying %s entries', (mode) => {
+  it.each(['inline', 'module'] as const)('keeps safe and app-owned metadata separate when replaying %s entries', (mode) => {
     const { head } = createStreamableHead()
-    useHeadSafe(head, { title: 'Guest guide' })
+    useHeadSafe(head, { title: 'Guest guide', meta: [{ name: 'content-language', content: 'Guide' }] })
     const chunk = renderSSRHeadSuspenseChunk(head)
     const updates: unknown[] = JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')')))
-    const dom = new JSDOM('')
+    const dom = new JSDOM('<meta http-equiv="content-language" content="en">')
     const window = dom.window as any
     const { document } = window
     globalThis.window = window
@@ -68,9 +68,16 @@ describe('the patch a bare wrapStream emits', () => {
     client.push({ script: [{ textContent: '// %pageTitle', processTemplateParams: true }] })
     client.render()
 
-    expect({ title: document.title, script: document.querySelector('script')?.textContent }).toEqual({
+    expect({
+      title: document.title,
+      script: document.querySelector('script')?.textContent,
+      language: document.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content'),
+      metadata: document.querySelector('meta[name="content-language"]')?.getAttribute('content'),
+    }).toEqual({
       title: 'Guest guide',
       script: '//',
+      language: 'en',
+      metadata: 'Guide',
     })
   })
 

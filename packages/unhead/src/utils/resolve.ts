@@ -111,6 +111,7 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
   const title = ctx.tagMap.get('title')
   const tpl = ctx.tagMap.get('titleTemplate')
   head._title = title?.textContent
+  head._titleSafe = title?._safe
   if (!tpl)
     return
   const fn = tpl.textContent
