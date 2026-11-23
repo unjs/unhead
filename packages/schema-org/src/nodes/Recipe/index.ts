@@ -1,7 +1,6 @@
 import type {
   Arrayable,
   Identity,
-  IdReference,
   NodeRelation,
   NodeRelations,
   ResolvableDate,
@@ -96,7 +95,7 @@ export interface RecipeSimple extends Thing {
   /**
    *  A reference to a video representing the recipe instructions, by ID.
    */
-  video?: NodeRelations<VideoObject | IdReference>
+  video?: NodeRelations<VideoObject>
   /**
    * The language code for the guide; e.g., en-GB.
    */

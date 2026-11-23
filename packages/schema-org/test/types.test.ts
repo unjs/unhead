@@ -82,6 +82,18 @@ describe('public types', () => {
     definePerson({ name: 42 })
   })
 
+  it('accepts a relation reference only when it has no node fields', () => {
+    const reference: IdReference = { '@id': '#ada' }
+    defineArticle({ author: reference })
+    defineArticle({ author: { '@id': '#ada' } })
+    defineArticle({ author: { '@id': '#ada', '@type': 'Person' } })
+    defineArticle({ author: { '@id': '#ada', 'name': 'Ada' } })
+    // @ts-expect-error an author with @id and Person fields resolves as a Person, which requires a name
+    defineArticle({ author: { '@id': '#ada', 'url': 'https://example.com/ada' } })
+    // @ts-expect-error fields that every Thing declares also make the author a Person
+    defineArticle({ author: { '@id': '#ada', 'image': '/ada.png' } })
+  })
+
   it('exposes honest graph metadata and synchronous plugin metadata', () => {
     const graph = createSchemaOrgGraph()
     expectTypeOf(graph.meta.host).toEqualTypeOf<string | undefined>()
