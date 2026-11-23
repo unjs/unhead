@@ -202,6 +202,32 @@ it.each([false, true])('splits the stream after formatted select options, prepar
   expect(end).toBe('</main></body></html>')
 })
 
+describe.each([false, true])('customizable select streaming, prepared: %s', (prepared) => {
+  it.each([
+    '<select><optgroup label="Group"><legend>Group</legend><option>Choice</option></optgroup></select>',
+    '<select><option><svg viewBox="0 0 10 10"><title>Icon</title><g><path d="M0 0h10"/></g></svg>Choice</option></select>',
+    '<select><optgroup label="Group"><legend>Group</legend><option><svg><title>Icon</title><path d="M0 0h10"/></svg>Choice</option></optgroup></select>',
+  ])('mounts streamed content and inserts initial body-close tags after %s', async (select) => {
+    for (const [open, close] of [['', ''], ...integrationPoints]) {
+      const head = createStreamableServerHead()
+      head.push({ script: [{ src: '/initial.js', tagPosition: 'bodyClose' }] })
+      const template = `<html><head></head><body>${open}${select}${close}<main><!-- app-html --></main></body></html>`
+      const app = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('<p>Streamed app</p>'))
+          controller.close()
+        },
+      })
+
+      const html = await new Response(wrapStream(head, app, prepared ? prepareTemplate(template) : template)).text()
+      const document = new JSDOM(html).window.document
+
+      expect(document.querySelector('main')?.innerHTML).toBe('<p>Streamed app</p>')
+      expect(html).toContain('</main><script src="/initial.js"></script></body>')
+    }
+  })
+})
+
 it('splits the stream at a comment in the document instead of marker text in a textarea', () => {
   const head = createStreamableServerHead()
   const textarea = '<textarea><!--app-html--></textarea>'

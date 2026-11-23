@@ -17,7 +17,7 @@ const HEAD_TEXT = /* @__PURE__ */ new Set(['title', 'style', 'script', 'noscript
 const BODY_TEXT = /* @__PURE__ */ new Set(['textarea', 'xmp', 'iframe', 'noembed'])
 const BODY_SCOPE_BARRIERS = /* @__PURE__ */ new Set(['applet', 'marquee', 'object'])
 const SCOPED = /* @__PURE__ */ new Set(['applet', 'marquee', 'object', 'select', 'table', 'template'])
-const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent'])
+const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 'hr', 'script', 'template', 'selectedcontent', 'svg'])
 const SELECT_FORMATTING = /* @__PURE__ */ new Set([
   'abbr',
   'b',
@@ -35,6 +35,7 @@ const SELECT_FORMATTING = /* @__PURE__ */ new Set([
   'img',
   'ins',
   'kbd',
+  'legend',
   'mark',
   'picture',
   'q',
