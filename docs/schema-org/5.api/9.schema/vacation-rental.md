@@ -1,5 +1,6 @@
 ---
 title: VacationRental Schema
+since: 3.3.0
 description: Add Google vacation rental structured data with defineVacationRental(), including accommodation, location, amenities, beds, ratings, and reviews.
 ---
 

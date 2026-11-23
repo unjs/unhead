@@ -1,5 +1,6 @@
 ---
 title: "Minify"
+since: 3.0.0
 description: "Minify inline script and style tag content during SSR rendering. Zero-dependency lightweight minifiers for edge and serverless, with support for custom minifiers."
 navigation.title: "Minify"
 ---
