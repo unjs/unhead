@@ -1,15 +1,33 @@
 import { defineBuildConfig } from 'unbuild'
 
-export default defineBuildConfig({
-  externals: [
-    'vue',
-    'vite',
-    'webpack',
-    'unplugin',
-    '@unhead/bundler',
-    '@unhead/bundler/vite',
-    '@unhead/bundler/framework',
+const externals = [
+  'vue',
+  'vite',
+  'webpack',
+  'unplugin',
+  '@unhead/bundler',
+  '@unhead/bundler/vite',
+  '@unhead/bundler/framework',
+]
+
+export default defineBuildConfig([{
+  // The lazy head builds first and alone, so the dist of every other entry stays as it was.
+  // The package exports of the next build do not exist yet, so warnings pass here.
+  externals,
+  clean: true,
+  declaration: true,
+  failOnWarn: false,
+  entries: [
+    { input: 'src/lazy', name: 'lazy' },
   ],
+  hooks: {
+    'rollup:options': (_, options) => {
+      options.experimentalLogSideEffects = true
+    },
+  },
+}, {
+  clean: false,
+  externals,
   declaration: true,
   entries: [
     { input: 'src/index', name: 'index' },
@@ -33,4 +51,4 @@ export default defineBuildConfig({
       options.experimentalLogSideEffects = true
     },
   },
-})
+}])

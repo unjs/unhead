@@ -16,6 +16,10 @@ Use `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `u
 
 ::
 
+## Lazy Head
+
+[Lazy Head](/docs/head/api/lazy-head) queues client entries while the server tags stay in place. The app or framework calls `load()` to apply them.
+
 ## Plugins
 
 See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `defineHeadPlugin`.

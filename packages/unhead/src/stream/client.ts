@@ -5,6 +5,7 @@ import { createClientHeadAdapter } from '../client/adapter'
 import { installDomEventHandlers } from '../client/domEventHandlers'
 import { createHooks } from '../utils/hooks'
 
+export { attachStreamHead } from './queue'
 export type { StreamingGlobal, UnheadStreamQueue }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'

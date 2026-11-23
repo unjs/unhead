@@ -1,3 +1,4 @@
+import type { SetupHooks } from '../lazy/deferred'
 import type {
   RawInput,
   Unhead,
@@ -19,8 +20,8 @@ import type {
   WarmupStrategy,
 } from './types'
 import { installDomEventHandlers } from '../client/domEventHandlers'
+import { callHook } from '../utils/callHook'
 import { hasOwn } from '../utils/hasOwn'
-import { callHook } from '../utils/hooks'
 import { createScriptProxy } from './proxy'
 import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'
@@ -161,8 +162,16 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
     _events.push({ type: s, timestamp: Date.now() })
-    // eslint-disable-next-line ts/no-use-before-define
-    callHook(head, 'script:updated', hookCtx)
+    const hooks = head.hooks
+    if (hooks && !hooks.callHook) {
+      const setup = hooks as unknown as SetupHooks
+      // eslint-disable-next-line ts/no-use-before-define
+      callSetupListeners(setup._hooks['script:updated'], hookCtx)
+    }
+    else {
+      // eslint-disable-next-line ts/no-use-before-define
+      callHook(head, 'script:updated', hookCtx)
+    }
   }
   const failReadiness = (reason: unknown) => {
     loadError = reason instanceof Error ? reason : new Error(String(reason))
@@ -376,6 +385,10 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         syncStatus('loading')
         // status should get updated from script events
         pushScript()
+        head._load?.().catch((error) => {
+          if (!lifecycleController.signal.aborted)
+            failReadiness(error)
+        })
       }
       if (cb)
         _registerCb('loaded', cb)
@@ -564,4 +577,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   }
   scripts[id] = script
   return result
+}
+
+// Like Hookable, run setup listeners synchronously until a listener returns a promise.
+async function callSetupListeners(list: ((ctx: unknown) => unknown)[] | undefined, ctx: unknown) {
+  for (const callback of list?.slice() ?? []) {
+    const pending = callback(ctx)
+    if (pending)
+      await pending
+  }
 }

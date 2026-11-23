@@ -72,7 +72,7 @@ async function bundleBareImport(entry) {
       load: id => id === 'virtual:entry' ? `import '${entry.src.replace(/\\/g, '/')}'` : null,
     }],
   })
-  const { output } = await bundle.generate({ format: 'esm' })
+  const { output } = await bundle.generate({ format: 'esm', comments: { legal: false } })
   await bundle.close()
   // rolldown emits bare //#region markers even for empty chunks — not code
   return output.filter(o => o.type === 'chunk').map(o => o.code).join('\n').split('\n').filter(l => l.trim() && !l.trim().startsWith('//#')).join('\n').trim()
