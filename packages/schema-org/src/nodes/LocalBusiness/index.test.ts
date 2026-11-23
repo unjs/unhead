@@ -216,4 +216,25 @@ describe('defineLocalBusiness', () => {
       })
     })
   })
+
+  it('publishes only the opening hours the user passes', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          name: 'test',
+          address: { streetAddress: '123 st' },
+          // @ts-expect-error opens and closes are required
+          openingHoursSpecification: [
+            { dayOfWeek: 'Sunday' },
+          ],
+        }),
+      ])
+
+      const business = (await injectSchemaOrg(head)).find((n: any) => n.name === 'test')
+      expect(business!.openingHoursSpecification).toEqual({
+        '@type': 'OpeningHoursSpecification',
+        'dayOfWeek': 'Sunday',
+      })
+    })
+  })
 })

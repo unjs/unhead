@@ -21,12 +21,13 @@ export interface OpeningHoursSimple extends Thing {
   'dayOfWeek'?: Arrayable<DayOfWeek>
   /**
    * The opening hour of the place or service on the given day(s) of the week.
+   * Use '00:00' with closes '23:59' for open all day, or '00:00' with closes '00:00' for closed all day.
    */
-  'opens'?: Time
+  'opens': Time
   /**
    * The closing hour of the place or service on the given day(s) of the week.
    */
-  'closes'?: Time
+  'closes': Time
   /**
    * The date when the item becomes valid.
    */
@@ -42,8 +43,6 @@ export interface OpeningHoursSpecification extends OpeningHoursSimple {}
 export const openingHoursResolver = defineSchemaOrgResolver<OpeningHoursSpecification>({
   defaults: {
     '@type': 'OpeningHoursSpecification',
-    'opens': '00:00',
-    'closes': '23:59',
   },
   resolve(node) {
     node.validFrom = resolvableDateToIso(node.validFrom)

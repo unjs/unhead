@@ -68,7 +68,7 @@ Google requires both `name` and `address` for a LocalBusiness rich result. The U
 
 - **openingHoursSpecification**  `NodeRelations<OpeningHoursSpecification>`: [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
 
-  The specification for when the business is open.
+  The specification for when the business is open. Each entry requires `opens` and `closes`. For open all day, use `00:00` and `23:59`. For closed all day, use `00:00` for both.
 
 - **paymentAccepted** `string`
 
