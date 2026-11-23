@@ -7,13 +7,16 @@ const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-
 const TITLE = 'x onerror=lateTitle() y'
 const encoder = new TextEncoder()
 
-function render(chunks: Uint8Array[], title = TITLE) {
+function render(chunks: Uint8Array[], title = TITLE, lateBody = false) {
   const { head } = createStreamableHead()
   const queue = [...chunks]
   const source = new ReadableStream<Uint8Array>({
     pull(controller) {
-      if (queue.length === chunks.length)
+      if (queue.length === chunks.length) {
         head.push({ title })
+        if (lateBody)
+          head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
+      }
       controller.enqueue(queue.shift()!)
       if (!queue.length)
         controller.close()
@@ -51,6 +54,39 @@ const documents = {
 }
 
 describe('wrapStream patch boundaries', () => {
+  it.each(['whole', 'split'] as const)('delivers late head and body output after a large JSON script: %s', async (chunking) => {
+    const open = '<script type="application/json">'
+    const state = JSON.stringify({ data: 'x'.repeat(256 * 1024 + 1) })
+    const close = '</script><p>after</p>'
+    const chunks = chunking === 'whole' ? [open + state + close] : [open + state, close]
+    const html = await render(chunks.map(chunk => encoder.encode(chunk)), TITLE, true)
+    const { document } = new JSDOM(html).window
+
+    expect(document.querySelector('script[type="application/json"]')?.textContent).toBe(state)
+    expect(inspect(html).delivered).toBe(true)
+    expect(document.querySelector('body > script[src="/late.js"]')).not.toBeNull()
+  })
+
+  it.each([
+    ['script', ['<!', '-- <scr', 'ipt>'], ['</scr', 'ipt>still escaped -->'], ['</ScRi', 'Pt data-end="', '>">']],
+    ['script', ['<!--'], ['--', '>'], ['</scr', 'ipt>']],
+    ['script', ['<!', '-->', '<script>'], [], ['</scr', 'ipt>']],
+    ['script', ['<!--', '->', '<script>'], [], ['</scr', 'ipt>']],
+    ['textarea', [], [], ['</text', 'area>']],
+    ['style', [], [], ['</sty', 'le>']],
+  ] as const)('preserves large %s text and split tokenizer transitions', async (name, before, after, close) => {
+    const data = 'x'.repeat(64 * 1024)
+    const text = name === 'style' ? `/*${data}*/` : data
+    const content = [...before, text, text, text, text, text, ...after]
+    const chunks = [`<${name}>`, ...content, ...close, '<p>after</p>']
+    const html = await render(chunks.map(chunk => encoder.encode(chunk)), TITLE, true)
+    const { document } = new JSDOM(html).window
+
+    expect(document.querySelector(`#app > ${name}`)?.textContent).toBe(content.join(''))
+    expect(inspect(html).delivered).toBe(true)
+    expect(document.querySelector('body > script[src="/late.js"]')).not.toBeNull()
+  })
+
   it.each(Object.entries(documents))('keeps the %s intact at every split', async (_, markup) => {
     const bytes = encoder.encode(markup)
     const expected = inspect(await render([bytes])).app
