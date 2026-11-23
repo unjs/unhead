@@ -1,4 +1,4 @@
-import type { ResolvableHead } from 'unhead/types'
+import type { Unhead as Head, ResolvableHead } from 'unhead/types'
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
 import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -73,6 +73,72 @@ async function render(code: string, enabled?: boolean, input = {}, minifyJs?: Mi
 }
 
 describe('static inline keys', () => {
+  it.each(['client', 'ssr'] as const)('hydrates a script once when an earlier buildApp hook builds %s first', async (first) => {
+    const body = 'globalThis.visits = (globalThis.visits || 0) + 1'
+    const entry = join(appRoot, 'inline-key-hook-order.ts')
+    const source = `import { useHead } from 'unhead'
+export function register(head) {
+  useHead(head, { script: [{ innerHTML: ${JSON.stringify(body)} }] })
+}`
+    const registrations: Record<string, (head: Head<ResolvableHead>) => void> = {}
+    const builder = await createBuilder({
+      configFile: false,
+      root: appRoot,
+      logLevel: 'silent',
+      resolve: { alias: { unhead: fileURLToPath(new URL('../../unhead/src/index.ts', import.meta.url)) } },
+      environments: { ssr: { consumer: 'server', build: { ssr: entry } } },
+      build: { write: false, minify: false, lib: { entry, formats: ['cjs'] } },
+      builder: {
+        sharedConfigBuild: true,
+        async buildApp(builder) {
+          await builder.build(builder.environments[first === 'client' ? 'ssr' : 'client']!)
+        },
+      },
+      plugins: [
+        {
+          name: 'framework-build-first',
+          async buildApp(builder) {
+            await builder.build(builder.environments[first]!)
+          },
+          resolveId(id) {
+            if (id === entry)
+              return entry
+          },
+          load(id) {
+            if (id === entry)
+              return source
+          },
+          generateBundle(_options, bundle) {
+            for (const chunk of Object.values(bundle)) {
+              if (chunk.type === 'chunk' && chunk.isEntry) {
+                const exports: { register?: typeof registrations[string] } = {}
+                runInNewContext(chunk.code, { exports })
+                registrations[this.environment.name] = exports.register!
+              }
+            }
+          },
+        },
+        ...Unhead({ transformInlineTagKeys: true, transformInlineScripts: false, devtools: false, validate: false }),
+      ],
+    })
+    await builder.buildApp()
+    const server = createHead({ disableDefaults: true })
+    registrations.ssr!(server)
+    const dom = new JSDOM(`<!DOCTYPE html><head>${server.render().headTags}</head>`, { runScripts: 'dangerously' })
+    try {
+      const original = dom.window.document.querySelector('script')
+      expect(dom.window.visits).toBe(1)
+      const client = createClientHead({ document: dom.window.document })
+      registrations.client!(client)
+      client.render()
+      expect(dom.window.visits).toBe(1)
+      expect([...dom.window.document.querySelectorAll('script')]).toEqual([original])
+    }
+    finally {
+      dom.window.close()
+    }
+  })
+
   it('deduplicates repeated static tags and preserves their SSR nodes', async () => {
     const body = 'globalThis.visits = (globalThis.visits || 0) + 1'
     const input = { script: [{ innerHTML: body }], style: [{ innerHTML: '.page{color:red}' }], noscript: [{ innerHTML: 'Enable JavaScript' }] }
