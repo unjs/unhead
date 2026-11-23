@@ -188,6 +188,7 @@ export interface TemplateScan {
   bodyClose?: number
   headClose?: number
   outlet?: { start: number, end: number }
+  canAppendAtEnd?: true
   headElements: HeadElement[]
 }
 
@@ -412,10 +413,13 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
   let templateDepth = 0
   let cursor = html.charCodeAt(0) === 0xFEFF ? 1 : 0
 
-  while (cursor < html.length) {
+  while (true) {
     const start = html.indexOf('<', cursor)
-    if (start < 0)
+    if (start < 0) {
+      if (!scopes.length && !foreign.length)
+        result.canAppendAtEnd = true
       break
+    }
 
     const text = html.slice(cursor, start)
     if (phase !== 'body' && !scopes.length && NON_WHITESPACE.test(text)
@@ -457,7 +461,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     const tag = readTag(html, start, collectHead && (phase !== 'body'))
     if (!tag) {
-      if (next === '/' || ASCII_ALPHA.test(next ?? ''))
+      if (next === undefined || next === '/' || ASCII_ALPHA.test(next))
         break
       if (!scopes.length && !foreign.length)
         phase = 'body'
@@ -573,9 +577,8 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       phase = 'body'
     }
 
-    if (closing && name === 'body' && !scopes.length) {
-      if (result.body)
-        result.bodyClose = start
+    if (closing && name === 'body' && !scopes.length && result.body) {
+      result.bodyClose = start
       break
     }
     if (!closing && (name === 'frameset' || name === 'plaintext'))

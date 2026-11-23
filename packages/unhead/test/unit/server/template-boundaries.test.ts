@@ -169,6 +169,44 @@ it.each([false, true])('keeps late tags when optional body and html end tags are
   expect(html.endsWith('<style>p { color: black }</style>')).toBe(true)
 })
 
+describe.each([false, true])('streaming without a verified body close, prepared: %s', (prepared) => {
+  it.each([
+    '<',
+    '<!-- unfinished comment',
+    '<div class="example',
+    '<textarea>Content',
+    '<table><tr><td>Cell',
+    '<svg><g>Label</g>',
+    '<select><option><meter></meter></option></select></body></html>',
+  ])('rejects a template with an unverified end: %s', async (content) => {
+    const template = `<html><head></head><body>${content}`
+    const app = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<main>App content</main>'))
+        controller.close()
+      },
+    })
+
+    const rendered = wrapStream(createStreamableServerHead(), app, prepared ? prepareTemplate(template) : template)
+
+    await expect(new Response(rendered).text()).rejects.toThrow('Cannot stream an incomplete or unsupported HTML template.')
+  })
+
+  it('keeps the fallback when the template omits the opening body tag', async () => {
+    const template = '<html><head></head><p>Intro</p></body></html>'
+    const app = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<main>App content</main>'))
+        controller.close()
+      },
+    })
+
+    const rendered = wrapStream(createStreamableServerHead(), app, prepared ? prepareTemplate(template) : template)
+
+    expect(await new Response(rendered).text()).toContain('<p>Intro</p></body></html><main>App content</main>')
+  })
+})
+
 it.each([false, true])('mounts streamed content after a foreignObject table, prepared: %s', async (prepared) => {
   const head = createStreamableServerHead()
   head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })

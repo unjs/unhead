@@ -48,6 +48,8 @@ export interface PreparedHtmlTemplateWithIndexes {
     bodyCloseTagStart: number
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
+  /** @internal */
+  canAppendAtEnd?: true
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -239,6 +241,7 @@ function readTemplate(html: string, deferBodyClose: boolean, collectHead: boolea
     body,
     headElements,
     bodyOutlet: outlet,
+    canAppendAtEnd: scan.canAppendAtEnd,
     partial: deferBodyClose && !prepared && body !== undefined,
     indexes: {
       htmlTagStart: root?.start ?? -1,
@@ -254,12 +257,13 @@ function readTemplate(html: string, deferBodyClose: boolean, collectHead: boolea
 /** Find document tag boundaries without extracting existing tags. */
 /* @__PURE__ */
 export function parseHtmlForIndexes(html: string, mode: 'stream' | 'body-close' | 'body-open' = 'stream'): PreparedHtmlTemplateWithIndexes {
-  const { indexes, bodyOutlet } = readTemplate(html, mode === 'body-open', false)
+  const { indexes, bodyOutlet, canAppendAtEnd } = readTemplate(html, mode === 'body-open', false)
   return {
     html,
     input: {},
     indexes,
     bodyOutlet: mode === 'stream' ? bodyOutlet : undefined,
+    canAppendAtEnd: mode === 'stream' ? canAppendAtEnd : undefined,
   }
 }
 
