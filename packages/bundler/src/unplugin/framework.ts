@@ -6,6 +6,7 @@ import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTra
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
 import { SSRStaticReplace } from './SSRStaticReplace'
+import { StaticInlineKeys } from './StaticInlineKeys'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
@@ -150,6 +151,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
     return {
       vite: () => {
         const plugins: VitePlugin[] = dispatch('vite', defs)
+        if (options.transformInlineTagKeys === true)
+          plugins.push(StaticInlineKeys({ filter: options.filter, sourcemap: options.sourcemap, framework }))
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {

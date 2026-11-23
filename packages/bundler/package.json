@@ -33,6 +33,10 @@
       "types": "./dist/framework.d.ts",
       "default": "./dist/framework.mjs"
     },
+    "./inline-keys": {
+      "types": "./dist/inline-keys.d.ts",
+      "default": "./dist/inline-keys.mjs"
+    },
     "./minify/rolldown": {
       "types": "./dist/minify/rolldown.d.ts",
       "default": "./dist/minify/rolldown.mjs"
@@ -56,6 +60,9 @@
       ],
       "framework": [
         "dist/framework"
+      ],
+      "inline-keys": [
+        "dist/inline-keys"
       ],
       "minify/rolldown": [
         "dist/minify/rolldown"
