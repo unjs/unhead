@@ -319,7 +319,7 @@ it.each(['content-security-policy', 'Content-Security-Policy', 'Content-Securit&
 })
 
 it.each([false, true])('replaces a template policy at its source position, prepared: %s', (prepared) => {
-  const template = '<html><head><!--before--><meta http-equiv="content-security-policy" content="default-src \'none\'"><!--after--></head><body></body></html>'
+  const template = '<html><head><!--before--><meta http-equiv="Content-Security-Policy" content="default-src \'none\'"><!--after--></head><body></body></html>'
   const head = createServerHeadWithContext()
   head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'script-src https://scripts.example' }] })
 
@@ -328,6 +328,42 @@ it.each([false, true])('replaces a template policy at its source position, prepa
 
   expect(Array.from(policies, policy => policy.getAttribute('content'))).toEqual(['script-src https://scripts.example'])
   expect(html).toContain('<!--before--><meta http-equiv="content-security-policy" content="script-src https://scripts.example"><!--after-->')
+})
+
+it.each([false, true])('keeps distinct source policies at their own positions, prepared: %s', (prepared) => {
+  const first = '<meta http-equiv="content-security-policy" content="script-src \'self\'">'
+  const second = '<meta http-equiv="content-security-policy" content="img-src \'self\'">'
+  const template = `<html><head>${first}<!--between-->${second}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+
+  const html = transformHtmlTemplate(head, prepared ? prepareTemplate(template) : template)
+
+  expect(html).toContain(`<head>${first}<!--between-->${second}</head>`)
+})
+
+it.each([
+  { content: 'img-src https://assets.example', tagPosition: 'bodyClose' as const },
+  { content: '' },
+])('keeps the source policy without an applicable managed head replacement: %j', (managed) => {
+  const policy = '<meta http-equiv="content-security-policy" content="default-src \'self\'">'
+  const template = `<html><head>${policy}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'http-equiv': 'content-security-policy', ...managed }] })
+
+  const html = transformHtmlTemplate(head, template)
+
+  expect(html).toContain(`<head>${policy}`)
+})
+
+it('keeps source bootstrap scripts before the policies that followed them', () => {
+  const bootstrap = '<script src="/bootstrap.js"></script>'
+  const policy = '<meta http-equiv="content-security-policy" content="script-src \'self\'">'
+  const template = `<html><head>${bootstrap}${policy}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+
+  const html = transformHtmlTemplate(head, template)
+
+  expect(html).toContain(`<head>${bootstrap}${policy}</head>`)
 })
 
 it('places a managed policy directive before stylesheets regardless of case', () => {

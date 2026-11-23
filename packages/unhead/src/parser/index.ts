@@ -51,13 +51,12 @@ export interface PreparedHtmlTemplateWithIndexes {
   /** @internal */
   canAppendAtEnd?: true
   /**
-   * Source slots for policies that participate in managed deduplication.
+   * Source position for a single policy that a managed head policy can replace.
    * @internal
    */
-  policySlots?: ReadonlyArray<{
+  policySlot?: Readonly<{
     start: number
     end: number
-    attrs: Readonly<Record<string, string>>
   }>
 }
 
@@ -284,9 +283,18 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const { root, headElements, body, indexes, partial } = readTemplate(html, deferBodyClose, true, prepared)
   const input: SerializableHead = {}
   const parts: string[] = []
-  const policySlots: NonNullable<PreparedHtmlTemplateWithIndexes['policySlots']>[number][] = []
+  let lastPolicyStart = -1
+  let policyCount = 0
+  let policySlot: PreparedHtmlTemplateWithIndexes['policySlot']
   let cursor = 0
   let removed = 0
+
+  for (const { tag } of headElements) {
+    if (isPolicyMeta(tag)) {
+      lastPolicyStart = tag.start
+      policyCount++
+    }
+  }
 
   function replace(start: number, end: number, replacement = '') {
     parts.push(html.slice(cursor, start), replacement)
@@ -312,6 +320,9 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
         case 'style': {
           if (!endTag)
             continue
+          // A later policy must not start applying to an earlier source script.
+          if (tagName === 'script' && startTag.start < lastPolicyStart)
+            continue
           const content = html.slice(startTag.end, endTag.start)
           if (tagName === 'script' && !canExtractScript(content))
             continue
@@ -325,14 +336,13 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           break
         }
         case 'meta': {
-          const attrs = readAttributes(startTag.attributes)
-          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
-          // Deduplicate policies with managed input, but keep their output slot.
-          // Meta-delivered policies apply only to subsequent content.
-          if (attrs['http-equiv']?.toLowerCase() === 'content-security-policy') {
-            policySlots.push({ start: startTag.start - removed, end: startTag.end - removed, attrs: Object.freeze({ ...attrs }) })
+          // Source policies apply cumulatively and must survive generic metadata deduplication.
+          if (isPolicyMeta(startTag)) {
+            if (policyCount === 1)
+              policySlot = Object.freeze({ start: startTag.start - removed, end: startTag.end - removed })
             continue
           }
+          ;(input.meta ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.end)
           break
         }
@@ -366,7 +376,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   return {
     html: parts.length ? parts.join('') + html.slice(cursor) : html,
     input,
-    policySlots: policySlots.length ? Object.freeze(policySlots.map(slot => Object.freeze(slot))) : undefined,
+    policySlot,
     indexes: partial ? withDeferredBodyClose(html, indexes, removed) : indexes,
   }
 }
@@ -408,6 +418,11 @@ function readAttributes(raw: Record<string, string> | undefined, escapeAmpersand
   return attrs
 }
 
+function isPolicyMeta(tag: { name: string, attributes?: Record<string, string> }): boolean {
+  const pragma = tag.attributes?.['http-equiv']
+  return tag.name === 'meta' && typeof pragma === 'string' && decodeAttribute(pragma).toLowerCase() === 'content-security-policy'
+}
+
 /**
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
@@ -430,41 +445,31 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
-    if (template.policySlots) {
+    let headTags = headHtml.headTags
+    const slot = template.policySlot
+    if (slot && headTags) {
       // Scan rendered markup so renderer hooks and escaping remain authoritative.
-      const rendered = `<head>${headHtml.headTags}</head>`
-      const policies = scanTemplate(rendered, true, true).headElements.filter(({ tag }) =>
-        tag.name === 'meta' && decodeAttribute(tag.attributes?.['http-equiv'] || '').toLowerCase() === 'content-security-policy',
-      )
-      const used = new Set<typeof policies[number]>()
-      for (const slot of template.policySlots) {
-        parts.push(html.substring(lastIndex, slot.start))
-        for (const policy of policies) {
-          const attrs = readAttributes(policy.tag.attributes)
-          if (used.has(policy) || attrs['http-equiv'] !== slot.attrs['http-equiv'])
-            continue
-          used.add(policy)
-          const unchanged = Object.keys(attrs).length === Object.keys(slot.attrs).length
-            && Object.keys(attrs).every(key => attrs[key] === slot.attrs[key])
-          parts.push(unchanged ? html.slice(slot.start, slot.end) : rendered.slice(policy.tag.start, policy.tag.end))
-        }
-        lastIndex = slot.end
-      }
-      let cursor = 6 // Skip the synthetic <head> wrapper.
-      const remaining: string[] = []
-      for (const policy of policies) {
-        if (used.has(policy)) {
-          const trailingLineBreak = rendered[policy.tag.end] === '\n'
-          const start = !trailingLineBreak && rendered[policy.tag.start - 1] === '\n' ? policy.tag.start - 1 : policy.tag.start
-          remaining.push(rendered.slice(cursor, Math.max(cursor, start)))
-          cursor = policy.tag.end + (trailingLineBreak ? 1 : 0)
+      const headOpen = '<head>'
+      const headClose = '</head>'
+      const rendered = headOpen + headTags + headClose
+      const scan = scanTemplate(rendered, true, true)
+      if (scan.headClose === rendered.length - headClose.length) {
+        const policies = scan.headElements.filter(({ tag }) => isPolicyMeta(tag))
+        if (policies.length === 1) {
+          const { tag } = policies[0]
+          if (decodeAttribute(tag.attributes?.content || '').trim()) {
+            parts.push(html.substring(lastIndex, slot.start), rendered.slice(tag.start, tag.end))
+            lastIndex = slot.end
+            const trailingLineBreak = rendered[tag.end] === '\n'
+            const start = !trailingLineBreak && rendered[tag.start - 1] === '\n' ? tag.start - 1 : tag.start
+            const end = tag.end + (trailingLineBreak ? 1 : 0)
+            headTags = rendered.slice(headOpen.length, start) + rendered.slice(end, -headClose.length)
+          }
         }
       }
-      remaining.push(rendered.slice(cursor, -7))
-      headHtml = { ...headHtml, headTags: remaining.join('') }
     }
     parts.push(html.substring(lastIndex, indexes.headTagEnd))
-    parts.push(headHtml.headTags)
+    parts.push(headTags)
     lastIndex = indexes.headTagEnd
   }
 
