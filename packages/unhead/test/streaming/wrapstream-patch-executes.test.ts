@@ -1,7 +1,14 @@
+import { runInNewContext } from 'node:vm'
 import { JSDOM } from 'jsdom'
-import { createStreamableHead, wrapStream } from 'unhead/stream/server'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { useHeadSafe } from 'unhead'
+import { createHead } from 'unhead/client'
+import { createHead as createLazyHead } from 'unhead/lazy'
+import { TemplateParamsPlugin } from 'unhead/plugins'
+import { attachStreamHead, createStreamableHead as createClientStreamableHead } from 'unhead/stream/client'
+import { createStreamableHead, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
+import { buildStreamingPluginOptions, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
 
@@ -37,6 +44,53 @@ async function serveAndRun(late: Record<string, unknown>) {
 }
 
 describe('the patch a bare wrapStream emits', () => {
+  it.each(['inline', 'module', 'lazy'] as const)('keeps safe and app-owned metadata separate when replaying %s entries', async (mode) => {
+    const { head } = createStreamableHead()
+    useHeadSafe(head, { title: 'Guest guide', meta: [{ name: 'content-language', content: 'Guide' }] })
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    const updates: unknown[] = JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')')))
+    const dom = new JSDOM('<meta http-equiv="content-language" content="en">')
+    const window = dom.window as any
+    const { document } = window
+    globalThis.window = window
+    globalThis.document = document
+    window.__unhead__ = { _q: [updates], push: (batch: unknown[]) => window.__unhead__._q.push(batch) }
+
+    let client
+    if (mode === 'lazy') {
+      const lazy = createLazyHead({ document, streamKey: '__unhead__', plugins: [TemplateParamsPlugin] })
+      lazy.finishHydration()
+      client = await lazy.load()
+    }
+    else {
+      if (mode === 'inline') {
+        initIife()
+      }
+      else {
+        const plugin = buildStreamingPluginOptions({ framework: 'unhead', mode: 'module' })
+        const { code } = (plugin.load as any).handler.call({}, `\0${VIRTUAL_CLIENT_ID}`)
+        const body = code.split('\n').filter((line: string) => !line.startsWith('import')).join('\n')
+        runInNewContext(body, { attachStreamHead, createHead, window, document })
+      }
+      client = createClientStreamableHead({ plugins: [TemplateParamsPlugin] })!
+    }
+
+    client.push({ script: [{ textContent: '// %pageTitle', processTemplateParams: true }] })
+    client.render()
+
+    await vi.waitFor(() => expect({
+      title: document.title,
+      script: document.querySelector('script')?.textContent,
+      language: document.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content'),
+      metadata: document.querySelector('meta[name="content-language"]')?.getAttribute('content'),
+    }).toEqual({
+      title: 'Guest guide',
+      script: '//',
+      language: 'en',
+      metadata: 'Guide',
+    }))
+  })
+
   it('applies to the document once the browser runs it', async () => {
     const { html, document } = await serveAndRun({
       title: 'Streamed late',

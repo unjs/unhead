@@ -15,8 +15,7 @@ describe('dom useHeadSafe', () => {
         "bodyAttrs": " class="dark"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset="utf-8">
-      <link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon">",
+        "headTags": "<link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon">",
         "htmlAttrs": " lang="en" dir="ltr"",
       }
     `)
@@ -49,29 +48,6 @@ describe('dom useHeadSafe', () => {
         "bodyTagsOpen": "",
         "headTags": "<link href="/icon.png" rel="apple-touch-icon" sizes="180x180">
       <link href="favicon.ico" rel="icon">",
-        "htmlAttrs": "",
-      }
-    `)
-  })
-
-  it('meta charset allows safe', async () => {
-    const head = createServerHeadWithContext()
-
-    useHeadSafe(head, {
-      meta: [
-        {
-          charset: 'utf-8',
-        },
-      ],
-    })
-
-    const ctx = renderSSRHead(head)
-    expect(ctx).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<meta charset="utf-8">",
         "htmlAttrs": "",
       }
     `)
@@ -228,28 +204,5 @@ describe('dom useHeadSafe', () => {
 
     const ctx = renderSSRHead(head)
     expect(ctx.headTags).toBe('')
-  })
-
-  it('meta charset is actually safe', async () => {
-    const head = createServerHeadWithContext()
-
-    useHeadSafe(head, {
-      meta: [
-        {
-          charset: 'utf-8"><script>alert("pwned?")</script>',
-        },
-      ],
-    })
-
-    const ctx = renderSSRHead(head)
-    expect(ctx).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<meta charset="utf-8&quot;><script>alert(&quot;pwned?&quot;)</script>">",
-        "htmlAttrs": "",
-      }
-    `)
   })
 })

@@ -401,6 +401,7 @@ describe('useSeoMeta', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta http-equiv="content-security-policy" content="base-uri https://example.com; child-src 'none'; connect-src 'none'; default-src 'none'; font-src 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'none'; manifest-src 'none'; media-src 'none'; object-src 'none'; prefetch-src 'none'; report-to 'none'; report-uri 'none'; require-sri-for 'none'; require-trusted-types-for 'none'; sandbox 'none'; script-src 'none'; script-src-attr 'none'; script-src-elem 'none'; style-src 'none'; style-src-attr 'none'; style-src-elem 'none'; trusted-types 'none'; upgrade-insecure-requests 'none'; worker-src 'none'">
       <meta charset="utf-8">
+      <meta http-equiv="content-type" content="text/html; charset=utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Title</title>
       <meta property="article:author" content="https://example.com/some.html">
@@ -439,7 +440,6 @@ describe('useSeoMeta', () => {
       <meta property="book:isbn" content="978-3-16-148410-0">
       <meta property="book:release_date" content="1970-01-01T00:00:00.000Z">
       <meta name="color-scheme" content="normal">
-      <meta http-equiv="content-type" content="text/html; charset=utf-8">
       <meta name="creator" content="Name">
       <meta http-equiv="default-style" content="style">
       <meta name="description" content="Description">

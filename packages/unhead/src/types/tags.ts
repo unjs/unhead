@@ -113,6 +113,12 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _safe?: boolean
   /**
+   * Safe attributes in an SSR tag merged from safe and trusted entries.
+   * An empty set means all attributes came from trusted entries.
+   * @internal
+   */
+  _safeProps?: ReadonlySet<string>
+  /**
    * Copied from the entry options when the entry arrived through the server stream.
    * @internal
    */

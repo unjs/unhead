@@ -332,6 +332,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _title?: string
+  /** @internal */
+  _titleSafe?: boolean
   /**
    * @internal
    */

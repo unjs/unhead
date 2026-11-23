@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
-import { createServerHeadWithContext } from '../../util'
+import { createServerHeadWithContext, useDom } from '../../util'
 
 // Note: SafeInputPlugin must be registered via useHeadSafe() — calling
 // head.push() with _safe:true alone does NOT activate the safe plugin.
@@ -14,6 +14,149 @@ async function safeRender(input: any) {
 }
 
 describe('useHeadSafe edge cases', () => {
+  it('preserves literal references in safe server-rendered attributes', () => {
+    const head = createServerHeadWithContext()
+    const href = '/guide?topic=attributes&copy;=example&lang=en'
+    useHeadSafe(head, {
+      meta: [{ name: 'description', content: 'Reference: &copy;' }],
+      link: [{ rel: 'alternate', href }],
+    })
+    head.push({ meta: [{ name: 'author', content: 'Copyright &copy;' }] })
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+      author: document.querySelector('meta[name="author"]')?.getAttribute('content'),
+      link: document.querySelector('link')?.getAttribute('href'),
+    }).toEqual({ description: 'Reference: &copy;', author: 'Copyright ©', link: href })
+  })
+
+  it.each([false, true])('preserves attribute values when merging safe and trusted metadata, safe last: %s', (safeLast) => {
+    const head = createServerHeadWithContext()
+    const safe = { meta: [{ name: 'description', content: 'Reference: &copy;', tagDuplicateStrategy: 'merge' as const }] }
+    const trusted = { meta: [{ name: 'description', content: undefined, media: '(width > 20em) &amp;', tagDuplicateStrategy: 'merge' as const }] }
+    if (safeLast) {
+      head.push(trusted)
+      useHeadSafe(head, safe)
+    }
+    else {
+      useHeadSafe(head, safe)
+      head.push(trusted)
+    }
+
+    const { document } = useDom(renderSSRHead(head)).window
+    const description = document.querySelector('meta[name="description"]')
+    expect({
+      content: description?.getAttribute('content'),
+      media: description?.getAttribute('media'),
+    }).toEqual({ content: 'Reference: &copy;', media: '(width > 20em) &' })
+  })
+
+  it('keeps a suppressed safe title in display fields', () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({
+      titleTemplate: () => null,
+      meta: [{ name: 'description', content: '%pageTitle' }],
+      script: [{ textContent: '// %pageTitle', processTemplateParams: true }],
+    })
+    useHeadSafe(head, { title: 'Guide' })
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      title: document.title,
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+      script: document.querySelector('script')?.textContent,
+    }).toEqual({ title: '', description: 'Guide', script: '//' })
+  })
+
+  it.each(['name', 'property'])('keeps app pragmas separate from safe %s metadata', (selector) => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ 'http-equiv': 'content-type', 'content': 'text/html; charset=utf-8' }] })
+    const input = { meta: [{ [selector]: 'content-type', content: 'Documentation', tagDuplicateStrategy: 'merge' as const }] }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      encoding: document.querySelector('meta[http-equiv="content-type"]')?.getAttribute('content'),
+      metadata: document.querySelector(`meta[${selector}="content-type"]`)?.getAttribute('content'),
+    }).toEqual({ encoding: 'text/html; charset=utf-8', metadata: 'Documentation' })
+  })
+
+  it('orders an app encoding pragma before prioritized safe metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ 'http-equiv': 'Content-Type', 'content': 'text/html; charset=utf-8' }] })
+    const input = { title: 'Guide', meta: [{ name: 'description', content: 'Documentation', tagPriority: -100 }] }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect(document.head.firstElementChild?.getAttribute('http-equiv')).toBe('Content-Type')
+  })
+
+  it('keeps the app base URL when safe input includes base metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ base: { href: '/guide/' } })
+    const input = { title: 'Guide', base: { id: 'visitor' } }
+    useHeadSafe(head, input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect(document.querySelector('base')?.getAttribute('href')).toBe('/guide/')
+  })
+
+  it('keeps the document encoding app-owned while accepting other safe metadata', () => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [{ charset: 'windows-1252' }] })
+    const visitor = { meta: [{ charset: 'utf-8', name: 'description', content: 'Visitor guide' }] }
+    useHeadSafe(head, visitor)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      encoding: document.querySelector('meta[charset]')?.getAttribute('charset'),
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+    }).toEqual({ encoding: 'windows-1252', description: 'Visitor guide' })
+  })
+
+  it('keeps app template parameters when a safe entry defines the same names', () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({ templateParams: { site: 'Documentation' } })
+    const guest = { title: '%site', templateParams: { site: 'Guest page' } }
+    useHeadSafe(head, guest)
+
+    expect(renderSSRHead(head).headTags).toContain('<title>Documentation</title>')
+  })
+
+  it.each([true, false])('uses the page title only in permitted template contexts, safe=%s', (safe) => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    head.push({
+      titleTemplate: '%s | Example',
+      meta: [
+        { name: 'description', content: '%pageTitle' },
+        { 'http-equiv': 'content-language', 'content': '%pageTitle' },
+      ],
+      link: [{ rel: 'stylesheet', href: '/assets/%pageTitle/guide.css' }],
+      script: [{ textContent: '// %pageTitle', processTemplateParams: true }],
+    })
+    const input = { title: 'Guide' }
+    if (safe)
+      useHeadSafe(head, input)
+    else
+      head.push(input)
+
+    const { document } = useDom(renderSSRHead(head)).window
+    expect({
+      title: document.title,
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+      directive: document.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content'),
+      stylesheet: document.querySelector('link')?.getAttribute('href'),
+      script: document.querySelector('script')?.textContent,
+    }).toEqual({
+      title: 'Guide | Example',
+      description: 'Guide',
+      directive: safe ? '' : 'Guide',
+      stylesheet: safe ? '/assets//guide.css' : '/assets/Guide/guide.css',
+      script: safe ? '//' : '// Guide',
+    })
+  })
+
   // ─── 1. Attribute Name Injection ───────────────────────────────────
   describe('attribute name injection', () => {
     const maliciousKeys = [
@@ -327,11 +470,9 @@ describe('useHeadSafe edge cases', () => {
       const head = createServerHeadWithContext({
         plugins: [TemplateParamsPlugin],
       })
+      head.push({ templateParams: { href: 'data:text/css,p%7Bcolor%3Ablue%7D' } })
       useHeadSafe(head, {
         link: [{ rel: 'stylesheet', href: '%href' }],
-        templateParams: {
-          href: 'data:text/css,body{display:none}',
-        },
       })
       const ctx = renderSSRHead(head)
       expect(ctx.headTags).toBe('')
@@ -380,13 +521,10 @@ describe('useHeadSafe edge cases', () => {
       expect(ctx.headTags).not.toContain('Content-Security-Policy')
     })
 
-    it('escapes quotes in attribute values', async () => {
-      const ctx = await safeRender({
-        meta: [{ name: 'description', content: 'He said "hello" & <goodbye>' }],
-      })
-      expect(ctx.headTags).toContain('&quot;')
-      // < and > are not escaped in attribute values (safe inside double quotes)
-      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; & <goodbye>"')
+    it('preserves quotes and punctuation in parsed attribute values', async () => {
+      const content = 'He said "hello" & <goodbye>'
+      const { document } = useDom(await safeRender({ meta: [{ name: 'description', content }] })).window
+      expect(document.querySelector('meta')?.getAttribute('content')).toBe(content)
     })
   })
 
