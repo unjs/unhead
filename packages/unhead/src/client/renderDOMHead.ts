@@ -175,8 +175,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           }
         }
         else if (v !== false as any && v !== null) {
-          if ($el.getAttribute(k) !== v as any)
-            $el.setAttribute(k, v === true as any ? '' : String(v))
+          const value = v === true as any ? '' : String(v)
+          if ($el.getAttribute(k) !== value)
+            $el.setAttribute(k, value)
           track(ck, previous[ck] || (() => $el.removeAttribute(k)))
         }
       }
