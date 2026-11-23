@@ -2,6 +2,7 @@
 import type { ViteDevServer } from 'vite'
 import type { LazyAppName } from './fixtures/lazy-app'
 import { resolve } from 'node:path'
+import { runInThisContext } from 'node:vm'
 import { createComponent } from 'solid-js'
 import { hydrate } from 'solid-js/web'
 import { createServer } from 'vite'
@@ -35,9 +36,10 @@ function serverRender(name: LazyAppName) {
   const { html, headTags, hydrationScript } = renderApp(name)
   document.head.innerHTML = headTags
   document.body.innerHTML = `<div id="app">${html}</div>`
-  // jsdom does not run the inline hydration script, so run its code here
-  // eslint-disable-next-line no-new-func
-  new Function(hydrationScript.replace(/^<script>|<\/script>.*$/g, ''))()
+  const template = document.createElement('template')
+  template.innerHTML = hydrationScript
+  // Run Solid's generated fixture script in the same context as hydrate().
+  runInThisContext(template.content.querySelector('script')!.text)
 }
 
 function hydrateApp(name: LazyAppName, head = createLazyHead()) {
