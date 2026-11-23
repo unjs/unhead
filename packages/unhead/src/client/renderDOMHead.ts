@@ -210,6 +210,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
+      const needsContentKey = pending.some(({ id }) => id?.includes(':content:'))
       const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
@@ -239,7 +240,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (!dedupe) {
           if (props.innerHTML === undefined)
             next.innerHTML = el.innerHTML
-          dedupe = dedupeKey(next) || hashTag(next)
+          dedupe = dedupeKey(next)
+          // Only a content-based identity can appear after reading innerHTML.
+          if (dedupe && !needsContentKey)
+            continue
+          dedupe ||= hashTag(next)
         }
         let k = dedupe
         let c = 1
