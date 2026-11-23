@@ -23,7 +23,7 @@ export function getInlineTagKey(tag: InlineTag, input: Readonly<Record<string, u
 
   for (const [field, value] of Object.entries(attrs)) {
     const name = field.toLowerCase()
-    if (name === 'id' || name === 'data-hid' || name === 'data-hid-generated')
+    if (name === 'id' || name === 'data-hid')
       return
     if (tag === 'script' && name === 'type' && (typeof value !== 'string' || SPECIAL_SCRIPT_TYPE_RE.test(value.trim())))
       return
@@ -35,6 +35,5 @@ export function getInlineTagKey(tag: InlineTag, input: Readonly<Record<string, u
 
   const hash = createHash('sha256').update(`${tag}\0`).update(body, 'utf16le').digest().toString('base64url', 0, 8)
   const key = `~${hash}`
-  // Generated keys are transport hints, not authored content identity.
-  return { key, 'data-hid-generated': '', ...(!strategy && { tagDuplicateStrategy: 'replace' as const }) }
+  return { key, ...(!strategy && { tagDuplicateStrategy: 'replace' as const }) }
 }

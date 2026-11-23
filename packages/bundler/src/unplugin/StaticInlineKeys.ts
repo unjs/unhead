@@ -13,7 +13,7 @@ const HEAD_FUNCTIONS = new Set(['useHead', 'useServerHead'])
 const HEAD_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte)|#imports|#app(?:\/composables\/head)?|#unhead\/composables|nuxt\/app)$/
 const HEAD_FACTORY_IMPORT_RE = /^(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/(?:client|server)$/
 const HEAD_INJECT_IMPORTS = new Set(['@unhead/vue', '#app', '#app/composables/head', '#unhead/composables', 'nuxt/app'])
-const LITERAL_PATH_PATTERN_RE = /^\^((?:[^.\\^$*+?()[\]{}|]|\\(?:[\\/.*+?^${}()|[\]-]|x[\da-f]{2}|u[\da-f]{4}))+)(\$)?$/i
+const DIRECTORY_PATTERN_RE = /^\^((?:[^.\\^$*+?()[\]{}|]|\\(?:[\\/.*+?^${}()|[\]-]|x[\da-f]{2}|u[\da-f]{4}))+)$/i
 const PATH_ESCAPE_RE = /\\(?:x([\da-f]{2})|u([\da-f]{4})|(.))/gi
 
 interface StaticInlineKeysOptions extends BaseTransformerTypes {
@@ -88,8 +88,10 @@ function headInputIndex(callee: CallExpression['callee'], scope: ScopeTracker, h
 function inlineInput(tag: ObjectExpression, scope: ScopeTracker) {
   const input: Record<string, unknown> = {}
   for (const field of tag.properties) {
-    const prop = field.type === 'Property' ? propertyName(field) : undefined
-    if (prop === undefined || prop === '__proto__' || Object.hasOwn(input, prop) || field.type !== 'Property')
+    if (field.type !== 'Property')
+      return
+    const prop = propertyName(field)
+    if (prop === undefined || prop === '__proto__' || Object.hasOwn(input, prop))
       return
     if (prop === 'innerHTML' || prop === 'textContent' || prop === 'tagDuplicateStrategy' || prop.toLowerCase() === 'type')
       input[prop] = resolveStaticText(field.value, scope)
@@ -125,12 +127,12 @@ function isWithin(root: string, file: string): boolean {
   return fromRoot !== '..' && !fromRoot.startsWith(`..${sep}`) && !isAbsolute(fromRoot)
 }
 
-function externalPatternPath(pattern: RegExp): string | undefined {
-  const match = !pattern.ignoreCase && !pattern.multiline && LITERAL_PATH_PATTERN_RE.exec(pattern.source)
+function externalDirectory(rule: RegExp): string | undefined {
+  const match = !rule.flags && DIRECTORY_PATTERN_RE.exec(rule.source)
   if (!match)
     return
   const path = match[1]!.replace(PATH_ESCAPE_RE, (_, byte, unit, literal) => byte || unit ? String.fromCharCode(Number.parseInt(byte || unit, 16)) : literal)
-  if (isAbsolute(path) && (match[2] || path.endsWith('/') || path.endsWith('\\')))
+  if (isAbsolute(path) && (path.endsWith('/') || path.endsWith('\\')))
     return path
 }
 
@@ -156,41 +158,32 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
       const preserveSymlinks = config.resolve.preserveSymlinks
       const root = existsSync(config.root) ? realpathSync(config.root) : resolve(config.root)
       const owner = nearestNamedPackage(root, packages)
-      const externals: (string | RegExp)[] = []
+      const hasPathAlias = config.resolve.alias.some(({ find, replacement }) => (typeof find !== 'string' || isAbsolute(find))
+        && isAbsolute(replacement) && isWithin(root, replacement))
+      const externalIds = new Set<string>()
       for (const env of Object.values(config.environments)) {
         if (env.consumer !== 'server')
           continue
         const buildExternal = env.build.rolldownOptions?.external ?? env.build.rollupOptions?.external
         const { external } = env.resolve
-        if (external === true || typeof buildExternal === 'function')
+        if (external === true)
           return
-        externals.push(...(external || []))
-        if (buildExternal)
-          externals.push(...(Array.isArray(buildExternal) ? buildExternal : [buildExternal]))
+        const rules = Array.isArray(buildExternal) ? buildExternal : buildExternal ? [buildExternal] : []
+        // An external entry can import application files outside Vite's transform.
+        for (const rule of [...(external || []), ...rules]) {
+          const path = typeof rule === 'string' ? rule : rule instanceof RegExp && !hasPathAlias ? externalDirectory(rule) : undefined
+          if (!path || path.startsWith('.') || (owner && (path === owner.name || path.startsWith(`${owner.name}/`))))
+            return
+          if (!isAbsolute(path))
+            externalIds.add(path)
+          else if (isWithin(root, path) || (existsSync(path) && !NODE_MODULES_RE.test(realpathSync(path))))
+            return
+        }
       }
-      if (externals.some(rule => typeof rule === 'string' && (rule.startsWith('.') || (owner && (rule === owner.name || rule.startsWith(`${owner.name}/`))))))
-        return
-
-      const patterns = externals.filter((rule): rule is RegExp => typeof rule !== 'string')
-      const hasPathAlias = config.resolve.alias.some(({ find, replacement }) => (typeof find !== 'string' || isAbsolute(find))
-        && isAbsolute(replacement) && isWithin(root, replacement))
-      // External entries can import application files through Node, bypassing the SSR transform.
-      for (const rule of new Set(patterns)) {
-        const path = externalPatternPath(rule)
-        if (!path || hasPathAlias || isWithin(root, path) || (existsSync(path) && !NODE_MODULES_RE.test(realpathSync(path))))
-          return
-      }
-
-      const literals = [...new Set(externals.filter((rule): rule is string => typeof rule === 'string'))]
-      for (const path of literals.filter(isAbsolute)) {
-        if (isWithin(root, path) || (existsSync(path) && !NODE_MODULES_RE.test(realpathSync(path))))
-          return
-      }
-      const externalIds = literals.filter(id => !isAbsolute(id))
-      if (externalIds.length) {
+      if (externalIds.size) {
         const resolveExternal = config.createResolver()
         const importer = join(root, 'index.html')
-        const paths = await Promise.all(externalIds.map(id => resolveExternal(id, importer))).catch(() => {
+        const paths = await Promise.all([...externalIds].map(id => resolveExternal(id, importer))).catch(() => {
           // Fail closed if the build cannot establish parity for an external specifier.
           config.logger.warn('Unhead skipped automatic inline keys because an SSR external could not be resolved.')
         })
@@ -287,7 +280,7 @@ export function StaticInlineKeys(options: StaticInlineKeysOptions): Plugin {
                 const identity = inline && getInlineTagKey(name, inline)
                 if (!identity)
                   continue
-                const key = `key:"${identity.key}","data-hid-generated":"",${identity.tagDuplicateStrategy ? 'tagDuplicateStrategy:"replace",' : ''}`
+                const key = `key:"${identity.key}",${identity.tagDuplicateStrategy ? 'tagDuplicateStrategy:"replace",' : ''}`
                 if (tag.type === 'ObjectExpression') {
                   s.appendLeft(tag.start + 1, key)
                 }

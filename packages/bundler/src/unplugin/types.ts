@@ -26,7 +26,7 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 
 export interface VitePluginOptions extends UnpluginOptions {
   /**
-   * Generate keys for static inline tags in application source. Enabled by default.
+   * Generate keys for static inline tags in application source. Disabled by default.
    * Requires the Vite app builder with `builder.sharedConfigBuild: true` for SSR and client parity.
    */
   transformInlineTagKeys?: boolean
