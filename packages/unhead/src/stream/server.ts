@@ -1,13 +1,14 @@
 import type { PreparedTemplate } from '../parser'
-import type { StreamingHtmlTemplate } from '../parser/template'
+import type { StreamingHtmlTemplate } from '../parser/scanTemplate'
 import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
+import { parseHtmlForStreamingExtraction } from '../parser/scanTemplate'
 import { renderStreamingHead } from '../parser/streamingMetadata'
-import { parseHtmlForStreamingExtraction } from '../parser/template'
 import { createHead, renderWithoutDefaultCharset } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
+import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { isEmptyProps } from '../utils/resolve'
 import { DEFAULT_STREAM_KEY } from './client'
@@ -280,6 +281,14 @@ function unwrapEntryInput(input: any): any {
   return typeof input === 'function' ? input() : input
 }
 
+function unpackStreamMeta(input: any): any {
+  // The IIFE renders before any client composables can register FlatMetaPlugin.
+  if (!input?._flatMeta)
+    return input
+  const { _flatMeta, meta, ...rest } = input
+  return { ...rest, meta: [...(Array.isArray(meta) ? meta : meta ? [meta] : []), ...unpackMeta(_flatMeta)] }
+}
+
 function rememberShellBodyTags(head: Unhead<any>): void {
   const state = streamState(head)
   let seen = state.seen
@@ -432,6 +441,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
         if (!input)
           continue
       }
+      input = unpackStreamMeta(input)
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
         inputs.push(input)
@@ -457,7 +467,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     // poison every subsequent chunk render with the same error.
     for (const [key, entry] of head.entries) {
       try {
-        safeJsonStringify(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers))
+        safeJsonStringify(unpackStreamMeta(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)))
       }
       catch {
         head.entries.delete(key)
@@ -667,6 +677,8 @@ export interface StreamingTemplateParts {
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - A rendered payload to insert alongside the template's own tags
  * @returns Object with `shell` (before app) and `end` (after app) parts
+ * @throws If the template has no verified split or safe ending. Templates may
+ * omit optional closing tags if the rest of the markup can be read.
  *
  * @example
  * ```ts
@@ -712,6 +724,10 @@ function renderStreamingTemplate(
   let parsed: StreamingHtmlTemplate = typeof template === 'string'
     ? (preRenderedState ? parseHtmlForIndexes(template) : parseHtmlForStreamingExtraction(template))
     : cached ?? template
+
+  const { bodyTagEnd, bodyCloseTagStart } = parsed.indexes
+  if (!(bodyTagEnd >= 0 && bodyCloseTagStart >= bodyTagEnd) && !parsed.canAppendAtEnd)
+    throw new Error('Cannot stream an incomplete or unsupported HTML template.')
 
   const shouldPushTemplate = !preRenderedState && !isEmptyProps(parsed.input)
   const previousEntry = shouldPushTemplate ? head.entries.get(0) : undefined

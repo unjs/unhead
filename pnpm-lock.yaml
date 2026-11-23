@@ -300,8 +300,8 @@ catalogs:
       specifier: ^1.1.1
       version: 1.1.1
     parse5:
-      specifier: ^7.3.0
-      version: 7.3.0
+      specifier: ^8.0.1
+      version: 8.0.1
     pathe:
       specifier: ^2.0.3
       version: 2.0.3
@@ -1285,7 +1285,7 @@ importers:
         version: 6.1.1
       parse5:
         specifier: 'catalog:'
-        version: 7.3.0
+        version: 8.0.1
       unplugin:
         specifier: 'catalog:'
         version: 3.3.0(esbuild@0.28.2)(rolldown@1.2.3)(rollup@4.63.2)(vite@8.3.3)(webpack@5.105.2(esbuild@0.28.2))
@@ -1293,6 +1293,9 @@ importers:
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
         version: 16.0.3(rollup@4.63.2)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       rollup:
         specifier: ^4.63.2
         version: 4.63.2

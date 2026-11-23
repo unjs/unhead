@@ -20,6 +20,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'html-in-title',
   'inline-script-size',
   'inline-style-size',
+  'large-inline-content-without-key',
   'meta-beyond-1mb',
   'missing-alias-sorting-plugin',
   'missing-description',
@@ -61,6 +62,7 @@ export interface ValidationRuleOptions {
   'charset-not-early': { maxPosition: number }
   'inline-script-size': { maxKB: number }
   'inline-style-size': { maxKB: number }
+  'large-inline-content-without-key': { minLength: number }
   'meta-beyond-1mb': { maxBytes: number }
   'too-many-fetchpriority-high': { max: number }
   'too-many-prefetches': { max: number }
