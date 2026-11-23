@@ -384,7 +384,10 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         syncStatus('loading')
         // status should get updated from script events
         pushScript()
-        head._load?.().catch(console.error)
+        head._load?.().catch((error) => {
+          if (!lifecycleController.signal.aborted)
+            failReadiness(error)
+        })
       }
       if (cb)
         _registerCb('loaded', cb)

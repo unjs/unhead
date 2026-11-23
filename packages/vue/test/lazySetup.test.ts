@@ -42,6 +42,57 @@ async function buildFixture(aliased: boolean, fixture = 'lazy-setup.ts') {
 }
 
 describe('production Vue setup', () => {
+  it.each([false, true])('renders safely immediately after mounting, streaming: %s', async (streaming) => {
+    const code = await buildFixture(false)
+    const { window } = new JSDOM('<title>Server</title><div id="app"><div>ready</div></div>', { runScripts: 'outside-only' })
+    const frames: FrameRequestCallback[] = []
+    window.requestAnimationFrame = callback => frames.push(callback)
+    if (streaming)
+      window.eval('window.__unhead__ = { _q: [], push(entries) { this._q.push(entries) } }')
+    let client: { rendered: boolean, render: () => boolean, update: () => void, unmount: () => void } | undefined
+    try {
+      window.eval(code)
+      const fixture = window as unknown as { SetupFixture: { start: (streaming: boolean, subscribe: boolean, supplied: boolean, renderImmediately: boolean) => NonNullable<typeof client> } }
+      client = fixture.SetupFixture.start(streaming, false, false, true)
+      expect(client.rendered).toBe(false)
+      expect(window.document.title).toBe('Server')
+      frames.shift()!(0)
+      await expect.poll(() => window.document.title).toBe('Hydrated title')
+      client.update()
+      expect(client.render()).toBe(false)
+      await expect.poll(() => window.document.title).toBe('Updated title')
+    }
+    finally {
+      client?.unmount()
+      window.close()
+    }
+  })
+
+  it.each([false, true])('settles an awaited script when runtime plugins reject, streaming: %s', async (streaming) => {
+    const code = await buildFixture(false, 'lazy-suspense-script.ts')
+    const { window } = new JSDOM('<div id="app"><div>ready</div></div>', { runScripts: 'outside-only' })
+    window.requestAnimationFrame = () => 0
+    if (streaming)
+      window.eval('window.__unhead__ = { _q: [], push(entries) { this._q.push(entries) } }')
+    let client: { state: { resolved: boolean, status: string, error: string, result: unknown, repeated: unknown }, unmount: () => void } | undefined
+    try {
+      window.eval(code)
+      const fixture = window as unknown as { SetupFixture: { start: (streaming: boolean, rejectRuntime: boolean) => NonNullable<typeof client> } }
+      client = fixture.SetupFixture.start(streaming, true)
+      await expect.poll(() => client!.state.resolved).toBe(true)
+      expect(client.state.status).toBe('error')
+      expect(client.state.error).toBe('Runtime plugin failed')
+      expect(client.state.result).toBe(false)
+      expect(client.state.repeated).toBe(false)
+      expect(window.document.querySelector('#app')?.textContent).toBe('ready')
+      expect(window.document.querySelector('script[src="/setup.js"]')).toBeNull()
+    }
+    finally {
+      client?.unmount()
+      window.close()
+    }
+  })
+
   it.each([false, true])('loads an awaited script while root Suspense hydration is pending, streaming: %s', async (streaming) => {
     const code = await buildFixture(false, 'lazy-suspense-script.ts')
     const dom = new JSDOM('<title>Server</title><div id="app"><div>ready</div></div>', { runScripts: 'outside-only' })

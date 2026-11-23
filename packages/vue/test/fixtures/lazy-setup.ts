@@ -4,7 +4,7 @@ import { createStreamableHead } from '@unhead/vue/stream/client'
 import { HookableCore } from 'hookable'
 import { createSSRApp, h } from 'vue'
 
-export function start(streaming: boolean, subscribe: boolean, supplied: boolean) {
+export function start(streaming: boolean, subscribe: boolean, supplied: boolean, renderImmediately = false) {
   const updates: string[] = []
   const hookable = new HookableCore<ClientHeadHooks>()
   if (supplied)
@@ -29,7 +29,10 @@ export function start(streaming: boolean, subscribe: boolean, supplied: boolean)
     },
   }).use(head)
   app.mount('#app')
+  const rendered = renderImmediately ? head.render() : undefined
   return {
+    rendered,
+    render: () => head.render(),
     updates,
     update() {
       updates.length = 0
