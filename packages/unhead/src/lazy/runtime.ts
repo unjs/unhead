@@ -6,10 +6,10 @@ import type { HeadQueue, LazyHeadOptions } from './index'
 import { createClientHeadAdapter } from '../client/adapter'
 import { renderLazyDOMHead } from '../client/renderDOMHead'
 import { tagWeight } from '../client/tagWeight'
-import { attachStreamHead } from '../stream/queue'
 import { createUnhead } from '../unhead'
 import { createHooks } from '../utils/hooks'
 import { copyInput } from './same'
+import { attachLazyStreamHead } from './stream'
 
 function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue: HeadQueue<T>, replayShell: () => void) {
   const live = head.entries
@@ -34,7 +34,7 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
   queue.closeStream = discard
   // Stream patches replace hydration defaults and remain below newer client entries.
   let index = -(1 << 20)
-  attachStreamHead(stream, head, (input) => {
+  attachLazyStreamHead(stream, head, (input) => {
     if (wasDiscarded())
       return
     const entry = head.push(input as T, { _index: index++, _streamed: true })

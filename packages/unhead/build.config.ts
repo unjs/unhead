@@ -9,6 +9,7 @@ import { build as viteBuild } from 'vite'
 
 const IIFE_GLOBAL_NAME = '__unhead_iife__'
 const IIFE_INIT_CALL = `${IIFE_GLOBAL_NAME}.init();`
+const EAGER_RENDERER = { __UNHEAD_LAZY_RENDERER__: 'false' }
 const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
 // Rollup transform plugins use text prefilters and replacements before parsing.
 // Escape their trigger text in the module source so the IIFE remains opaque data.
@@ -70,6 +71,7 @@ async function buildIifeFromDist(rootDir: string) {
 
 async function buildIifeFromSource(rootDir: string) {
   const result = await viteBuild({
+    define: EAGER_RENDERER,
     build: {
       emptyOutDir: false,
       lib: {
@@ -131,6 +133,7 @@ export default defineBuildConfig([{
   // yet, so warnings pass here.
   clean: true,
   declaration: true,
+  replace: { __UNHEAD_LAZY_RENDERER__: 'true' },
   failOnWarn: false,
   hooks: {
     'rollup:options': (ctx, options) => {
@@ -144,6 +147,10 @@ export default defineBuildConfig([{
 }, {
   clean: false,
   declaration: true,
+  // Only the separate lazy build needs hydration adoption and stream precedence.
+  rollup: {
+    esbuild: { define: EAGER_RENDERER, minifySyntax: true },
+  },
   hooks: {
     'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {

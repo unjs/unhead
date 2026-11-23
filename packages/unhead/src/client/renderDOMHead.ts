@@ -5,6 +5,9 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { CLASS_SEPARATOR_RE, normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
+// Source-based tests and the lazy build use the full renderer.
+declare const __UNHEAD_LAZY_RENDERER__: boolean
+
 type DomEventHandler = (this: Element, e: Event) => any
 
 // [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
@@ -54,7 +57,8 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adoption?: boolean): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adopt?: boolean): boolean {
+  const adoption = (typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__) && adopt
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))

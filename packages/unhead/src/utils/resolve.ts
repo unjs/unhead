@@ -4,6 +4,8 @@ import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
+declare const __UNHEAD_LAZY_RENDERER__: boolean
+
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
 
@@ -117,9 +119,11 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>,
   head._titleTemplate = fn
   if (!fn)
     return
-  // @ts-expect-error untyped
   // Adoption only needs title ownership. Retired callbacks may reference disposed state.
-  let v = adoption ? head.resolvedOptions.document?.title : typeof fn === 'function' ? fn(title?.textContent) : fn
+  let v = (typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__) && adoption
+    ? head.resolvedOptions.document?.title
+    // @ts-expect-error titleTemplate can store a function in textContent
+    : typeof fn === 'function' ? fn(title?.textContent) : fn
   if (typeof v === 'string' && !head.plugins.has('template-params'))
     v = v.replace('%s', title?.textContent || '')
   if (title) {
@@ -170,6 +174,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, adoption = false): HeadTag[] {
+  const lazyRenderer = typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -216,7 +221,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
-          t._p = ((e._order ?? e._i) << 10) + i
+          t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
           t._d = dedupeKey(t)
           if (!t._d)
             t._h = hashTag(t)
@@ -235,7 +240,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
-  resolveTitleTemplate(ctx, head, adoption)
+  resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
