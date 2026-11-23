@@ -54,7 +54,7 @@ import type { WebSite } from '../../nodes/WebSite'
 import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { computed, isRef } from 'vue'
+import { computed, isRef, shallowRef } from 'vue'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -298,9 +298,19 @@ export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOpti
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())
-  const entry = useHead(normalizeSchemaOrgInput(input) as unknown as UseHeadInput, options)
-  const corePatch = entry.patch
-  const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>
-  publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
-  return publicEntry
+  // Box the input so shallowRef does not reuse an incoming ref as its own state.
+  const currentInput = unhead.ssr ? undefined : shallowRef<{ input: UseSchemaOrgInput }>({ input })
+  const entry = useHead((currentInput
+    ? () => normalizeSchemaOrgInput(currentInput.value.input)
+    : normalizeSchemaOrgInput(input)) as unknown as UseHeadInput, options)
+  // Keep useHead's watcher patch separate from the public schema input patch.
+  return {
+    ...entry,
+    patch(input) {
+      if (currentInput)
+        currentInput.value = { input }
+      else
+        entry.patch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
+    },
+  }
 }
