@@ -57,6 +57,19 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
       '<html><head><!-- Example: <body> --><title>Document title</title></head><body class="managed">Content</body></html>',
     )
   })
+
+  it.each([
+    '<svg><foreignObject><div>Illustration label</div></foreignObject></svg>',
+    '<table><tr><td>Table cell</table>',
+  ])('inserts body tags after %s', (body) => {
+    const head = createServerHeadWithContext()
+    head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+    const prefix = `<html><head></head><body>${body}`
+
+    expect(render(head, `${prefix}</body></html>`)).toBe(
+      `${prefix}<style>p { color: black }</style></body></html>`,
+    )
+  })
 })
 
 it('splits the stream at a comment in the document instead of marker text in a textarea', () => {

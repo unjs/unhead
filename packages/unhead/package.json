@@ -182,7 +182,6 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
     "esbuild": "catalog:",
-    "parse5": "catalog:",
     "rollup": "catalog:",
     "vite": "catalog:"
   }

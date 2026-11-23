@@ -299,9 +299,6 @@ catalogs:
     oxc-walker:
       specifier: ^1.1.1
       version: 1.1.1
-    parse5:
-      specifier: ^7.3.0
-      version: 7.3.0
     pathe:
       specifier: ^2.0.3
       version: 2.0.3
@@ -1293,9 +1290,6 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
-      parse5:
-        specifier: 'catalog:'
-        version: 7.3.0
       rollup:
         specifier: ^4.63.2
         version: 4.63.2
