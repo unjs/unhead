@@ -21,7 +21,8 @@ describe('simpleHead component in ssr', () => {
 
     const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
-      "<meta name="viewport" content="width=device-width, initial-scale=1">
+      "<meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
       <script nomodule src="https://example.com/nomodule.js"></script>
@@ -34,7 +35,6 @@ describe('simpleHead component in ssr', () => {
       <link rel="prefetch" href="https://example.com/next-page">
       <link rel="prerender" href="https://example.com/next-page">
       <meta name="description" content="Default Description">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
       <link rel="icon" href="favicon.ico">
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://www.example.com"}</script>"
     `)
@@ -56,7 +56,8 @@ describe('simpleHead component in ssr', () => {
 
     const headContent = transformed.match(HEAD_RE)?.[1] || ''
     expect(headContent).toMatchInlineSnapshot(`
-      "<meta name="viewport" content="width=device-width, initial-scale=1">
+      "<meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
       <script nomodule src="https://example.com/nomodule.js"></script>
@@ -69,7 +70,6 @@ describe('simpleHead component in ssr', () => {
       <link rel="prefetch" href="https://example.com/next-page">
       <link rel="prerender" href="https://example.com/next-page">
       <meta name="description" content="Default Description">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
       <link rel="icon" href="favicon.ico">
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://www.example.com"}</script>"
     `)
