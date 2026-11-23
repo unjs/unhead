@@ -1,6 +1,9 @@
 import type { SerializableHead } from '../types'
+import type { PolicySlot } from './policy'
 import { hasOwn } from '../utils/hasOwn'
+import { normalizeProps } from '../utils/normalize'
 import { decodeAttribute } from './decodeAttribute'
+import { CSP_DIRECTIVE, findRenderedPolicy, policyIdentity } from './policy'
 import { closeTextElement, scanTemplate } from './scanTemplate'
 
 const TAG_HTML = 0
@@ -54,10 +57,7 @@ export interface PreparedHtmlTemplateWithIndexes {
    * Source position for a single policy that a managed head policy can replace.
    * @internal
    */
-  policySlot?: Readonly<{
-    start: number
-    end: number
-  }>
+  policySlot?: PolicySlot
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -290,7 +290,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   let removed = 0
 
   for (const { tag } of headElements) {
-    if (isPolicyMeta(tag)) {
+    if (isMetaPragma(tag, CSP_DIRECTIVE)) {
       lastPolicyStart = tag.start
       policyCount++
     }
@@ -314,14 +314,16 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   if (indexes.headTagEnd >= 0) {
     for (const { tag: startTag, close: endTag, start } of headElements) {
       const tagName = startTag.name
+      // Source URL resolution and policy enforcement depend on document order.
+      if (startTag.start < lastPolicyStart
+        && (tagName === 'base' || tagName === 'link' || tagName === 'script' || tagName === 'style')) {
+        continue
+      }
       switch (tagName) {
         case 'title':
         case 'script':
         case 'style': {
           if (!endTag)
-            continue
-          // A later policy must not start applying to an earlier source script.
-          if (tagName === 'script' && startTag.start < lastPolicyStart)
             continue
           const content = html.slice(startTag.end, endTag.start)
           if (tagName === 'script' && !canExtractScript(content))
@@ -337,12 +339,20 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
         }
         case 'meta': {
           // Source policies apply cumulatively and must survive generic metadata deduplication.
-          if (isPolicyMeta(startTag)) {
-            if (policyCount === 1)
-              policySlot = Object.freeze({ start: startTag.start - removed, end: startTag.end - removed })
+          if (isMetaPragma(startTag, CSP_DIRECTIVE)) {
+            if (policyCount === 1) {
+              const identity = policyIdentity(normalizeProps({ tag: 'meta', props: {} }, readAttributes(startTag.attributes)))
+              if (identity)
+                policySlot = Object.freeze({ identity, start: startTag.start - removed, end: startTag.end - removed })
+            }
             continue
           }
-          ;(input.meta ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['meta']>[number])
+          // Encoding detection scans the original document prefix.
+          if (lastPolicyStart >= 0 && (startTag.attributes?.charset !== undefined || isMetaPragma(startTag, 'content-type'))) {
+            continue
+          }
+          const attrs = readAttributes(startTag.attributes)
+          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.end)
           break
         }
@@ -418,9 +428,9 @@ function readAttributes(raw: Record<string, string> | undefined, escapeAmpersand
   return attrs
 }
 
-function isPolicyMeta(tag: { name: string, attributes?: Record<string, string> }): boolean {
+function isMetaPragma(tag: { name: string, attributes?: Record<string, string> }, value: string): boolean {
   const pragma = tag.attributes?.['http-equiv']
-  return tag.name === 'meta' && typeof pragma === 'string' && decodeAttribute(pragma).toLowerCase() === 'content-security-policy'
+  return tag.name === 'meta' && typeof pragma === 'string' && decodeAttribute(pragma).toLowerCase() === value
 }
 
 /**
@@ -447,24 +457,24 @@ export function applyHeadToHtml(
   if (indexes.headTagEnd >= 0) {
     let headTags = headHtml.headTags
     const slot = template.policySlot
-    if (slot && headTags) {
-      // Scan rendered markup so renderer hooks and escaping remain authoritative.
+    const replacement = slot && findRenderedPolicy(headHtml, slot.identity)
+    if (slot && replacement) {
+      // Only move a matching serialized tag that the parser finds in the document head.
       const headOpen = '<head>'
       const headClose = '</head>'
       const rendered = headOpen + headTags + headClose
       const scan = scanTemplate(rendered, true, true)
       if (scan.headClose === rendered.length - headClose.length) {
-        const policies = scan.headElements.filter(({ tag }) => isPolicyMeta(tag))
-        if (policies.length === 1) {
-          const { tag } = policies[0]
-          if (decodeAttribute(tag.attributes?.content || '').trim()) {
-            parts.push(html.substring(lastIndex, slot.start), rendered.slice(tag.start, tag.end))
-            lastIndex = slot.end
-            const trailingLineBreak = rendered[tag.end] === '\n'
-            const start = !trailingLineBreak && rendered[tag.start - 1] === '\n' ? tag.start - 1 : tag.start
-            const end = tag.end + (trailingLineBreak ? 1 : 0)
-            headTags = rendered.slice(headOpen.length, start) + rendered.slice(end, -headClose.length)
-          }
+        const start = replacement.start + headOpen.length
+        const end = replacement.end + headOpen.length
+        const policy = scan.headElements.find(({ tag }) => tag.start === start && tag.end === end && isMetaPragma(tag, CSP_DIRECTIVE))
+        if (policy && decodeAttribute(policy.tag.attributes?.content || '').trim()) {
+          parts.push(html.substring(lastIndex, slot.start), headTags.slice(replacement.start, replacement.end))
+          lastIndex = slot.end
+          const trailingLineBreak = headTags[replacement.end] === '\n'
+          const removeStart = !trailingLineBreak && headTags[replacement.start - 1] === '\n' ? replacement.start - 1 : replacement.start
+          const removeEnd = replacement.end + (trailingLineBreak ? 1 : 0)
+          headTags = headTags.slice(0, removeStart) + headTags.slice(removeEnd)
         }
       }
     }
