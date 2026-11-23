@@ -27,11 +27,26 @@ export function createDeferredHead<T = ResolvableHead, R = DeferredHead<T>>(
       return queue.head ? queue.head.push(input, entryOptions) : pushQueuedEntry(queue, options, input, entryOptions)
     },
   }
+  let loading: Promise<void> | undefined
+  let off: () => void
+  const load = () => loading ||= import('./runtime')
+    .then(({ hydrate }) => hydrate(options, queue, head))
+    .then(() => { off() })
+    .catch((error) => {
+      loading = undefined
+      throw error
+    })
+  // A requested script can unblock async setup. Load independently of hydration
+  // completion so Suspense can await its browser event without a circular wait.
+  off = head.hooks!.hook('script:updated', ({ script }) => {
+    if (script.status === 'loading')
+      load().catch(console.error)
+  })
   options.init?.forEach(input => input && head.push(input as T))
   return install(head, (schedule) => {
     if (queue.hydrating) {
       queue.hydrating = false
-      schedule(() => import('./runtime').then(({ hydrate }) => hydrate(options, queue, head)))
+      schedule(load)
     }
   }, queue)
 }

@@ -5,7 +5,7 @@ import { build } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { Unhead } from '../src/vite'
 
-async function buildFixture(aliased: boolean) {
+async function buildFixture(aliased: boolean, fixture = 'lazy-setup.ts') {
   const vue = resolve(__dirname, '../src')
   const core = resolve(__dirname, '../../unhead/src')
   const result = await build({
@@ -32,7 +32,7 @@ async function buildFixture(aliased: boolean) {
     build: {
       write: false,
       minify: false,
-      lib: { entry: resolve(__dirname, 'fixtures/lazy-setup.ts'), name: 'SetupFixture', formats: ['iife'] },
+      lib: { entry: resolve(__dirname, 'fixtures', fixture), name: 'SetupFixture', formats: ['iife'] },
     },
   })
   const output = Array.isArray(result) ? result[0] : result
@@ -42,6 +42,31 @@ async function buildFixture(aliased: boolean) {
 }
 
 describe('production Vue setup', () => {
+  it.each([false, true])('loads an awaited script while root Suspense hydration is pending, streaming: %s', async (streaming) => {
+    const code = await buildFixture(false, 'lazy-suspense-script.ts')
+    const dom = new JSDOM('<title>Server</title><div id="app"><div>ready</div></div>', { runScripts: 'outside-only' })
+    const { window } = dom
+    const frames: FrameRequestCallback[] = []
+    window.requestAnimationFrame = callback => frames.push(callback)
+    if (streaming)
+      window.eval('window.__unhead__ = { _q: [], push(entries) { this._q.push(entries) } }')
+    let client: { resolved: boolean, unmount: () => void } | undefined
+    try {
+      window.eval(code)
+      const fixture = window as unknown as { SetupFixture: { start: (streaming: boolean) => NonNullable<typeof client> } }
+      client = fixture.SetupFixture.start(streaming)
+      await expect.poll(() => window.document.querySelector('script[src="/setup.js"]')).not.toBeNull()
+      expect(client.resolved).toBe(false)
+      window.document.querySelector('script[src="/setup.js"]')!.dispatchEvent(new window.Event('load'))
+      await expect.poll(() => client!.resolved).toBe(true)
+      expect(window.document.querySelector('#app')?.textContent).toBe('ready')
+    }
+    finally {
+      client?.unmount()
+      window.close()
+    }
+  })
+
   it.each([
     { aliased: true, streaming: true, subscribe: false, supplied: false },
     { aliased: false, streaming: false, subscribe: true, supplied: false },
