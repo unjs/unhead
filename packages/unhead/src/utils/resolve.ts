@@ -3,7 +3,7 @@ import { callHook } from './callHook'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
-import { bindTagAliases, callTagHook, syncTagAliases } from './tagHooks'
+import { bindTagAliases, callTagHook, resolveTagAttrs, syncTagAliases } from './tagHooks'
 
 declare const __UNHEAD_LAZY_RENDERER__: boolean
 
@@ -11,7 +11,7 @@ const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
 
 // @ts-expect-error untyped
-const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
+const sortTags = (a: HeadTagInput, b: HeadTagInput) => a._w === b._w ? a._p - b._p : a._w - b._w
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
@@ -36,9 +36,9 @@ function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   }
 }
 
-export interface ResolveTagsContext {
-  tagMap: Map<string, HeadTag>
-  tags: HeadTag[]
+export interface ResolveTagsContext<T extends HeadTagInput = HeadTagInput> {
+  tagMap: Map<string, T>
+  tags: T[]
 }
 
 export interface ResolveTagsOptions {
@@ -59,7 +59,7 @@ function cloneTagsInPlace(tags: HeadTag[]) {
   }
 }
 
-function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+function valuesToTags(ctx: ResolveTagsContext<HeadTag>, sortFlatMeta: boolean) {
   // reuse the pre-dedupe array; the map never holds more tags than went in
   const tags = ctx.tags
   let w = 0
@@ -89,12 +89,14 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const attrs = { ...prev.attrs }
-      for (const p in next.attrs) {
+      const prevAttrs = resolveTagAttrs(prev)
+      const nextAttrs = resolveTagAttrs(next)
+      const attrs = { ...prevAttrs }
+      for (const p in nextAttrs) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
         attrs[p] = p === 'style'
-          ? new Map([...(prev.attrs.style || []) as any, ...next.attrs[p] as any])
-          : p === 'class' ? new Set([...(prev.attrs.class || []) as any, ...next.attrs[p] as any]) : next.attrs[p]
+          ? new Map([...(prevAttrs.style || []) as any, ...nextAttrs[p] as any])
+          : p === 'class' ? new Set([...(prevAttrs.class || []) as any, ...nextAttrs[p] as any]) : nextAttrs[p]
       }
       ctx.tagMap.set(k, { ...next, attrs, props: attrs })
     }
@@ -181,7 +183,7 @@ export function sanitizeTags(tags: HeadTagInput[]): HeadTag[] {
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, adoption = false): HeadTag[] {
   const lazyRenderer = typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
-  const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
+  const ctx: ResolveTagsContext<HeadTag> = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
   syncEntryHookCache(head, hooks)
   for (const e of head.entries.values()) {

@@ -1,4 +1,33 @@
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from 'unhead/utils'
+import type { HeadTag } from 'unhead/types'
+import type { ResolveTagsContext } from 'unhead/utils'
+import { ssrRenderTags } from 'unhead/server'
+import { dedupeKey, dedupeTags, hashTag, isMetaArrayDupeKey } from 'unhead/utils'
+
+it.each([false, true])('merges legacy body attributes with a prefilled map: %s', (prefilled) => {
+  const first: HeadTag = {
+    tag: 'bodyAttrs',
+    props: { class: new Set(['app']) as any, style: new Map([['color', 'red']]) as any, id: 'root' },
+    _d: 'bodyAttrs',
+    _w: 100,
+    _p: 0,
+  }
+  const next: HeadTag = {
+    tag: 'bodyAttrs',
+    props: { 'class': new Set(['page']) as any, 'style': new Map([['background', 'blue']]) as any, 'data-page': 'home' },
+    _d: 'bodyAttrs',
+    _w: 100,
+    _p: 1024,
+  }
+  const ctx: ResolveTagsContext = {
+    tags: prefilled ? [next] : [first, next],
+    tagMap: prefilled ? new Map([['bodyAttrs', first]]) : new Map(),
+  }
+
+  dedupeTags(ctx)
+
+  expect(ssrRenderTags([...ctx.tagMap.values()]).bodyAttrs)
+    .toBe(' class="app page" style="color:red;background:blue" id="root" data-page="home"')
+})
 
 it('derives identities from canonical attributes without a resolved props alias', () => {
   const tag = { tag: 'meta' as const, attrs: { name: 'description', content: 'Home' } }
