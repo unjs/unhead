@@ -52,23 +52,6 @@ function hydrateApp(name: LazyAppName, head = createLazyHead()) {
   return { head, ...fixture }
 }
 
-// A navigation pause, as a router holds one while the next page loads
-function pausable(head: ReturnType<typeof createLazyHead>) {
-  let paused = false
-  head.hooks.hook('dom:beforeRender', (ctx) => {
-    ctx.shouldRender = !paused
-  })
-  return {
-    pause: () => {
-      paused = true
-    },
-    resume: () => {
-      paused = false
-      head.render()
-    },
-  }
-}
-
 const settle = (ms = 40) => new Promise(resolve => setTimeout(resolve, ms))
 
 beforeEach(() => {
@@ -93,11 +76,10 @@ describe('solid lazy head', () => {
     const head = createLazyHead()
     const load = vi.spyOn(head, 'load')
     hydrateApp('Home', head)
-    head.render()
+    head.finishHydration()
     await settle()
     expect(load).not.toHaveBeenCalled()
     expect(document.getElementById('home')).toBe(element)
-    expect(head.entries.size).toBe(1)
     expect(document.title).toBe('Home')
 
     await head.load()
@@ -111,38 +93,43 @@ describe('solid lazy head', () => {
     const load = vi.spyOn(head, 'load')
     head.push({ meta: [{ name: 'description', content: 'desc' }] })
     hydrateApp('Home', head)
-    head.render()
+    head.finishHydration()
     await settle()
     expect(load).not.toHaveBeenCalled()
   })
 
-  it('a signal change after hydration loads the runtime and reaches the document', async () => {
+  it('queues a signal change until activation', async () => {
     serverRender('Signal')
     const { head, setTitle } = hydrateApp('Signal')
     const load = vi.spyOn(head, 'load')
-    head.render()
+    head.finishHydration()
     await settle()
     expect(load).not.toHaveBeenCalled()
 
     setTitle('Two')
-    expect(load).toHaveBeenCalledTimes(1)
+    expect(document.title).toBe('One')
+    await head.load()
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
-  it('a push in onMount loads at once, before hydration ends', async () => {
+  it('queues a push in onMount before hydration ends', async () => {
     serverRender('MountPush')
     const head = createLazyHead()
     const load = vi.spyOn(head, 'load')
     hydrateApp('MountPush', head)
-    expect(load).toHaveBeenCalled()
-    head.render()
+    expect(load).not.toHaveBeenCalled()
+    head.finishHydration()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="mounted"]')?.getAttribute('content')).toBe('yes'))
   })
 
-  it('a component shown after mount loads at once', async () => {
+  it('a component shown after mount waits for activation', async () => {
     serverRender('ShowAfterMount')
     expect(document.getElementById('client-child')).toBeNull()
-    hydrateApp('ShowAfterMount')
+    const { head } = hydrateApp('ShowAfterMount')
+    head.finishHydration()
+    expect(document.querySelector('meta[name="client-child"]')).toBeNull()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="client-child"]')?.getAttribute('content')).toBe('yes'))
     expect(document.getElementById('client-child')).not.toBeNull()
   })
@@ -151,22 +138,18 @@ describe('solid lazy head', () => {
     serverRender('Parent')
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const { head, setShowChild } = hydrateApp('Parent')
-    const navigation = pausable(head)
-    head.render()
-    navigation.pause()
+    head.finishHydration()
     setShowChild(false)
-    navigation.resume()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
 
-  it('a new page during a navigation pause does not load until the pause lifts', async () => {
+  it('keeps the server head until the app loads after navigation', async () => {
     serverRender('Navigation')
     const { head, setPage } = hydrateApp('Navigation')
-    const navigation = pausable(head)
-    head.render()
+    head.finishHydration()
 
-    navigation.pause()
     const load = vi.spyOn(head, 'load')
     setPage('next')
     await settle()
@@ -174,21 +157,18 @@ describe('solid lazy head', () => {
     expect(load).not.toHaveBeenCalled()
     expect(document.title).toBe('First page')
 
-    navigation.resume()
-    expect(load).toHaveBeenCalledTimes(1)
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
     expect(document.title).toBe('Next page')
   })
 
-  // The composable patches with the same input in its mount effect. The lazy head cannot
-  // compare a function value, so that patch counts as a change.
-  it('a function value loads the runtime once hydration ends', async () => {
+  it('resolves function values on activation', async () => {
     serverRender('Getter')
-    expect(document.title).toBe('Getter')
-    const { head } = hydrateApp('Getter')
-    const load = vi.spyOn(head, 'load')
-    head.render()
-    await settle()
-    expect(load).toHaveBeenCalledTimes(1)
+    const { head, setTitle } = hydrateApp('Getter')
+    head.finishHydration()
+    setTitle('Two')
+    expect(document.title).toBe('One')
+    await head.load()
+    await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 })

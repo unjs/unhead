@@ -1,26 +1,22 @@
-// Deep equality of head input against a copy from `copyInput`: plain objects, lists, and primitives.
-// The copy holds no plain object of the input, so the same object on both sides is one the copy
-// shares, such as a promise. It may have changed in place, so it counts as a change. A getter can
-// return another value on each call, so it counts as a change too.
-// A `titleTemplate`, an event handler, or a schema.org node resolver is a value.
-export function sameInput(a: any, b: any, key?: string): boolean {
-  if (a === b)
-    return typeof a === 'function' ? key === 'titleTemplate' || !!key?.startsWith('on') : !a || typeof a !== 'object' || key === '_resolver'
-  if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || a.constructor !== b.constructor || (a.constructor !== Object && !Array.isArray(a)))
-    return false
-  const keys = Object.keys(a)
-  return keys.length === Object.keys(b).length && keys.every(k => sameInput(a[k], b[k], k))
-}
-
-// A copy of every plain object and list in head input, so an input that the app edits in place,
-// as a reactive object, keeps the values it had. Any other object and every function stay shared.
+// Keep the original values when the app edits a plain object or list in place.
 export function copyInput<T>(value: T, key?: string): T {
-  // the resolver leaves a schema.org node resolver as it is
-  if (key === '_resolver')
+  if (typeof value === 'function') {
+    // Preserve callbacks and schema.org resolvers for the normal resolver.
+    if (/^(?:on|_resolver$|titleTemplate$)/.test(key ?? ''))
+      return value
+    try {
+      // Adoption needs the original value even if the getter changes before load.
+      const snapshot = copyInput(value(), '_resolver')
+      return (() => snapshot) as T
+    }
+    catch {
+      // Let the renderer handle the error if a getter is still unavailable then.
+      return value
+    }
+  }
+  const out: any = Array.isArray(value) ? [] : value?.constructor === Object ? {} : undefined
+  if (!out)
     return value
-  if (!value || typeof value !== 'object' || (!Array.isArray(value) && (value as any).constructor !== Object))
-    return value
-  const out: any = Array.isArray(value) ? [] : {}
   for (const k in value)
     out[k] = copyInput((value as any)[k], k)
   return out

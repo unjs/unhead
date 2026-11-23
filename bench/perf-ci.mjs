@@ -6,8 +6,10 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
+import { deepStrictEqual, strictEqual } from 'node:assert'
+import { execFileSync } from 'node:child_process'
 import { Session } from 'node:inspector/promises'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // resolve built dist from the repo root (cwd) so this harness can run from anywhere
 // (e.g. /tmp during the base-branch measurement) without a relative path back to packages/
@@ -16,6 +18,7 @@ const dist = name => packageDist('unhead', name)
 const schemaOrgDist = name => packageDist('schema-org', name)
 const { useHead, useSeoMeta } = await dist('index.mjs')
 const { createHead, renderSSRHead } = await dist('server.mjs')
+const { processTemplateParams, unpackMeta } = await dist('utils.mjs')
 const {
   defineOrganization,
   defineProduct,
@@ -211,6 +214,90 @@ async function measureAlloc(fn, { warmup = 50, reps = 5, runs = 200 } = {}) {
   return stats(samples)
 }
 
+async function seoMetaSsrBenches() {
+  const title = 'Fieldnote pricing'
+  const site = { ogSiteName: 'Fieldnote', twitterCard: 'summary_large_image' }
+  const page = {
+    description: 'Find a plan for your workspace.',
+    ogTitle: title,
+    ogDescription: 'Choose monthly or annual billing.',
+    ogImage: 'https://fieldnote.example/pricing.png',
+    ogImageAlt: 'The Fieldnote pricing page',
+    ogType: 'website',
+  }
+
+  const render = (addSeoMeta) => {
+    const head = createHead()
+    useHead(head, {
+      htmlAttrs: { lang: 'en' },
+      link: [{ rel: 'canonical', href: 'https://fieldnote.example/pricing' }],
+    })
+    addSeoMeta(head)
+    return renderSSRHead(head)
+  }
+
+  const runtime = () => render((head) => {
+    useSeoMeta(head, site)
+    useSeoMeta(head, { title, ...page })
+  })
+
+  // Equivalent to the useHead calls emitted by the Vite transform.
+  const compiled = () => render((head) => {
+    useHead(head, {
+      meta: [
+        { property: 'og:site_name', content: site.ogSiteName },
+        { name: 'twitter:card', content: site.twitterCard },
+      ],
+    })
+    useHead(head, {
+      title,
+      meta: [
+        { name: 'description', content: page.description },
+        { property: 'og:title', content: page.ogTitle },
+        { property: 'og:description', content: page.ogDescription },
+        { property: 'og:image', content: page.ogImage },
+        { property: 'og:image:alt', content: page.ogImageAlt },
+        { property: 'og:type', content: page.ogType },
+      ],
+    })
+  })
+
+  deepStrictEqual(runtime(), compiled())
+
+  const benches = []
+  for (const [id, name, run] of [
+    ['seo-meta-unpack', 'SEO metadata unpacking', () => unpackMeta(page)],
+    ['ssr-seo-meta-runtime', 'SSR head with runtime SEO metadata', runtime],
+    ['ssr-seo-meta-compiled', 'SSR head with compiled SEO metadata', compiled],
+  ]) {
+    const { cpu } = measureTimes(run, { warmup: 5000, reps: 30, runs: 4000 })
+    const alloc = await measureAlloc(run)
+    benches.push(
+      { id: `${id}-cpu`, name: `${name} (CPU)`, kind: 'time', value: cpu.value, rme: cpu.rme },
+      { id: `${id}-alloc`, name: `${name} (allocated)`, kind: 'alloc', value: alloc.value, rme: alloc.rme },
+    )
+  }
+  return benches
+}
+
+async function titleTemplateBenches() {
+  const template = '%s | Fieldnote'
+  const params = { pageTitle: 'Pricing' }
+  const calls = 100
+  const substitute = () => {
+    for (let i = 0; i < calls; i++)
+      processTemplateParams(template, params)
+  }
+  strictEqual(processTemplateParams(template, params), 'Pricing | Fieldnote')
+
+  const { cpu } = measureTimes(substitute, { warmup: 1000, reps: 30, runs: 400 })
+  const alloc = await measureAlloc(substitute, { runs: 60 })
+  return [
+    { id: 'title-template-cpu', name: `Title template substitution (CPU / ${calls} calls)`, kind: 'time', value: cpu.value, rme: cpu.rme },
+    { id: 'title-template-alloc', name: `Title template substitution (allocated / ${calls} calls)`, kind: 'alloc', value: alloc.value, rme: alloc.rme },
+  ]
+}
+
 // async twins of measureTimes/measureAlloc for the streaming benches, which must be
 // awaited per run; kept separate so the sync render benches don't pay the microtask
 // overhead of a conditional await inside their hot loop. Async heap deltas are only
@@ -383,7 +470,7 @@ async function csrBenches() {
 
   const t = measureTimes(nav, { warmup: 50, reps: 30, runs: 60 })
   return [
-    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', value: muts / N },
+    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', category: 'cpu', value: muts / N },
     { id: 'csr-nav-cpu', name: 'CSR re-render (CPU)', kind: 'time', value: t.cpu.value, rme: t.cpu.rme },
     { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme, informational: true },
   ]
@@ -394,17 +481,29 @@ const alloc = await measureAlloc(renderMediumSsrHead)
 const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
 const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
 const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
+// Isolate retained heap from the allocation profiler and timing benchmark state.
+// The same TypeScript harness runs against both built refs, including from /tmp.
+const memoryBenches = ['ssr', 'csr', 'router-hints', 'large-app'].flatMap(scenario => JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-memory.ts', import.meta.url)), scenario,
+], { encoding: 'utf8' })).benches)
+const csrCpuBenches = JSON.parse(execFileSync(process.execPath, [
+  '--expose-gc', fileURLToPath(new URL('./csr-perf.ts', import.meta.url)),
+], { encoding: 'utf8' })).benches
 
 const result = {
   benches: [
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
+    ...await seoMetaSsrBenches(),
+    ...await titleTemplateBenches(),
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
+    ...csrCpuBenches,
+    ...memoryBenches,
   ],
 }
 

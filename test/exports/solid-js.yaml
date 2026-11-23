@@ -26,6 +26,7 @@
   MinifyPlugin: function
   PromisesPlugin: function
   SafeInputPlugin: object
+  ServerOnlyCrawlerTagsPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
 ./server:
@@ -60,6 +61,8 @@
   HasElementTags: object
   hashTag: function
   hasOwn: function
+  isCrawlerMetaKey: function
+  isCrawlerTag: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function

@@ -1,12 +1,14 @@
-import type { HeadTag, Unhead } from '../types'
+import type { HeadTag } from '../types'
+import type { HeadQueue, LazyHeadOptions } from './index'
 import { tagWeight } from '../client/tagWeight'
+import { createUnhead } from '../unhead'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
 // Only dev builds load this module. It compares the tags the client would render with the
-// server head in the document, and names each one that waits for the first head change.
+// server head in the document, and names each one that waits for activation.
 
 // warned tags by source, kept for the browser tab, so each warns once and not on every page load
 const WARNED = 'unhead:lazy-warned'
@@ -30,7 +32,7 @@ function saveWarned(view: Window | null, warned: Set<string>) {
   }
 }
 
-const FIX = `It applies on the first head change. Push the same input on the server and the client, or call head.load().`
+const FIX = `It applies when the framework loads the head. Push the same input on the server and the client, or call head.load().`
 
 function attr(value: unknown): string | undefined {
   if (value === false || value == null || typeof value === 'function')
@@ -107,18 +109,19 @@ function differences(tag: HeadTag, el: Element): string[] {
   return out
 }
 
-export async function checkHydratedHead(
-  head: Unhead<any, any>,
-  document: Document,
-  useLazyPlugins: () => Promise<void>,
-  sources: Record<number, string | undefined>,
-  isLoading: () => boolean,
-): Promise<void> {
-  await useLazyPlugins()
-  // a change already loads the runtime, which applies every client tag
-  if (isLoading())
+export function checkHydratedHead<T>(options: LazyHeadOptions, queue: HeadQueue<T>): void {
+  const document = options.document ?? globalThis.document
+  // Plugin setup belongs to activation. The check cannot predict plugin output.
+  if (!document || options.lazyPlugins || options.plugins?.length || queue.plugins.length)
     return
-  head.resolvedOptions._tagWeight = tagWeight
+  const head = createUnhead<T>(() => false, { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
+  const sources: Record<number, string | undefined> = {}
+  for (const [id, entry] of queue.entries) {
+    if (!entry.disposed) {
+      head.push(entry.input, { ...entry.options, _index: id })
+      sources[id] = entry.source
+    }
+  }
   const tags = resolveTags(head)
   const index = indexDocument(document)
   const counter: Record<string, number> = {}

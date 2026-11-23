@@ -25,24 +25,8 @@ async function hydrate(app: ReactElement, head = createLazyHead(), wrap = (root:
   await act(async () => {
     roots.push(hydrateRoot(document.getElementById('app')!, wrap(<UnheadProvider value={head}>{app}</UnheadProvider>)))
   })
+  head.finishHydration()
   return head
-}
-
-// A navigation pause, as a router holds one while the next page loads
-function pausable(head: ReturnType<typeof createLazyHead>) {
-  let paused = false
-  head.hooks.hook('dom:beforeRender', (ctx) => {
-    ctx.shouldRender = !paused
-  })
-  return {
-    pause: () => {
-      paused = true
-    },
-    resume: () => {
-      paused = false
-      head.render()
-    },
-  }
 }
 
 // Lets a test change component state from outside React
@@ -83,7 +67,6 @@ describe('react lazy head', () => {
     await settle()
     expect(load).not.toHaveBeenCalled()
     expect(document.getElementById('home')).toBe(element)
-    expect(head.entries.size).toBe(1)
     expect(document.title).toBe('Home')
 
     await head.load()
@@ -91,8 +74,7 @@ describe('react lazy head', () => {
     expect([...document.head.children]).toEqual(nodes)
   })
 
-  // StrictMode reruns each effect in development, so the dispose of the first run is a change
-  it('in development, StrictMode loads the runtime after hydration and keeps the server head', async () => {
+  it('keeps server tags through StrictMode and activation', async () => {
     function Home() {
       useHead({ title: 'Home', meta: [{ name: 'description', content: 'desc' }] })
       return <div id="home">home</div>
@@ -102,14 +84,14 @@ describe('react lazy head', () => {
     const load = vi.spyOn(head, 'load')
     // as the installation guide wraps the provider
     await hydrate(<Home />, head, root => <StrictMode>{root}</StrictMode>)
-    expect(load).toHaveBeenCalled()
+    expect(load).not.toHaveBeenCalled()
+    await head.load()
     await settle()
     expect(document.title).toBe('Home')
     expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1)
   })
 
-  // React hydrates a boundary after the shell commits, so its entries arrive after the provider effect
-  it('useHead() inside <Suspense> loads the runtime after hydration and keeps one copy of each tag', async () => {
+  it('useHead() inside <Suspense> waits for activation and keeps one copy of each tag', async () => {
     function Page() {
       useHead({ title: 'Page', meta: [{ name: 'description', content: 'desc' }] })
       return <div id="page">page</div>
@@ -123,7 +105,8 @@ describe('react lazy head', () => {
     const head = createLazyHead()
     const load = vi.spyOn(head, 'load')
     await hydrate(<Shell />, head)
-    expect(load).toHaveBeenCalled()
+    expect(load).not.toHaveBeenCalled()
+    await head.load()
     await settle()
     expect(document.getElementById('page')).toBe(element)
     expect(document.title).toBe('Page')
@@ -150,7 +133,7 @@ describe('react lazy head', () => {
     expect(load).not.toHaveBeenCalled()
   })
 
-  it('a state change after hydration loads the runtime and reaches the document', async () => {
+  it('queues a state change until activation', async () => {
     const title = controls<string>()
     function Page() {
       const [value, setValue] = useState('One')
@@ -166,11 +149,12 @@ describe('react lazy head', () => {
     expect(load).not.toHaveBeenCalled()
 
     await title.set('Two')
-    expect(load).toHaveBeenCalledTimes(1)
+    expect(document.title).toBe('One')
+    await head.load()
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
-  it('a component mounted after hydration loads at once', async () => {
+  it('a component mounted after hydration waits for activation', async () => {
     function ClientChild() {
       useHead({ meta: [{ name: 'client-child', content: 'yes' }] })
       return <span id="client-child">client child</span>
@@ -182,7 +166,8 @@ describe('react lazy head', () => {
     }
     serverRender(<App />)
     expect(document.getElementById('client-child')).toBeNull()
-    await hydrate(<App />)
+    const head = await hydrate(<App />)
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="client-child"]')?.getAttribute('content')).toBe('yes'))
     expect(document.getElementById('client-child')).not.toBeNull()
   })
@@ -202,16 +187,14 @@ describe('react lazy head', () => {
     serverRender(<Parent />)
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const head = createLazyHead()
-    const navigation = pausable(head)
     await hydrate(<Parent />, head)
-    navigation.pause()
     await show.set(false)
-    navigation.resume()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
 
-  it('a new page during a navigation pause does not load until the pause lifts', async () => {
+  it('keeps the server head until the app loads after navigation', async () => {
     const page = controls<'first' | 'next'>()
     function NextPage() {
       useHead({ title: 'Next page', meta: [{ name: 'next', content: 'yes' }] })
@@ -225,10 +208,8 @@ describe('react lazy head', () => {
     }
     serverRender(<App />)
     const head = createLazyHead()
-    const navigation = pausable(head)
     await hydrate(<App />, head)
 
-    navigation.pause()
     const load = vi.spyOn(head, 'load')
     await page.set('next')
     await settle()
@@ -236,8 +217,7 @@ describe('react lazy head', () => {
     expect(load).not.toHaveBeenCalled()
     expect(document.title).toBe('First page')
 
-    navigation.resume()
-    expect(load).toHaveBeenCalledTimes(1)
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="next"]')).not.toBeNull())
     expect(document.title).toBe('Next page')
   })

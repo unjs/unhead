@@ -68,7 +68,7 @@ export function createFixture() {
       return el('signal', () => title())
     },
     Getter: () => {
-      useHead({ title: () => 'Getter' })
+      useHead({ title: () => title() })
       return el('getter', () => 'getter')
     },
     Parent: () => {

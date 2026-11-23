@@ -6,6 +6,18 @@ const ESCAPE_HTML_RE = /[&<>"'/]/g
 const CLOSE_TAG_RE: Record<string, RegExp> = {}
 const ESCAPE_HTML_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#x27;', '/': '&#x2F;' }
 
+const SCRIPT_START_RE = /<script[\t\n\f\r />]/i
+
+function canCloseScript(content: string): boolean {
+  if (!content.includes('<!--'))
+    return true
+
+  // After closing sequences have been escaped, a comment end resets script data.
+  const reset = content.lastIndexOf('-->')
+  const opener = content.indexOf('<!--', reset < 0 ? 0 : reset + 3)
+  return opener < 0 || !SCRIPT_START_RE.test(content.slice(opener + 4))
+}
+
 /* @__PURE__ */
 export function escapeHtml(str: string) {
   return str.replace(ESCAPE_HTML_RE, c => ESCAPE_HTML_MAP[c])
@@ -25,6 +37,11 @@ export function tagToString<T extends HeadTag>(tag: T) {
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent ?? tag.innerHTML ?? '')
-  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  if (tag.tag === 'title')
+    content = escapeHtml(content)
+  else if (content.includes('</'))
+    content = content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  if (tag.tag === 'script' && !canCloseScript(content))
+    content = ''
   return `${openTag}${content}</${tag.tag}>`
 }

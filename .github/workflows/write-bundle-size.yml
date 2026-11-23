@@ -55,7 +55,33 @@ jobs:
           git add bench/bundle/last.json
           if git diff --staged --quiet; then
             echo "No bundle stat changes to commit."
-          else
-            git commit -m "chore: update bundle stats [skip ci]"
-            git push
+            exit 0
           fi
+
+          target_ref=refs/heads/main
+          built_ref="$(git rev-parse HEAD)"$'\t'"$target_ref"
+          remote_ref=$(git ls-remote --exit-code origin "$target_ref")
+          if [[ "$remote_ref" != "$built_ref" ]]; then
+            echo "Main moved during the build. Skip publishing stale bundle stats."
+            exit 0
+          fi
+
+          git commit -m "chore: update bundle stats [skip ci]"
+          if push_output=$(LC_ALL=C git push --porcelain origin "HEAD:$target_ref" 2>&1); then
+            printf '%s\n' "$push_output"
+            exit 0
+          else
+            push_status=$?
+          fi
+
+          # Main can also move between the check and the push.
+          case "$push_output" in
+            *$'\t[rejected] (fetch first)'*|*$'\t[rejected] (non-fast-forward)'*|*$'\t[remote rejected] (failed to update ref)'*)
+              if remote_ref=$(git ls-remote --exit-code origin "$target_ref") && [[ "$remote_ref" != "$built_ref" ]]; then
+                echo "Main moved before the push finished. Skip publishing stale bundle stats."
+                exit 0
+              fi
+              ;;
+          esac
+          printf '%s\n' "$push_output" >&2
+          exit "$push_status"

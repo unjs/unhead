@@ -1,46 +1,85 @@
-import type { LazyHeadOptions, LazyUnhead } from 'unhead/lazy'
-import type { UseHeadInput, VueHeadClient } from './types'
-import { createHead as _createHead } from 'unhead/lazy'
-import { getCurrentInstance } from 'vue'
-import { vueInstall } from './install'
+import type { DeferredHeadLifecycle, LazyHeadOptions, LazyUnhead } from 'unhead/lazy'
+import type { CreateStreamableClientHeadOptions } from 'unhead/stream/client'
+import type { CreateClientHeadOptions } from 'unhead/types'
+import type { App, Plugin } from 'vue'
+import type { UseHeadInput } from './types'
+import { createDeferredHead as _createDeferredHead, createHead as _createHead, deferredHeadLifecycle } from 'unhead/lazy'
+import { getCurrentInstance, unref } from 'vue'
+import { installHead, vueInstall } from './install'
 
-/**
- * @experimental
- */
-export type LazyVueHead = LazyUnhead<UseHeadInput> & VueHeadClient<UseHeadInput, boolean>
+/** @experimental */
+export type LazyVueHead = LazyUnhead<UseHeadInput> & Plugin
 
-// Hydration sets vnode.el before setup runs. So a mounted component, or one with no
-// server element, is making a call that the server cannot have rendered.
-function _isClientOnlyPush() {
-  const vm = getCurrentInstance()
-  return !!vm && (vm.isMounted || !vm.vnode.el)
-}
-
-// The component that pushes an entry, for dev warnings
-function _entrySource() {
+function entrySource() {
   const type = getCurrentInstance()?.type as { __file?: string, __name?: string, name?: string } | undefined
   return type && (type.__file || type.__name || type.name)
 }
 
 /**
- * The lazy head for a server rendered Vue app. It loads the DOM runtime only when a
- * change needs it, or when `load()` runs.
+ * Create a lazy head for a server-rendered Vue app. The framework calls `load()`
+ * when it is ready to apply queued entries.
  *
- * @experimental The lazy head API may change in a future minor release.
+ * @experimental
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: LazyHeadOptions = {}): LazyVueHead {
-  const head = _createHead<UseHeadInput>({
-    _isClientOnlyPush,
-    // only dev warnings read the entry source, so production builds drop it
-    // eslint-disable-next-line node/prefer-global/process
-    ...(process.env.NODE_ENV !== 'production' && { _entrySource }),
-    ...options,
-  } as LazyHeadOptions) as LazyVueHead
-  head.install = vueInstall(head)
+  // eslint-disable-next-line node/prefer-global/process
+  const head = _createHead<UseHeadInput>(process.env.NODE_ENV === 'production' ? options : { _entrySource: entrySource, ...options })
+  return Object.assign(head, { install: vueInstall(head) })
+}
+
+export type { LazyHeadOptions }
+
+/**
+ * Install a deferred head with a framework-owned hydration lifecycle.
+ *
+ * @experimental
+ */
+export function createDeferredHead(
+  options: CreateClientHeadOptions,
+  schedule: (app: App, lifecycle: DeferredHeadLifecycle) => void,
+) {
+  const [head, queue] = _createDeferredHead<UseHeadInput>(options)
+  return Object.assign(head, {
+    install(app: App) {
+      installHead(app, head)
+      schedule(app, deferredHeadLifecycle(head, queue))
+    },
+  })
+}
+
+/** @internal */
+export function createHeadAfterHydration(options: LazyHeadOptions = {}, resolveRef?: (value: unknown) => unknown) {
+  const [shell, queue] = _createDeferredHead<UseHeadInput>(options, resolveRef)
+  const head = shell as typeof shell & { install: (app: App) => void }
+  head.install = (app) => {
+    installHead(app, head)
+    const finish = () => {
+      queue.hydrating = false
+      requestAnimationFrame(() => head._load?.().catch(console.error))
+    }
+    const mount = app.mount
+    app.mount = (...args) => {
+      const mounted = mount.apply(app, args)
+      queue.streamRoute = [app, app.config.globalProperties.$route?.path]
+      const suspense = mounted?.$.subTree.suspense
+      if (suspense?.pendingBranch) {
+        // Flush with the root boundary's mounted effects when hydration resolves.
+        suspense.effects.push(finish)
+      }
+      else {
+        finish()
+      }
+      return mounted
+    }
+  }
   return head
 }
 
-export type {
-  LazyHeadOptions,
+/** @internal */
+export function createStreamableHeadAfterHydration(options?: CreateStreamableClientHeadOptions) {
+  const view = window as unknown as Record<string, unknown>
+  if (view[options?.streamKey ?? '__unhead__']) {
+    return createHeadAfterHydration(options, unref)
+  }
 }

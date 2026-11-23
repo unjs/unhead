@@ -2,14 +2,14 @@ import type { RollupOptions } from 'rollup'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
+import { transform } from 'esbuild'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
 import { build as viteBuild } from 'vite'
 
-const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
-const WHITESPACE_RE = /\s+/g
 const IIFE_GLOBAL_NAME = '__unhead_iife__'
 const IIFE_INIT_CALL = `${IIFE_GLOBAL_NAME}.init();`
+const EAGER_RENDERER = { __UNHEAD_LAZY_RENDERER__: 'false' }
 const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
 // Rollup transform plugins use text prefilters and replacements before parsing.
 // Escape their trigger text in the module source so the IIFE remains opaque data.
@@ -25,10 +25,6 @@ const IIFE_ROLLUP_TRANSFORM_TOKENS = [
   'typeof window',
 ] as const
 const IIFE_ROLLUP_TRANSFORM_RE = new RegExp(IIFE_ROLLUP_TRANSFORM_TOKENS.join('|'), 'g')
-
-function minifyIifeCode(code: string) {
-  return code.replace(COMMENT_RE, '').replace(WHITESPACE_RE, ' ').trim()
-}
 
 function makeExecutableIifeCode(code: string) {
   return `${code}${code.endsWith(';') ? '' : ';'}${IIFE_INIT_CALL}`
@@ -75,6 +71,7 @@ async function buildIifeFromDist(rootDir: string) {
 
 async function buildIifeFromSource(rootDir: string) {
   const result = await viteBuild({
+    define: EAGER_RENDERER,
     build: {
       emptyOutDir: false,
       lib: {
@@ -136,6 +133,7 @@ export default defineBuildConfig([{
   // yet, so warnings pass here.
   clean: true,
   declaration: true,
+  replace: { __UNHEAD_LAZY_RENDERER__: 'true' },
   failOnWarn: false,
   hooks: {
     'rollup:options': (ctx, options) => {
@@ -149,12 +147,18 @@ export default defineBuildConfig([{
 }, {
   clean: false,
   declaration: true,
+  // Only the separate lazy build needs hydration adoption and stream precedence.
+  rollup: {
+    esbuild: { define: EAGER_RENDERER, minifySyntax: true },
+  },
   hooks: {
     'rollup:options': failOnSideEffects,
     'build:done': async function (ctx) {
-      const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
+      const iife = ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
-        : await buildIifeFromDist(ctx.options.rootDir)))
+        : await buildIifeFromDist(ctx.options.rootDir)
+      const minified = await transform(iife, { minify: true, target: 'es2022', legalComments: 'none' })
+      const code = makeExecutableIifeCode(minified.code.trim())
 
       writeIifeArtifacts(ctx.options.rootDir, code)
       console.log(`Built streaming IIFE: ${code.length} bytes`)
@@ -179,5 +183,6 @@ export default defineBuildConfig([{
     { input: 'src/validate/index', name: 'validate' },
     { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
+    { input: 'src/vite/index', name: 'vite' },
   ],
 }])

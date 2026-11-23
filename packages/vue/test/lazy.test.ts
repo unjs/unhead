@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent, h, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { injectHead, useHead } from '../src'
 import { createHead as createLazyHead } from '../src/lazy'
+import { useScript } from '../src/scripts'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
 const settle = (ms = 40) => new Promise(resolve => setTimeout(resolve, ms))
@@ -23,23 +24,6 @@ function hydrate(component: ReturnType<typeof defineComponent>) {
   return { app, head }
 }
 
-// A navigation pause, as Nuxt holds one from `page:loading:start` to `page:loading:end`
-function pausable(head: ReturnType<typeof createLazyHead>) {
-  let paused = false
-  head.hooks.hook('dom:beforeRender', (ctx) => {
-    ctx.shouldRender = !paused
-  })
-  return {
-    pause: () => {
-      paused = true
-    },
-    resume: () => {
-      paused = false
-      head.render()
-    },
-  }
-}
-
 // the production path: the dev warning has its own test
 beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'production')
@@ -50,6 +34,50 @@ afterEach(() => {
 })
 
 describe('vue lazy head', () => {
+  it('keeps script status reactive across activation', async () => {
+    document.head.innerHTML = ''
+    const head = createLazyHead()
+    const app = createSSRApp({})
+    app.use(head)
+    const script = app.runWithContext(() => useScript('/lazy-script.js', { trigger: 'manual' }))
+
+    const loading = script.load()
+    expect(script.status.value).toBe('loading')
+    await head.load()
+    await vi.waitFor(() => {
+      const element = document.querySelector('script[src="/lazy-script.js"]')
+      expect(element).not.toBeNull()
+      element!.dispatchEvent(new Event('load'))
+    })
+    await loading
+    expect(script.status.value).toBe('loaded')
+    expect(app.runWithContext(() => useScript('/lazy-script.js', { trigger: 'manual' })).status).toBe(script.status)
+    script.remove()
+  })
+
+  it('lets a queued plugin read the injected head entries during resolution', async () => {
+    document.head.innerHTML = '<title>Server</title>'
+    const head = createLazyHead({ document })
+    const app = createSSRApp({}).use(head)
+    const injected = app.runWithContext(injectHead)
+    injected.use({
+      key: 'derived-tags',
+      hooks: {
+        'tags:beforeResolve': (context) => {
+          for (const entry of injected.entries.values()) {
+            const title = entry._tags?.find(tag => tag.tag === 'title')?.textContent
+            if (title)
+              context.tags.push({ tag: 'meta', props: { name: 'derived-title', content: title } })
+          }
+        },
+      },
+    })
+    head.finishHydration()
+    head.push({ title: 'New page' })
+    await head.load()
+    await vi.waitFor(() => expect(document.querySelector('meta[name="derived-title"]')?.getAttribute('content')).toBe('New page'))
+  })
+
   it('names the component of a client only value in a dev warning', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -64,11 +92,12 @@ describe('vue lazy head', () => {
     // the server computed another value
     document.head.innerHTML = '<meta name="theme-color" content="#fff">'
     const client = hydrate(ColorMode)
-    client.head.render()
-    await settle(100)
-    expect(warn.mock.calls.map(call => String(call[0]))).toEqual([
-      expect.stringContaining('<meta name="theme-color"> differs from the server head in content. Pushed by ColorMode.'),
-    ])
+    client.head.finishHydration()
+    await vi.waitFor(() => {
+      expect(warn.mock.calls.map(call => String(call[0]))).toEqual([
+        expect.stringContaining('<meta name="theme-color"> differs from the server head in content. Pushed by ColorMode.'),
+      ])
+    })
   })
 
   it('leaves the server head alone during hydration, then adopts it', async () => {
@@ -81,9 +110,8 @@ describe('vue lazy head', () => {
     await serverRender(App)
     const nodes = [...document.head.children]
     const { head } = hydrate(App)
-    head.render()
+    head.finishHydration()
     expect(document.title).toBe('Home')
-    expect(head.entries.size).toBe(1)
 
     await head.load()
     await settle()
@@ -109,7 +137,7 @@ describe('vue lazy head', () => {
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
-  it('a ref change after hydration loads the runtime and reaches the document', async () => {
+  it('a ref change after hydration waits for activation', async () => {
     const title = ref('One')
     const App = defineComponent({
       setup() {
@@ -119,8 +147,11 @@ describe('vue lazy head', () => {
     })
     await serverRender(App)
     const { head } = hydrate(App)
-    head.render()
+    head.finishHydration()
     title.value = 'Two'
+    await nextTick()
+    expect(document.title).toBe('One')
+    await head.load()
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
@@ -141,12 +172,10 @@ describe('vue lazy head', () => {
     await serverRender(App)
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const { head } = hydrate(App)
-    const navigation = pausable(head)
-    head.render()
-    navigation.pause()
+    head.finishHydration()
     show.value = false
     await nextTick()
-    navigation.resume()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
@@ -188,147 +217,28 @@ describe('vue lazy head', () => {
     })
     await serverRender(App)
     const { head } = hydrate(App)
-    const navigation = pausable(head)
-    head.render()
+    head.finishHydration()
     await settle()
     expect(renders).toBeLessThan(10)
     expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(2)
-    navigation.pause()
     show.value = false
     await nextTick()
-    navigation.resume()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0))
   })
 
-  describe('calls the server could not have rendered', () => {
-    it('useHead in setup of a hydrating component does not load', async () => {
-      const App = defineComponent({
-        setup() {
-          useHead({ title: 'Covered' })
-          return () => h('div', 'x')
-        },
-      })
-      await serverRender(App)
-      const head = createLazyHead()
-      const load = vi.spyOn(head, 'load')
-      createSSRApp(App).use(head).mount('#app')
-      await nextTick()
-      await settle()
-      expect(load).not.toHaveBeenCalled()
+  it('waits for the framework before rendering a client only entry', async () => {
+    const App = defineComponent({
+      setup() {
+        onMounted(() => useHead({ meta: [{ name: 'mounted', content: 'yes' }] }))
+        return () => h('div', 'x')
+      },
     })
-
-    it('useHead in onMounted loads at once', async () => {
-      const App = defineComponent({
-        setup() {
-          onMounted(() => {
-            useHead({ meta: [{ name: 'mounted', content: 'yes' }] })
-          })
-          return () => h('div', 'x')
-        },
-      })
-      await serverRender(App)
-      hydrate(App)
-      await vi.waitFor(() => expect(document.querySelector('meta[name="mounted"]')?.getAttribute('content')).toBe('yes'))
-    })
-
-    it('useHead in a child mounted after hydration loads at once', async () => {
-      const Child = defineComponent({
-        setup() {
-          useHead({ meta: [{ name: 'client-child', content: 'yes' }] })
-          return () => h('span', 'child')
-        },
-      })
-      const show = ref(false)
-      const App = defineComponent({
-        setup() {
-          onMounted(() => {
-            show.value = true
-          })
-          return () => h('div', show.value ? h(Child) : 'waiting')
-        },
-      })
-      await serverRender(App)
-      hydrate(App)
-      await vi.waitFor(() => expect(document.querySelector('meta[name="client-child"]')?.getAttribute('content')).toBe('yes'))
-    })
-
-    it('a ref change in onMounted loads at once', async () => {
-      const title = ref('Server')
-      const App = defineComponent({
-        setup() {
-          useHead({ title })
-          onMounted(() => {
-            title.value = 'Mounted'
-          })
-          return () => h('div', 'x')
-        },
-      })
-      await serverRender(App)
-      hydrate(App)
-      await vi.waitFor(() => expect(document.title).toBe('Mounted'))
-    })
-
-    it('a new page during a navigation pause does not load until the pause lifts', async () => {
-      const Page = defineComponent({
-        setup() {
-          useHead({ title: 'Next page' })
-          onMounted(() => {
-            useHead({ meta: [{ name: 'next-mounted', content: 'yes' }] })
-          })
-          return () => h('span', 'next')
-        },
-      })
-      const page = ref(false)
-      const App = defineComponent({
-        setup() {
-          useHead({ title: 'First page' })
-          return () => h('div', page.value ? h(Page) : 'first')
-        },
-      })
-      await serverRender(App)
-      const { head } = hydrate(App)
-      const navigation = pausable(head)
-      head.render()
-
-      navigation.pause()
-      const load = vi.spyOn(head, 'load')
-      page.value = true
-      await nextTick()
-      await settle()
-      expect(load).not.toHaveBeenCalled()
-      expect(document.title).toBe('First page')
-
-      navigation.resume()
-      expect(load).toHaveBeenCalledTimes(1)
-      await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
-    })
-
-    it('a load during a hydration pause writes nothing until the pause lifts', async () => {
-      const App = defineComponent({
-        setup() {
-          onMounted(() => {
-            useHead({ meta: [{ name: 'paused', content: 'yes' }] })
-          })
-          return () => h('div', 'x')
-        },
-      })
-      await serverRender(App)
-      let paused = true
-      const head = createLazyHead()
-      head.hooks.hook('dom:beforeRender', (ctx) => {
-        ctx.shouldRender = !paused
-      })
-      const load = vi.spyOn(head, 'load')
-      createSSRApp(App).use(head).mount('#app')
-      await nextTick()
-      expect(load).toHaveBeenCalled()
-      await load.mock.results[0].value
-      await settle()
-      expect(document.querySelector('meta[name="paused"]')).toBeNull()
-
-      paused = false
-      head.render()
-      await vi.waitFor(() => expect(document.querySelector('meta[name="paused"]')).not.toBeNull())
-    })
+    await serverRender(App)
+    const { head } = hydrate(App)
+    head.finishHydration()
+    expect(document.querySelector('meta[name="mounted"]')).toBeNull()
+    await head.load()
+    await vi.waitFor(() => expect(document.querySelector('meta[name="mounted"]')?.getAttribute('content')).toBe('yes'))
   })
 })

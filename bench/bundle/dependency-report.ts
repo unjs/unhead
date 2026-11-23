@@ -158,7 +158,7 @@ export function renderDependencyReport(base: DependencyAnalysis | null, current:
     const largestLabel = largest ? `${largest.name} ${formatSize(largest.size)}` : 'none'
     out.push(`| ${pkg.name} | ${pkg.dependencyCount} | ${formatSize(pkg.dependencySize)} | ${largestLabel} | ${pkg.skippedOptionalDependencies.length} |`)
   }
-  out.push('', '</details>', '')
+  out.push('', '<sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded. Skipped optional dependencies are unavailable on the CI platform.</sub>', '', '</details>', '')
   const skippedCount = current.packages.reduce(
     (total, pkg) => total + pkg.skippedOptionalDependencies.length,
     0,
@@ -171,7 +171,5 @@ export function renderDependencyReport(base: DependencyAnalysis | null, current:
     }
     out.push('', '</details>', '')
   }
-  out.push('<sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded. Skipped optional dependencies are unavailable on the CI platform.</sub>')
-
   return out.join('\n')
 }

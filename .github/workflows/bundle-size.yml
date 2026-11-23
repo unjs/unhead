@@ -32,28 +32,46 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
+      - name: Install Fieldnote dependencies
+        id: fieldnote
+        continue-on-error: true
+        run: |
+          fixture="$RUNNER_TEMP/fieldnote"
+          mkdir "$fixture"
+          cp -R bench/fixtures/fieldnote/. "$fixture/"
+          cd "$fixture"
+          pnpm install --frozen-lockfile --ignore-scripts
+
       - name: Build base branch bundles
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          FIELDNOTE_READY: ${{ steps.fieldnote.outcome == 'success' }}
         run: |
           pnpm install --frozen-lockfile
           VITEST_VERSION=$(node -p "require('vitest/package.json').version")
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
+          cp bench/csr-memory.ts /tmp/csr-memory.ts
+          cp bench/csr-perf.ts /tmp/csr-perf.ts
+          cp bench/memory.ts /tmp/memory.ts
           cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
           cp bench/unplugin-transform.bench.ts /tmp/unplugin-transform.bench.ts
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
           git diff --stat
-          git checkout -f "$BASE_REF"
+          git checkout -f "$BASE_SHA"
           pnpm install
           # Use the PR runner for both measurements, including across Vitest major upgrades.
           pnpm add -Dw --save-exact --ignore-scripts "vitest@$VITEST_VERSION"
           cp /tmp/unplugin-transform.bench.ts bench/unplugin-transform.bench.ts
           node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json
           pnpm build
+          if [[ "$FIELDNOTE_READY" == 'true' ]]; then
+            node "$RUNNER_TEMP/fieldnote/measure-entry.ts" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/fieldnote/base-entry.json" ||
+              echo "::warning title=Fieldnote bundle size::Could not measure the base entry."
+          fi
           # the base ref may predate some bundle configs (react, full, schema-org);
           # tolerate their absence so the other baselines are still produced and the
           # new bundles surface as fresh rather than failing the run
@@ -66,21 +84,27 @@ jobs:
           cp -r bench/bundle/dist /tmp/base-dist
           # measure base perf with the PR's harness against the base-built packages;
           # run from /tmp so the working tree stays clean across the checkout back
-          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
+          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --reporter=json --outputFile=/tmp/base-transform-perf.json
           # the base pnpm install may have rewritten the lockfile; discard before switching back
           git checkout -f -
 
       - name: Build PR bundles
+        env:
+          FIELDNOTE_READY: ${{ steps.fieldnote.outcome == 'success' }}
         run: |
           pnpm install
           node bench/bundle/dependency-analyze.mjs > /tmp/pr-dependencies.json
           pnpm build
+          if [[ "$FIELDNOTE_READY" == 'true' ]]; then
+            node "$RUNNER_TEMP/fieldnote/measure-entry.ts" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/fieldnote/pr-entry.json" ||
+              echo "::warning title=Fieldnote bundle size::Could not measure the PR entry."
+          fi
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
-          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
+          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json
           pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --reporter=json --outputFile=/tmp/pr-transform-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -95,19 +119,19 @@ jobs:
         id: analyze
         env:
           BASE_DIST: /tmp/base-dist
+          BASE_FIELDNOTE_ENTRY: ${{ runner.temp }}/fieldnote/base-entry.json
           BASE_DEPENDENCIES: /tmp/base-dependencies.json
           BASE_PERF: /tmp/base-perf.json
           BASE_TRANSFORM_PERF: /tmp/base-transform-perf.json
           PR_DEPENDENCIES: /tmp/pr-dependencies.json
+          PR_FIELDNOTE_ENTRY: ${{ runner.temp }}/fieldnote/pr-entry.json
           PR_PERF: /tmp/pr-perf.json
           PR_TRANSFORM_PERF: /tmp/pr-transform-perf.json
         run: |
           output=$(bun bench/bundle/report.ts)
           echo "$output"
           printf '%s\n' "$output" >> "$GITHUB_STEP_SUMMARY"
-          echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$output" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          printf 'result<<EOF\n%s\nEOF\n' "$output" >> "$GITHUB_OUTPUT"
 
       - name: Post comment on PR
         if: github.event.pull_request.head.repo.full_name == github.repository

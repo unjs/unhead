@@ -1,4 +1,4 @@
-import fs from 'node:fs'
+import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -28,6 +28,7 @@ export default defineBuildConfig({
         { find: 'unhead/lazy', replacement: path.join(packagesDir, 'unhead/dist/lazy.mjs') },
         { find: '@unhead/react/client', replacement: path.join(packagesDir, 'react/dist/client.mjs') },
         { find: '@unhead/react', replacement: path.join(packagesDir, 'react/dist/index.mjs') },
+        { find: 'unhead/stream/client', replacement: path.join(packagesDir, 'unhead/dist/stream/client.mjs') },
         { find: 'unhead/client', replacement: path.join(packagesDir, 'unhead/dist/client.mjs') },
         { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
         { find: 'unhead/plugins', replacement: path.join(packagesDir, 'unhead/dist/plugins.mjs') },
@@ -51,13 +52,27 @@ export default defineBuildConfig({
         emitFile: true,
         filename: 'stats.html',
       }))
-    },
-    'build:done': () => {
-      const file = path.resolve(__dirname, 'dist/react-client-lazy/react-client/lazy.mjs')
-      const contents = fs.readFileSync(file)
-      const size = contents.length
-      const compressed = zlib.gzipSync(contents).length
-      console.log(`REACT CLIENT LAZY Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
+      config.plugins.push({
+        name: 'react-lazy-startup-size',
+        generateBundle(_, bundle) {
+          const seen = new Set(['react', 'react/jsx-runtime', 'react-dom'])
+          let raw = 0
+          let gzip = 0
+          function measure(id: string) {
+            if (seen.has(id))
+              return
+            seen.add(id)
+            const chunk = bundle[id]
+            if (chunk?.type !== 'chunk')
+              throw new Error(`The lazy React entry references an unmeasured startup module: ${id}`)
+            raw += Buffer.byteLength(chunk.code)
+            gzip += zlib.gzipSync(chunk.code).length
+            chunk.imports.forEach(measure)
+          }
+          measure('react-client/lazy.mjs')
+          console.log(`REACT CLIENT LAZY Size: ${raw} B (gzipped: ${gzip} B)`)
+        },
+      })
     },
   },
 })

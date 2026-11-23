@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
+import type { StreamingGlobal } from 'unhead/stream/client'
 import type { ViteDevServer } from 'vite'
 import type { LazyAppName } from './fixtures/lazy/apps'
 import { resolve } from 'node:path'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { flushSync, hydrate, unmount } from 'svelte'
+import { flushSync, hydrate, tick, unmount } from 'svelte'
 import { createServer } from 'vite'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHead as createLazyHead, UnheadContextKey } from '../src/lazy'
@@ -54,23 +55,6 @@ function hydrateApp(name: LazyAppName, head = createLazyHead()) {
   return { head, app }
 }
 
-// A navigation pause, as a router holds one while the next page loads
-function pausable(head: ReturnType<typeof createLazyHead>) {
-  let paused = false
-  head.hooks.hook('dom:beforeRender', (ctx) => {
-    ctx.shouldRender = !paused
-  })
-  return {
-    pause: () => {
-      paused = true
-    },
-    resume: () => {
-      paused = false
-      head.render()
-    },
-  }
-}
-
 const settle = (ms = 40) => new Promise(resolve => setTimeout(resolve, ms))
 
 beforeEach(() => {
@@ -81,6 +65,7 @@ afterEach(async () => {
   mounted = []
   // a loaded head renders the unmount on a timer, so let it finish before the next test
   await settle()
+  vi.unstubAllGlobals()
   vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
@@ -94,11 +79,10 @@ describe('svelte lazy head', () => {
     const head = createLazyHead()
     const load = vi.spyOn(head, 'load')
     hydrateApp('Home', head)
-    head.render()
+    head.finishHydration()
     await settle()
     expect(load).not.toHaveBeenCalled()
     expect(document.getElementById('home')).toBe(element)
-    expect(head.entries.size).toBe(1)
     expect(document.title).toBe('Home')
 
     await head.load()
@@ -106,39 +90,57 @@ describe('svelte lazy head', () => {
     expect([...document.head.children]).toEqual(nodes)
   })
 
-  it('a state change after hydration loads the runtime and reaches the document', async () => {
+  it('queues a state change until activation', async () => {
     serverRender('Title')
     const { head, app } = hydrateApp('Title')
     const load = vi.spyOn(head, 'load')
-    head.render()
-    // the effect patches with an equal input after hydration, which loads nothing
+    head.finishHydration()
     await settle()
     expect(load).not.toHaveBeenCalled()
 
     app.setTitle('Two')
     flushSync()
-    expect(load).toHaveBeenCalledTimes(1)
+    expect(document.title).toBe('One')
+    await head.load()
     await vi.waitFor(() => expect(document.title).toBe('Two'))
   })
 
-  // Svelte runs onMount after hydrate() returns, so a call to render() right after it
-  // ends hydration first
-  it('a push in onMount loads the runtime', async () => {
+  it('keeps the streamed title above the initial Svelte effect', async () => {
+    serverRender('Title')
+    const queue: StreamingGlobal = {
+      _q: [[{ title: 'Streamed' }]],
+      push(batch) { queue._q.push(batch) },
+    }
+    vi.stubGlobal('svelteHeadStream', queue)
+    const head = createLazyHead({ streamKey: 'svelteHeadStream' })
+    const { app } = hydrateApp('Title', head)
+
+    await tick()
+    head.finishHydration()
+    await head.load()
+    await vi.waitFor(() => expect(document.title).toBe('Streamed'))
+
+    app.setTitle('Two')
+    await vi.waitFor(() => expect(document.title).toBe('Two'))
+  })
+
+  it('applies an onMount entry at activation', async () => {
     serverRender('MountPush')
     const head = createLazyHead()
     const load = vi.spyOn(head, 'load')
     hydrateApp('MountPush', head)
     expect(load).not.toHaveBeenCalled()
-    head.render()
+    head.finishHydration()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="mounted"]')?.getAttribute('content')).toBe('yes'))
-    expect(load).toHaveBeenCalled()
   })
 
-  it('a component shown after mount loads the runtime', async () => {
+  it('a component shown after mount waits for activation', async () => {
     serverRender('ShowAfterMount')
     expect(document.getElementById('client-child')).toBeNull()
     const { head } = hydrateApp('ShowAfterMount')
-    head.render()
+    head.finishHydration()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="client-child"]')?.getAttribute('content')).toBe('yes'))
     expect(document.getElementById('client-child')).not.toBeNull()
   })
@@ -147,26 +149,22 @@ describe('svelte lazy head', () => {
     serverRender('Parent')
     expect(document.querySelector('meta[name="child"]')).not.toBeNull()
     const { head, app } = hydrateApp('Parent')
-    const navigation = pausable(head)
-    head.render()
+    head.finishHydration()
     // Svelte disposes an entry from onDestroy, which waits for the mount effects
     await settle()
-    navigation.pause()
     app.hideChild()
     flushSync()
-    navigation.resume()
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="child"]')).toBeNull())
     expect(document.title).toBe('Parent')
   })
 
-  it('a new page during a navigation pause does not load until the pause lifts', async () => {
+  it('keeps the server head until the app loads after navigation', async () => {
     serverRender('Navigation')
     const { head, app } = hydrateApp('Navigation')
-    const navigation = pausable(head)
-    head.render()
+    head.finishHydration()
     await settle()
 
-    navigation.pause()
     const load = vi.spyOn(head, 'load')
     app.navigate()
     flushSync()
@@ -175,8 +173,7 @@ describe('svelte lazy head', () => {
     expect(load).not.toHaveBeenCalled()
     expect(document.title).toBe('First page')
 
-    navigation.resume()
-    expect(load).toHaveBeenCalledTimes(1)
+    await head.load()
     await vi.waitFor(() => expect(document.querySelector('meta[name="next-mounted"]')).not.toBeNull())
     expect(document.title).toBe('Next page')
   })

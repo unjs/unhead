@@ -32,30 +32,32 @@ async function both(plugins: HeadPluginInput[], server: ResolvableHead[], steps:
   const offDom = ssrDom(plugins, ...server)
   const off = createClientHead({ document: offDom.window.document, plugins })
   const lazyDom = ssrDom(plugins, ...server)
-  const lazy = createLazyHead({ document: lazyDom.window.document, lazyPlugins: async () => plugins })
   let paused = false
+  const lazy = createLazyHead({ document: lazyDom.window.document, lazyPlugins: async () => plugins, hooks: {
+    'dom:beforeRender': (ctx) => {
+      ctx.shouldRender = !paused
+    },
+  } })
   const pause = () => {
     paused = true
   }
-  for (const head of [off, lazy]) {
-    head.hooks.hook('dom:beforeRender', (ctx: { shouldRender: boolean }) => {
-      ctx.shouldRender = !paused
-    })
-  }
-  const load = vi.spyOn(lazy, 'load')
+  off.hooks.hook('dom:beforeRender', (ctx) => {
+    ctx.shouldRender = !paused
+  })
   const offEntries = server.map(input => off.push(input))
   const lazyEntries = server.map(input => lazy.push(input))
   off.render()
-  lazy.render()
+  lazy.finishHydration()
   for (const step of steps) {
     step(off, offEntries, pause)
     step(lazy, lazyEntries, pause)
     paused = false
     off.render()
+    await lazy.load()
     lazy.render()
     await settle()
   }
-  return { off: html(offDom), lazy: html(lazyDom), lazyDom, offDom, load }
+  return { off: html(offDom), lazy: html(lazyDom), lazyDom, offDom }
 }
 
 const site = { titleTemplate: '%s %separator %siteName', templateParams: { siteName: 'Site', separator: '·' } }
@@ -100,50 +102,36 @@ describe('lazy head parity with the default head', () => {
   it.each([
     ['crawler tags alone', (_: any, entries: any[]) => entries[0].patch({ ...page('a'), meta: [{ name: 'description', content: 'New' }, { property: 'og:image', content: '/new.png' }], link: [{ rel: 'alternate', hreflang: 'de', href: '/de' }] })],
     ['the title alone', (_: any, entries: any[]) => entries[0].patch({ ...page('a'), title: 'b' })],
-  ])('loads the runtime for a change to %s, and matches the default head', async (_, step) => {
-    const { offDom, lazyDom, load } = await both([], [page('a')], [step])
-    expect(load).toHaveBeenCalled()
+  ])('matches the default head when a change affects %s', async (_, step) => {
+    const { offDom, lazyDom } = await both([], [page('a')], [step])
     await vi.waitFor(() => expect(html(lazyDom)).toEqual(html(offDom)))
   })
 
-  it('loads the runtime for crawler keys of useSeoMeta', async () => {
+  it('renders crawler keys queued by useSeoMeta', async () => {
     const dom = ssrDom([], { title: 'A' })
     const head = createLazyHead({ document: dom.window.document })
-    const load = vi.spyOn(head, 'load')
     head.push({ title: 'A' })
     head.render()
     useSeoMeta(head, { ogTitle: 'A', twitterCard: 'summary_large_image' })
-    expect(load).toHaveBeenCalledTimes(1)
+    await head.load()
     await vi.waitFor(() => expect(dom.window.document.querySelector('meta[name="twitter:card"]')).not.toBeNull())
   })
 
   it('matches the default head over navigations through template params', async () => {
-    const { offDom, lazyDom, load } = await both([TemplateParamsPlugin], [site, page('Home')], [navigate('Pricing'), navigate('Docs'), navigate('Tools')])
-    expect(load).toHaveBeenCalled()
+    const { offDom, lazyDom } = await both([TemplateParamsPlugin], [site, page('Home')], [navigate('Pricing'), navigate('Docs'), navigate('Tools')])
     expect(lazyDom.window.document.title).toBe('Tools · Site')
     expect(html(lazyDom)).toEqual(html(offDom))
   })
 
-  it('loads for a title change while a dom:rendered listener waits', async () => {
+  it('fires a queued dom:rendered listener after activation', async () => {
     const dom = ssrDom([], { title: 'A' })
     const head = createLazyHead({ document: dom.window.document })
-    const load = vi.spyOn(head, 'load')
     const rendered = vi.fn()
     const entry = head.push({ title: 'A' }, { onRendered: rendered })
     head.render()
     entry.patch({ title: 'B' })
-    expect(load).toHaveBeenCalled()
+    await head.load()
     await vi.waitFor(() => expect(rendered).toHaveBeenCalled())
-  })
-
-  it('loads for a new value that is not a plain object, such as a promise', async () => {
-    const dom = ssrDom([], { title: 'A' })
-    const head = createLazyHead({ document: dom.window.document })
-    const load = vi.spyOn(head, 'load')
-    const entry = head.push({ title: 'A', link: [{ rel: 'stylesheet', href: Promise.resolve('/a.css') }] } as any)
-    head.render()
-    entry.patch({ title: 'A', link: [{ rel: 'stylesheet', href: Promise.resolve('/b.css') }] } as any)
-    await vi.waitFor(() => expect(load).toHaveBeenCalled())
   })
 
   it.each([
@@ -165,8 +153,7 @@ describe('lazy head parity with the default head', () => {
         pause()
       },
     ]
-    const { lazyDom, off, lazy, load } = await both([], [{ titleTemplate: '%s | Site' }, guide], steps)
-    expect(load).toHaveBeenCalled()
+    const { lazyDom, off, lazy } = await both([], [{ titleTemplate: '%s | Site' }, guide], steps)
     await vi.waitFor(() => expect(lazyDom.window.document.querySelectorAll('link[rel="prev"], link[rel="next"]')).toHaveLength(0))
     expect(lazy).toEqual(off)
   })
@@ -181,8 +168,7 @@ describe('lazy head parity with the default head', () => {
       ['a navigation shortens a list of tags', { meta: tags(3) }, replacePage({ meta: tags(2, 'new') })],
       ['a navigation removes an attribute', inferred, replacePage({ meta: [{ property: 'og:title', content: 'B' }] })],
     ])('matches the default head when %s', async (_, server, change) => {
-      const { offDom, lazyDom, load } = await both([], [{ title: 'Site' }, server], [change])
-      expect(load).toHaveBeenCalled()
+      const { offDom, lazyDom } = await both([], [{ title: 'Site' }, server], [change])
       await vi.waitFor(() => expect(html(lazyDom)).toEqual(html(offDom)))
     })
   })
@@ -193,19 +179,20 @@ describe('lazy head parity with the default head', () => {
     const late = tags(2, 'late')
     const doc = ssrDom([], { meta: page }, { meta: late }).window.document
     let paused = false
-    const head = createLazyHead({ document: doc })
-    head.hooks.hook('dom:beforeRender', (ctx) => {
-      ctx.shouldRender = !paused
-    })
+    const head = createLazyHead({ document: doc, hooks: {
+      'dom:beforeRender': (ctx) => {
+        ctx.shouldRender = !paused
+      },
+    } })
     head.push({ meta: page })
-    head.render()
+    head.finishHydration()
     paused = true
     const entry = head.push({ meta: late })
     await settle()
     entry.dispose()
     head.push({ link: [{ rel: 'stylesheet', href: '/home.css' }] })
     paused = false
-    head.render()
+    await head.load()
     await vi.waitFor(() => expect(doc.querySelector('link[rel="stylesheet"]')).not.toBeNull())
     expect([...doc.querySelectorAll('meta[property="article:tag"]')].map(el => el.getAttribute('content'))).toEqual(page.map(tag => tag.content))
   })
@@ -218,13 +205,12 @@ describe('lazy head parity with the default head', () => {
     ['drops every class', ''],
   ])('matches the default head when a paused step %s in place', async (_, next) => {
     const input = { title: 'Site', htmlAttrs: { class: 'a b' }, bodyAttrs: { class: 'a b' } }
-    const { off, lazy, load } = await both([], [input], [(__, entries, pause) => {
+    const { off, lazy } = await both([], [input], [(__, entries, pause) => {
       pause()
       input.htmlAttrs.class = next
       input.bodyAttrs.class = next
       entries[0].patch(input)
     }])
-    expect(load).toHaveBeenCalled()
     expect(lazy).toEqual(off)
   })
 

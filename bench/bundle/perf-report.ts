@@ -1,23 +1,32 @@
-// Renders the directional Performance section. A change is only surfaced past a gate:
+// Renders separate CPU, SSR hydration, and memory sections. A change is surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
 //  - alloc: |Δ| > max(2%, 1 KiB). Synchronous bytes allocated per render is
 //           near-deterministic, so a tight gate surfaces gains time can't show.
-//  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
+//  - count: |Δ| > max(2%, 0.5). DOM mutations or detached elements; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
+//  - memory: compare byte deltas with byte uncertainty, including near-zero results.
 // Noisy metrics are `informational`: shown for reference but excluded from the verdict.
 // This includes wall time and async heap deltas, where GC/scheduling can false-alarm.
 
-export interface PerfBench {
+const sectionNames = { cpu: 'CPU', hydration: 'SSR Hydration', memory: 'Memory' }
+type Category = keyof typeof sectionNames
+
+interface Measurement {
   id: string
   name: string
-  kind: 'time' | 'alloc' | 'count'
   value: number
   rme?: number
   runs?: number
   // reported for reference but excluded from the verdict (e.g. wall time or async allocation)
   informational?: boolean
 }
+
+export type PerfBench = Measurement & (
+  | { kind: 'time', category?: 'hydration' }
+  | { kind: 'alloc' | 'memory' }
+  | { kind: 'count', category: 'cpu' | 'memory' }
+)
 
 export interface PerfRun {
   benches: PerfBench[]
@@ -84,23 +93,27 @@ const COUNT_FLOOR_UNITS = 0.5
 
 type Status = 'new' | 'slower' | 'faster' | 'same'
 
-interface Row {
+type Row = {
   bench: PerfBench
-  base?: PerfBench
-  status: Status
   deltaPct: number
-}
+} & (
+  | { status: 'new', base?: undefined }
+  | { status: Exclude<Status, 'new'>, base: PerfBench }
+)
 
 function fmtValue(b: PerfBench): string {
   if (b.kind === 'time')
     return `${b.value.toFixed(3)} ms`
-  if (b.kind === 'count')
-    return `${Math.round(b.value * 10) / 10}`
-  const kib = Math.round((b.value / 1024) * 10) / 10
-  return `${kib} KiB`
+  if (b.kind === 'count') {
+    const precision = b.informational ? 1000 : 10
+    return `${Math.round(b.value * precision) / precision}`
+  }
+  return fmtBytes(b.value)
 }
 
-function fmtKib(bytes: number): string {
+function fmtBytes(bytes: number): string {
+  if (Math.abs(bytes) >= 1024 ** 2)
+    return `${Math.round(bytes / 1024 ** 2 * 100) / 100} MiB`
   return `${Math.round((bytes / 1024) * 10) / 10} KiB`
 }
 
@@ -120,7 +133,14 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
   }
   else if (pr.kind === 'count') {
     // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
-    significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
+    significant = pr.informational
+      ? delta !== 0
+      : Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
+  }
+  else if (pr.kind === 'memory') {
+    // A near-zero heap delta can have a large RME but little absolute uncertainty.
+    const uncertainty = 2 * (Math.abs(base.value) * (base.rme || 0) + Math.abs(pr.value) * (pr.rme || 0)) / 100
+    significant = Math.abs(delta) > Math.max(ALLOC_FLOOR_BYTES, Math.abs(base.value) * ALLOC_FLOOR_PCT / 100, uncertainty)
   }
   else {
     const threshold = Math.max(ALLOC_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
@@ -128,7 +148,7 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
-  // higher is worse for time, allocation and DOM-mutation count
+  // Higher is worse for time, allocated bytes, retained heap and detached elements.
   return { bench: pr, base, status: delta > 0 ? 'slower' : 'faster', deltaPct }
 }
 
@@ -136,46 +156,87 @@ function deltaCell(row: Row): string {
   if (row.status === 'new')
     return '🆕 new'
   // informational metrics report their delta neutrally, never as slower/faster
-  if (row.bench.informational)
-    return row.status === 'same' ? '~ noise' : `ℹ️ ${fmtPct(row.deltaPct)}`
+  if (row.bench.informational) {
+    if (row.status === 'same')
+      return '~ noise'
+    if (row.bench.kind === 'count' || row.base?.value === 0) {
+      const delta = row.bench.value - row.base.value
+      return `ℹ️ ${delta > 0 ? '+' : ''}${fmtValue({ ...row.bench, value: delta })}`
+    }
+    return `ℹ️ ${fmtPct(row.deltaPct)}`
+  }
   if (row.status === 'same')
     return '~ noise'
   const emoji = row.status === 'slower' ? '🔴' : '🟢'
   if (row.bench.kind === 'time')
     return `${emoji} ${fmtPct(row.deltaPct)}`
   const delta = row.bench.value - (row.base?.value ?? 0)
+  const percentage = row.base?.value === 0 ? '' : ` (${fmtPct(row.deltaPct)})`
   if (row.bench.kind === 'count')
-    return `${emoji} ${delta > 0 ? '+' : ''}${Math.round(delta * 10) / 10} (${fmtPct(row.deltaPct)})`
-  return `${emoji} ${delta > 0 ? '+' : '-'}${fmtKib(Math.abs(delta))} (${fmtPct(row.deltaPct)})`
+    return `${emoji} ${delta > 0 ? '+' : ''}${Math.round(delta * 10) / 10}${percentage}`
+  return `${emoji} ${delta > 0 ? '+' : '-'}${fmtBytes(Math.abs(delta))}${percentage}`
 }
 
-export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
-  const rows = pr.benches.map(b => classify(b, base?.benches?.find(x => x.id === b.id)))
+function renderSection(category: Category, rows: Row[]): string {
+  if (!rows.length)
+    return ''
+
   // informational benches are shown in the details but never drive the verdict
   const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
+  const observedWork = rows.filter(r => r.bench.informational && r.bench.kind === 'count' && (r.status === 'slower' || r.status === 'faster'))
+  const highlighted = rows.filter(r => (r.status === 'slower' || r.status === 'faster') && (!r.bench.informational || r.bench.kind === 'count'))
   const slower = changed.filter(r => r.status === 'slower')
 
-  const out: string[] = ['## ⚡ Performance _(directional)_', '']
+  const isTiming = category !== 'memory'
+  const expanded = category === 'hydration'
+  const out: string[] = [`### ⚡ Perf - ${sectionNames[category]}`, '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} slower** · past the per-metric noise gate`)
+    out.push(`⚠️ **${slower.length} ${isTiming ? 'slower' : 'higher'}**`)
   else if (changed.length)
-    out.push(`🟢 **${changed.length} faster**`)
+    out.push(`🟢 **${changed.length} ${isTiming ? 'faster' : 'lower'}**`)
+  else if (category === 'cpu' && observedWork.length)
+    out.push('✅ **No significant timing change**')
   else
-    out.push('✅ **No significant change** _(within CI noise)_')
+    out.push('✅ **No significant change**')
 
-  if (changed.length) {
+  if (!expanded && highlighted.length) {
     out.push('', '| Benchmark | base → PR | Δ |', '|---|---|---|')
-    for (const row of changed)
+    for (const row of highlighted)
       out.push(`| **${row.bench.name}** | ${fmtValue(row.base!)} → ${fmtValue(row.bench)} | ${deltaCell(row)} |`)
   }
 
-  out.push('', `<details><summary>All benchmarks (${rows.length})</summary>`, '')
-  out.push('| Benchmark | PR | Δ | RME |', '|---|---|---|---|')
+  out.push('')
+  if (!expanded)
+    out.push(`<details><summary>All benchmarks (${rows.length})</summary>`, '')
+  out.push('| Benchmark | Base | PR | Δ | RME |', '|---|---|---|---|---|')
   for (const row of rows) {
     const rme = row.bench.rme != null ? `±${row.bench.rme.toFixed(1)}%` : '—'
-    out.push(`| ${row.bench.name} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
+    out.push(`| ${row.bench.name} | ${row.base ? fmtValue(row.base) : '—'} | ${fmtValue(row.bench)} | ${deltaCell(row)} | ${rme} |`)
   }
-  out.push('', '</details>')
+  if (expanded)
+    out.push('', 'The hydration timer starts after HTML parsing and document setup.')
+  if (isTiming)
+    out.push('', 'Timing results are directional measurements from a shared CI runner.')
+  if (rows.some(row => row.bench.kind === 'count' && row.bench.informational))
+    out.push('', 'DOM read counts use a separate untimed run.')
+  if (rows.some(row => row.bench.kind === 'alloc'))
+    out.push('', 'Allocation rows show bytes allocated per operation.')
+  if (rows.some(row => row.bench.kind === 'memory')) {
+    out.push('', 'Process memory measurements run after forced GC. Retained heap is the change across the full batch.', 'RSS includes runtime overhead. External memory covers native allocations associated with JavaScript objects.', 'CSR measurements include jsdom overhead.')
+  }
+  if (!expanded)
+    out.push('', '</details>')
 
   return out.join('\n')
+}
+
+export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
+  const sections: Record<Category, Row[]> = { cpu: [], hydration: [], memory: [] }
+  for (const bench of pr.benches) {
+    const category = bench.kind === 'time' || bench.kind === 'count' ? bench.category ?? 'cpu' : 'memory'
+    sections[category].push(classify(bench, base?.benches.find(candidate => candidate.id === bench.id)))
+  }
+  return [renderSection('cpu', sections.cpu), renderSection('hydration', sections.hydration), renderSection('memory', sections.memory)]
+    .filter(Boolean)
+    .join('\n\n---\n\n')
 }

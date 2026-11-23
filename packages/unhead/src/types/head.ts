@@ -22,6 +22,8 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _i: number
+  /** Sort order when it differs from the stable entry index. @internal */
+  _order?: number
   /**
    * Resolved tags
    *
@@ -46,10 +48,17 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /** @internal */
+  _streamed?: true
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Filter safe entries before they are streamed.
+   * @internal
+   */
+  _filterStreamInput?: (input: ResolvableHead) => Record<string, unknown> | undefined
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
@@ -224,6 +233,11 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
    */
   _index?: number
   /**
+   * Entry arrived through the server stream.
+   * @internal
+   */
+  _streamed?: true
+  /**
    * Source location for devtools tracing.
    * @internal
    */
@@ -304,6 +318,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _scripts?: Record<string, any>
+  /** @internal */
+  _load?: () => Promise<void>
   /**
    * @internal
    */
@@ -325,7 +341,13 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    *
    * @internal
    */
-  _stream?: { shellRendered?: true, bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean, nonce?: string }
+  _stream?: {
+    shellRendered?: true
+    bodyTags?: [input: ResolvableHead, safe?: boolean][]
+    seen?: Set<string>
+    writesBodyTags?: boolean
+    nonce?: string
+  }
 }
 
 export interface DomState {
