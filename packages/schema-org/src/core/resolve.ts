@@ -234,9 +234,12 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fall
       ids.push(a)
       continue
     }
-    // Count keys without creating array
+    // Count set keys without creating array. An undefined key is unset, as the NodeRelation type reads it.
     let keyCount = 0
-    for (const _ in a) keyCount++
+    for (const k in a) {
+      if (a[k] !== undefined)
+        keyCount++
+    }
 
     // filter out id references
     if ((keyCount === 1 && a['@id']) || (keyCount === 2 && a['@id'] && a['@type'])) {

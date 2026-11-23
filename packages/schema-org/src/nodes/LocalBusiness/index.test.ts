@@ -267,6 +267,7 @@ describe('defineLocalBusiness', () => {
           openingHoursSpecification: [
             { '@id': 'https://example.com/#weekdays' },
             { '@id': 'https://example.com/#weekend', '@type': 'OpeningHoursSpecification' },
+            { '@id': 'https://example.com/#holidays', 'dayOfWeek': undefined },
           ],
         }),
       ])
@@ -275,6 +276,7 @@ describe('defineLocalBusiness', () => {
       expect(business!.openingHoursSpecification).toEqual([
         { '@id': 'https://example.com/#weekdays' },
         { '@id': 'https://example.com/#weekend' },
+        { '@id': 'https://example.com/#holidays' },
       ])
     })
   })
