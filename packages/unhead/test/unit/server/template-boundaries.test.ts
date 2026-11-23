@@ -318,6 +318,18 @@ it.each(['content-security-policy', 'Content-Security-Policy', 'Content-Securit&
   expect(transformHtmlTemplate(head, template)).toContain(`<head>${policy}${fallback}<title>Page</title></head>`)
 })
 
+it.each([false, true])('replaces a template policy at its source position, prepared: %s', (prepared) => {
+  const template = '<html><head><!--before--><meta http-equiv="content-security-policy" content="default-src \'none\'"><!--after--></head><body></body></html>'
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'script-src https://scripts.example' }] })
+
+  const html = transformHtmlTemplate(head, prepared ? prepareTemplate(template) : template)
+  const policies = new JSDOM(html).window.document.querySelectorAll('meta[http-equiv="content-security-policy"]')
+
+  expect(Array.from(policies, policy => policy.getAttribute('content'))).toEqual(['script-src https://scripts.example'])
+  expect(html).toContain('<!--before--><meta http-equiv="content-security-policy" content="script-src https://scripts.example"><!--after-->')
+})
+
 it('places a managed policy directive before stylesheets regardless of case', () => {
   const head = createServerHeadWithContext()
   head.push({

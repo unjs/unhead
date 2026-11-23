@@ -50,6 +50,15 @@ export interface PreparedHtmlTemplateWithIndexes {
   bodyOutlet?: Readonly<{ start: number, end: number }>
   /** @internal */
   canAppendAtEnd?: true
+  /**
+   * Source slots for policies that participate in managed deduplication.
+   * @internal
+   */
+  policySlots?: ReadonlyArray<{
+    start: number
+    end: number
+    attrs: Readonly<Record<string, string>>
+  }>
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -275,6 +284,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const { root, headElements, body, indexes, partial } = readTemplate(html, deferBodyClose, true, prepared)
   const input: SerializableHead = {}
   const parts: string[] = []
+  const policySlots: NonNullable<PreparedHtmlTemplateWithIndexes['policySlots']>[number][] = []
   let cursor = 0
   let removed = 0
 
@@ -316,11 +326,13 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
         }
         case 'meta': {
           const attrs = readAttributes(startTag.attributes)
+          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
+          // Deduplicate policies with managed input, but keep their output slot.
           // Meta-delivered policies apply only to subsequent content.
           if (attrs['http-equiv']?.toLowerCase() === 'content-security-policy') {
+            policySlots.push({ start: startTag.start - removed, end: startTag.end - removed, attrs: Object.freeze({ ...attrs }) })
             continue
           }
-          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.end)
           break
         }
@@ -354,6 +366,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   return {
     html: parts.length ? parts.join('') + html.slice(cursor) : html,
     input,
+    policySlots: policySlots.length ? Object.freeze(policySlots.map(slot => Object.freeze(slot))) : undefined,
     indexes: partial ? withDeferredBodyClose(html, indexes, removed) : indexes,
   }
 }
@@ -417,6 +430,39 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
+    if (template.policySlots) {
+      // Scan rendered markup so renderer hooks and escaping remain authoritative.
+      const rendered = `<head>${headHtml.headTags}</head>`
+      const policies = scanTemplate(rendered, true, true).headElements.filter(({ tag }) =>
+        tag.name === 'meta' && decodeAttribute(tag.attributes?.['http-equiv'] || '').toLowerCase() === 'content-security-policy',
+      )
+      const used = new Set<typeof policies[number]>()
+      for (const slot of template.policySlots) {
+        parts.push(html.substring(lastIndex, slot.start))
+        for (const policy of policies) {
+          const attrs = readAttributes(policy.tag.attributes)
+          if (used.has(policy) || attrs['http-equiv'] !== slot.attrs['http-equiv'])
+            continue
+          used.add(policy)
+          const unchanged = Object.keys(attrs).length === Object.keys(slot.attrs).length
+            && Object.keys(attrs).every(key => attrs[key] === slot.attrs[key])
+          parts.push(unchanged ? html.slice(slot.start, slot.end) : rendered.slice(policy.tag.start, policy.tag.end))
+        }
+        lastIndex = slot.end
+      }
+      let cursor = 6 // Skip the synthetic <head> wrapper.
+      const remaining: string[] = []
+      for (const policy of policies) {
+        if (used.has(policy)) {
+          const trailingLineBreak = rendered[policy.tag.end] === '\n'
+          const start = !trailingLineBreak && rendered[policy.tag.start - 1] === '\n' ? policy.tag.start - 1 : policy.tag.start
+          remaining.push(rendered.slice(cursor, Math.max(cursor, start)))
+          cursor = policy.tag.end + (trailingLineBreak ? 1 : 0)
+        }
+      }
+      remaining.push(rendered.slice(cursor, -7))
+      headHtml = { ...headHtml, headTags: remaining.join('') }
+    }
     parts.push(html.substring(lastIndex, indexes.headTagEnd))
     parts.push(headHtml.headTags)
     lastIndex = indexes.headTagEnd
