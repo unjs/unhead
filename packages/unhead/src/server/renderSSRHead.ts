@@ -1,5 +1,5 @@
 import type { HeadRenderer, RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
-import { callHook } from '../utils/hooks'
+import { callHook } from '../utils/callHook'
 import { resolveTags } from '../utils/resolve'
 import { callTagHook, syncTagAliases } from '../utils/tagHooks'
 import { capoTagWeight } from './sort'

@@ -1,7 +1,7 @@
-import type { DefaultTreeAdapterMap, DefaultTreeAdapterTypes, Token, TreeAdapter } from 'parse5'
 import type { SerializableHead } from '../types'
-import { defaultTreeAdapter, parse, html as parse5Html } from 'parse5'
 import { hasOwn } from '../utils/hasOwn'
+import { decodeAttribute } from './decodeAttribute'
+import { closeTextElement, scanTemplate } from './scanTemplate'
 
 const TAG_HTML = 0
 const TAG_HEAD = 1
@@ -48,6 +48,8 @@ export interface PreparedHtmlTemplateWithIndexes {
     bodyCloseTagStart: number
   }
   bodyOutlet?: Readonly<{ start: number, end: number }>
+  /** @internal */
+  canAppendAtEnd?: true
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -230,111 +232,24 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   return result
 }
 
-function getChildElement(parent: DefaultTreeAdapterTypes.ParentNode | undefined, tagName: string) {
-  return parent?.childNodes.find((child): child is DefaultTreeAdapterTypes.Element =>
-    defaultTreeAdapter.isElementNode(child) && child.tagName === tagName)
-}
-
-const BODY_START_RE = /<body[\t\n\f\r />]/gi
-
-function findBodyStartEnd(html: string, start: number) {
-  let quote = 0
-  for (let i = start + 5; i < html.length; i++) {
-    const code = html.charCodeAt(i)
-    if (quote) {
-      if (code === quote)
-        quote = 0
-    }
-    else if (code === GT_CHAR) {
-      return i + 1
-    }
-    else if (code === QUOTE_CHAR || code === APOS_CHAR) {
-      quote = code
-    }
-    else if (html[i] === '<') {
-      break
-    }
-  }
-  return -1
-}
-
-function readTemplate(html: string, deferBodyClose: boolean, prepared?: PreparedTemplate['indexes']) {
-  if (prepared && prepared.bodyTagEnd >= 0 && prepared.bodyTagEnd < html.length) {
-    const prefix = parseTemplateDocument(html.slice(0, prepared.bodyTagEnd))
-    if (prefix.indexes.bodyTagEnd === prepared.bodyTagEnd) {
-      prefix.indexes.bodyCloseTagStart = prepared.bodyCloseTagStart
-      return { ...prefix, partial: false }
-    }
-  }
-  if (deferBodyClose) {
-    let attempts = 0
-    for (const { index } of html.matchAll(BODY_START_RE)) {
-      const end = findBodyStartEnd(html, index)
-      if (end > 0 && end < html.length) {
-        const prefix = parseTemplateDocument(html.slice(0, end))
-        // A text match only limits the scan. The parser must confirm the boundary.
-        if (prefix.indexes.bodyTagStart === index && prefix.indexes.bodyTagEnd === end)
-          return { ...prefix, partial: true }
-      }
-      // Bound the number of prefix parses when the template repeats tag text.
-      if (++attempts === 2)
-        break
-    }
-  }
-  return { ...parseTemplateDocument(html), partial: false }
-}
-
-const FOREIGN_CONTENT_RE = /<(?:svg|math)[\t\n\f\r />]/i
-
-function createTemplateTreeAdapter(): TreeAdapter<DefaultTreeAdapterMap> {
-  const foreign = new Set<DefaultTreeAdapterTypes.Element>()
-  return {
-    ...defaultTreeAdapter,
-    onItemPush(node) {
-      if (node.namespaceURI !== parse5Html.NS.HTML)
-        foreign.add(node)
-    },
-    onItemPop(node) {
-      if (node.namespaceURI !== parse5Html.NS.HTML)
-        foreign.delete(node)
-    },
-    setNodeSourceCodeLocation(node, location) {
-      if (!foreign.size || !defaultTreeAdapter.isCommentNode(node))
-        defaultTreeAdapter.setNodeSourceCodeLocation(node, location)
-    },
-    updateNodeSourceCodeLocation(node, location) {
-      // The HTML parser can record a document close while foreign elements remain open.
-      if (foreign.size && location.endTag && defaultTreeAdapter.isElementNode(node)
-        && (node.tagName === 'head' || node.tagName === 'body')) {
-        return
-      }
-      defaultTreeAdapter.updateNodeSourceCodeLocation(node, location)
-    },
-  }
-}
-
-function parseTemplateDocument(html: string) {
-  const treeAdapter = FOREIGN_CONTENT_RE.test(html) ? createTemplateTreeAdapter() : defaultTreeAdapter
-  const document = parse(html, { sourceCodeLocationInfo: true, treeAdapter })
-  const root = getChildElement(document, 'html')
-  const head = getChildElement(root, 'head')
-  const body = getChildElement(root, 'body')
-  const rootStart = root?.sourceCodeLocation?.startTag
-  const bodyStart = body?.sourceCodeLocation?.startTag
-
+function readTemplate(html: string, deferBodyClose: boolean, collectHead: boolean, prepared?: PreparedTemplate['indexes']) {
+  const scan = scanTemplate(html, deferBodyClose || !!prepared, collectHead)
+  const { root, body, headClose, headElements, outlet } = scan
+  const bodyClose = prepared && body?.end === prepared.bodyTagEnd ? prepared.bodyCloseTagStart : scan.bodyClose
   return {
     root,
-    rootStart,
-    head,
-    bodyStart,
     body,
+    headElements,
+    bodyOutlet: outlet,
+    canAppendAtEnd: scan.canAppendAtEnd,
+    partial: deferBodyClose && !prepared && body !== undefined,
     indexes: {
-      htmlTagStart: rootStart?.startOffset ?? -1,
-      htmlTagEnd: rootStart?.endOffset ?? -1,
-      headTagEnd: head?.sourceCodeLocation?.endTag?.startOffset ?? -1,
-      bodyTagStart: bodyStart?.startOffset ?? -1,
-      bodyTagEnd: bodyStart?.endOffset ?? -1,
-      bodyCloseTagStart: body?.sourceCodeLocation?.endTag?.startOffset ?? -1,
+      htmlTagStart: root?.start ?? -1,
+      htmlTagEnd: root?.end ?? -1,
+      headTagEnd: headClose ?? -1,
+      bodyTagStart: body?.start ?? -1,
+      bodyTagEnd: body?.end ?? -1,
+      bodyCloseTagStart: bodyClose ?? -1,
     },
   }
 }
@@ -342,12 +257,13 @@ function parseTemplateDocument(html: string) {
 /** Find document tag boundaries without extracting existing tags. */
 /* @__PURE__ */
 export function parseHtmlForIndexes(html: string, mode: 'stream' | 'body-close' | 'body-open' = 'stream'): PreparedHtmlTemplateWithIndexes {
-  const { indexes, body } = readTemplate(html, mode === 'body-open')
+  const { indexes, bodyOutlet, canAppendAtEnd } = readTemplate(html, mode === 'body-open', false)
   return {
     html,
     input: {},
     indexes,
-    bodyOutlet: mode === 'stream' ? findBodyOutlet(html, body, indexes) : undefined,
+    bodyOutlet: mode === 'stream' ? bodyOutlet : undefined,
+    canAppendAtEnd: mode === 'stream' ? canAppendAtEnd : undefined,
   }
 }
 
@@ -356,7 +272,7 @@ export function parseHtmlForIndexes(html: string, mode: 'stream' | 'body-close' 
 export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate, deferBodyClose = false): PreparedHtmlTemplateWithIndexes {
   const html = typeof template === 'string' ? template : template.html
   const prepared = typeof template !== 'string' && preparedTemplates?.has(template) ? template.indexes : undefined
-  const { root, rootStart, head, body, bodyStart, indexes, partial } = readTemplate(html, deferBodyClose, prepared)
+  const { root, headElements, body, indexes, partial } = readTemplate(html, deferBodyClose, true, prepared)
   const input: SerializableHead = {}
   const parts: string[] = []
   let cursor = 0
@@ -368,8 +284,8 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
     removed += end - start - replacement.length
   }
 
-  if (root && rootStart) {
-    const attrs = readAttributes(root, rootStart, false)
+  if (root) {
+    const attrs = readAttributes(root.attributes, false)
     if (Object.keys(attrs).length) {
       input.htmlAttrs = attrs
       replace(indexes.htmlTagStart, indexes.htmlTagEnd, '<html>')
@@ -377,58 +293,39 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
     }
   }
 
-  if (head && indexes.headTagEnd >= 0) {
-    let whitespaceStart: number | undefined
-    for (const node of head.childNodes) {
-      if (defaultTreeAdapter.isTextNode(node)) {
-        whitespaceStart = node.sourceCodeLocation?.startOffset
-        continue
-      }
-
-      const precedingText = whitespaceStart
-      whitespaceStart = undefined
-      if (!defaultTreeAdapter.isElementNode(node) || !node.sourceCodeLocation?.startTag)
-        continue
-
-      const { startTag, endTag } = node.sourceCodeLocation
-      if ((endTag ?? startTag).endOffset > indexes.headTagEnd)
-        continue
-
-      // Match the existing output format by removing indentation with extracted tags.
-      const start = precedingText !== undefined && !html.slice(precedingText, startTag.startOffset).trim()
-        ? precedingText
-        : startTag.startOffset
-      const { tagName } = node
+  if (indexes.headTagEnd >= 0) {
+    for (const { tag: startTag, close: endTag, start } of headElements) {
+      const tagName = startTag.name
       switch (tagName) {
         case 'title':
         case 'script':
         case 'style': {
           if (!endTag)
             continue
-          const content = html.slice(startTag.endOffset, endTag.startOffset)
+          const content = html.slice(startTag.end, endTag.start)
           if (tagName === 'script' && !canExtractScript(content))
             continue
           if (tagName === 'title')
             input.title ||= content.trim() || undefined
           else if (tagName === 'script')
-            (input.script ||= []).push({ ...readAttributes(node, startTag), innerHTML: content } as NonNullable<SerializableHead['script']>[number])
+            (input.script ||= []).push({ ...readAttributes(startTag.attributes), innerHTML: content } as NonNullable<SerializableHead['script']>[number])
           else
-            (input.style ||= []).push({ ...readAttributes(node, startTag), textContent: content })
-          replace(start, endTag.endOffset)
+            (input.style ||= []).push({ ...readAttributes(startTag.attributes), textContent: content })
+          replace(start, endTag.end)
           break
         }
         case 'meta':
-          (input.meta ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['meta']>[number])
-          replace(start, startTag.endOffset)
+          (input.meta ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['meta']>[number])
+          replace(start, startTag.end)
           break
         case 'link':
-          (input.link ||= []).push(readAttributes(node, startTag) as unknown as NonNullable<SerializableHead['link']>[number])
-          replace(start, startTag.endOffset)
+          (input.link ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['link']>[number])
+          replace(start, startTag.end)
           break
         case 'base':
           if (!input.base) {
-            input.base = readAttributes(node, startTag) as unknown as SerializableHead['base']
-            replace(start, startTag.endOffset)
+            input.base = readAttributes(startTag.attributes) as unknown as SerializableHead['base']
+            replace(start, startTag.end)
           }
           break
       }
@@ -436,12 +333,12 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
     indexes.headTagEnd -= removed
   }
 
-  if (body && bodyStart) {
+  if (body) {
     indexes.bodyTagStart -= removed
-    const attrs = readAttributes(body, bodyStart, false)
+    const attrs = readAttributes(body.attributes, false)
     if (Object.keys(attrs).length) {
       input.bodyAttrs = attrs
-      replace(bodyStart.startOffset, bodyStart.endOffset, '<body>')
+      replace(body.start, body.end, '<body>')
     }
     indexes.bodyTagEnd -= removed
   }
@@ -463,7 +360,7 @@ function withDeferredBodyClose(
   return {
     ...indexes,
     get bodyCloseTagStart() {
-      const offset = parseTemplateDocument(html).indexes.bodyCloseTagStart
+      const offset = scanTemplate(html, false).bodyClose ?? -1
       return offset >= 0 ? offset - removed : -1
     },
   }
@@ -480,49 +377,16 @@ function canExtractScript(content: string) {
   if (escaped === content)
     return true
 
-  const markup = `<head><script>${escaped}</script></head>`
-  return parseTemplateDocument(markup).indexes.headTagEnd === markup.length - '</head>'.length
+  return closeTextElement(`${escaped}</script>`, 'script', 0)?.start === escaped.length
 }
 
-// The root attribute serializer escapes ampersands after merging with pushed values.
-function readAttributes(node: DefaultTreeAdapterTypes.Element, startTag: Token.LocationWithAttributes, escapeAmpersands = true) {
+function readAttributes(raw: Record<string, string> | undefined, escapeAmpersands = true) {
   const attrs: Record<string, string> = {}
-  if (startTag.attrs) {
-    for (const { name, value } of node.attrs) {
-      if (hasOwn(startTag.attrs, name))
-        attrs[name] = escapeAmpersands ? value.replaceAll('&', '&amp;') : value
-    }
+  for (const key in raw) {
+    const value = decodeAttribute(raw[key])
+    attrs[key] = escapeAmpersands ? value.replaceAll('&', '&amp;') : value
   }
   return attrs
-}
-
-const SSR_OUTLET_RE = /^<!--\s*(?:app-html|ssr-outlet)\s*-->$/
-
-function findBodyOutlet(
-  html: string,
-  body: DefaultTreeAdapterTypes.Element | undefined,
-  { bodyTagEnd, bodyCloseTagStart }: PreparedHtmlTemplateWithIndexes['indexes'],
-): PreparedHtmlTemplateWithIndexes['bodyOutlet'] {
-  if (!body || bodyTagEnd < 0 || bodyCloseTagStart < 0 || (!html.includes('app-html', bodyTagEnd) && !html.includes('ssr-outlet', bodyTagEnd)))
-    return
-
-  const pending: DefaultTreeAdapterTypes.Element[] = [body]
-  let first: PreparedHtmlTemplateWithIndexes['bodyOutlet']
-  while (pending.length) {
-    for (const child of pending.pop()!.childNodes) {
-      if (defaultTreeAdapter.isCommentNode(child)) {
-        const location = child.sourceCodeLocation
-        if (location && location.startOffset >= bodyTagEnd && location.endOffset <= bodyCloseTagStart
-          && (!first || location.startOffset < first.start) && SSR_OUTLET_RE.test(html.slice(location.startOffset, location.endOffset))) {
-          first = Object.freeze({ start: location.startOffset, end: location.endOffset })
-        }
-      }
-      else if (defaultTreeAdapter.isElementNode(child) && child.namespaceURI === parse5Html.NS.HTML) {
-        pending.push(child)
-      }
-    }
-  }
-  return first
 }
 
 /**

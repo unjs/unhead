@@ -11,6 +11,10 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./lazy:
+  createDeferredHead: function
+  createHead: function
+  deferredHeadLifecycle: function
 ./legacy:
   activeHead: object
   createHead: function
@@ -40,6 +44,7 @@
   MinifyPlugin: function
   PromisesPlugin: function
   SafeInputPlugin: object
+  ServerOnlyCrawlerTagsPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
 ./scripts:
@@ -63,6 +68,7 @@
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
 ./stream/client:
+  attachStreamHead: function
   createStreamableHead: function
   DEFAULT_STREAM_KEY: string
 ./stream/iife:
@@ -97,6 +103,8 @@
   HasElementTags: object
   hashTag: function
   hasOwn: function
+  isCrawlerMetaKey: function
+  isCrawlerTag: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function

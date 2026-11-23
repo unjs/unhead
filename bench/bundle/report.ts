@@ -8,11 +8,15 @@ import { parseVitestBenchmarks, renderPerfReport } from './perf-report'
 // Combined bundle, dependency, and perf comment for the PR. Bundle data comes
 // from the dist dirs; dependency and perf data come from JSON generated for the
 // base and PR builds.
-const sections: string[] = [renderBundleReport(collectBundleData())]
-
 function readJson(p?: string) {
   return p && fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null
 }
+
+const { BASE_FIELDNOTE_ENTRY, PR_FIELDNOTE_ENTRY } = process.env
+const fieldnote = BASE_FIELDNOTE_ENTRY || PR_FIELDNOTE_ENTRY
+  ? { before: readJson(BASE_FIELDNOTE_ENTRY), after: readJson(PR_FIELDNOTE_ENTRY) }
+  : undefined
+const sections: string[] = [renderBundleReport(collectBundleData(), fieldnote)]
 
 const prDependencies = readJson(process.env.PR_DEPENDENCIES)
 if (prDependencies?.packages?.length)

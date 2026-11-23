@@ -22,6 +22,8 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _i: number
+  /** Sort order when it differs from the stable entry index. @internal */
+  _order?: number
   /**
    * Resolved tags
    *
@@ -46,6 +48,8 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
+  /** @internal */
+  _streamed?: true
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {
@@ -229,6 +233,11 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
    */
   _index?: number
   /**
+   * Entry arrived through the server stream.
+   * @internal
+   */
+  _streamed?: true
+  /**
    * Source location for devtools tracing.
    * @internal
    */
@@ -309,6 +318,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _scripts?: Record<string, any>
+  /** @internal */
+  _load?: () => Promise<void>
   /**
    * @internal
    */

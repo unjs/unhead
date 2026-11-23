@@ -15,6 +15,14 @@ const fixture = resolve(__dirname, 'fixtures/page.html')
  * helper itself against representative HTML inputs.
  */
 describe('validateHtml', () => {
+  it('omits hydration identity advice when checking raw HTML', () => {
+    const body = `/*${'a'.repeat(32_768)}*/`
+    const result = validateHtml(`<!doctype html><head><style data-hid="theme">${body}</style></head>`, 'inline')
+
+    expect(result.rules.map(rule => rule.id)).toContain('inline-style-size')
+    expect(result.rules.map(rule => rule.id)).not.toContain('large-inline-content-without-key')
+  })
+
   it('reports rules from a fixture HTML file', async () => {
     const html = await readFile(fixture, 'utf8')
     const result = validateHtml(html, fixture)

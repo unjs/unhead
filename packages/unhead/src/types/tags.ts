@@ -120,6 +120,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _safe?: boolean
   /**
+   * Copied from the entry options when the entry arrived through the server stream.
+   * @internal
+   */
+  _streamed?: true
+  /**
    * @internal
    */
   _d?: string

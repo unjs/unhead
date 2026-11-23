@@ -38,7 +38,10 @@ export function tagToString<T extends HeadTagInput>(tag: T) {
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent ?? tag.innerHTML ?? '')
-  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  if (tag.tag === 'title')
+    content = escapeHtml(content)
+  else if (content.includes('</'))
+    content = content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
   if (tag.tag === 'script' && !canCloseScript(content))
     content = ''
   return `${openTag}${content}</${tag.tag}>`
