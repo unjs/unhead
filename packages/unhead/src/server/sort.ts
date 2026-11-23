@@ -15,11 +15,9 @@ export function capoTagWeight(tag: HeadTag): number {
   else if (tag.tag === 'title') {
     weight = 10
   }
-  else if (tag.tag === 'meta' && typeof tag.props['http-equiv'] === 'string' && tag.props['http-equiv'].toLowerCase() === 'content-type') {
-    weight = -20
-  }
   else if (tag.tag === 'meta') {
-    weight = tag.props['http-equiv'] === 'content-security-policy' ? -30 : tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
+    const httpEquiv = typeof tag.props['http-equiv'] === 'string' ? tag.props['http-equiv'].toLowerCase() : ''
+    weight = httpEquiv === 'content-security-policy' ? -30 : httpEquiv === 'content-type' || tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
   }
   else if (tag.tag === 'link' && tag.props.rel) {
     const rel = tag.props.rel
