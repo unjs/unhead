@@ -106,6 +106,27 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     return plugin
   }
 
+  it('transforms stream boundaries without injecting a client in manual mode', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const plugin = await buildPlugin(
+      {
+        framework: '@unhead/test',
+        mode: 'manual',
+        filter: /\.tsx$/,
+        transform: (code, _, options) => ({ code: `${code}\n${options?.ssr ? 'server patch' : 'client placeholder'}` }),
+      },
+      { command: 'build' },
+      hookThis,
+    )
+
+    expect(plugin.transform.handler.call({}, 'boundary', '/entry.tsx', { ssr: true })).toEqual({ code: 'boundary\nserver patch' })
+    expect(plugin.transform.handler.call({}, 'boundary', '/entry.tsx')).toEqual({ code: 'boundary\nclient placeholder' })
+    expect(plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>')).toBeUndefined()
+    expect(plugin.vite.transformIndexHtml.handler.call(hookThis, undefined)).toBeUndefined()
+    expect(calls).toHaveLength(0)
+  })
+
   it('async mode resolves a hashed emitted asset path prefixed with base, with no bundle', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
