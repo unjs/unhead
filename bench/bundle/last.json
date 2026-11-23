@@ -80,13 +80,13 @@
     "br": 4956
   },
   "vueClientLazy": {
-    "size": 1778,
-    "gz": 948,
-    "br": 848
+    "size": 1914,
+    "gz": 986,
+    "br": 882
   },
   "vueClientLazyRuntime": {
     "size": 17510,
     "gz": 7122,
-    "br": 6495
+    "br": 6497
   }
 }
