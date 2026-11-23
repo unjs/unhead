@@ -237,4 +237,45 @@ describe('defineLocalBusiness', () => {
       })
     })
   })
+
+  it('requires opens and closes when an opening hours entry has an @id and other fields', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          name: 'test',
+          address: { streetAddress: '123 st' },
+          // @ts-expect-error an entry with more keys than @id and @type resolves as a node
+          openingHoursSpecification: [{ '@id': '#sunday', 'dayOfWeek': 'Sunday' }],
+        }),
+      ])
+
+      const business = (await injectSchemaOrg(head)).find((n: any) => n.name === 'test')
+      expect(business!.openingHoursSpecification).toEqual({
+        '@id': '#sunday',
+        '@type': 'OpeningHoursSpecification',
+        'dayOfWeek': 'Sunday',
+      })
+    })
+  })
+
+  it('accepts opening hours entries that reference a node by @id', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          name: 'test',
+          address: { streetAddress: '123 st' },
+          openingHoursSpecification: [
+            { '@id': 'https://example.com/#weekdays' },
+            { '@id': 'https://example.com/#weekend', '@type': 'OpeningHoursSpecification' },
+          ],
+        }),
+      ])
+
+      const business = (await injectSchemaOrg(head)).find((n: any) => n.name === 'test')
+      expect(business!.openingHoursSpecification).toEqual([
+        { '@id': 'https://example.com/#weekdays' },
+        { '@id': 'https://example.com/#weekend' },
+      ])
+    })
+  })
 })

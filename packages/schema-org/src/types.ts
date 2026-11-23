@@ -2,7 +2,7 @@ import type { SchemaOrgGraph } from './core'
 import type { ImageObject, Organization, Person } from './nodes'
 
 export type Arrayable<T> = T | Array<T>
-export type NodeRelation<T> = T | IdReference
+export type NodeRelation<T> = T | RelationIdReference<T>
 export type NodeRelations<T> = Arrayable<NodeRelation<T>>
 export type Identity = Person | Organization
 export type ResolvableDate = string | Date
@@ -128,14 +128,31 @@ export type WithResolver<T> = T & {
 /**
  * A minimal JSON-LD node that refers to another graph node by ID.
  *
- * References are still valid Things. Modelling that relationship keeps
- * resolved relation values assignable to the schema properties they replace
+ * References are still valid Things. The index signature keeps resolved
+ * relation values assignable to the schema properties they replace
  * without weakening Thing's arbitrary-property boundary back to `any`.
+ * It declares no other Thing fields, so a reference fits a relation that forbids them.
  */
-export interface IdReference extends Thing {
+export interface IdReference {
   /** IRI identifying the canonical address of this object. */
   '@id': string
+  '@type'?: Arrayable<string>
+  [key: string]: unknown
 }
+
+/** The keys that `T` declares, without its index signature. Primitives declare none. */
+type DeclaredKeys<T> = T extends object
+  ? keyof { [K in keyof T as string extends K ? never : number extends K ? never : symbol extends K ? never : K]: unknown }
+  : never
+
+/**
+ * An `IdReference` in a relation to `T`.
+ *
+ * The resolver reads a value as a reference only when its keys are `@id`, or `@id` and `@type`.
+ * Any other key makes it a full node, so a reference cannot carry the declared fields of `T`.
+ * Otherwise a value with `@id` would skip the required fields of `T`.
+ */
+type RelationIdReference<T> = IdReference & { [K in Exclude<DeclaredKeys<T>, '@id' | '@type'>]?: never }
 
 // we support string for DX
 export type Id = string | `#${string}` | `https://${string}#${string}`
