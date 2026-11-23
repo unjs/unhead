@@ -1,4 +1,13 @@
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from './types'
+import { callHook } from './utils/hooks'
+
+function createNoopEntry<T>(): ActiveHeadEntry<T> {
+  return {
+    _i: -1,
+    dispose() {},
+    patch() {},
+  }
+}
 
 export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
   // a function plugin can declare its key statically so we can bail before
@@ -31,8 +40,13 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
     render: () => renderer(head),
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions) {
+      const beforePushCtx = { input, options: _options ? { ..._options } : {}, shouldPush: true }
+      callHook(head, 'entries:beforePush', beforePushCtx)
+      if (!beforePushCtx.shouldPush)
+        return createNoopEntry<T>()
+
       // a rest copy rather than `delete`, which would leave the options in slow dictionary mode
-      const { head: _head, onRendered: _onRendered, _index, ...options } = _options || {}
+      const { head: _head, onRendered: _onRendered, _index, ...options } = beforePushCtx.options
       const _i = _index ?? head._entryCount++
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
