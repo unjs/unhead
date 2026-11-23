@@ -80,6 +80,7 @@ const SELECT_SVG_ELEMENTS = /* @__PURE__ */ new Set([
   'title',
   'use',
 ])
+const SELECT_SVG_TEXT = /* @__PURE__ */ new Set(['text', 'textpath', 'tspan'])
 const MATH_INTEGRATION = /* @__PURE__ */ new Set(['mi', 'mn', 'mo', 'ms', 'mtext'])
 const VOID_HTML = /* @__PURE__ */ new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
 const DOCUMENT_SCOPES = /* @__PURE__ */ new Set(['body', 'frameset', 'head', 'html', 'plaintext'])
@@ -190,7 +191,14 @@ export interface TemplateScan {
   headClose?: number
   outlet?: { start: number, end: number }
   canAppendAtEnd?: true
+  canOpenBodyAtEnd?: true
+  streamRestAt?: number
   headElements: HeadElement[]
+}
+
+interface StreamBodyState {
+  foreign: ForeignElement[]
+  scopes: string[]
 }
 
 function skipSpace(html: string, start: number) {
@@ -317,15 +325,15 @@ export function closeTextElement(html: string, name: string, start: number) {
   return close ? readTag(html, close.index) : undefined
 }
 
-function selectToken(name: string, closing: boolean): 'skip' | 'scan' | 'stop' {
+function selectToken(name: string, closing: boolean, streamBody: boolean): 'skip' | 'scan' | 'stop' {
   // These elements cannot change the tokenizer or close the select. Some
   // browsers ignore them and others retain them in a customizable option.
-  if (SELECT_FORMATTING.has(name))
+  if (SELECT_FORMATTING.has(name) || (streamBody && name === 'meter'))
     return 'skip'
   return (name === 'select' ? closing : SELECT_CONTENT.has(name)) ? 'scan' : 'stop'
 }
 
-function closeSelectSvg(html: string, cursor: number): number | undefined {
+function closeSelectSvg(html: string, cursor: number, streamBody: boolean): number | undefined {
   // Older browsers ignore SVG tags in a select. Only consume balanced icons
   // whose contents keep both the HTML and SVG tokenizers in the data state.
   const stack = ['svg']
@@ -350,7 +358,8 @@ function closeSelectSvg(html: string, cursor: number): number | undefined {
       stack.pop()
     }
     else {
-      if (SVG_INTEGRATION.has(current) || !SELECT_SVG_ELEMENTS.has(tag.name))
+      const allowed = SELECT_SVG_ELEMENTS.has(tag.name) || (streamBody && SELECT_SVG_TEXT.has(tag.name))
+      if (SVG_INTEGRATION.has(current) || !allowed)
         return
       if (!tag.selfClosing)
         stack.push(tag.name)
@@ -405,27 +414,33 @@ function closeForeignElement(stack: ForeignElement[], name: string): boolean {
  * Read only the boundaries needed by the template helpers. Keep proven prefix
  * offsets if the scan reaches markup whose parsing context it cannot verify.
  */
-export function scanTemplate(html: string, stopAtBody: boolean, collectHead = false): TemplateScan {
+export function scanTemplate(html: string, stopAtBody: boolean, collectHead = false, stream?: 'shell' | StreamBodyState): TemplateScan {
   const result: TemplateScan = { headElements: [] }
-  const foreign: ForeignElement[] = []
-  const scopes: string[] = []
-  let phase: 'root' | 'before-head' | 'head' | 'after-head' | 'body' = 'root'
+  const streamBody = typeof stream === 'object' ? stream : undefined
+  const foreign: ForeignElement[] = streamBody?.foreign ?? []
+  const scopes: string[] = streamBody?.scopes ?? []
+  let phase: 'root' | 'before-head' | 'head' | 'after-head' | 'body' = streamBody ? 'body' : 'root'
   let explicitHead = false
   let templateDepth = 0
   let cursor = html.charCodeAt(0) === 0xFEFF ? 1 : 0
 
   while (true) {
     const start = html.indexOf('<', cursor)
-    if (start < 0) {
-      if (!scopes.length && !foreign.length)
-        result.canAppendAtEnd = true
-      break
-    }
-
-    const text = html.slice(cursor, start)
+    if (streamBody)
+      result.streamRestAt = start < 0 ? html.length : start
+    const text = html.slice(cursor, start < 0 ? html.length : start)
     if (phase !== 'body' && !scopes.length && NON_WHITESPACE.test(text)
       && (!text.includes('&') || NON_WHITESPACE.test(decodeAttribute(text)))) {
       phase = 'body'
+    }
+    if (start < 0) {
+      if (!scopes.length && !foreign.length) {
+        if (stream !== 'shell' || phase === 'body')
+          result.canAppendAtEnd = true
+        else if (phase === 'after-head')
+          result.canOpenBodyAtEnd = true
+      }
+      break
     }
 
     if (html.startsWith('<!--', start)) {
@@ -434,7 +449,8 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         break
       if (phase === 'body' && !templateDepth && !foreign.length && !result.outlet
         && OUTLET.test(html.slice(start, end))) {
-        result.outlet = Object.freeze({ start, end })
+        if (!streamBody)
+          result.outlet = Object.freeze({ start, end })
       }
       cursor = end
       continue
@@ -472,17 +488,19 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     cursor = tag.end
     const { name, closing, selfClosing } = tag
+    if (streamBody && DOCUMENT_SCOPES.has(name))
+      break
     const foreignScope = parent?.context === 'html' ? parent.scope : -1
     const scopeName = parent ? foreign[foreignScope]?.name : scopes.at(-1)
     if (scopeName === 'select') {
       if (name === 'svg' && !closing) {
-        const end = selfClosing ? cursor : closeSelectSvg(html, cursor)
+        const end = selfClosing ? cursor : closeSelectSvg(html, cursor, !!streamBody)
         if (end === undefined)
           break
         cursor = end
         continue
       }
-      const action = selectToken(name, closing)
+      const action = selectToken(name, closing, !!streamBody)
       if (action === 'stop')
         break
       if (action === 'skip')
@@ -587,7 +605,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     if (SCOPED.has(name)) {
       if (!closing) {
-        if (name === 'template') {
+        if (!streamBody && name === 'template') {
           templateDepth++
           if (phase === 'root' || phase === 'before-head')
             phase = 'head'
@@ -603,7 +621,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         }
         if (scopes[scope] === name) {
           scopes.length = scope
-          if (name === 'template')
+          if (!streamBody && name === 'template')
             templateDepth--
         }
         else if (!BODY_SCOPE_BARRIERS.has(name)) {
@@ -630,4 +648,9 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
   if (result.bodyClose === undefined)
     delete result.outlet
   return result
+}
+
+export function createStreamBodyScanner() {
+  const state: StreamBodyState = { foreign: [], scopes: [] }
+  return (html: string) => scanTemplate(html, false, false, state)
 }

@@ -8,6 +8,7 @@ import { callHook } from '../utils/hooks'
 import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
+import { canAppendStreamHtml, createStreamBoundary, prepareStreamShell } from './htmlBoundary'
 import { parseStreamKey } from './key'
 
 const LT_RE = /</g
@@ -499,9 +500,8 @@ function safeJsonStringify(obj: any): string {
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
- * @param options.flushChunk - Returns extra HTML to emit after each app
- * chunk and once before the closing HTML (used by framework packages to
- * interleave head-update scripts)
+ * @param options.flushChunk - Returns complete HTML to emit after a verified
+ * app boundary or before the closing HTML.
  * @returns A new ReadableStream with shell and closing HTML included
  *
  * @example
@@ -518,9 +518,6 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  // `renderStreamEnd()` writes streamed body tags.
-  // Manual drivers opt in with `writesBodyTags`.
-  streamState(head).writesBodyTags = true
   // Preserve late entries when no custom chunk renderer exists.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string
@@ -538,7 +535,16 @@ export function wrapStream(
   })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
-  let parts: StreamingTemplateParts | undefined
+  let output: StreamingOutput | undefined
+
+  function flush(controller: ReadableStreamDefaultController<Uint8Array>) {
+    const extra = flushChunk()
+    if (!extra)
+      return
+    if (!canAppendStreamHtml(extra))
+      throw new Error('The stream update must be complete HTML.')
+    controller.enqueue(enc.encode(extra))
+  }
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -548,23 +554,23 @@ export function wrapStream(
     // for retry.
     async start(controller) {
       const activeReader = stream.getReader()
-      let prepared: StreamingTemplateParts
       try {
-        prepared = prepareStreamingTemplate(head, template, preRenderedState)
+        output = prepareStreamingOutput(head, template, preRenderedState)
       }
       catch (error) {
         activeReader.releaseLock()
         throw error
       }
+      streamState(head).writesBodyTags = true
       reader = activeReader
-      parts = prepared
-      controller.enqueue(enc.encode(prepared.shell))
+      controller.enqueue(enc.encode(output.shell))
     },
     // Read at most one upstream chunk per downstream request so backpressure
     // propagates instead of eagerly draining the app stream.
     async pull(controller) {
       const activeReader = reader
-      if (!activeReader)
+      const activeOutput = output
+      if (!activeReader || !activeOutput)
         return
       let result: ReadableStreamReadResult<Uint8Array>
       try {
@@ -585,19 +591,33 @@ export function wrapStream(
       if (result.done) {
         reader = undefined
         activeReader.releaseLock()
-        const extra = flushChunk?.()
-        if (extra)
-          controller.enqueue(enc.encode(extra))
-        const closing = parts ? renderStreamEnd(head, parts) : ''
+        const closing = activeOutput.finish(() => flush(controller))
         if (closing)
           controller.enqueue(enc.encode(closing))
         controller.close()
         return
       }
-      controller.enqueue(result.value)
-      const extra = flushChunk?.()
-      if (extra)
-        controller.enqueue(enc.encode(extra))
+      try {
+        const canFlush = activeOutput.write(result.value)
+        controller.enqueue(result.value)
+        if (canFlush)
+          flush(controller)
+      }
+      catch (error) {
+        if (activeReader !== reader)
+          return
+        reader = undefined
+        controller.error(error)
+        try {
+          await activeReader.cancel(error)
+        }
+        catch {
+          // The response already has the original error.
+        }
+        finally {
+          activeReader.releaseLock()
+        }
+      }
     },
     async cancel(reason) {
       const activeReader = reader
@@ -635,6 +655,13 @@ export interface StreamingTemplateParts {
    * Offset for streamed body tags within `end`.
    */
   bodyTagsAt?: number
+}
+
+/** @internal */
+export interface StreamingOutput {
+  shell: string
+  write: (chunk: Uint8Array) => boolean
+  finish: (beforeEnd?: () => void) => string
 }
 
 interface StreamingTemplateLayout {
@@ -676,6 +703,13 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
   return layout || undefined
 }
 
+/** @internal */
+export function prepareStreamingTemplate(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState: SSRHeadPayload | undefined,
+  options: { verifyStream: true },
+): StreamingOutput
 /**
  * @experimental
  *
@@ -707,6 +741,44 @@ export function prepareStreamingTemplate(
   head: Unhead<any>,
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
+): StreamingTemplateParts
+export function prepareStreamingTemplate(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState?: SSRHeadPayload,
+  options?: { verifyStream: true },
+) {
+  if (options?.verifyStream)
+    return prepareStreamingOutput(head, template, preRenderedState)
+  return prepareStreamingTemplateParts(head, template, preRenderedState)
+}
+
+function prepareStreamingOutput(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState?: SSRHeadPayload,
+): StreamingOutput {
+  const parts = prepareStreamingTemplateParts(head, template, preRenderedState, prepareStreamShell)
+  const boundary = createStreamBoundary()
+  return {
+    shell: parts.shell,
+    write: boundary.write,
+    finish(beforeEnd?: () => void): string {
+      if (!boundary.finish())
+        throw new Error('The app stream ended without a verified HTML boundary.')
+      if (parts.bodyTagsAt !== undefined && !canAppendStreamHtml(parts.end.slice(0, parts.bodyTagsAt)))
+        throw new Error('The stream closing tags need a verified HTML boundary.')
+      beforeEnd?.()
+      return renderStreamEnd(head, parts)
+    },
+  }
+}
+
+function prepareStreamingTemplateParts(
+  head: Unhead<any>,
+  template: string | PreparedTemplate,
+  preRenderedState?: SSRHeadPayload,
+  prepareShell?: (shell: string) => string,
 ): StreamingTemplateParts {
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const layout = typeof template === 'string'
@@ -738,6 +810,9 @@ export function prepareStreamingTemplate(
       end: '',
     }
   }
+
+  if (prepareShell)
+    parts.shell = prepareShell(parts.shell)
 
   // Only clear entries once the shell/end parts have been successfully
   // produced so a template failure leaves them intact for retry.

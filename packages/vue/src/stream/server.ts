@@ -51,7 +51,7 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
  * Creates a head instance configured for Vue streaming SSR.
  *
  * Vue emits resolved Suspense boundaries in document order.
- * `wrapStream()` can therefore write each head patch after its app chunk.
+ * `wrapStream()` verifies HTML boundaries before writing head patches.
  * React and Solid use `<HeadStream />` for out-of-order reveals.
  *
  * @example

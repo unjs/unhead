@@ -1,5 +1,5 @@
 import type { ServerUnhead } from 'unhead/server'
-import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/server'
+import type { PreparedTemplate, StreamingOutput } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
@@ -9,7 +9,6 @@ import {
   prepareStreamingTemplate,
   renderShell,
   renderSSRHeadSuspenseChunk,
-  renderStreamEnd,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
@@ -111,9 +110,8 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       return new ReadableStream<Uint8Array>({
         start(controller) {
           let shellResolved = false
-          let shellFlushed = false
           let innerDone = false
-          let parts: StreamingTemplateParts | undefined
+          let output: StreamingOutput | undefined
           let shellState: SSRHeadPayload | undefined
           const bufferedChunks: Uint8Array[] = []
           const outputChunks: Uint8Array[] = []
@@ -194,22 +192,21 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
               return
 
             try {
-              if (!shellFlushed) {
-                parts = prepareStreamingTemplate(head, template, shellState)
-                enqueueOutput(encoder.encode(parts.shell))
-                shellFlushed = true
+              if (!output) {
+                output = prepareStreamingTemplate(head, template, shellState, { verifyStream: true })
+                enqueueOutput(encoder.encode(output.shell))
               }
 
               if (bufferedChunks.length) {
                 for (const chunk of bufferedChunks) {
+                  output.write(chunk)
                   enqueueOutput(chunk)
                 }
                 bufferedChunks.length = 0
               }
 
               if (innerDone) {
-                if (parts)
-                  enqueueOutput(encoder.encode(renderStreamEnd(head, parts)))
+                enqueueOutput(encoder.encode(output.finish()))
                 closeOutput()
               }
             }
@@ -241,7 +238,8 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
                   flushShellAndChunks()
                   break
                 }
-                if (shellFlushed) {
+                if (output) {
+                  output.write(value)
                   enqueueOutput(value)
                 }
                 else {

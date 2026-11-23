@@ -9,7 +9,6 @@ import {
   createStreamableHead as createCoreStreamableHead,
   prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
-  renderStreamEnd,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
@@ -102,18 +101,21 @@ export function createStreamableHead<T = ResolvableHead>(
       // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {
-        shellReady.then(async () => {
+        shellReady.then(() => {
           try {
-            const parts = await prepareStreamingTemplate(head, template)
-            writable.write(parts.shell)
+            const output = prepareStreamingTemplate(head, template, undefined, { verifyStream: true })
+            writable.write(output.shell)
 
             const passthrough = new PassThrough()
 
-            passthrough.on('data', chunk => writable.write(chunk))
+            passthrough.on('data', (chunk) => {
+              output.write(chunk)
+              writable.write(chunk)
+            })
             passthrough.on('end', () => {
               // The event runs after the outer catch. Handle its error here.
               try {
-                writable.write(renderStreamEnd(head, parts))
+                writable.write(output.finish())
                 writable.end()
               }
               catch (err) {

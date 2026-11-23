@@ -3,6 +3,20 @@ import { describe, expect, it } from 'vitest'
 import { createStreamableHead, prepareTemplate } from '../src/stream/server'
 
 describe('streaming shell tag positions', () => {
+  it('rejects incomplete app HTML before writing the footer', async () => {
+    const context = createStreamableHead()
+    const template = '<html><head></head><body><!--app-html--></body></html>'
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<p class="'))
+        controller.close()
+      },
+    })
+    context.onCompleteShell()
+
+    await expect(new Response(context.wrapStream(stream, template)).text()).rejects.toThrow('The app stream ended without a verified HTML boundary.')
+  })
+
   it.each([false, true])('preserves initial tags around the app, prepared: %s', async (prepared) => {
     const context = createStreamableHead({
       init: [{

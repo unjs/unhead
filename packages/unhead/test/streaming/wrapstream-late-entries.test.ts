@@ -38,6 +38,93 @@ describe('wrapStream late entries', () => {
     expect(html.indexOf('__unhead__.push(')).toBeLessThan(html.indexOf('</body>'))
   })
 
+  it('preserves a quoted attribute split across app chunks', async () => {
+    const { head } = createStreamableHead()
+    const chunks = ['<p class="', 'example">Content</p>']
+    const encoder = new TextEncoder()
+    const source = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (chunks.length === 2)
+          head.push({ title: 'Late title' })
+        controller.enqueue(encoder.encode(chunks.shift()!))
+        if (!chunks.length)
+          controller.close()
+      },
+    })
+
+    const html = await new Response(wrapStream(head, source, TEMPLATE)).text()
+
+    expect(html).toMatch(/<p class="example">Content<\/p>.*Late title.*<\/body>/s)
+  })
+
+  it('rejects when the app ends before completing an HTML tag', async () => {
+    const { head } = createStreamableHead()
+    const source = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<p class="'))
+        controller.close()
+      },
+    })
+
+    await expect(new Response(wrapStream(head, source, TEMPLATE)).text()).rejects.toThrow('The app stream ended without a verified HTML boundary.')
+  })
+
+  it('preserves a UTF-8 character split across app chunks', async () => {
+    const { head } = createStreamableHead()
+    const bytes = new TextEncoder().encode('<p>Café</p>')
+    const split = bytes.indexOf(0xC3) + 1
+    const source = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.subarray(0, split))
+        controller.enqueue(bytes.subarray(split))
+        controller.close()
+      },
+    })
+
+    const html = await new Response(wrapStream(head, source, TEMPLATE, undefined, {
+      flushChunk: () => '<!-- Late update -->',
+    })).text()
+
+    expect(html).toContain('<p>Café</p><!-- Late update -->')
+  })
+
+  it('waits for a table that spans several large chunks', async () => {
+    const { head } = createStreamableHead()
+    const row = `<tr><td>${'x'.repeat(140 * 1024)}</td></tr>`
+    const chunks = ['<table>', row, row, '</table>']
+    const encoder = new TextEncoder()
+    const source = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (chunks.length === 4)
+          head.push({ title: 'Late table' })
+        controller.enqueue(encoder.encode(chunks.shift()!))
+        if (!chunks.length)
+          controller.close()
+      },
+    }, { highWaterMark: 0 })
+
+    const html = await new Response(wrapStream(head, source, TEMPLATE)).text()
+
+    expect(html).toMatch(/<\/table>.*Late table.*<\/body>/s)
+  })
+
+  it.each([
+    '<select><option><meter value="1" max="2">Half</meter></option></select>',
+    '<select><option><svg><text>Choice</text></svg>Choice</option></select>',
+  ])('preserves customizable select markup in app content: %s', async (appHtml) => {
+    const { head } = createStreamableHead()
+    const source = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(appHtml))
+        controller.close()
+      },
+    })
+
+    const html = await new Response(wrapStream(head, source, TEMPLATE)).text()
+
+    expect(html).toContain(`<div id="app">${appHtml}</div>`)
+  })
+
   it('flushes a head update queued as the source closes', async () => {
     const { head } = createStreamableHead()
     const { promise: reading, resolve: onPull } = Promise.withResolvers<void>()
@@ -78,6 +165,17 @@ describe('wrapStream late entries', () => {
 
     expect(html).not.toContain('window.__unhead__={')
     expect(html).toContain('window.__unhead__&&(')
+  })
+
+  it('enters the body when the template ends after the head', async () => {
+    const { head } = createStreamableHead()
+    const html = await new Response(wrapStream(
+      head,
+      lateStream(() => head.push({ title: 'Late' })),
+      '<html><head></head>',
+    )).text()
+
+    expect(html).toMatch(/<\/head><body><p>app<\/p>.*Late/s)
   })
 
   it('completes the response when a chunk cannot be serialized', async () => {
