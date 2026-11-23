@@ -1,5 +1,6 @@
-import type { ResolvableHead } from '../types'
+import type { ClientHeadHooks, ResolvableHead } from '../types'
 import type { HeadQueue, LazyHeadOptions, LazyUnhead } from './index'
+import { createHooks } from '../utils/hooks'
 import { pushQueuedEntry } from './push'
 
 export type DeferredHead<T> = Pick<LazyUnhead<T>, 'push' | 'use' | 'ssr' | 'hooks' | 'resolvedOptions' | '_scripts' | '_dom'>
@@ -19,6 +20,7 @@ export function createDeferredHead<T = ResolvableHead, R = DeferredHead<T>>(
   const queue: HeadQueue<T> = { index: 1, hydrating: true, entries: new Map(), plugins: [] }
   const head: DeferredHead<T> = {
     ssr: false,
+    hooks: options.hookable ?? createHooks<ClientHeadHooks>(),
     resolvedOptions: { document: options.document ?? globalThis.document },
     use: (plugin) => { queue.plugins.push(plugin) },
     push(input, entryOptions) {
