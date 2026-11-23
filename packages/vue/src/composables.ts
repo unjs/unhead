@@ -26,7 +26,7 @@ export { injectHead } from './install'
 const resolveRefs = (_?: string, value?: any) => unref(value)
 
 export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
-  const head = (options.head || injectHead()) as Unhead<I>
+  const head = (options.head || injectHead()) as Pick<Unhead<I>, 'push' | 'ssr'>
   if (head.ssr)
     return head.push((input || {}) as I, options as HeadEntryOptions)
 

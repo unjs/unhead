@@ -1,5 +1,6 @@
 import { createHead } from '@unhead/vue/client'
 import { JSDOM } from 'jsdom'
+import { attachStreamHead } from 'unhead/stream/client'
 import { createStreamingPlugin, VIRTUAL_CLIENT_ID } from 'unhead/stream/unplugin'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -37,7 +38,7 @@ function runStub(queued: any[][] = []) {
   const loaded = typeof hook === 'function' ? hook.call({}, `\0${VIRTUAL_CLIENT_ID}`) : hook.handler.call({}, `\0${VIRTUAL_CLIENT_ID}`)
   const body = loaded.code.split('\n').filter((line: string) => !line.startsWith('import')).join('\n')
   // eslint-disable-next-line no-new-func
-  new Function('createHead', 'window', 'document', 'console', body)(createHead, win, win.document, console)
+  new Function('createHead', 'attachStreamHead', 'window', 'document', 'console', body)(createHead, attachStreamHead, win, win.document, console)
   return win
 }
 

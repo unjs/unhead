@@ -5,7 +5,7 @@ import { renderToString } from '@vue/server-renderer'
 import { useSeoMeta as useCoreSeoMeta } from 'unhead'
 import { createHead as createCoreClientHead } from 'unhead/client'
 import * as unheadPlugins from 'unhead/plugins'
-import { createStreamableHead as wrapStreamedHead } from 'unhead/stream/client'
+import { attachStreamHead, createStreamableHead as wrapStreamedHead } from 'unhead/stream/client'
 import { createStreamableHead as createStreamingServer, renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { VIRTUAL_CLIENT_ID } from 'unhead/stream/unplugin'
 import { describe, expect, it } from 'vitest'
@@ -236,6 +236,7 @@ describe('serverOnlyCrawlerTags with streaming SSR', () => {
       'unhead/client': { createHead: createCoreClientHead },
       'unhead/plugins': unheadPlugins,
       'unhead/stream/client': { createStreamableHead: wrapStreamedHead },
+      'virtual:@unhead/streaming-queue': { attachStreamHead },
     }
     const readMeta = (name: string) => document.head.querySelector(`meta[name="${name}"]`)?.getAttribute('content')
 
