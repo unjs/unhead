@@ -1,53 +1,53 @@
 {
   "client": {
-    "size": 13665,
-    "gz": 5639,
-    "br": 5120
+    "size": 13507,
+    "gz": 5547,
+    "br": 5036
   },
   "clientFull": {
-    "size": 26817,
-    "gz": 10543,
-    "br": 9553
+    "size": 26666,
+    "gz": 10458,
+    "br": 9483
   },
   "server": {
-    "size": 12876,
-    "gz": 5217,
-    "br": 4734
+    "size": 12843,
+    "gz": 5210,
+    "br": 4718
   },
   "vueClient": {
-    "size": 14729,
-    "gz": 6122,
-    "br": 5563
+    "size": 14571,
+    "gz": 6037,
+    "br": 5493
   },
   "vueClientFull": {
-    "size": 29804,
-    "gz": 11658,
-    "br": 10592
+    "size": 29653,
+    "gz": 11574,
+    "br": 10517
   },
   "vueServer": {
-    "size": 13935,
-    "gz": 5677,
-    "br": 5165
+    "size": 13902,
+    "gz": 5674,
+    "br": 5148
   },
   "reactClient": {
-    "size": 14854,
-    "gz": 6124,
-    "br": 5564
+    "size": 14696,
+    "gz": 6048,
+    "br": 5500
   },
   "reactClientFull": {
-    "size": 30068,
-    "gz": 11662,
-    "br": 10555
+    "size": 29917,
+    "gz": 11566,
+    "br": 10496
   },
   "reactServer": {
-    "size": 13566,
-    "gz": 5491,
-    "br": 4992
+    "size": 13533,
+    "gz": 5483,
+    "br": 4981
   },
   "schemaOrg": {
-    "size": 40508,
-    "gz": 14043,
-    "br": 12591
+    "size": 40482,
+    "gz": 14044,
+    "br": 12604
   },
   "schemaOrgImports": {
     "size": 98,
@@ -60,24 +60,24 @@
     "br": 407
   },
   "clientSelfContained": {
-    "size": 14388,
-    "gz": 5973,
-    "br": 5388
+    "size": 14234,
+    "gz": 5893,
+    "br": 5315
   },
   "serverSelfContained": {
-    "size": 13601,
-    "gz": 5539,
+    "size": 13570,
+    "gz": 5537,
     "br": 5001
   },
   "vueStreamingClient": {
-    "size": 1404,
-    "gz": 750,
-    "br": 671
+    "size": 1365,
+    "gz": 730,
+    "br": 654
   },
   "streamingBootstrap": {
-    "size": 13147,
-    "gz": 5448,
-    "br": 4956
+    "size": 13011,
+    "gz": 5369,
+    "br": 4900
   },
   "vueClientLazy": {
     "size": 1914,
@@ -85,8 +85,8 @@
     "br": 882
   },
   "vueClientLazyRuntime": {
-    "size": 17510,
-    "gz": 7122,
-    "br": 6497
+    "size": 17376,
+    "gz": 7047,
+    "br": 6428
   }
 }
