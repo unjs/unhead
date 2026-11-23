@@ -1,3 +1,4 @@
+import type { HeadPluginOptions } from '../types/head'
 import { hasContent } from '../utils/const'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -78,64 +79,64 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
         } as any,
       ],
     })
-    return {
-      key: 'infer-seo-meta',
-      hooks: {
-        'tags:beforeResolve': ({ tagMap }) => {
-          let title = head._titleTemplate || head._title
-          // check if the current title is %infer
-          const ogTitle = tagMap.get('meta:og:title')
-          if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            if (typeof title === 'function') {
-              // @ts-expect-error untyped
-              title = title(head._title)
-            }
-            title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
-            ogTitle.processTemplateParams = true
+    const hooks: NonNullable<HeadPluginOptions['hooks']> = {
+      // `_plain` tells the compiled server head that no function changes the text. Only then
+      // may its memo hold the inferred tags.
+      'tags:beforeResolve': Object.assign(({ tagMap }: any) => {
+        let title = head._titleTemplate || head._title
+        // check if the current title is %infer
+        const ogTitle = tagMap.get('meta:og:title')
+        if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
+          if (typeof title === 'function') {
+            // @ts-expect-error untyped
+            title = title(head._title)
           }
+          title = hasContent(title) ? String(title) : undefined
+          ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+          ogTitle.processTemplateParams = true
+        }
 
-          const descriptionValue = tagMap.get('meta:description')?.props?.content
-          const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
-          const ogDescription = tagMap.get('meta:og:description')
-          if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
-            ogDescription.processTemplateParams = true
+        const descriptionValue = tagMap.get('meta:description')?.props?.content
+        const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
+        const ogDescription = tagMap.get('meta:og:description')
+        if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
+          ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
+          ogDescription.processTemplateParams = true
+        }
+      }, { _plain: !options.ogTitle && !options.ogDescription }),
+      // after resolve so an image added or dropped by any other hook still counts
+      'tags:afterResolve': (ctx) => {
+        let cardIndex = -1
+        let hasImage = false
+        for (let i = 0; i < ctx.tags.length; i++) {
+          const tag = ctx.tags[i]!
+          if (tag.tag !== 'meta')
+            continue
+          if (tag.props.name === 'twitter:card' && typeof tag.props['data-infer'] !== 'undefined') {
+            cardIndex = i
+            continue
           }
-        },
-        // after resolve so an image added or dropped by any other hook still counts
-        'tags:afterResolve': (ctx) => {
-          let cardIndex = -1
-          let hasImage = false
-          for (let i = 0; i < ctx.tags.length; i++) {
-            const tag = ctx.tags[i]!
-            if (tag.tag !== 'meta')
-              continue
-            if (tag.props.name === 'twitter:card' && typeof tag.props['data-infer'] !== 'undefined') {
-              cardIndex = i
-              continue
-            }
-            const key = tag.props.property || tag.props.name
-            if (!IMAGE_META_KEYS.has(key))
-              continue
-            hasImage ||= hasImageContent(tag.props.content)
-            // a client tag adopts the server element of the same key and removes it when the entry goes
-            if (serverImages.length)
-              serverImages = serverImages.filter(el => elementMetaKey(el) !== key)
-          }
-          if (cardIndex === -1)
-            return
+          const key = tag.props.property || tag.props.name
+          if (!IMAGE_META_KEYS.has(key))
+            continue
+          hasImage ||= hasImageContent(tag.props.content)
+          // a client tag adopts the server element of the same key and removes it when the entry goes
+          if (serverImages.length)
+            serverImages = serverImages.filter(el => elementMetaKey(el) !== key)
+        }
+        if (cardIndex === -1)
+          return
           // the server rendered an image that no client entry manages, so the server card stands
-          if (!hasImage && serverImages.length) {
-            serverImages = serverImages.filter(el => el.isConnected)
-            hasImage = serverImages.length > 0
-          }
-          const card = ctx.tags[cardIndex]!
-          const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
-          delete props['data-infer']
-          ctx.tags[cardIndex] = { ...card, props }
-        },
+        if (!hasImage && serverImages.length) {
+          serverImages = serverImages.filter(el => el.isConnected)
+          hasImage = serverImages.length > 0
+        }
+        const card = ctx.tags[cardIndex]!
+        const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
+        delete props['data-infer']
+        ctx.tags[cardIndex] = { ...card, props }
       },
     }
+    return { key: 'infer-seo-meta', hooks, _native: Object.freeze({ ...hooks }) }
   }, 'infer-seo-meta')
 }

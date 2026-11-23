@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
+import { CompileTransform, resolveCompileOptions } from './CompileTransform'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { ServerOnlyCrawlerTags, ServerOnlyCrawlerTagsRuntime } from './ServerOnlyCrawlerTags'
@@ -34,10 +35,13 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     if (runtime)
       plugins.push(ServerOnlyCrawlerTagsRuntime.vite({}))
   }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
-  }
+  const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
+  const seoMeta = options.transformSeoMeta !== false && UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts })
+  const compileOpts = resolveCompileOptions(options.compile, framework)
+  // Compile runs after it, so a call it rewrites compiles as the `useHead` call that a build
+  // without compile renders, in its tag order. Compile takes the calls it leaves.
+  if (seoMeta)
+    plugins.push(seoMeta)
   const minifyTransformOptions = resolveMinifyTransformOptions(options)
   if (minifyTransformOptions) {
     plugins.push(MinifyTransform.vite({
@@ -46,6 +50,9 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
       ...minifyTransformOptions,
     }))
   }
+  // Compile reads the minified inline content
+  if (compileOpts)
+    plugins.push(CompileTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, importPaths: seoMetaOpts.importPaths, ...compileOpts }))
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {

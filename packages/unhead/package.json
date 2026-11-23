@@ -94,6 +94,10 @@
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
     },
+    "./compiled/server": {
+      "types": "./dist/compiled/server.d.ts",
+      "default": "./dist/compiled/server.mjs"
+    },
     "./vite": {
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
@@ -151,6 +155,9 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "compiled/server": [
+        "dist/compiled/server.d.ts"
       ],
       "vite": [
         "dist/vite.d.ts"

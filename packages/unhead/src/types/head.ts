@@ -51,6 +51,12 @@ export interface HeadEntry<Input> {
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
   /**
+   * Frozen hook identities of a built-in plugin that the compiled server head runs natively.
+   *
+   * @internal
+   */
+  _native?: Readonly<Record<string, (...args: any[]) => any>>
+  /**
    * Filter safe entries before they are streamed.
    * @internal
    */

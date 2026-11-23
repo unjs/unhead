@@ -1,0 +1,93 @@
+import type { CompiledTags } from './types'
+
+/** The dedupe key came from v3 `_d`, not from `hashTag`. */
+export const FLAG_IDENTITY = 1
+/** v3 `isMetaArrayDupeKey` holds, so one entry may repeat this meta. */
+export const FLAG_ARRAYABLE = 2
+/** A string value of this tag holds a dynamic value. */
+export const FLAG_DYNAMIC_VALUES = 4
+/** A whole dynamic value of `undefined` leaves no tag, as v3 makes no tag for a key whose value is undefined. */
+export const FLAG_UNDEFINED_DROPS = 8
+/** A number value of this tag renders by other v3 rules. The build sets it on flat meta, whose number values then take the v3 input. */
+export const FLAG_STRING_VALUES = 16
+/** A keyless JSON script whose identity is its content, which holds a dynamic value. */
+export const FLAG_CONTENT_IDENTITY = 32
+
+export const DYNAMIC_VALUE_OPEN = '\uE000'
+export const DYNAMIC_VALUE_CLOSE = '\uE001'
+export const DYNAMIC_VALUE_RE = /\uE000(\d+)\uE001/g
+/** A `tagPriority` that `AliasSortingPlugin` moves. Compiled tags never hold one. */
+export const ALIAS_PRIORITY_RE = /^(?:before|after):/
+const WHOLE_DYNAMIC_VALUE_RE = /^\uE000(\d+)\uE001$/
+
+/**
+ * The token that marks dynamic value `index` inside a string value of `compileTags` input.
+ *
+ * @experimental
+ */
+export function dynamicValue(index: number): string {
+  return `${DYNAMIC_VALUE_OPEN}${index}${DYNAMIC_VALUE_CLOSE}`
+}
+
+/**
+ * A deep copy of compiled tag JSON. Compiled tags are shared by every request, so no head may hold
+ * a nested template param of it.
+ */
+export function copyValue<T>(value: T): T {
+  if (!value || typeof value !== 'object')
+    return value
+  const out: any = Array.isArray(value) ? [] : {}
+  for (const key in value)
+    out[key] = copyValue(value[key])
+  return out
+}
+
+/**
+ * Replaces the dynamic values of a value. A value that is only a dynamic value keeps the raw value,
+ * so `normalizeProps` sees what the author passed.
+ */
+export function resolveDynamicValues(value: string, values?: readonly unknown[]): unknown {
+  const whole = WHOLE_DYNAMIC_VALUE_RE.exec(value)
+  return whole
+    ? values?.[+whole[1]!]
+    : value.replace(DYNAMIC_VALUE_RE, (_, index) => String(values?.[+index]))
+}
+
+/**
+ * Rebuilds loose head input from compiled tags. `normalizeEntryToTags` over the result
+ * gives the tags the runtime makes for the original input.
+ *
+ * @internal
+ */
+export function toHeadInput(compiledTags: CompiledTags, values?: readonly unknown[]): Record<string, any> {
+  const input: Record<string, any> = {}
+  for (const [tag, props, , , extra, flags] of compiledTags) {
+    // A reader may edit the input in place, as the Nuxt island handler does. Style content
+    // that is not a string becomes an attribute, which compile allows only before the others.
+    // Template params hold no config keys, so a `tagPriority` from the compile option stays out of them
+    let value: any = Object.assign({}, tag === 'style' && extra, copyValue(props || {}), tag !== 'templateParams' && extra)
+    if (flags! & FLAG_DYNAMIC_VALUES) {
+      for (const key in value) {
+        if (typeof value[key] === 'string')
+          value[key] = resolveDynamicValues(value[key], values)
+      }
+      // only a whole dynamic value resolves to undefined
+      if (flags! & FLAG_UNDEFINED_DROPS && Object.values(value).includes(undefined))
+        continue
+    }
+    // normalize adds this one last, so an attribute a value adds must land before it
+    if (value['data-hid'] === value.key)
+      delete value['data-hid']
+    // `title: null` and `title: { textContent: null }` differ, so keep the shorthand
+    if ((tag === 'title' || tag === 'titleTemplate') && !props && extra && 'textContent' in extra && Object.keys(extra).length === 1)
+      value = value.textContent
+    const current = input[tag]
+    if (current === undefined)
+      input[tag] = tag === 'meta' || tag === 'link' || tag === 'script' || tag === 'style' || tag === 'noscript' ? [value] : value
+    else if (Array.isArray(current))
+      current.push(value)
+    else
+      input[tag] = [current, value]
+  }
+  return input
+}
