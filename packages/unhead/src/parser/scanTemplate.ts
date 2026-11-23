@@ -432,7 +432,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       const end = endComment(html, start + 4)
       if (end < 0)
         break
-      if (phase === 'body' && !templateDepth && !foreign.length && !result.outlet
+      if (phase === 'body' && !templateDepth && !foreign.length && !result.outlet && scopes.at(-1) !== 'select'
         && OUTLET.test(html.slice(start, end))) {
         result.outlet = Object.freeze({ start, end })
       }

@@ -308,6 +308,38 @@ it('leaves tags after the document head in their original position', () => {
   )
 })
 
+it.each(['content-security-policy', 'Content-Security-Policy', 'Content-Securit&#121;-Policy'])('keeps the source policy directive in its head position: %s', (pragma) => {
+  const head = createServerHeadWithContext()
+  head.push({ title: 'Page' })
+  const policy = `<meta http-equiv="${pragma}" content="default-src 'self'">`
+  const fallback = '<noscript>JavaScript is disabled.</noscript>'
+  const template = `<html><head>${policy}${fallback}</head><body></body></html>`
+
+  expect(transformHtmlTemplate(head, template)).toContain(`<head>${policy}${fallback}<title>Page</title></head>`)
+})
+
+it('places a managed policy directive before stylesheets regardless of case', () => {
+  const head = createServerHeadWithContext()
+  head.push({
+    link: [{ rel: 'stylesheet', href: '/page.css' }],
+    meta: [{ 'http-equiv': 'Content-Security-Policy', 'content': 'default-src \'self\'' }],
+  })
+
+  const html = transformHtmlTemplateRaw(head, '<html><head></head><body></body></html>')
+
+  expect(Array.from(new JSDOM(html).window.document.head.children, element => element.localName))
+    .toEqual(['meta', 'link'])
+})
+
+it.each([false, true])('uses the outlet outside a select, prepared: %s', (prepared) => {
+  const select = '<select><option>Example<!--app-html--></option></select>'
+  const template = `<html><head></head><body>${select}<main><!--app-html--></main></body></html>`
+  const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), prepared ? prepareTemplate(template) : template)
+
+  expect(shell).toContain(`<body>${select}<main>`)
+  expect(end).toBe('</main></body></html>')
+})
+
 it('keeps the parsed attributes of an extracted data script', () => {
   const head = createServerHeadWithContext()
   const html = '<html><head><script data-label="A &amp;amp; B" type=application/json/>{"label":"example"}</script></head><body></body></html>'

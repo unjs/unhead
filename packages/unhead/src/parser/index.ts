@@ -314,10 +314,16 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           replace(start, endTag.end)
           break
         }
-        case 'meta':
-          (input.meta ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['meta']>[number])
+        case 'meta': {
+          const attrs = readAttributes(startTag.attributes)
+          // Meta-delivered policies apply only to subsequent content.
+          if (attrs['http-equiv']?.toLowerCase() === 'content-security-policy') {
+            continue
+          }
+          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.end)
           break
+        }
         case 'link':
           (input.link ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['link']>[number])
           replace(start, startTag.end)
