@@ -5,7 +5,7 @@ const DOUBLE_QUOTE_RE = /"/g
 /* @__PURE__ */
 function encodeAttribute(value: string, escapeAmpersands: boolean) {
   let s = typeof value === 'string' ? value : String(value)
-  if (escapeAmpersands)
+  if (escapeAmpersands && s.includes('&'))
     s = s.replaceAll('&', '&amp;')
   return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
 }
