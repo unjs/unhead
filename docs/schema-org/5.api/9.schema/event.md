@@ -139,6 +139,7 @@ Import `definePlace` and `defineOrganization` with `defineEvent` in this example
 - `name`, `description`, `image`, and `inLanguage` can be inherited from resolved page metadata.
 - `organizer`, `performer`, and `offers` use their corresponding nested resolvers.
 - `offers` has no default `availability` or `priceValidUntil`. If tickets are not on sale yet, omit `availability`. Set `validFrom` only when you know the on-sale date.
+- `endDate` has no default. Google recommends it, so set it when you know when the event ends.
 - `eventAttendanceMode` and `eventStatus` are expanded to full Schema.org URLs.
 - Event date fields accept JavaScript Date objects. Midnight values are serialized as calendar dates unless `eventStatus` is `EventMovedOnline`; dates for moved-online events are serialized as ISO 8601 date-times.
 

@@ -12,6 +12,7 @@ import {
   resolvableDateToIso,
   resolveDefaultType,
   resolveWithBase,
+  setIfEmpty,
 } from '../../utils'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
@@ -191,13 +192,6 @@ export const datasetResolver = defineSchemaOrgResolver<Dataset>({
   defaults: {
     '@type': 'Dataset',
   },
-  inheritMeta: [
-    'description',
-    'url',
-    'dateModified',
-    'datePublished',
-    { meta: 'title', key: 'name' },
-  ],
   idPrefix: ['url', PrimaryDatasetId],
   resolve(node, ctx) {
     resolveDefaultType(node, 'Dataset')
@@ -247,5 +241,14 @@ export const datasetResolver = defineSchemaOrgResolver<Dataset>({
     node.datePublished = resolvableDateToIso(node.datePublished)
 
     return node
+  },
+  // Page metadata describes the page. Only the root dataset inherits it; a dataset
+  // nested in hasPart or isPartOf keeps only the values given.
+  resolveRootNode(node, { meta }) {
+    setIfEmpty(node, 'name', meta.title || undefined)
+    setIfEmpty(node, 'description', meta.description || undefined)
+    setIfEmpty(node, 'url', meta.url || undefined)
+    setIfEmpty(node, 'datePublished', resolvableDateToIso(meta.datePublished) || undefined)
+    setIfEmpty(node, 'dateModified', resolvableDateToIso(meta.dateModified) || undefined)
   },
 })

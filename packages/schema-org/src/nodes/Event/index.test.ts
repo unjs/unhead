@@ -155,7 +155,6 @@ describe('defineEvent', () => {
           {
             "@id": "https://example.com/#event",
             "@type": "Event",
-            "endDate": "2021-11-10",
             "inLanguage": "en-AU",
             "name": "test",
             "startDate": "2021-11-10",
@@ -181,7 +180,6 @@ describe('defineEvent', () => {
           {
             "@id": "https://example.com/#event",
             "@type": "Event",
-            "endDate": "2021-10-10",
             "inLanguage": "en-AU",
             "name": "test",
             "startDate": "2021-10-10",
@@ -194,18 +192,39 @@ describe('defineEvent', () => {
   it('preserves time data for online events', async () => {
     await useSetup(async (head) => {
       const startDate = new Date(2021, 10, 10, 0)
+      const endDate = new Date(2021, 10, 11, 0)
       useSchemaOrg(head, [
         defineEvent({
           name: 'Online event',
           eventAttendanceMode: 'OnlineEventAttendanceMode',
           startDate,
+          endDate,
         }),
       ])
 
       const [event] = await injectSchemaOrg(head)
 
       expect(event.startDate).toBe(startDate.toISOString())
-      expect(event.endDate).toBe(startDate.toISOString())
+      expect(event.endDate).toBe(endDate.toISOString())
+    })
+  })
+
+  it.each([
+    ['an offline event', {}],
+    ['an online event', { eventAttendanceMode: 'OnlineEventAttendanceMode' as const }],
+  ])('leaves endDate empty for %s with only a startDate', async (_, mode) => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Single session',
+          startDate: '2021-10-10T19:00:00+11:00',
+          ...mode,
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+
+      expect(event.endDate).toBeUndefined()
     })
   })
 
@@ -226,7 +245,6 @@ describe('defineEvent', () => {
           {
             "@id": "https://example.com/#event",
             "@type": "Event",
-            "endDate": "2021-10-10",
             "inLanguage": "en-AU",
             "location": {
               "@type": "VirtualLocation",

@@ -95,6 +95,10 @@ interface OfferBase extends Thing {
    * The date when the offer becomes valid.
    */
   'validFrom'?: ResolvableDate
+  /**
+   * The date after which the offer is no longer valid.
+   */
+  'validThrough'?: ResolvableDate
   'url'?: string
   /**
    * Nested information about the return policies associated with an Offer. If you decide to add hasMerchantReturnPolicy, add the required and recommended MerchantReturnPolicy properties.
@@ -149,7 +153,10 @@ export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | str
     '@type': 'Offer',
   },
   resolve(node, ctx) {
-    setIfEmpty(node, 'priceCurrency', ctx.meta.currency)
+    // The site currency describes a price. An offer priced only through
+    // priceSpecification carries its currency there.
+    if (node.price != null)
+      setIfEmpty(node, 'priceCurrency', ctx.meta.currency)
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
 
@@ -161,6 +168,7 @@ export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | str
     if (node.priceValidUntil)
       node.priceValidUntil = resolvableDateToIso(node.priceValidUntil)
     node.validFrom = resolvableDateToIso(node.validFrom)
+    node.validThrough = resolvableDateToIso(node.validThrough)
 
     node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy, ctx, merchantReturnPolicyResolver)
     node.priceSpecification = resolveRelation(node.priceSpecification, ctx, unitPriceSpecificationResolver)

@@ -80,9 +80,26 @@ The `Product` TypeScript interface requires `name` and `image` when you pass an 
 
 ## Recommended Properties
 
-- **offers** `NodeRelations<Offer | number>`
+- **offers** `NodeRelations<Offer | AggregateOffer | number>`
 
   Add [Offer](https://schema.org/Offer) properties. Unhead has no default `availability` or `priceValidUntil`. Google recommends both, so pass them when you know them.
+
+  Unhead adds the `currency` option as `priceCurrency` only to an offer with a `price`. An offer priced only through `priceSpecification` keeps its currency there.
+
+  A product snippet also accepts an [AggregateOffer](https://schema.org/AggregateOffer) for a price range. If an entry has `@type: 'AggregateOffer'` or a `lowPrice`, Unhead resolves it as an AggregateOffer. Google requires `lowPrice` and `priceCurrency`, and recommends `highPrice` and `offerCount`. Merchant listings need an Offer.
+
+  ```ts
+  defineProduct({
+    name: 'Ergonomic Desk Chair',
+    image: '/product.png',
+    offers: {
+      '@type': 'AggregateOffer',
+      'lowPrice': 120,
+      'highPrice': 180,
+      'offerCount': 4,
+    },
+  })
+  ```
 
 Google's merchant and product variant documentation also uses `audience`, `category`, `color`, GTIN variants, `hasAdultConsideration`, `hasCertification`, `inProductGroupWithID`, `isVariantOf`, `material`, `pattern`, `size`, and `subjectOf`. Unhead types their nested CategoryCode, Certification, PeopleAudience, ProductGroup, SizeSpecification, and 3DModel values.
 
@@ -106,6 +123,7 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-sche
 
 - `audience`, `brand`, `hasCertification`, `isVariantOf`, and `subjectOf` resolve as typed nested nodes
 - untyped `brand` objects resolve as `Brand`; set `@type: Organization` for an organization brand
+- a numeric `reviewRating.ratingValue` gets `bestRating: 5` and `worstRating: 1`; a percentage or fraction such as `60%` or `6 / 10` implies its own scale and gets neither
 
 ## Examples
 
@@ -165,9 +183,11 @@ export interface ProductSimple extends Thing {
    */
   image: NodeRelations<ImageObject | string>
   /**
-   *  An array of references-by-ID to one or more Offer or aggregateOffer pieces.
+   * One or more Offer or AggregateOffer pieces.
+   * An entry with `@type: 'AggregateOffer'` or a `lowPrice` resolves as an AggregateOffer.
+   * Google merchant listings need an Offer; product snippets accept either.
    */
-  offers?: NodeRelations<Offer | number>
+  offers?: NodeRelations<Offer | AggregateOffer | number>
   /**
    * A Brand or Organization associated with the Product.
    */
@@ -204,10 +224,6 @@ export interface ProductSimple extends Thing {
    * An AggregateRating object.
    */
   aggregateRating?: NodeRelation<AggregateRating>
-  /**
-   * An AggregateOffer object.
-   */
-  aggregateOffer?: NodeRelation<AggregateOffer>
   /**
    * A reference to an Organization piece, representing the brand which produces the Product.
    */

@@ -222,7 +222,6 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
         ? node.previousStartDate.map(resolveDate)
         : resolveDate(node.previousStartDate)
     }
-    setIfEmpty(node, 'endDate', node.startDate)
     return node
   },
   resolveRootNode(node, { find }) {
