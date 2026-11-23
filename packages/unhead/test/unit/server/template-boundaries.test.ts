@@ -10,6 +10,16 @@ const renderers = [
 ] as const
 
 describe.each(renderers)('%s template boundaries', (_, render) => {
+  it('inserts body-close tags after a select containing a template', () => {
+    const head = createServerHeadWithContext()
+    head.push({ script: [{ src: '/injected.js', tagPosition: 'bodyClose' }] })
+    const prefix = '<html><head></head><body><select><template><option>Example</option></template><option>Last</option></select><main><!-- app-html --></main>'
+
+    expect(render(head, `${prefix}</body></html>`)).toBe(
+      `${prefix}<script src="/injected.js"></script></body></html>`,
+    )
+  })
+
   it('requires a document body end outside foreign content', () => {
     const state = { style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' as const }] }
     const prefix = '<html><head></head><body>'
@@ -70,6 +80,15 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
       `${prefix}<style>p { color: black }</style></body></html>`,
     )
   })
+})
+
+it.each([false, true])('splits the stream after a select containing a template, prepared: %s', (prepared) => {
+  const select = '<select><template><!-- app-html --><option>Example</option></template><option>Last</option></select>'
+  const template = `<html><head></head><body>${select}<main><!-- app-html --></main></body></html>`
+  const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), prepared ? prepareTemplate(template) : template)
+
+  expect(shell.endsWith(`${select}<main>`)).toBe(true)
+  expect(end).toBe('</main></body></html>')
 })
 
 it('splits the stream at a comment in the document instead of marker text in a textarea', () => {
