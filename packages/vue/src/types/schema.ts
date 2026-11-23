@@ -12,6 +12,7 @@ import type {
   MaybeEventFnHandlers,
   MetaFlat,
   Noscript,
+  ResolvableHead,
   ResolvableTemplateParams,
   SchemaAugmentations,
   Script,
@@ -147,4 +148,8 @@ export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadCl
 
 export type UseHeadInput<_Deprecated = never> = HeadInput<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
-export type VueHeadClient<I = UseHeadInput, R = unknown> = Unhead<I, R> & Plugin
+/**
+ * Client heads accept core-resolvable input by default. Pass Vue reactive input
+ * through useHead(), which owns dependency tracking and lifecycle cleanup.
+ */
+export type VueHeadClient<I = ResolvableHead, R = unknown> = Unhead<I, R> & Plugin

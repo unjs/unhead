@@ -29,6 +29,7 @@
       "@unhead/vue/stream/server": ["./packages/vue/src/stream/server"],
       "@unhead/vue/client": ["./packages/vue/src/client"],
       "@unhead/vue/server": ["./packages/vue/src/server"],
+      "@unhead/vue/stream/client": ["./packages/vue/src/stream/client"],
       "@unhead/bundler": ["./packages/bundler/src/index"],
       "@unhead/bundler/vite": ["./packages/bundler/src/unplugin/vite"],
       "@unhead/bundler/framework": ["./packages/bundler/src/unplugin/framework"],
