@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server'
-import { prepareStreamingTemplate, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../../src/stream/server'
+import { prepareStreamingTemplate, wrapStream } from '../../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../../util'
 
 const renderers = [
@@ -148,30 +148,22 @@ it.each([false, true])('streams after HTML scopes inside foreign content, prepar
   }
 })
 
-it('leaves an unsplit stream shell and its app content in source order', async () => {
+it.each([false, true])('keeps late tags when optional body and html end tags are omitted, prepared: %s', async (prepared) => {
   const head = createStreamableServerHead()
   const template = '<html><head></head><body>'
   const app = new ReadableStream<Uint8Array>({
-    start(controller) {
+    pull(controller) {
+      head.push({ title: 'Late title', style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
       controller.enqueue(new TextEncoder().encode('<main>Content</main>'))
       controller.close()
     },
   })
 
-  const html = await new Response(wrapStream(head, app, template, undefined, {
-    flushChunk: () => '<!-- Late update -->',
-  })).text()
+  const html = await new Response(wrapStream(head, app, prepared ? prepareTemplate(template) : template)).text()
 
-  expect(html.slice(html.indexOf('</head>'))).toBe('</head><body><main>Content</main>')
-})
-
-it('leaves body tags out when a stream template has no body end', () => {
-  const head = createStreamableServerHead({ writesBodyTags: true })
-  const parts = prepareStreamingTemplate(head, '<html><head></head><body>')
-  head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
-  renderSSRHeadSuspenseChunk(head)
-
-  expect(renderStreamEnd(head, parts)).toBe('')
+  expect(html).toContain('</head><body><main>Content</main>')
+  expect(html).toContain('Late title')
+  expect(html.endsWith('<style>p { color: black }</style>')).toBe(true)
 })
 
 it.each([false, true])('mounts streamed content after a foreignObject table, prepared: %s', async (prepared) => {
