@@ -41,9 +41,10 @@ export interface StreamingPluginOptions {
    *   always safe in production. Recommended for streaming SSR.
    * - 'module': ES module import of the client bootstrap. Vite rewrites the
    *   import path through its module graph so it survives production builds.
+   * - 'manual': Keep the boundary transforms. The app supplies the client head.
    * @default 'async'
    */
-  mode?: 'async' | 'inline' | 'module'
+  mode?: 'async' | 'inline' | 'module' | 'manual'
   /**
    * CSP nonce forwarded on every injected `<script>` tag. Pass a string or a
    * function returning a string (useful when the nonce rotates per request).
@@ -74,7 +75,7 @@ export interface StreamingPluginOptions {
 }
 
 interface InternalState {
-  mode: 'async' | 'inline' | 'module'
+  mode: NonNullable<StreamingPluginOptions['mode']>
   /** True once Vite-specific hooks have identified this as a Vite run. */
   isVite: boolean
   /** Production build detected via vite configResolved. */
@@ -287,7 +288,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     enforce: 'pre',
 
     async buildStart() {
-      if (!state.isVite)
+      if (!state.isVite || mode === 'manual')
         return
       // In dev, `module` mode never needs the iife asset: its descriptor is
       // resolved through the virtual client module, and a
@@ -408,6 +409,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
         // rewritten by downstream HTML transforms.
         order: 'pre',
         handler(this: any, html?: string, ctx?: { path?: string, bundle?: Record<string, any> }) {
+          if (mode === 'manual')
+            return
+
           // Vite's manifest pass (vitejs/ecosystem#15) calls this hook with
           // no HTML, ahead of any per-request render, to collect the
           // returned tags into a build manifest for frameworks (e.g. Nuxt)
