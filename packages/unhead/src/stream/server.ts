@@ -692,6 +692,8 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
  * @param head - The Unhead instance
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @returns Object with `shell` (before app) and `end` (after app) parts
+ * @throws If the template has no verified split or safe ending. Templates may
+ * omit optional closing tags if the rest of the markup can be read.
  *
  * @example
  * ```ts
@@ -706,13 +708,14 @@ export function prepareStreamingTemplate(
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
-
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const layout = typeof template === 'string'
     ? createStreamingTemplateLayout(parsed)
     : getPreparedStreamingLayout(template)
+  if (!layout && !parsed.canAppendAtEnd)
+    throw new Error('Cannot stream an incomplete or unsupported HTML template.')
 
+  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
   let parts: StreamingTemplateParts
   if (layout) {
     const shell = applyHeadToHtml(layout.shellTemplate, {
@@ -730,7 +733,6 @@ export function prepareStreamingTemplate(
     }
   }
   else {
-    // Can't split, return full template as shell
     parts = {
       shell: applyShellToTemplate(head, ssr, parsed),
       end: '',

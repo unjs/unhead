@@ -4,6 +4,22 @@ import { useHead } from '../../../src'
 import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
+  it('preserves unchanged numeric and boolean attributes on rerender', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    head.push({
+      meta: [{ name: 'count', content: 0 }],
+      script: [{ src: '/app.js', defer: true }],
+    })
+    const observer = new document.defaultView!.MutationObserver(() => {})
+    observer.observe(document.head, { attributes: true, subtree: true })
+
+    head.push({ title: 'Next page' })
+
+    expect(observer.takeRecords().map(record => record.attributeName)).toEqual([])
+    observer.disconnect()
+  })
+
   it('renders numeric zero meta content', () => {
     const head = useDOMHead()
 
