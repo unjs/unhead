@@ -203,7 +203,7 @@ function asciiLower(value: string) {
   return value.replace(ASCII_UPPER, letter => letter.toLowerCase())
 }
 
-export function readTag(html: string, start: number, collectAttributes = false): SourceTag | undefined {
+function readTag(html: string, start: number, collectAttributes = false): SourceTag | undefined {
   TAG_NAME.lastIndex = start
   const match = TAG_NAME.exec(html)
   if (!match)
@@ -260,7 +260,7 @@ export function readTag(html: string, start: number, collectAttributes = false):
   }
 }
 
-export function endComment(html: string, start: number) {
+function endComment(html: string, start: number) {
   if (html[start] === '>')
     return start + 1
   if (html.startsWith('->', start))
