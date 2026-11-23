@@ -78,6 +78,19 @@ function resolveStream(document: Document | undefined, streamKey: string) {
   return stream
 }
 
+function activateHooks(pending: DeferredHead<unknown>['hooks']): ClientUnhead['hooks'] {
+  if (!pending)
+    return createHooks<ClientHeadHooks>()
+  if ('callHook' in pending)
+    return pending
+  const active = createHooks<ClientHeadHooks>()
+  const { _hooks } = pending
+  // Keep references and teardown callbacks registered during setup intact.
+  Reflect.deleteProperty(pending, 'hook')
+  Object.assign(pending, active, { _hooks })
+  return Object.setPrototypeOf(pending, Object.getPrototypeOf(active))
+}
+
 export async function activate<T>(
   options: LazyHeadOptions,
   queue: HeadQueue<T>,
@@ -100,7 +113,7 @@ export async function activate<T>(
     stream = resolveQueue()
   let render: HeadRenderer<boolean> = () => false
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
-  const hooks = shell.hooks ??= createHooks<ClientHeadHooks>()
+  const hooks = shell.hooks = activateHooks(shell.hooks)
   const head = createClientHeadAdapter(core, hooks, head => render(head))
   head._b = true
   const hydrated = new Map<number, HeadEntry<T>>()
@@ -188,8 +201,8 @@ export async function activate<T>(
         if (entry.baseline) {
           hydrated.set(_i, {
             _i,
-            input: entry.baseline.input,
-            _o: entry.baseline.input,
+            input: entry.baseline,
+            _o: entry.baseline,
             options: head.entries.get(_i)?.options,
           })
         }
@@ -288,15 +301,19 @@ function discardOnRouteExit<T>(queue: HeadQueue<T>) {
 }
 
 // Keep the installed object stable. Composables can keep using it after replay.
-export async function hydrate<T>(options: LazyHeadOptions, queue: HeadQueue<T>, shell: DeferredHead<T>): Promise<void> {
-  if (queue.head)
-    return
+export function hydrate<T>(options: LazyHeadOptions, queue: HeadQueue<T>, shell: DeferredHead<T>, resolveRef?: (value: unknown) => unknown): Promise<void> {
+  return queue.loading ||= hydrateHead(options, queue, shell, resolveRef).catch((error) => {
+    queue.loading = undefined
+    throw error
+  })
+}
+
+async function hydrateHead<T>(options: LazyHeadOptions, queue: HeadQueue<T>, shell: DeferredHead<T>, resolveRef?: (value: unknown) => unknown): Promise<void> {
   const streamKey = options.streamKey ?? options.experimentalStreamKey ?? '__unhead__'
   const view = shell.resolvedOptions.document?.defaultView as unknown as Record<string, StreamingGlobal> | undefined
   const streamed = view?.[streamKey]
   if (streamed)
     discardOnRouteExit(queue)
-  const resolveRef = options._resolveRef
   const propResolvers = resolveRef ? [(_?: string, value?: unknown) => resolveRef(value), ...options.propResolvers ?? []] : options.propResolvers
   await activate({ ...options, propResolvers, streamKey: streamed ? streamKey : undefined }, queue, shell, (head) => {
     for (const key of Object.keys(head) as (keyof typeof head)[]) {
@@ -311,6 +328,7 @@ export async function hydrate<T>(options: LazyHeadOptions, queue: HeadQueue<T>, 
         set: value => Reflect.set(head, key, value),
       })
     }
+    shell._load = undefined
     queue.entries.clear()
     queue.plugins.length = 0
   })

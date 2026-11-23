@@ -79,15 +79,21 @@ describe('production Vue setup', () => {
     window.requestAnimationFrame = callback => frames.push(callback)
     if (streaming)
       window.eval('window.__unhead__ = { _q: [[{ title: "Streamed title" }]], push(entries) { this._q.push(entries) } }')
-    let client: { updates: string[], unmount: () => void } | undefined
+    let client: { updates: string[], update: () => void, unsubscribe?: () => void, unmount: () => void } | undefined
     try {
       window.eval(code)
       const fixture = window as unknown as { SetupFixture: { start: (streaming: boolean, subscribe: boolean, supplied: boolean) => NonNullable<typeof client> } }
       client = fixture.SetupFixture.start(streaming, subscribe, supplied)
       frames.shift()!(0)
       await expect.poll(() => window.document.title).toBe(streaming ? 'Streamed title' : 'Hydrated title')
-      if (subscribe)
+      if (subscribe) {
         expect(client.updates).toContain('setup')
+        client.update()
+        expect(client.updates.filter(update => update === 'setup')).toEqual(['setup'])
+        client.unsubscribe!()
+        client.update()
+        expect(client.updates).not.toContain('setup')
+      }
       if (supplied)
         expect(client.updates).toContain('supplied')
     }

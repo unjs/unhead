@@ -318,6 +318,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _scripts?: Record<string, any>
+  /** @internal */
+  _load?: () => Promise<void>
   /**
    * @internal
    */

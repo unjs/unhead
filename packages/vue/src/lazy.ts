@@ -39,51 +39,47 @@ export function createDeferredHead(
   options: CreateClientHeadOptions,
   schedule: (app: App, lifecycle: DeferredHeadLifecycle) => void,
 ) {
-  return _createDeferredHead<UseHeadInput, Plugin & Pick<LazyVueHead, 'push' | 'ssr' | 'use'>>(
-    options,
-    (head, finishHydration, queue) => Object.assign(head, {
-      install(app: App) {
-        installHead(app, head)
-        schedule(app, deferredHeadLifecycle(finishHydration, queue))
-      },
-    }),
-  )
-}
-
-/** @internal */
-export function createHeadAfterHydration(options: LazyHeadOptions = {}) {
-  return _createDeferredHead<UseHeadInput, Plugin & Pick<LazyVueHead, 'push' | 'ssr' | 'use'>>(options, (head, finishHydration, queue) => Object.assign(head, {
+  const [head, queue] = _createDeferredHead<UseHeadInput>(options)
+  return Object.assign(head, {
     install(app: App) {
       installHead(app, head)
-      const finish = () => finishHydration(load => requestAnimationFrame(() => setTimeout(() => {
-        load().catch(console.error)
-      })))
-      const mount = app.mount
-      app.mount = (...args) => {
-        const mounted = mount.apply(app, args)
-        queue.streamRoute = [app, app.config.globalProperties.$route?.path]
-        const suspense = mounted?.$.subTree.suspense
-        if (suspense?.pendingBranch) {
-          // Flush with the root boundary's mounted effects when hydration resolves.
-          suspense.effects.push(finish)
-        }
-        else {
-          finish()
-        }
-        return mounted
-      }
+      schedule(app, deferredHeadLifecycle(head, queue))
     },
-  }))
+  })
 }
 
 /** @internal */
-export function createStreamableHeadAfterHydration(options: CreateStreamableClientHeadOptions = {}) {
-  const streamKey = options.streamKey ?? '__unhead__'
-  const view = (options.document ?? globalThis.document)?.defaultView as unknown as Record<string, unknown> | undefined
-  if (view?.[streamKey]) {
-    return createHeadAfterHydration({
-      ...options,
-      _resolveRef: unref,
-    })
+export function createHeadAfterHydration(options: LazyHeadOptions = {}, resolveRef?: (value: unknown) => unknown) {
+  const [shell, queue] = _createDeferredHead<UseHeadInput>(options, resolveRef)
+  const head = shell as typeof shell & { install: (app: App) => void }
+  head.install = (app) => {
+    installHead(app, head)
+    const finish = () => {
+      queue.hydrating = false
+      requestAnimationFrame(() => head._load?.().catch(console.error))
+    }
+    const mount = app.mount
+    app.mount = (...args) => {
+      const mounted = mount.apply(app, args)
+      queue.streamRoute = [app, app.config.globalProperties.$route?.path]
+      const suspense = mounted?.$.subTree.suspense
+      if (suspense?.pendingBranch) {
+        // Flush with the root boundary's mounted effects when hydration resolves.
+        suspense.effects.push(finish)
+      }
+      else {
+        finish()
+      }
+      return mounted
+    }
+  }
+  return head
+}
+
+/** @internal */
+export function createStreamableHeadAfterHydration(options?: CreateStreamableClientHeadOptions) {
+  const view = window as unknown as Record<string, unknown>
+  if (view[options?.streamKey ?? '__unhead__']) {
+    return createHeadAfterHydration(options, unref)
   }
 }

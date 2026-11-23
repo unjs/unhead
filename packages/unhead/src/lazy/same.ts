@@ -1,17 +1,12 @@
-function isFunctionValue(key?: string): boolean {
-  return key === 'titleTemplate' || !!key?.startsWith('on')
-}
-
 // Keep the original values when the app edits a plain object or list in place.
 export function copyInput<T>(value: T, key?: string): T {
-  // the resolver leaves a schema.org node resolver as it is
-  if (key === '_resolver')
-    return value
-  if (typeof value === 'function' && !isFunctionValue(key)) {
+  if (typeof value === 'function') {
+    // Preserve callbacks and schema.org resolvers for the normal resolver.
+    if (/^(?:on|_resolver$|titleTemplate$)/.test(key ?? ''))
+      return value
     try {
       // Adoption needs the original value even if the getter changes before load.
-      const resolved = value()
-      const snapshot = typeof resolved === 'function' ? resolved : copyInput(resolved)
+      const snapshot = copyInput(value(), '_resolver')
       return (() => snapshot) as T
     }
     catch {
@@ -19,9 +14,9 @@ export function copyInput<T>(value: T, key?: string): T {
       return value
     }
   }
-  if (!value || typeof value !== 'object' || (!Array.isArray(value) && (value as any).constructor !== Object))
+  const out: any = Array.isArray(value) ? [] : value?.constructor === Object ? {} : undefined
+  if (!out)
     return value
-  const out: any = Array.isArray(value) ? [] : {}
   for (const k in value)
     out[k] = copyInput((value as any)[k], k)
   return out
