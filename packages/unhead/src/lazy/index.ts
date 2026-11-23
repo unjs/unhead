@@ -20,6 +20,8 @@ export interface LazyHeadOptions extends CreateClientHeadOptions {
    * @internal
    */
   _entrySource?: () => string | undefined
+  /** @internal */
+  _resolveRef?: (value: unknown) => unknown
 }
 
 /**
@@ -52,11 +54,18 @@ export interface QueuedEntry<T> {
 }
 
 /** @internal */
+interface StreamApp {
+  config: { globalProperties: Record<string, unknown> }
+  onUnmount: (cleanup: () => void) => unknown
+}
+
+/** @internal */
 export interface HeadQueue<T> {
   index: number
   hydrating: boolean
   entries: Map<number, QueuedEntry<T>>
   plugins: HeadPluginInput[]
+  streamRoute?: [app: StreamApp, path: string | undefined]
   closeStream?: false | (() => void)
   head?: ClientUnhead<T>
 }

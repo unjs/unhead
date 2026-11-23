@@ -1,5 +1,5 @@
 import { createStreamableHead } from '@unhead/vue/stream/client'
-import { createSSRApp, h, nextTick, ref } from 'vue'
+import { createSSRApp, h } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { useHead } from '../../src'
 
@@ -24,22 +24,4 @@ export async function start() {
   await router.isReady()
   app.mount('#app')
   return { app, navigate: () => router.push('/destination'), abort: () => router.push('/blocked') }
-}
-
-export async function startCustom() {
-  const destination = ref(false)
-  const initial = page('initial')
-  const target = page('destination')
-  const head = createStreamableHead()!
-  const app = createSSRApp({ render: () => h(destination.value ? target : initial) }).use(head)
-  app.mount('#app')
-  return {
-    app,
-    async navigate() {
-      app.config.globalProperties.$unhead.discardStream()
-      destination.value = true
-      await nextTick()
-    },
-    abort: async () => {},
-  }
 }

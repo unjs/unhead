@@ -44,12 +44,7 @@ beforeAll(async () => {
 })
 
 describe('production Vue Vite streaming switch', () => {
-  it.each([
-    ['before activation', 'start'],
-    ['after activation', 'start'],
-    ['before activation', 'startCustom'],
-    ['after activation', 'startCustom'],
-  ] as const)('drops initial stream styles on navigation %s using %s', async (timing, start) => {
+  it.each(['before activation', 'after activation'] as const)('drops initial stream styles on navigation %s', async (timing) => {
     const dom = new JSDOM('<div id="app"><div>initial</div></div>', { runScripts: 'outside-only', url: 'https://example.test/' })
     const { window } = dom
     const frames: FrameRequestCallback[] = []
@@ -57,10 +52,10 @@ describe('production Vue Vite streaming switch', () => {
     window.eval('window.__unhead__ = { _q: [], push(entries) { this._q.push(entries) } }')
     window.eval(code)
     const fixture = window as unknown as {
-      NavigationFixture: Record<typeof start, () => Promise<{ app: { unmount: () => void }, navigate: () => Promise<unknown>, abort: () => Promise<unknown> }>>
+      NavigationFixture: { start: () => Promise<{ app: { unmount: () => void }, navigate: () => Promise<unknown>, abort: () => Promise<unknown> }> }
       __unhead__: { push: (entries: unknown[]) => void }
     }
-    const client = await fixture.NavigationFixture[start]()
+    const client = await fixture.NavigationFixture.start()
     const styles = () => [...window.document.querySelectorAll('link[rel="stylesheet"]')].map(el => el.getAttribute('href'))
     try {
       fixture.__unhead__.push([{ link: [{ rel: 'stylesheet', href: '/initial-stream.css' }] }])

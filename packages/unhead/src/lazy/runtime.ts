@@ -253,13 +253,52 @@ export async function activate<T>(
   return head
 }
 
+interface StreamRouter {
+  afterEach: (callback: (to: { path: string }, from: { path: string }, failure?: unknown) => void) => () => void
+}
+
+function discardOnRouteExit<T>(queue: HeadQueue<T>) {
+  const navigation = queue.streamRoute
+  if (!navigation)
+    return
+  queue.streamRoute = undefined
+  const [app, initialPath] = navigation
+  const { $router: router, $route: route } = app.config.globalProperties as { $router?: StreamRouter, $route?: { path: string } }
+  if (!router)
+    return
+
+  const discard = () => {
+    const close = queue.closeStream
+    queue.closeStream = false
+    if (close)
+      close()
+  }
+  if (route?.path !== initialPath) {
+    discard()
+    return
+  }
+
+  const remove = router.afterEach((to, from, failure) => {
+    if (!failure && to.path !== from.path) {
+      remove()
+      discard()
+    }
+  })
+  app.onUnmount(remove)
+}
+
 // Keep the installed object stable. Composables can keep using it after replay.
 export async function hydrate<T>(options: LazyHeadOptions, queue: HeadQueue<T>, shell: DeferredHead<T>): Promise<void> {
   if (queue.head)
     return
   const streamKey = options.streamKey ?? options.experimentalStreamKey ?? '__unhead__'
   const view = shell.resolvedOptions.document?.defaultView as unknown as Record<string, StreamingGlobal> | undefined
-  await activate({ ...options, streamKey: view?.[streamKey] ? streamKey : undefined }, queue, shell, (head) => {
+  const streamed = view?.[streamKey]
+  if (streamed)
+    discardOnRouteExit(queue)
+  const resolveRef = options._resolveRef
+  const propResolvers = resolveRef ? [(_?: string, value?: unknown) => resolveRef(value), ...options.propResolvers ?? []] : options.propResolvers
+  await activate({ ...options, propResolvers, streamKey: streamed ? streamKey : undefined }, queue, shell, (head) => {
     for (const key of Object.keys(head) as (keyof typeof head)[]) {
       // The installed push can be wrapped by the framework. The other fields
       // are shared with the adapter while the runtime replays queued entries.
