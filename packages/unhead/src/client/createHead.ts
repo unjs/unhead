@@ -13,7 +13,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
   const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks>(options.hooks)
-  const head = createClientHeadAdapter(core, hooks, renderer)
+  const head = createClientHeadAdapter(core, hooks)
   options.plugins?.forEach(p => head.use(p))
   options.init?.forEach(e => e && head.push(e as T))
   return head

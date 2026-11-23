@@ -25,11 +25,13 @@ export interface LazyHeadOptions extends CreateClientHeadOptions {
 /**
  * @experimental
  */
-export interface LazyUnhead<T = ResolvableHead> extends Pick<ClientUnhead<T>, 'ssr' | 'push' | 'use' | 'resolvedOptions' | '_scripts' | '_dom'> {
+export interface LazyUnhead<T = ResolvableHead> extends Pick<ClientUnhead<T>, 'ssr' | 'push' | 'use' | 'resolvedOptions' | '_scripts' | '_dom' | '_entryCount' | '_h'> {
   /** Available before activation if supplied by the framework or created by Vue's useScript. */
   hooks?: ClientUnhead<T>['hooks']
   /** Resolved entries are available once the runtime starts replaying the queue. */
   readonly entries: Map<number, HeadEntry<T>>
+  /** Registered plugins are available after runtime activation. */
+  readonly plugins: ClientUnhead<T>['plugins']
   /** Stop recording which entries came from hydration. */
   finishHydration: () => void
   /** Discard streamed patches from the initial page when the framework leaves it. */
@@ -81,12 +83,16 @@ export function createHead<T = ResolvableHead>(options: LazyHeadOptions = {}): L
   let active: ClientUnhead<T> | undefined
   let loading: Promise<ClientUnhead<T>> | undefined
   let emptyEntries: Map<number, HeadEntry<T>> | undefined
+  let emptyPlugins: ClientUnhead<T>['plugins'] | undefined
 
   const shell: LazyUnhead<T> = {
     ssr: false,
     hooks: options.hookable,
     resolvedOptions: { document: options.document ?? globalThis.document },
     get entries() { return queue.head?.entries ?? (emptyEntries ||= new Map()) },
+    get plugins() { return queue.head?.plugins ?? (emptyPlugins ||= new Map()) },
+    get _entryCount() { return queue.head?._entryCount ?? queue.index },
+    get _h() { return queue.head?._h ?? 0 },
     finishHydration() {
       if (!queue.hydrating)
         return
