@@ -54,7 +54,7 @@ import type { WebSite } from '../../nodes/WebSite'
 import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { computed, isRef, shallowRef } from 'vue'
+import { computed, effectScope, getCurrentScope, isRef, shallowRef } from 'vue'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -300,12 +300,20 @@ export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOpti
   unhead.use(UnheadSchemaOrg())
   // Box the input so shallowRef does not reuse an incoming ref as its own state.
   const currentInput = unhead.ssr ? undefined : shallowRef<{ input: UseSchemaOrgInput }>({ input })
-  const entry = useHead((currentInput
+  const headInput = (currentInput
     ? () => normalizeSchemaOrgInput(currentInput.value.input)
-    : normalizeSchemaOrgInput(input)) as unknown as UseHeadInput, options)
+    : normalizeSchemaOrgInput(input)) as unknown as UseHeadInput
+  // Own the client watcher so disposal also cancels queued updates.
+  // Preserve useHead's no-op behavior when the caller's scope has stopped.
+  const scope = currentInput && getCurrentScope()?.active !== false ? effectScope() : undefined
+  const entry = scope ? scope.run(() => useHead(headInput, options))! : useHead(headInput, options)
   // Keep useHead's watcher patch separate from the public schema input patch.
   return {
     ...entry,
+    dispose() {
+      scope?.stop()
+      entry.dispose()
+    },
     patch(input) {
       if (currentInput)
         currentInput.value = { input }

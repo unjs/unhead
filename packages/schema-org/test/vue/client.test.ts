@@ -7,6 +7,42 @@ import { describe, expect, it, vi } from 'vitest'
 import { computed, createApp, h, nextTick, ref } from 'vue'
 
 describe('schema.org Vue client patches', () => {
+  it.each(['array', 'ref', 'getter', 'computed'] as const)('does not restore disposed schema after a queued %s patch', async (kind) => {
+    const head = createHead({ document })
+    const replacement = ref([defineWebPage({ name: 'Patched' })])
+    const patch = kind === 'array' ? replacement.value : kind === 'ref' ? replacement : kind === 'getter' ? () => replacement.value : computed(() => replacement.value)
+    let entry!: ActiveHeadEntry<UseSchemaOrgInput>
+    const app = createApp({
+      setup() {
+        entry = useSchemaOrg([defineWebPage({ name: 'Original' })])
+        return () => h('div')
+      },
+    })
+    const root = document.createElement('div')
+    document.body.append(root)
+    app.use(head)
+    app.mount(root)
+
+    const script = () => document.querySelector('script[type="application/ld+json"]')
+    try {
+      await vi.waitFor(() => expect(script()?.textContent).toContain('Original'))
+      entry.patch(patch)
+      entry.dispose()
+      await nextTick()
+      await vi.waitFor(() => expect(script()).toBeNull())
+
+      replacement.value = [defineWebPage({ name: 'Updated after disposal' })]
+      await nextTick()
+      await new Promise<void>(resolve => setTimeout(resolve, 0))
+      expect(script()).toBeNull()
+    }
+    finally {
+      app.unmount()
+      root.remove()
+      await vi.waitFor(() => expect(script()).toBeNull())
+    }
+  })
+
   it.each(['ref', 'getter', 'computed'] as const)('tracks replacement %s arrays without restoring the original input', async (kind) => {
     const head = createHead({ document })
     const original = ref([defineWebPage({ name: 'Original' })])
