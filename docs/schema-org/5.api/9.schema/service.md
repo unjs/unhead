@@ -9,7 +9,7 @@ Service structured data describes a service that a person or organization provid
 
 ## JSON-LD Example
 
-Unhead renders this JSON-LD for the [pricing example](#with-pricing). It resolves `offers` to an `Offer` with default availability and price validity.
+Unhead renders this JSON-LD for the [pricing example](#with-pricing). It resolves `offers` to an `Offer`.
 
 ```json
 {
@@ -24,11 +24,9 @@ Unhead renders this JSON-LD for the [pricing example](#with-pricing). It resolve
       "serviceType": "Web Design",
       "offers": {
         "@type": "Offer",
-        "availability": "https://schema.org/InStock",
         "price": 5000,
         "priceCurrency": "USD",
-        "description": "Starting price for basic website",
-        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+        "description": "Starting price for basic website"
       },
       "provider": {
         "@type": "Organization",

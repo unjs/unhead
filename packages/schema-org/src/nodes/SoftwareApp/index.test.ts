@@ -38,7 +38,6 @@ describe('defineSoftwareApp', () => {
             "name": "Angry Birds",
             "offers": {
               "@type": "Offer",
-              "availability": "https://schema.org/InStock",
               "price": "1.00",
               "priceCurrency": "USD",
               "priceValidUntil": "2023-12-30T00:00:00.000Z",
