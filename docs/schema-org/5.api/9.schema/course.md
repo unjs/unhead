@@ -14,6 +14,8 @@ description: Use defineCourse() to add Course structured data with a provider, d
 - [Schema.org Course](https://schema.org/Course)
 - [Course List Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/course)
 
+Google no longer shows the Course info rich result. [Google removed its documentation in September 2025](https://developers.google.com/search/updates#simplification). Course list is the only Google feature that uses Course markup.
+
 The fields below cover Google's Course list feature and the fields used by Unhead's resolver. They do not cover every property on `schema.org/Course`. Other valid properties, such as `coursePrerequisites`, pass through to the generated JSON-LD. Use a [custom node](/docs/schema-org/guides/recipes/custom-nodes) with [`schema-dts`](https://github.com/google/schema-dts) when you need full Schema.org typing.
 
 ## Examples
@@ -29,7 +31,7 @@ defineCourse({
 })
 ```
 
-For [Google's course list feature](https://developers.google.com/search/docs/appearance/structured-data/course), mark up at least three courses and add the required ItemList carousel properties. Each Course needs `name` and `description`, together with valid provider information.
+For [Google's course list feature](https://developers.google.com/search/docs/appearance/structured-data/course), mark up at least three courses and add the required ItemList carousel properties. Each Course requires `name` and `description`. Google recommends `provider`.
 
 ## Defaults and resolves
 
@@ -74,5 +76,4 @@ export interface CourseSimple extends Thing {
 ## Related Schemas
 
 - [Organization](/docs/schema-org/api/schema/organization): Course provider
-- [Person](/docs/schema-org/api/schema/person): Instructor
-- [Event](/docs/schema-org/api/schema/event): Course sessions
+- [ItemList](/docs/schema-org/api/schema/item-list): Course list carousel

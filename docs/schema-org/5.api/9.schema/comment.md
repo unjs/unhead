@@ -20,9 +20,9 @@ description: Use defineComment() to add Comment structured data. Connect user co
 
   Content of the comment.
 
-- **author** `Person`
+- **author** `Person | Organization`
 
-  The registered author is moved to a root Schema node, resolving the field as an `@id` reference to a [Person](/docs/schema-org/api/schema/person).
+  Unhead moves the registered author to a root Schema node. The field resolves to an `@id` reference to a [Person](/docs/schema-org/api/schema/person) or an [Organization](/docs/schema-org/api/schema/organization). An author without `@type` resolves as a Person.
 
 ## Defaults
 
@@ -32,8 +32,8 @@ description: Use defineComment() to add Comment structured data. Connect user co
 
 ## Resolves
 
-- `author` is resolved as a root Person node and replaced with an ID reference
-- `dateCreated` and `dateModified` accept Date objects and are serialized as ISO 8601 strings
+- `author` is resolved as a root Person or Organization node and replaced with an ID reference
+- `dateCreated`, `dateModified`, and `datePublished` accept Date objects and are serialized as ISO 8601 strings
 
 ## Examples
 
@@ -66,7 +66,7 @@ export interface CommentSimple extends Thing {
   /**
    * A reference by ID to the Person who wrote the comment.
    */
-  author: NodeRelation<Person>
+  author: NodeRelation<Identity>
   /**
    * The date and time the comment was created.
    */
@@ -75,6 +75,30 @@ export interface CommentSimple extends Thing {
    * The date and time the comment was last modified.
    */
   dateModified?: ResolvableDate
+  /**
+   * The date and time the comment was published.
+   */
+  datePublished?: ResolvableDate
+  /**
+   * Replies to this comment.
+   */
+  comment?: NodeRelations<Comment>
+  /**
+   * The number of replies.
+   */
+  commentCount?: number
+  /**
+   * The source type when content was generated or edited algorithmically.
+   */
+  digitalSourceType?: DigitalSourceType
+  /**
+   * Images attached to the comment.
+   */
+  image?: NodeRelations<ImageObject | string>
+  /**
+   * Videos attached to the comment.
+   */
+  video?: NodeRelations<VideoObject | string>
   /**
    * The number of upvotes the comment has received.
    */
