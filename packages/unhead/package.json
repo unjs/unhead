@@ -177,7 +177,6 @@
   },
   "dependencies": {
     "hookable": "catalog:",
-    "parse5": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
