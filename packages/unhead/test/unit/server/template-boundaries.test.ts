@@ -1,6 +1,7 @@
+import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server'
-import { prepareStreamingTemplate } from '../../../src/stream/server'
+import { prepareStreamingTemplate, wrapStream } from '../../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../../util'
 
 const renderers = [
@@ -9,7 +10,31 @@ const renderers = [
   ['prepared', (head: ReturnType<typeof createServerHeadWithContext>, html: string) => transformHtmlTemplateRaw(head, prepareTemplate(html))],
 ] as const
 
+const integrationScopes = [
+  '<table><tbody><tr><td>Cell</td></tr></tbody></table>',
+  '<table><tr><td>Cell</table>',
+  '<select><option>Choice</option></select>',
+  '<template><!-- app-html --><table><tr><td>Cell</table></template>',
+  '<select><template><option>Choice</option></template><option>Last</option></select>',
+]
+const integrationPoints = [
+  ['<svg><foreignObject>', '</foreignObject></svg>'],
+  ['<math><annotation-xml encoding="text/html">', '</annotation-xml></math>'],
+] as const
+
 describe.each(renderers)('%s template boundaries', (_, render) => {
+  it.each(integrationScopes)('inserts body-close tags after HTML scopes in integration points: %s', (content) => {
+    for (const [open, close] of integrationPoints) {
+      const head = createServerHeadWithContext()
+      head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+      const prefix = `<html><head></head><body>${open}${content}${close}<main><!-- app-html --></main>`
+
+      expect(render(head, `${prefix}</body></html>`)).toBe(
+        `${prefix}<style>p { color: black }</style></body></html>`,
+      )
+    }
+  })
+
   it('inserts body-close tags after a select containing a template', () => {
     const head = createServerHeadWithContext()
     head.push({ script: [{ src: '/injected.js', tagPosition: 'bodyClose' }] })
@@ -92,6 +117,39 @@ describe.each(renderers)('%s template boundaries', (_, render) => {
       '&#32;<html><head>&Tab;<title>Document title</title></head><body></body></html>',
     )
   })
+})
+
+it.each([false, true])('streams a table inside SVG foreignObject before the main outlet, prepared: %s', (prepared) => {
+  for (const content of integrationScopes) {
+    for (const [open, close] of integrationPoints) {
+      const head = createStreamableServerHead()
+      head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+      const illustration = `${open}${content}${close}`
+      const template = `<html><head></head><body>${illustration}<main><!-- app-html --></main></body></html>`
+      const { shell, end } = prepareStreamingTemplate(head, prepared ? prepareTemplate(template) : template)
+
+      expect(shell.endsWith(`${illustration}<main>`)).toBe(true)
+      expect(end).toBe('</main><style>p { color: black }</style></body></html>')
+    }
+  }
+})
+
+it.each([false, true])('mounts streamed content after a foreignObject table, prepared: %s', async (prepared) => {
+  const head = createStreamableServerHead()
+  head.push({ style: [{ textContent: 'p { color: black }', tagPosition: 'bodyClose' }] })
+  const template = '<html><head></head><body><svg><foreignObject><table><tr><td>Cell</td></tr></table></foreignObject></svg><main><!-- app-html --></main></body></html>'
+  const app = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode('<p>Streamed app</p>'))
+      controller.close()
+    },
+  })
+
+  const html = await new Response(wrapStream(head, app, prepared ? prepareTemplate(template) : template)).text()
+  const document = new JSDOM(html).window.document
+
+  expect(document.querySelector('main')?.innerHTML).toBe('<p>Streamed app</p>')
+  expect(document.body.lastElementChild?.outerHTML).toBe('<style>p { color: black }</style>')
 })
 
 it.each([false, true])('splits the stream after a select containing a template, prepared: %s', (prepared) => {

@@ -20,7 +20,7 @@ const SELECT_CONTENT = /* @__PURE__ */ new Set(['button', 'option', 'optgroup', 
 const SVG_INTEGRATION = /* @__PURE__ */ new Set(['desc', 'foreignobject', 'title'])
 const MATH_INTEGRATION = /* @__PURE__ */ new Set(['mi', 'mn', 'mo', 'ms', 'mtext'])
 const VOID_HTML = /* @__PURE__ */ new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
-const DOCUMENT_SCOPES = /* @__PURE__ */ new Set(['body', 'frameset', 'head', 'html', 'plaintext', 'select', 'table', 'template'])
+const DOCUMENT_SCOPES = /* @__PURE__ */ new Set(['body', 'frameset', 'head', 'html', 'plaintext'])
 const IMPLIED_END = /* @__PURE__ */ new Set(['dd', 'dt', 'li', 'optgroup', 'option', 'p', 'rb', 'rp', 'rt', 'rtc'])
 const CLOSES_IMPLIED_CHILDREN = /* @__PURE__ */ new Set([
   'address',
@@ -254,7 +254,27 @@ export function closeTextElement(html: string, name: string, start: number) {
   return close ? readTag(html, close.index) : undefined
 }
 
+function foreignHtmlScope(stack: ForeignElement[]) {
+  for (let index = stack.length - 1; index >= 0; index--) {
+    const element = stack[index]
+    if (element.context !== 'html')
+      break
+    if (SCOPED.has(element.name))
+      return index
+  }
+  return -1
+}
+
 function closeForeignElement(stack: ForeignElement[], name: string): boolean {
+  if (stack.at(-1)?.context === 'html' && SCOPED.has(name)) {
+    const scope = foreignHtmlScope(stack)
+    if (scope < 0 || stack[scope].name !== name)
+      return false
+    // Closing an HTML scope also closes its remaining HTML descendants.
+    // Keep the surrounding foreign elements until their own end tags.
+    stack.length = scope
+    return true
+  }
   let depth = stack.length
   if (CLOSES_IMPLIED_CHILDREN.has(name)) {
     while (depth > 0) {
@@ -340,6 +360,13 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
     const { name, closing, selfClosing } = tag
 
     if (parent) {
+      const scope = foreignHtmlScope(foreign)
+      // Apply the same conservative select rules inside integration points.
+      // A nested template supplies its own scope until its end tag.
+      if (scope >= 0 && foreign[scope].name === 'select'
+        && (name === 'select' ? !closing : !SELECT_CONTENT.has(name))) {
+        break
+      }
       if (closing) {
         if (!closeForeignElement(foreign, name))
           break
