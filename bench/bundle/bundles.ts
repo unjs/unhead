@@ -22,6 +22,8 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'serverSelfContained', name: 'Server (Self-Contained)', category: 'Core', file: 'server-sc/server/minimal.mjs' },
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },
+  { id: 'vueClientLazy', name: 'Vue Client (Lazy head, eager)', category: 'Vue', file: 'vue-client-lazy/vue-client/lazy.mjs' },
+  { id: 'vueClientLazyRuntime', name: 'Vue Client (Lazy head, runtime chunk)', category: 'Vue', file: 'vue-client-lazy/chunks/runtime.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
   { id: 'vueStreamingClient', name: 'Vue Streaming Client', category: 'Streaming', file: 'streaming/vue-client.mjs', required: true },
   { id: 'streamingBootstrap', name: 'Streaming Bootstrap', category: 'Streaming', file: 'streaming/bootstrap.js', required: true },

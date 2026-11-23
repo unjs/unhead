@@ -2,10 +2,11 @@ import { runInNewContext } from 'node:vm'
 import { JSDOM } from 'jsdom'
 import { useHeadSafe } from 'unhead'
 import { createHead } from 'unhead/client'
+import { createHead as createLazyHead } from 'unhead/lazy'
 import { TemplateParamsPlugin } from 'unhead/plugins'
-import { createStreamableHead as createClientStreamableHead } from 'unhead/stream/client'
+import { attachStreamHead, createStreamableHead as createClientStreamableHead } from 'unhead/stream/client'
 import { createStreamableHead, renderSSRHeadSuspenseChunk, wrapStream } from 'unhead/stream/server'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
 import { buildStreamingPluginOptions, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
 
@@ -43,7 +44,7 @@ async function serveAndRun(late: Record<string, unknown>) {
 }
 
 describe('the patch a bare wrapStream emits', () => {
-  it.each(['inline', 'module'] as const)('keeps safe and app-owned metadata separate when replaying %s entries', (mode) => {
+  it.each(['inline', 'module', 'lazy'] as const)('keeps safe and app-owned metadata separate when replaying %s entries', async (mode) => {
     const { head } = createStreamableHead()
     useHeadSafe(head, { title: 'Guest guide', meta: [{ name: 'content-language', content: 'Guide' }] })
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -55,20 +56,29 @@ describe('the patch a bare wrapStream emits', () => {
     globalThis.document = document
     window.__unhead__ = { _q: [updates], push: (batch: unknown[]) => window.__unhead__._q.push(batch) }
 
-    if (mode === 'inline') {
-      initIife()
+    let client
+    if (mode === 'lazy') {
+      const lazy = createLazyHead({ document, streamKey: '__unhead__', plugins: [TemplateParamsPlugin] })
+      lazy.finishHydration()
+      client = await lazy.load()
     }
     else {
-      const plugin = buildStreamingPluginOptions({ framework: 'unhead', mode: 'module' })
-      const { code } = (plugin.load as any).handler.call({}, `\0${VIRTUAL_CLIENT_ID}`)
-      runInNewContext(code.slice(code.indexOf('\n') + 1), { createHead, window, document })
+      if (mode === 'inline') {
+        initIife()
+      }
+      else {
+        const plugin = buildStreamingPluginOptions({ framework: 'unhead', mode: 'module' })
+        const { code } = (plugin.load as any).handler.call({}, `\0${VIRTUAL_CLIENT_ID}`)
+        const body = code.split('\n').filter((line: string) => !line.startsWith('import')).join('\n')
+        runInNewContext(body, { attachStreamHead, createHead, window, document })
+      }
+      client = createClientStreamableHead({ plugins: [TemplateParamsPlugin] })!
     }
 
-    const client = createClientStreamableHead({ plugins: [TemplateParamsPlugin] })!
     client.push({ script: [{ textContent: '// %pageTitle', processTemplateParams: true }] })
     client.render()
 
-    expect({
+    await vi.waitFor(() => expect({
       title: document.title,
       script: document.querySelector('script')?.textContent,
       language: document.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content'),
@@ -78,7 +88,7 @@ describe('the patch a bare wrapStream emits', () => {
       script: '//',
       language: 'en',
       metadata: 'Guide',
-    })
+    }))
   })
 
   it('applies to the document once the browser runs it', async () => {
