@@ -52,7 +52,8 @@ export function createDeferredHead(
 
 /** @internal */
 export function createHeadAfterHydration(options: CreateClientHeadOptions = {}) {
-  return _createDeferredHead<UseHeadInput, Plugin & Pick<LazyVueHead, 'push' | 'ssr' | 'use'>>(options, (head, finishHydration) => Object.assign(head, {
+  return _createDeferredHead<UseHeadInput, Plugin & Pick<LazyVueHead, 'push' | 'ssr' | 'use' | 'discardStream'>>(options, (head, finishHydration, queue) => Object.assign(head, {
+    discardStream: deferredHeadLifecycle(finishHydration, queue).discardStream,
     install(app: App) {
       installHead(app, head)
       const finish = () => finishHydration(load => requestAnimationFrame(() => setTimeout(() => {
@@ -61,6 +62,17 @@ export function createHeadAfterHydration(options: CreateClientHeadOptions = {}) 
       const mount = app.mount
       app.mount = (...args) => {
         const mounted = mount.apply(app, args)
+        // Vue Router is optional. Resolve it after installation and initial navigation.
+        const router = app.config.globalProperties.$router as {
+          afterEach: (callback: (to: unknown, from: unknown, failure?: unknown) => void) => () => void
+        } | undefined
+        if (router) {
+          const remove = router.afterEach((_to, _from, failure) => {
+            if (!failure)
+              deferredHeadLifecycle(finishHydration, queue).discardStream()
+          })
+          app.onUnmount(remove)
+        }
         const suspense = mounted?.$.subTree.suspense
         if (suspense?.pendingBranch) {
           // Flush with the root boundary's mounted effects when hydration resolves.

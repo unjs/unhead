@@ -1,8 +1,11 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 // @vitest-environment node
 import { resolve } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { build } from 'vite'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { Unhead as ReactUnhead } from '../../react/src/vite'
 import { Unhead } from '../src/vite'
 
 const root = resolve(__dirname, 'fixtures/lazy-preload')
@@ -49,6 +52,44 @@ async function buildPages(base = '/site/', lazyHeadPreload?: boolean, lazyHead =
 describe('lazy head preload', () => {
   beforeAll(() => vi.stubEnv('NODE_ENV', 'production'))
   afterAll(() => vi.unstubAllEnvs())
+
+  it.each([true, false])('builds an eager React page with the published export map, lazy available: %s', async (lazyAvailable) => {
+    const fixture = await mkdtemp(resolve(tmpdir(), 'unhead-react-preload-'))
+    const react = resolve(fixture, 'node_modules/@unhead/react')
+    const unhead = resolve(fixture, 'node_modules/unhead')
+    try {
+      await mkdir(resolve(react, 'dist'), { recursive: true })
+      await mkdir(unhead, { recursive: true })
+      await writeFile(resolve(react, 'package.json'), await readFile(resolve(__dirname, '../../react/package.json')))
+      await writeFile(resolve(react, 'dist/client.mjs'), `export * from ${JSON.stringify(resolve(__dirname, '../../react/src/client.ts'))}`)
+      await writeFile(resolve(unhead, 'package.json'), JSON.stringify({ name: 'unhead', type: 'module', exports: { './client': './client.mjs' } }))
+      await writeFile(resolve(fixture, 'index.html'), '<title>Eager React</title><script type="module" src="./entry.ts"></script>')
+      await writeFile(resolve(fixture, 'entry.ts'), 'import { createHead } from "@unhead/react/client"; createHead().push({ title: "Eager React" })')
+      const result = await build({
+        root: fixture,
+        configFile: false,
+        logLevel: 'silent',
+        plugins: ReactUnhead({ devtools: false, validate: false }),
+        resolve: { alias: [
+          { find: 'unhead/client', replacement: `${core}/client/index.ts` },
+          ...lazyAvailable ? [{ find: 'unhead/lazy', replacement: `${core}/lazy/index.ts` }] : [],
+        ] },
+        build: { write: false },
+      })
+      if (!('output' in result))
+        throw new Error('Expected one client build.')
+      const html = result.output.find(asset => asset.fileName === 'index.html')
+      if (html?.type !== 'asset')
+        throw new Error('Missing index.html.')
+      const dom = new JSDOM(String(html.source))
+      expect(dom.window.document.title).toBe('Eager React')
+      expect(dom.window.document.querySelector('link[fetchpriority="low"]')).toBeNull()
+      dom.window.close()
+    }
+    finally {
+      await rm(fixture, { recursive: true, force: true })
+    }
+  })
 
   it.each(['/site/', '/store%20front/', './'])('hints only the deferred runtime with base %s', async (base) => {
     const { output, lazy, eager } = await buildPages(base)

@@ -178,6 +178,7 @@
     "@vue/server-renderer": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:",
+    "vue-router": "catalog:",
     "vue-vapor": "catalog:"
   }
 }
