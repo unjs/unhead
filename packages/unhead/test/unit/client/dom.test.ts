@@ -1,9 +1,25 @@
-import { renderDOMHead } from '@unhead/dom'
+import { createHead, renderDOMHead } from '@unhead/dom'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../../../src'
 import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
+  it('preserves unchanged numeric and boolean attributes on rerender', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    head.push({
+      meta: [{ name: 'count', content: 0 }],
+      script: [{ src: '/app.js', defer: true }],
+    })
+    const observer = new document.defaultView!.MutationObserver(() => {})
+    observer.observe(document.head, { attributes: true, subtree: true })
+
+    head.push({ title: 'Next page' })
+
+    expect(observer.takeRecords().map(record => record.attributeName)).toEqual([])
+    observer.disconnect()
+  })
+
   it('renders numeric zero meta content', () => {
     const head = useDOMHead()
 
@@ -36,6 +52,18 @@ describe('dom', () => {
     expect(document.title).toBe('Server title')
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Server description')
     expect(renderDOMHead(head, { document })).toBe(false)
+  })
+
+  it('cleans up a server-rendered class containing a non-breaking space', () => {
+    const original = 'before\u00A0after'
+    const document = useDom({ bodyAttrs: `class="before ${original} other"` }).window.document
+    const head = createHead({ document, render: () => false })
+    const entry = head.push({ bodyAttrs: { class: original } })
+
+    entry.patch({ bodyAttrs: { class: 'next' } })
+    renderDOMHead(head, { document })
+
+    expect([...document.body.classList]).toEqual(['before', 'other', 'next'])
   })
 
   it('releases removed untracked elements from the dom cache', () => {
@@ -105,6 +133,126 @@ describe('dom', () => {
     expect(document.querySelector('meta[name="description"]')).toBe(el)
     expect(el.getAttribute('content')).toBe('updated')
     expect(reads).toBe(0)
+  })
+
+  it('adopts an unclaimed SSR style by its current content on a later render', () => {
+    const document = useDom({ headTags: '<style>.before{}</style>' }).window.document
+    const style = document.head.querySelector('style')!
+    const head = useDOMHead({ document })
+    head.push({ meta: [{ name: 'description', content: 'First render' }] })
+
+    style.textContent = '.after{}'
+    head.push({ style: [{ textContent: '.after{}' }] })
+
+    const styles = document.head.querySelectorAll('style')
+    expect(styles).toHaveLength(1)
+    expect(styles[0]).toBe(style)
+  })
+
+  it('reuses keyed and identified SSR styles without reading their innerHTML', () => {
+    const style = [
+      { key: 'precomputed-style', textContent: '.keyed{color:red}' },
+      { id: 'identified-style', textContent: '.identified{color:green}' },
+      { textContent: '.unkeyed{color:blue}' },
+    ]
+    const serverHead = createServerHeadWithContext()
+    serverHead.push({ style })
+    const document = useDom(serverHead.render()).window.document
+    const [keyed, identified, unkeyed] = document.head.querySelectorAll('style')
+    const innerHTML = Object.getOwnPropertyDescriptor(document.defaultView!.Element.prototype, 'innerHTML')!.get!
+    let reads = 0
+    for (const el of [keyed, identified]) {
+      Object.defineProperty(el, 'innerHTML', {
+        get(this: Element) {
+          reads++
+          return innerHTML.call(this)
+        },
+      })
+    }
+
+    useDOMHead({ document }).push({ style })
+
+    const hydrated = document.head.querySelectorAll('style')
+    expect(hydrated).toHaveLength(3)
+    expect(hydrated[0]).toBe(keyed)
+    expect(hydrated[1]).toBe(identified)
+    expect(hydrated[2]).toBe(unkeyed)
+    expect(reads).toBe(0)
+  })
+
+  it('reuses SSR links with regular and semantic identities', () => {
+    const link = [
+      { rel: 'prefetch' as const, href: '/asset.js' },
+      { rel: 'prefetch' as const, href: '/asset.js', key: 'explicit' },
+      { rel: 'canonical' as const, href: '/home' },
+      { rel: 'alternate' as const, href: '/default', hreflang: '' },
+    ]
+    const serverHead = createServerHeadWithContext()
+    serverHead.push({ link })
+    const document = useDom(serverHead.render()).window.document
+    const ssrLinks = [...document.head.querySelectorAll('link')]
+
+    useDOMHead({ document }).push({ link: link.map(tag => tag.rel === 'canonical' ? { ...tag, key: 'canonical-client' } : tag) })
+
+    const hydrated = [...document.head.querySelectorAll('link')]
+    expect(hydrated.map(el => ssrLinks.indexOf(el))).toEqual([0, 1, 2, 3])
+  })
+
+  it('reuses a stylesheet when an earlier element detaches during the scan', () => {
+    const style = [{ key: 'route-style', textContent: '.route{color:red}' }]
+    const serverHead = createServerHeadWithContext()
+    serverHead.push({ style })
+    const document = useDom(serverHead.render()).window.document
+    const ssrStyle = document.head.querySelector('style')
+    const link = document.createElement('link')
+    link.rel = 'prefetch'
+    link.href = '/asset.js'
+    const getAttributeNames = link.getAttributeNames.bind(link)
+    link.getAttributeNames = () => {
+      link.remove()
+      return getAttributeNames()
+    }
+    document.head.prepend(link)
+
+    useDOMHead({ document }).push({ style })
+
+    const hydrated = document.head.querySelectorAll('style')
+    expect(hydrated).toHaveLength(1)
+    expect(hydrated[0]).toBe(ssrStyle)
+  })
+
+  it('normalizes link identity attributes in a foreign namespace', () => {
+    const document = useDom().window.document
+    const link = document.createElementNS('urn:fixture', 'LINK')
+    link.setAttribute('rel', 'alternate')
+    link.setAttribute('href', '/fr')
+    link.setAttribute('HREFLANG', 'fr')
+    document.head.append(link)
+
+    useDOMHead({ document }).push({ link: [{ rel: 'alternate', href: '/fr', hreflang: 'fr' }] })
+
+    expect(document.head.children).toHaveLength(1)
+    expect(document.head.firstElementChild).toBe(link)
+  })
+
+  it('does not replay completed style cleanup when switching documents', () => {
+    const document = useDom().window.document
+    const head = useDOMHead({ document })
+    const entry = head.push({ title: 'First route' })
+    entry.patch({ style: [{ key: 'route-css', textContent: '.route{color:red}' }] })
+    const style = document.head.querySelector('style')!
+
+    entry.patch({ title: 'Second route' })
+    expect(style.isConnected).toBe(false)
+
+    style.textContent = '.external{color:blue}'
+    document.head.append(style)
+    const nextDocument = useDom().window.document
+    renderDOMHead(head, { document: nextDocument })
+
+    expect(document.head.querySelector('style') === style).toBe(true)
+    expect(style.textContent).toBe('.external{color:blue}')
+    expect(nextDocument.title).toBe('Second route')
   })
 
   it('basic', async () => {

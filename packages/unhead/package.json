@@ -93,6 +93,14 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -147,6 +155,12 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "lazy": [
+        "dist/lazy.d.ts"
+      ],
+      "vite": [
+        "dist/vite.d.ts"
       ]
     }
   },
@@ -170,11 +184,11 @@
   },
   "dependencies": {
     "hookable": "catalog:",
-    "parse5": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
+    "esbuild": "catalog:",
     "rollup": "catalog:",
     "vite": "catalog:"
   }

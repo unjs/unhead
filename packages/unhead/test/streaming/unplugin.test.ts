@@ -106,6 +106,27 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     return plugin
   }
 
+  it('transforms stream boundaries without injecting a client in manual mode', async () => {
+    const { calls, emitFile } = fakeEmitFile()
+    const hookThis = { emitFile }
+    const plugin = await buildPlugin(
+      {
+        framework: '@unhead/test',
+        mode: 'manual',
+        filter: /\.tsx$/,
+        transform: (code, _, options) => ({ code: `${code}\n${options?.ssr ? 'server patch' : 'client placeholder'}` }),
+      },
+      { command: 'build' },
+      hookThis,
+    )
+
+    expect(plugin.transform.handler.call({}, 'boundary', '/entry.tsx', { ssr: true })).toEqual({ code: 'boundary\nserver patch' })
+    expect(plugin.transform.handler.call({}, 'boundary', '/entry.tsx')).toEqual({ code: 'boundary\nclient placeholder' })
+    expect(plugin.vite.transformIndexHtml.handler.call(hookThis, '<html></html>')).toBeUndefined()
+    expect(plugin.vite.transformIndexHtml.handler.call(hookThis, undefined)).toBeUndefined()
+    expect(calls).toHaveLength(0)
+  })
+
   it('async mode resolves a hashed emitted asset path prefixed with base, with no bundle', async () => {
     const { calls, emitFile } = fakeEmitFile()
     const hookThis = { emitFile }
@@ -391,7 +412,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
     })
   })
 
-  it('module mode keeps the dynamic import descriptor on a normal (non-manifest) render', async () => {
+  it('module mode imports the bootstrap before the app entry on a normal (non-manifest) render', async () => {
     const plugin = await buildPlugin(
       { framework: '@unhead/test', mode: 'module' },
       { command: 'build', base: '/', build: { assetsDir: 'assets' } },
@@ -400,11 +421,12 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
 
     const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', { bundle: {} })
 
-    expect(result[0].children).toBe(`import("/${VIRTUAL_CLIENT_ID}")`)
+    expect(result[0].attrs.type).toBe('module')
+    expect(result[0].children).toBe(`import "/${VIRTUAL_CLIENT_ID}"`)
     expect(result[0].attrs.src).toBeUndefined()
   })
 
-  it('module mode prefixes the virtual client import with base during serve', async () => {
+  it('module mode leaves base rewriting to Vite during serve', async () => {
     const plugin = await buildPlugin(
       { framework: '@unhead/test', mode: 'module' },
       { command: 'serve', base: '/docs/', build: { assetsDir: 'assets' } },
@@ -413,7 +435,7 @@ describe('streaming unplugin transformIndexHtml manifest pass (vitejs/ecosystem#
 
     const result = plugin.vite.transformIndexHtml.handler.call({}, '<html></html>', {})
 
-    expect(result[0].children).toBe(`import("/docs/${VIRTUAL_CLIENT_ID}")`)
+    expect(result[0].children).toBe(`import "/${VIRTUAL_CLIENT_ID}"`)
   })
 
   describe.each([

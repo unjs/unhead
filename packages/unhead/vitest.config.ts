@@ -15,6 +15,7 @@ export default defineProject({
       // Resolvable here so `vi.mock('unhead/stream/iife', ...)` in tests
       // has a real module to intercept; see `@unhead/vue`'s vitest config.
       'unhead/stream/iife': resolve(__dirname, 'src/stream/iife.ts'),
+      'unhead/lazy': resolve(__dirname, 'src/lazy/index.ts'),
       'unhead/server': resolve(__dirname, 'src/server/index.ts'),
       'unhead/client': resolve(__dirname, 'src/client/index.ts'),
       'unhead/types': resolve(__dirname, 'src/types/index.ts'),
@@ -22,6 +23,7 @@ export default defineProject({
       'unhead/utils': resolve(__dirname, 'src/utils/index.ts'),
       'unhead/scripts': resolve(__dirname, 'src/scripts/index.ts'),
       'unhead/parser': resolve(__dirname, 'src/parser/index.ts'),
+      'unhead/vite': resolve(__dirname, 'src/vite/index.ts'),
       'unhead/legacy': resolve(__dirname, 'src/legacy.ts'),
       'unhead': resolve(__dirname, 'src/index.ts'),
     },

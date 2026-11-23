@@ -1,0 +1,17 @@
+{
+  "name": "nuxt-unhead-benchmark",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@12.21.0",
+  "dependencies": {
+    "@iconify-json/lucide": "1.2.158",
+    "@nuxt/icon": "2.6.3",
+    "@nuxt/ui": "4.13.0",
+    "@unhead/bundler": "3.4.3",
+    "@unhead/vue": "3.4.3",
+    "nuxt": "4.6.4",
+    "tailwindcss": "4.3.5",
+    "unhead": "3.4.3",
+    "vue": "3.5.44"
+  }
+}

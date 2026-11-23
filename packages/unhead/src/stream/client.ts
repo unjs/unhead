@@ -4,6 +4,7 @@ import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { createHooks } from '../utils/hooks'
 
+export { attachStreamHead } from './queue'
 export type { StreamingGlobal, UnheadStreamQueue }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'
