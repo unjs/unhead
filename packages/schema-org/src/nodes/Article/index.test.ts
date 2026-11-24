@@ -326,9 +326,6 @@ describe('defineArticle', () => {
                 ],
               },
             ],
-            "primaryImageOfPage": {
-              "@id": "https://example.com/#logo",
-            },
             "url": "https://example.com/",
           },
           {

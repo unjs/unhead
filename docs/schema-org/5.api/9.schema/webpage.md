@@ -34,7 +34,6 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 - **isPartOf**: WebSite reference
 
 - **about**: Identity reference on the homepage when an identity is registered
-- **primaryImageOfPage**: Logo reference when an Organization logo is registered. Pass `false` to opt out.
 
 ## Sub-Types
 
@@ -167,7 +166,7 @@ export interface WebPageSimple extends Thing {
   /**
    * A reference-by-ID to a node representing the page's featured image.
    *
-   * Pass `false` to opt out of the automatic `primaryImageOfPage` logo inheritance.
+   * Unhead does not fill it in. `false` and `null` leave it empty.
    */
   primaryImageOfPage?: NodeRelation<ImageObject | string> | false | null
   /**

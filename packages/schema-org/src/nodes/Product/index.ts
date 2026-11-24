@@ -10,7 +10,6 @@ import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
-  IdentityId,
   idReference,
   resolveWithBase,
   setIfEmpty,
@@ -374,10 +373,6 @@ export const productResolver = defineSchemaOrgResolver<Product>({
   },
   resolveRootNode(product, { find }) {
     const webPage = find(PrimaryWebPageId)
-    const identity = find(IdentityId)
-
-    if (identity)
-      setIfEmpty(product, 'brand', idReference(identity))
 
     if (webPage)
       setIfEmpty(product, 'mainEntityOfPage', idReference(webPage))

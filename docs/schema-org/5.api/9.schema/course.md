@@ -37,7 +37,7 @@ For [Google's course list feature](https://developers.google.com/search/docs/app
 
 - `@type` defaults to `Course`.
 - A root Course receives an ID such as `${canonicalUrl}#/schema/course/{n}`.
-- `provider` is resolved as a root Organization. When it is omitted, Unhead references the primary identity if one exists.
+- `provider` is resolved as a root Organization. Unhead does not fill it in, so set it on every course.
 
 ## Types
 

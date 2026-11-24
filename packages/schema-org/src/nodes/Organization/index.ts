@@ -432,9 +432,6 @@ export const organizationResolver
           },
         })
 
-        if (webPage && logoNode)
-          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
-
         // Every Organization subtype inherits `logo`, and Google's Organization
         // guide puts it on the subtype's own node (its OnlineStore example), so
         // the identity keeps it whatever its type.

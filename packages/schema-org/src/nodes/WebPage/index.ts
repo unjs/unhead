@@ -105,7 +105,7 @@ export interface WebPageSimple extends Thing {
   /**
    * A reference-by-ID to a node representing the page's featured image.
    *
-   * Pass `false` to opt out of the automatic `primaryImageOfPage` logo inheritance.
+   * Unhead does not fill it in. `false` and `null` leave it empty.
    */
   primaryImageOfPage?: NodeRelation<ImageObject | string> | false | null
   /**
@@ -268,16 +268,12 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
   resolveRootNode(webPage, { find, meta }) {
     const identity = find(IdentityId)
     const webSite = find(PrimaryWebSiteId)
-    const logo = find('#logo')
 
     /*
      * When it's a homepage, add additional about property which references the identity of the site.
      */
     if (identity && isHomePage(meta))
       setIfEmpty(webPage, 'about', idReference(identity))
-
-    if (logo)
-      setIfEmpty(webPage, 'primaryImageOfPage', idReference(logo))
 
     if (webSite)
       setIfEmpty(webPage, 'isPartOf', idReference(webSite))
