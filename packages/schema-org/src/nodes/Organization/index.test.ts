@@ -388,4 +388,90 @@ describe('defineOrganization', () => {
       expect(identity).toMatchObject({ url: 'https://example.com/app/' })
     }, { host: 'https://example.com/app/' })
   })
+
+  it('writes a Date founding date as a calendar date', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineOrganization({ name: 'Acme', foundingDate: new Date(2010, 4, 1) })])
+      const org = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Acme')
+      expect(org!.foundingDate).toBe('2010-05-01')
+    })
+  })
+
+  it('resolves Google return policy options', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Shop',
+          hasMerchantReturnPolicy: [
+            {
+              applicableCountry: ['AU', 'NZ'],
+              returnPolicyCategory: 'MerchantReturnFiniteReturnWindow',
+              merchantReturnDays: 30,
+              returnMethod: ['ReturnByMail', 'ReturnInStore'],
+              itemCondition: ['NewCondition', 'DamagedCondition'],
+              refundType: 'FullRefund',
+              customerRemorseReturnFees: 'ReturnShippingFees',
+              customerRemorseReturnShippingFeesAmount: { currency: 'AUD', value: 5 },
+              itemDefectReturnLabelSource: 'ReturnLabelInBox',
+              restockingFee: 10,
+              returnPolicySeasonalOverride: {
+                returnPolicyCategory: 'MerchantReturnFiniteReturnWindow',
+                startDate: '2026-12-01',
+                endDate: '2027-01-05',
+                merchantReturnDays: 60,
+              },
+            },
+            { merchantReturnLink: '/returns' },
+          ],
+        }),
+      ])
+      const org = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Shop')
+      expect(org!.hasMerchantReturnPolicy).toEqual([
+        expect.objectContaining({
+          '@type': 'MerchantReturnPolicy',
+          'applicableCountry': ['AU', 'NZ'],
+          'returnMethod': ['https://schema.org/ReturnByMail', 'https://schema.org/ReturnInStore'],
+          'itemCondition': ['https://schema.org/NewCondition', 'https://schema.org/DamagedCondition'],
+          'refundType': 'https://schema.org/FullRefund',
+          'customerRemorseReturnFees': 'https://schema.org/ReturnShippingFees',
+          'customerRemorseReturnShippingFeesAmount': { '@type': 'MonetaryAmount', 'currency': 'AUD', 'value': 5 },
+          'itemDefectReturnLabelSource': 'https://schema.org/ReturnLabelInBox',
+          'restockingFee': 10,
+          'returnPolicySeasonalOverride': {
+            '@type': 'MerchantReturnPolicySeasonalOverride',
+            'returnPolicyCategory': 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            'startDate': '2026-12-01',
+            'endDate': '2027-01-05',
+            'merchantReturnDays': 60,
+          },
+        }),
+        { '@type': 'MerchantReturnPolicy', 'merchantReturnLink': 'https://example.com/returns' },
+      ])
+    })
+  })
+
+  it('resolves untyped credit card tiers and numeric points', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Shop',
+          hasMemberProgram: {
+            name: 'Shop Plus',
+            description: 'Member points',
+            hasTiers: {
+              name: 'Card holders',
+              hasTierBenefit: 'TierBenefitLoyaltyPoints',
+              hasTierRequirement: { name: 'Shop Card' },
+              membershipPointsEarned: 5,
+            },
+          },
+        }),
+      ])
+      const org = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Shop')
+      expect((org as any).hasMemberProgram.hasTiers).toMatchObject({
+        hasTierRequirement: { '@type': 'CreditCard', 'name': 'Shop Card' },
+        membershipPointsEarned: 5,
+      })
+    })
+  })
 })

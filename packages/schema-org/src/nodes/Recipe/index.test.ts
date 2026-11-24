@@ -165,4 +165,18 @@ describe('defineRecipe', () => {
       ])
     })
   })
+
+  it('accepts comma separated keywords', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineRecipe({
+        name: 'Cake',
+        image: '/cake.jpg',
+        keywords: 'cake for a party, coffee',
+        recipeIngredient: ['flour'],
+        recipeInstructions: [{ text: 'Bake' }],
+      })])
+      const recipe = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Cake')
+      expect(recipe!.keywords).toBe('cake for a party, coffee')
+    })
+  })
 })

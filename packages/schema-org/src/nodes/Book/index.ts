@@ -7,7 +7,7 @@ import type {
   Thing,
 } from '../../types'
 import type { ReadAction } from '../WebPage'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
@@ -15,6 +15,8 @@ import {
   setIfEmpty,
   withBase,
 } from '../../utils'
+import { organizationResolver } from '../Organization'
+import { personResolver } from '../Person'
 
 export interface BookSimple extends Thing {
   /**
@@ -22,7 +24,7 @@ export interface BookSimple extends Thing {
    */
   name: string
   /**
-   * A description of the book. Display limit of 60 characters.
+   * A description of the book.
    */
   description?: string
   /**
@@ -117,7 +119,10 @@ export const bookEditionResolver = defineSchemaOrgResolver<BookEdition>({
     if (node.datePublished)
       node.datePublished = resolvableDateToDate(node.datePublished)
 
-    node.author = resolveRelation(node.author, ctx)
+    node.author = resolveIdentityRelation(node.author, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    })
     return node
   },
   resolveRootNode(node, { find }) {
@@ -146,7 +151,10 @@ export const bookResolver = defineSchemaOrgResolver<Book>({
     // provide a default sku
     node.workExample = resolveRelation(node.workExample, ctx, bookEditionResolver)
 
-    node.author = resolveRelation(node.author, ctx)
+    node.author = resolveIdentityRelation(node.author, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    })
 
     if (node.url && ctx.meta.host)
       node.url = withBase(node.url, ctx.meta.host)

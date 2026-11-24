@@ -1,10 +1,11 @@
-import type { NodeRelations } from '../../types'
+import type { Arrayable, NodeRelations } from '../../types'
 import type { LocalBusiness } from '../LocalBusiness'
 import type { Rating } from '../Rating'
 import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
   resolveDefaultType,
+  resolveWithBase,
 } from '../../utils'
 import { localBusinessResolver } from '../LocalBusiness'
 import { ratingResolver } from '../Rating'
@@ -12,7 +13,6 @@ import { ratingResolver } from '../Rating'
 type ValidFoodEstablishmentSubTypes = 'Bakery'
   | 'BarOrPub'
   | 'Brewery'
-  | 'Dentist'
   | 'CafeOrCoffeeShop'
   | 'Distillery'
   | 'FastFoodRestaurant'
@@ -21,7 +21,7 @@ type ValidFoodEstablishmentSubTypes = 'Bakery'
   | 'Winery'
 
 export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
-  '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes
+  '@type'?: Arrayable<'Organization' | 'LocalBusiness' | 'FoodEstablishment' | ValidFoodEstablishmentSubTypes | (string & Record<never, never>)>
   /**
    * Indicates whether a FoodEstablishment accepts reservations.
    */
@@ -37,7 +37,7 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   /**
    * The cuisine of the restaurant.
    */
-  'servesCuisine'?: string
+  'servesCuisine'?: Arrayable<string>
   /**
    * An official rating for a lodging business or food establishment
    */
@@ -63,6 +63,8 @@ export const foodEstablishmentResolver = defineSchemaOrgResolver<FoodEstablishme
     resolveDefaultType(node, ['Organization', 'LocalBusiness', 'FoodEstablishment'])
 
     node.starRating = resolveRelation(node.starRating, ctx, ratingResolver)
+    if (node.hasMenu)
+      node.hasMenu = resolveWithBase(ctx.meta.host, node.hasMenu)
     node = resolveNode(node as LocalBusiness, ctx, localBusinessResolver) as FoodEstablishment
     return node
   },

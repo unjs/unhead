@@ -47,7 +47,16 @@ export function idReference<T extends Thing>(node: T | string) {
   }
 }
 
+const W3C_DATE_PREFIX = /^(\d{4}(?:-[01]\d(?:-[0-3]\d)?)?)(?:T|$)/
+
 export function resolvableDateToDate(val: Date | string) {
+  // A date string already carries the calendar date the author meant. Parsing it
+  // as UTC and reading local getters moves it back a day west of UTC.
+  if (typeof val === 'string') {
+    const date = W3C_DATE_PREFIX.exec(val)?.[1]
+    if (date)
+      return date
+  }
   try {
     const date = val instanceof Date ? val : new Date(Date.parse(val))
     const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -150,17 +159,6 @@ export function isSiteIdentityId(id: string | undefined, host: string | undefine
   if (!id)
     return false
   return id === IdentityId || id === prefixId(host, IdentityId)
-}
-
-export function trimLength(val: string | undefined, length: number) {
-  if (!val)
-    return val
-
-  if (val.length > length) {
-    const trimmedString = val.substring(0, length)
-    return trimmedString.substring(0, Math.min(trimmedString.length, trimmedString.lastIndexOf(' ')))
-  }
-  return val
 }
 
 export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) {
