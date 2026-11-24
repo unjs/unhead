@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { propsToString } from '../../../src/server'
+import { useDom } from '../../util'
 
 describe('propsToString', () => {
+  it.each(['unhead&colon;payload', '&#117;nhead:payload', '&quot;', 'a&b="c"'])('preserves the literal attribute value after HTML parsing: %s', (value) => {
+    const dom = useDom({ headTags: `<meta${propsToString({ name: 'value', content: value })}>` })
+    expect(dom.window.document.querySelector('meta')?.getAttribute('content')).toBe(value)
+  })
+
   it('prepends a space only when there are props', async () => {
     expect(propsToString({
       a: 'b',
