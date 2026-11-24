@@ -18,7 +18,7 @@ export function bindStreamHead(
       for (const batch of batches) {
         for (const input of batch) {
           // The server marks filtered useHeadSafe() input. Template parameters keep its title out of scripts.
-          const { _safe, ...rest } = input as SerializableHead & { _safe?: true }
+          const { _safe, ...rest } = (input || {}) as SerializableHead & { _safe?: true }
           const id = push(_safe ? rest : input, _safe)
           const entry = id === undefined ? undefined : head.entries.get(id)
           if (entry)

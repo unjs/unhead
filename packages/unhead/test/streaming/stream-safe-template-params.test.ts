@@ -9,6 +9,7 @@ import { createStreamableHead, renderSSRHeadSuspenseChunk } from 'unhead/stream/
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { init as initIife } from '../../src/stream/iife'
 import { buildStreamingPluginOptions, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
+import { resolveTags } from '../../src/utils'
 
 const TITLE = 'x";alert(1);//'
 
@@ -68,6 +69,18 @@ describe.each([false, true])('streamed useHeadSafe titles, suppressed: %s', (sup
       title: document.title,
       script: document.querySelector('script')?.textContent,
       refresh: document.querySelector('meta[http-equiv]')?.getAttribute('content'),
-    }).toEqual({ title: suppressed ? '' : TITLE, script: 'window.t = ""', refresh: '0;url=/' }))
+    }).toEqual({ title: suppressed ? '' : TITLE, script: 'window.t = "%pageTitle"', refresh: '0;url=/%s' }))
+  })
+})
+
+describe('stream replay', () => {
+  it('keeps replaying a batch after a null entry', () => {
+    const { document } = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>').window
+    const head = createHead({ document })
+    const queue = { _q: [[null, { title: 'After' }]] } as any
+
+    attachStreamHead(queue, head)
+
+    expect(resolveTags(head).find(tag => tag.tag === 'title')?.textContent).toBe('After')
   })
 })
