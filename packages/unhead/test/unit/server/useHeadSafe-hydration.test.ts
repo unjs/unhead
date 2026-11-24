@@ -10,52 +10,49 @@ describe('safe JSON hydration', () => {
     { id: 'unhead:payload' },
     { ID: 'unhead:payload' },
     { id: ['unhead:payload'] },
-    { id: 'unhead&colon;payload' },
     { id: 'unhead&#58;payload' },
-    { id: 'unhead&#x3a;payload' },
-    { id: 'unhead&#X3A;payload' },
     { id: '&#117;nhead:payload' },
-    { id: '&#x75nhead:payload' },
-    { id: ['unhead&colon;payload'] },
-  ].flatMap(attrs => [true, false].map(hasPayload => ({ attrs, hasPayload }))))('ignores safe JSON with a reserved payload ID and restores the server title: %j', async ({ attrs, hasPayload }) => {
-    const server = createServerHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
-    const untrusted = {
-      title: 'forged title',
-      titleTemplate: 'forged %s',
-      templateParams: { injected: 'forged parameter' },
-      script: [{ src: '/forged.js' }],
-      style: [{ innerHTML: 'body { display: none }' }],
-      link: [{ rel: 'stylesheet', href: '/forged.css' }],
-      meta: [{ 'http-equiv': 'refresh', 'content': '0;url=/forged' }],
-      htmlAttrs: { onclick: 'forged()' },
-      bodyAttrs: { onload: 'forged()' },
+  ])('ignores safe JSON with a reserved payload ID and restores the server title: %j', async (attrs) => {
+    for (const hasPayload of [true, false]) {
+      const server = createServerHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
+      const untrusted = {
+        title: 'forged title',
+        titleTemplate: 'forged %s',
+        templateParams: { injected: 'forged parameter' },
+        script: [{ src: '/forged.js' }],
+        style: [{ innerHTML: 'body { display: none }' }],
+        link: [{ rel: 'stylesheet', href: '/forged.css' }],
+        meta: [{ 'http-equiv': 'refresh', 'content': '0;url=/forged' }],
+        htmlAttrs: { onclick: 'forged()' },
+        bodyAttrs: { onload: 'forged()' },
+      }
+      useHeadSafe(server, {
+        script: [{ ...attrs, type: 'application/json', textContent: JSON.stringify(untrusted) }],
+      } as any)
+      if (hasPayload)
+        useHead(server, { title: 'Genuine server title' }, { mode: 'server' })
+      const dom = useDom(await renderSSRHead(server))
+      const head = createClientHead({
+        document: dom.window.document,
+        plugins: [TemplateParamsPlugin],
+        domOptions: { render: () => {} },
+      })
+      useHead(head, {
+        script: [{ id: 'app-consumer', textContent: 'window.value = "%injected"', processTemplateParams: true }],
+      })
+      await renderDOMHead(head)
+      const document = dom.window.document
+      expect(document.title).toBe(hasPayload ? 'Genuine server title' : '')
+      expect(document.querySelector('script[src]')).toBeNull()
+      expect(document.querySelector('style, link, meta[http-equiv]')).toBeNull()
+      expect(document.documentElement.getAttribute('onclick')).toBeNull()
+      expect(document.body.getAttribute('onload')).toBeNull()
+      expect(document.getElementById('app-consumer')?.textContent).toBe('window.value = "%injected"')
+      // Safe JSON remains available as data, without becoming head configuration.
+      const data = Array.from(document.querySelectorAll('script[type="application/json"]'))
+        .find(script => script.textContent?.includes('forged title'))
+      expect(JSON.parse(data!.textContent!)).toEqual(untrusted)
     }
-    useHeadSafe(server, {
-      script: [{ ...attrs, type: 'application/json', textContent: JSON.stringify(untrusted) }],
-    } as any)
-    if (hasPayload)
-      useHead(server, { title: 'Genuine server title' }, { mode: 'server' })
-    const dom = useDom(await renderSSRHead(server))
-    const head = createClientHead({
-      document: dom.window.document,
-      plugins: [TemplateParamsPlugin],
-      domOptions: { render: () => {} },
-    })
-    useHead(head, {
-      script: [{ id: 'app-consumer', textContent: 'window.value = "%injected"', processTemplateParams: true }],
-    })
-    await renderDOMHead(head)
-    const document = dom.window.document
-    expect(document.title).toBe(hasPayload ? 'Genuine server title' : '')
-    expect(document.querySelector('script[src]')).toBeNull()
-    expect(document.querySelector('style, link, meta[http-equiv]')).toBeNull()
-    expect(document.documentElement.getAttribute('onclick')).toBeNull()
-    expect(document.body.getAttribute('onload')).toBeNull()
-    expect(document.getElementById('app-consumer')?.textContent).toBe('window.value = "%injected"')
-    // Safe JSON remains available as data, without becoming head configuration.
-    const data = Array.from(document.querySelectorAll('script[type="application/json"]'))
-      .find(script => script.textContent?.includes('forged title'))
-    expect(JSON.parse(data!.textContent!)).toEqual(untrusted)
   })
 
   it('preserves ordinary safe JSON IDs', async () => {

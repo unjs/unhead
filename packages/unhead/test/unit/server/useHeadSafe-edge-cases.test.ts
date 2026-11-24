@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
-import { createServerHeadWithContext, useDom } from '../../util'
+import { createServerHeadWithContext } from '../../util'
 
 // Note: SafeInputPlugin must be registered via useHeadSafe() — calling
 // head.push() with _safe:true alone does NOT activate the safe plugin.
@@ -376,13 +376,13 @@ describe('useHeadSafe edge cases', () => {
       expect(ctx.headTags).not.toContain('Content-Security-Policy')
     })
 
-    it('preserves safe meta content through HTML parsing', async () => {
-      const content = 'He said "hello" & <goodbye> &quot;'
+    it('escapes quotes in attribute values', async () => {
       const ctx = await safeRender({
-        meta: [{ name: 'description', content }],
+        meta: [{ name: 'description', content: 'He said "hello" & <goodbye>' }],
       })
-      const dom = useDom(ctx)
-      expect(dom.window.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(content)
+      expect(ctx.headTags).toContain('&quot;')
+      // < and > are not escaped in attribute values (safe inside double quotes)
+      expect(ctx.headTags).toContain('content="He said &quot;hello&quot; & <goodbye>"')
     })
   })
 

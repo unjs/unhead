@@ -3,8 +3,7 @@ import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 import { hasOwn } from '../../utils/hasOwn'
 
 function encodeAttribute(value: string) {
-  // Preserve literal values when the browser decodes attribute character references.
-  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+  return String(value).replace(/"/g, '&quot;')
 }
 
 /* @__PURE__ */

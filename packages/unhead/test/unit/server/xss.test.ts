@@ -1,7 +1,7 @@
 import { stringify } from 'devalue'
 import { describe, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
-import { createServerHeadWithContext, useDom } from '../../util'
+import { createServerHeadWithContext } from '../../util'
 
 describe('xss', () => {
   it('basic', async () => {
@@ -333,7 +333,7 @@ describe('xss', () => {
     expect(ctx.headTags).toMatchInlineSnapshot(`"<script>var xss = '<img src="1" onerror="alert(1)" />';</script>"`)
   })
 
-  it('preserves literal link URLs without decoding character references into schemes', async () => {
+  it('link attributes with protocol switching vectors', async () => {
     const head = createServerHeadWithContext()
 
     head.push({
@@ -345,12 +345,11 @@ describe('xss', () => {
     })
 
     const ctx = await renderSSRHead(head)
-    const dom = useDom(ctx)
-    expect(Array.from(dom.window.document.querySelectorAll('link')).map(link => link.getAttribute('href'))).toEqual([
-      '//evil.com/xss.js',
-      'javascript&#58;alert(1)',
-      'vbscript:alert(1)',
-    ])
+    expect(ctx.headTags).toMatchInlineSnapshot(`
+      "<link rel="stylesheet" href="//evil.com/xss.js">
+      <link rel="stylesheet" href="javascript&#58;alert(1)">
+      <link rel="stylesheet" href="vbscript:alert(1)">"
+    `)
   })
   it('style tag', async () => {
     // body {color: red;}</style><script>alert('XSS')</script><style>

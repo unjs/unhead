@@ -111,8 +111,9 @@ function stripProtoKeys(obj: any): any {
 
 function acceptDataAttrs(value: Record<string, string>, allowId = true) {
   return Object.fromEntries(
-    // The client reads this ID as trusted head configuration during hydration.
-    Object.entries(value || {}).filter(([key, val]) => ((allowId && key === 'id' && String(val) !== 'unhead:payload') || key.startsWith('data-')) && SafeAttrName.test(key)),
+    // The client reads `unhead:payload` as trusted head configuration during hydration.
+    // A character reference could spell that ID, so a safe ID cannot contain `&`.
+    Object.entries(value || {}).filter(([key, val]) => ((allowId && key === 'id' && String(val) !== 'unhead:payload' && !String(val).includes('&')) || key.startsWith('data-')) && SafeAttrName.test(key)),
   )
 }
 
