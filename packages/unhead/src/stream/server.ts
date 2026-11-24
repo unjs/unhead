@@ -16,6 +16,7 @@ const GT_RE = />/g
 const AMP_RE = /&/g
 const BACKSLASH_RE = /\\/g
 const QUOTE_RE = /["'`$]/g
+const CSP_NONCE_RE = /^[\w+/-]+=*$/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
@@ -132,6 +133,12 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
 
 function renderNonceAttribute(nonce?: string): string {
   return nonce ? ` nonce="${nonce.replace(AMP_RE, '&amp;').replace(/"/g, '&quot;')}"` : ''
+}
+
+// A late patch must carry no quotes, so it writes the nonce unquoted. CSP nonces are
+// base64 or base64url. A nonce outside that syntax cannot match a policy anyway.
+function unquotedNonce(nonce?: string): string {
+  return nonce && CSP_NONCE_RE.test(nonce) ? ` nonce=${nonce}` : ''
 }
 
 /**
@@ -553,7 +560,7 @@ export function wrapStream(
       return ''
     const key = getStreamKey(head)
     // A template with no `</head>` never received the bootstrap script.
-    return `<script${renderNonceAttribute(head._stream?.nonce)}>window.${key}&&(window.${key}.push(JSON.parse(\`${quoteFree(updates)}\`)));document.currentScript.remove()</script>`
+    return `<script${unquotedNonce(head._stream?.nonce)}>window.${key}&&(window.${key}.push(JSON.parse(\`${quoteFree(updates)}\`)));document.currentScript.remove()</script>`
   })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined

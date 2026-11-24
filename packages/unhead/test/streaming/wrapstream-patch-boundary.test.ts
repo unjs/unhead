@@ -9,8 +9,8 @@ const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-
 const TITLE = 'x onerror=lateTitle() y'
 const encoder = new TextEncoder()
 
-function render(chunks: (string | Uint8Array)[], title = TITLE, lateBody = false) {
-  const { head } = createStreamableHead()
+function render(chunks: (string | Uint8Array)[], title = TITLE, lateBody = false, nonce?: string) {
+  const { head } = createStreamableHead({ nonce })
   const queue = chunks.map(chunk => typeof chunk === 'string' ? encoder.encode(chunk) : chunk)
   const source = new ReadableStream<Uint8Array>({
     pull(controller) {
@@ -44,6 +44,7 @@ const documents = {
   'state script': '<script>window.__STATE__={"q":"<img src=x onerror=appData()>"};</script><p>after</p>',
   'escaped script': '<script><!-- <script>var q="<img src=x onerror=appData()>"</script> --></script><p>after</p>',
   'quoted attributes': '<img src="/missing.png" alt="a > b"><p title=\'c > d\'>x</p>',
+  'attribute markup': '<img alt="a > <img src=x onerror=appData()>"><p title=\'b > <img src=x onerror=appData()>\'>x</p>',
   'unquoted attribute': '<input value=a/b><p>after</p>',
   'comment': '<!-- a > b <p> --><p>after</p>',
   'textarea': '<textarea>a </b> <script></textarea><p>after</p>',
@@ -56,11 +57,23 @@ const documents = {
 describe('wrapStream patch boundaries', () => {
   it.each(Object.entries(documents))('adds no event handler to the %s at any split', async (_, markup) => {
     const bytes = encoder.encode(markup)
-    const expected = handlers(await render([bytes]))
-    for (let split = 1; split < bytes.length; split++) {
-      expect(handlers(await render([bytes.subarray(0, split), bytes.subarray(split)])), `split at byte ${split}`).toEqual(expected)
-      expect(handlers(await render([bytes.subarray(0, split)])), `end at byte ${split}`).toEqual(handlers(markup.slice(0, split)))
+    for (const nonce of [undefined, 'bm9uY2U+/w==']) {
+      const expected = handlers(await render([bytes], TITLE, false, nonce))
+      for (let split = 1; split < bytes.length; split++) {
+        const chunks = [bytes.subarray(0, split), bytes.subarray(split)]
+        expect(handlers(await render(chunks, TITLE, false, nonce)), `split at byte ${split}, nonce ${nonce}`).toEqual(expected)
+        expect(handlers(await render([chunks[0]!], TITLE, false, nonce)), `end at byte ${split}, nonce ${nonce}`).toEqual(handlers(markup.slice(0, split)))
+      }
     }
+  }, 30_000)
+
+  it.each([
+    ['bm9uY2U+/w==', '<script nonce=bm9uY2U+/w==>'],
+    ['a"b', '<script>'],
+  ])('writes the CSP nonce %s without quotes', async (nonce, opening) => {
+    const html = await render(['<p>First</p>'], 'Late title', false, nonce)
+
+    expect(html).toContain(`<p>First</p>${opening}window.__unhead__&&(`)
   })
 
   it('writes a late patch after an app chunk that ends outside script content', async () => {
