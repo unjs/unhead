@@ -6,7 +6,7 @@ export type StreamQueue = Pick<StreamingGlobal, '_q'> & Partial<StreamingGlobal>
 export function bindStreamHead(
   queue: StreamQueue,
   head: Unhead<any>,
-  push: (input: SerializableHead) => number | undefined = input => head.push(input, { _streamed: true })._i,
+  push: (input: SerializableHead, safe?: true) => number | undefined = (input, safe) => head.push(input, { _streamed: true, _safe: safe })._i,
 ) {
   let pending: SerializableHead[][] | undefined
   function replay(batches: SerializableHead[][]) {
@@ -17,7 +17,9 @@ export function bindStreamHead(
       // Hooks can enqueue a patch during replay. Apply it after the existing backlog.
       for (const batch of batches) {
         for (const input of batch) {
-          const id = push(input)
+          // The server marks filtered useHeadSafe() input. Template parameters keep its title out of scripts.
+          const { _safe, ...rest } = input as SerializableHead & { _safe?: true }
+          const id = push(_safe ? rest : input, _safe)
           const entry = id === undefined ? undefined : head.entries.get(id)
           if (entry)
             entry._streamed = true
