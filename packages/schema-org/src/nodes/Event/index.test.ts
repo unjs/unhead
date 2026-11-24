@@ -557,4 +557,16 @@ describe('defineEvent', () => {
       ])
     })
   })
+
+  it('does not name the site as the organizer', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({ name: 'Ticket Hub' }),
+        defineEvent({ name: 'Concert', startDate: '2027-01-01' }),
+      ])
+      const event = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'Event')
+      expect(event).toBeDefined()
+      expect(event).not.toHaveProperty('organizer')
+    })
+  })
 })

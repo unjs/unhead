@@ -14,11 +14,8 @@ import type { Place } from '../Place'
 import type { VirtualLocation } from '../VirtualLocation'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
-  IdentityId,
-  idReference,
   resolvableDateToDate,
   resolvableDateToIso,
-  setIfEmpty,
   withBase,
 } from '../../utils'
 import { offerResolver } from '../Offer'
@@ -223,11 +220,6 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
         : resolveDate(node.previousStartDate)
     }
     return node
-  },
-  resolveRootNode(node, { find }) {
-    const identity = find(IdentityId)
-    if (identity)
-      setIfEmpty(node, 'organizer', idReference(identity))
   },
 })
 
