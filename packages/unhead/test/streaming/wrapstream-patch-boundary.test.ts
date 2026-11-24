@@ -52,6 +52,8 @@ const documents = {
   'svg script': '<svg><script><img src=x alt="</script>">rest</script></svg><p>after</p>',
   'foreignObject script': '<svg><foreignObject><script>var a="</svg>";var q="<img src=x onerror=appData()>";</script></foreignObject></svg>',
   'uppercase': '<SCRIPT>var a = 1 < 2;</SCRIPT><P CLASS="x">y</P>',
+  'less-than text': '1 < 2<script>window.v = 1 > 0;var q="<img src=x onerror=appData()>";</script><p>after</p>',
+  'dash attribute': '<div data-note=--><script>window.v = 1 > 0;var q="<img src=x onerror=appData()>";</script></div><p>after</p>',
 }
 
 describe('wrapStream patch boundaries', () => {
@@ -163,6 +165,9 @@ describe('createPatchBoundary', () => {
     '<p title="<script>">x</p></script>after',
     '<textarea><script></textarea></script>after',
     '<NoFrames>x</noframes ><!-- <title> -->after',
+    '1 < 2<script>a > b</script>after',
+    '<div a=--><script>a > b</script>after',
+    'a <',
     '<!-- a --!><p>x</p><!--!>y-->after',
     '<script><!-- --!> <script></script> --></script>after',
   ])('reads %s the same at every chunk boundary', (html) => {

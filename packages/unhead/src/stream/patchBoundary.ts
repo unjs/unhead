@@ -2,6 +2,8 @@
 const TOKEN_RE = /<!--|--!?>|<(\/?)(script|iframe|noembed|noframes|noscript|style|textarea|title|xmp)(?=[\t\n\f\r />])|[<>"']/gi
 // The longest token plus its lookahead character.
 const TAIL_LENGTH = 11
+// After `<`, these characters start markup. Anything else leaves the `<` as text.
+const MARKUP_START = /[a-z/!?]/i
 
 const OUTSIDE = 0
 const DATA = 1
@@ -23,9 +25,19 @@ export function createPatchBoundary(): (text: string) => boolean {
   let text: string | undefined
   let comment = false
   let offset = 0
-  let pending: { start: number, name?: string, closing: boolean, quote?: string } | undefined
+  // `unresolved` marks a `<` at a chunk end, before its next character arrives.
+  let pending: { start: number, name?: string, closing: boolean, quote?: string, unresolved?: true } | undefined
   return (chunk) => {
     const html = tail + chunk
+    if (pending?.unresolved) {
+      const next = html[pending.start + 1 - offset + tail.length]
+      if (next !== undefined) {
+        if (MARKUP_START.test(next))
+          pending.unresolved = undefined
+        else
+          pending = undefined
+      }
+    }
     for (const match of html.matchAll(TOKEN_RE)) {
       const [token, slash, tag] = match
       // The previous call read every token that ended inside the tail, including its lookahead.
@@ -52,7 +64,8 @@ export function createPatchBoundary(): (text: string) => boolean {
         else if (token === '"' || token === '\'') {
           pending.quote = token
         }
-        else if (token === '>') {
+        // `-->` in an unquoted attribute value still ends the tag at its `>`.
+        else if (token.endsWith('>')) {
           if (pending.name === 'script')
             script = pending.closing ? OUTSIDE : DATA
           else if (pending.name)
@@ -83,8 +96,15 @@ export function createPatchBoundary(): (text: string) => boolean {
       else if (token === '<!--') {
         comment = true
       }
-      else if (tag || token === '<') {
+      else if (tag) {
         pending = { start, name, closing: !!slash }
+      }
+      else if (token === '<') {
+        const next = html[match.index! + 1]
+        if (next === undefined)
+          pending = { start, closing: false, unresolved: true }
+        else if (MARKUP_START.test(next))
+          pending = { start, closing: false }
       }
     }
     offset += chunk.length
