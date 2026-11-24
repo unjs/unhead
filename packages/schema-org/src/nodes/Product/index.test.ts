@@ -473,4 +473,12 @@ describe('defineProduct', () => {
     const product: Product = { name: 'Mug', image: '/mug.png', aggregateOffer: { lowPrice: 10, priceCurrency: 'USD' } }
     expect(product.name).toBe('Mug')
   })
+
+  it('treats an offer with an undefined lowPrice as an Offer', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineProduct({ name: 'Mug', image: '/mug.png', offers: { price: 150, lowPrice: undefined } })])
+      const product = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Mug')
+      expect((product as any).offers['@type']).toBe('Offer')
+    })
+  })
 })

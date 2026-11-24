@@ -366,7 +366,7 @@ export const productResolver = defineSchemaOrgResolver<Product>({
       const resolveOffer = (offer: NodeRelation<Offer | AggregateOffer | number>) => {
         const isAggregateOffer = typeof offer === 'object'
           && offer !== null
-          && (asArray((offer as Thing)['@type']).includes('AggregateOffer') || 'lowPrice' in offer)
+          && (asArray((offer as Thing)['@type']).includes('AggregateOffer') || (offer as AggregateOffer).lowPrice != null)
         return isAggregateOffer
           ? resolveRelation(offer as AggregateOffer, ctx, aggregateOfferResolver)
           : resolveRelation(offer as NodeRelation<Offer | number>, ctx, offerResolver)
