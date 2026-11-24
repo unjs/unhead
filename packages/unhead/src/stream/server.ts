@@ -9,10 +9,14 @@ import { unpackMeta } from '../utils/meta'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 import { parseStreamKey } from './key'
+import { createPatchBoundary } from './patchBoundary'
 
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+const BACKSLASH_RE = /\\/g
+const QUOTE_RE = /["'`$]/g
+const CSP_NONCE_RE = /^[\w+/-]+=*$/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
@@ -129,6 +133,12 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
 
 function renderNonceAttribute(nonce?: string): string {
   return nonce ? ` nonce="${nonce.replace(AMP_RE, '&amp;').replace(/"/g, '&quot;')}"` : ''
+}
+
+// A late patch must carry no quotes, so it writes the nonce unquoted. CSP nonces are
+// base64 or base64url. A nonce outside that syntax cannot match a policy anyway.
+function unquotedNonce(nonce?: string): string {
+  return nonce && CSP_NONCE_RE.test(nonce) ? ` nonce=${nonce}` : ''
 }
 
 /**
@@ -407,8 +417,16 @@ export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
-
   const streamKey = getStreamKey(head)
+  const updates = renderStreamUpdates(head)
+  return updates && `window.${streamKey}.push(${updates})`
+}
+
+// Returns the JSON array of late head updates, or an empty string.
+function renderStreamUpdates(head: Unhead<any>): string {
+  if (!head.entries.size)
+    return ''
+
   const propResolvers = head.resolvedOptions.propResolvers || []
   let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
@@ -456,7 +474,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     if (bodyTags)
       (state.bodyTags ||= []).push(...bodyTags)
     head.entries.clear()
-    return inputs.length ? `window.${streamKey}.push(${serialized})` : ''
+    return inputs.length ? serialized : ''
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -483,6 +501,12 @@ function safeJsonStringify(obj: any): string {
     .replace(AMP_RE, '\\u0026')
 }
 
+// Encode JSON for a template literal with no quote characters. A patch can land
+// inside an app attribute value, and a quote there would end the value.
+function quoteFree(json: string): string {
+  return json.replace(BACKSLASH_RE, '\\\\').replace(QUOTE_RE, quote => `\\x${quote.charCodeAt(0).toString(16)}`)
+}
+
 /**
  * @experimental
  *
@@ -499,9 +523,10 @@ function safeJsonStringify(obj: any): string {
  * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
- * @param options.flushChunk - Returns extra HTML to emit after each app
- * chunk and once before the closing HTML (used by framework packages to
- * interleave head-update scripts)
+ * @param options.flushChunk - Returns extra HTML to emit after an app chunk
+ * that ends with `>` outside script content, and once before the closing HTML.
+ * A chunk can still end inside an attribute value or a comment, so the output
+ * must contain no quotes.
  * @returns A new ReadableStream with shell and closing HTML included
  *
  * @example
@@ -523,22 +548,25 @@ export function wrapStream(
   streamState(head).writesBodyTags = true
   // Preserve late entries when no custom chunk renderer exists.
   const flushChunk = options?.flushChunk ?? (() => {
-    let chunk: string
+    let updates: string
     try {
-      chunk = renderSSRHeadSuspenseChunk(head)
+      updates = renderStreamUpdates(head)
     }
     catch {
       // The response already started. Skip this patch.
       return ''
     }
-    if (!chunk)
+    if (!updates)
       return ''
+    const key = getStreamKey(head)
     // A template with no `</head>` never received the bootstrap script.
-    return `<script${renderNonceAttribute(head._stream?.nonce)}>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
+    return `<script${unquotedNonce(head._stream?.nonce)}>window.${key}&&(window.${key}.push(JSON.parse(\`${quoteFree(updates)}\`)));document.currentScript.remove()</script>`
   })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let parts: StreamingTemplateParts | undefined
+  const decoder = new TextDecoder()
+  const atBoundary = createPatchBoundary()
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -585,16 +613,26 @@ export function wrapStream(
       if (result.done) {
         reader = undefined
         activeReader.releaseLock()
-        const extra = flushChunk?.()
-        if (extra)
-          controller.enqueue(enc.encode(extra))
-        const closing = parts ? renderStreamEnd(head, parts) : ''
-        if (closing)
-          controller.enqueue(enc.encode(closing))
+        // Late output inside an unclosed app script would end that script early.
+        if (atBoundary(decoder.decode())) {
+          const extra = flushChunk?.()
+          if (extra)
+            controller.enqueue(enc.encode(extra))
+          const closing = parts ? renderStreamEnd(head, parts) : ''
+          if (closing)
+            controller.enqueue(enc.encode(closing))
+        }
+        else if (parts) {
+          controller.enqueue(enc.encode(parts.end))
+        }
         controller.close()
         return
       }
       controller.enqueue(result.value)
+      // A patch inside an app script would end it early, and one inside text would
+      // show. A chunk that ends with `>` cannot split a UTF-8 character.
+      if (!atBoundary(decoder.decode(result.value, { stream: true })) || result.value.at(-1) !== 0x3E)
+        return
       const extra = flushChunk?.()
       if (extra)
         controller.enqueue(enc.encode(extra))
