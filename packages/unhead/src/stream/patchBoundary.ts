@@ -1,5 +1,5 @@
 // Tokens that start or end script content, text elements and comments.
-const TOKEN_RE = /<!--|--!?>|<(\/?)(script|iframe|noembed|noframes|noscript|style|textarea|title|xmp)(?=[\t\n\f\r />])/gi
+const TOKEN_RE = /<!--|--!?>|<(\/?)(script|iframe|noembed|noframes|noscript|style|textarea|title|xmp)(?=[\t\n\f\r />])|[<>"']/gi
 // The longest token plus its lookahead character.
 const TAIL_LENGTH = 11
 
@@ -12,10 +12,8 @@ const DOUBLE_ESCAPED = 3
  * Track whether streamed app HTML ends where a late head patch can go.
  *
  * A patch is an inline script, and its end tag would close an app script early. Script
- * tracking reads every `<script` token in any context, so a `<script` inside an
- * attribute or text only delays the patch. Patches carry no quotes, so other contexts
- * keep them inert. Waiting inside text elements and comments keeps the patch out of
- * visible text.
+ * tracking changes at completed tags and ignores tokens inside quoted attributes.
+ * Waiting inside text elements and comments keeps the patch out of visible text.
  *
  * Returns `true` when the HTML so far ends outside those contexts.
  */
@@ -24,6 +22,8 @@ export function createPatchBoundary(): (text: string) => boolean {
   let script = OUTSIDE
   let text: string | undefined
   let comment = false
+  let offset = 0
+  let pending: { start: number, name?: string, closing: boolean, quote?: string } | undefined
   return (chunk) => {
     const html = tail + chunk
     for (const match of html.matchAll(TOKEN_RE)) {
@@ -32,32 +32,63 @@ export function createPatchBoundary(): (text: string) => boolean {
       if (match.index! + token.length + (tag ? 1 : 0) <= tail.length)
         continue
       const name = tag?.toLowerCase()
-      if (script !== OUTSIDE) {
-        if (!tag)
-          script = token === '<!--' ? (script === DATA ? ESCAPED : script) : (token === '-->' && script > DATA ? DATA : script)
-        else if (name === 'script')
-          script = slash ? (script === DOUBLE_ESCAPED ? ESCAPED : OUTSIDE) : (script === ESCAPED ? DOUBLE_ESCAPED : script)
+      const start = offset - tail.length + match.index!
+      if (pending) {
+        // A token split across chunks can first arrive as a bare `<`.
+        if (start === pending.start && (tag || token === '<!--')) {
+          if (token === '<!--') {
+            pending = undefined
+            comment = true
+          }
+          else {
+            pending.name = name
+            pending.closing = !!slash
+          }
+        }
+        else if (pending.quote) {
+          if (token === pending.quote)
+            pending.quote = undefined
+        }
+        else if (token === '"' || token === '\'') {
+          pending.quote = token
+        }
+        else if (token === '>') {
+          if (pending.name === 'script')
+            script = pending.closing ? OUTSIDE : DATA
+          else if (pending.name)
+            text = pending.closing ? undefined : pending.name
+          pending = undefined
+        }
+        continue
       }
-      else if (name === 'script') {
-        if (!slash)
-          script = DATA
+      if (script !== OUTSIDE) {
+        if (token === '<!--' || token.startsWith('--')) {
+          script = token === '<!--' ? (script === DATA ? ESCAPED : script) : (token === '-->' && script > DATA ? DATA : script)
+        }
+        else if (name === 'script') {
+          if (slash && script !== DOUBLE_ESCAPED)
+            pending = { start, name, closing: true }
+          else
+            script = slash ? ESCAPED : (script === ESCAPED ? DOUBLE_ESCAPED : script)
+        }
       }
       else if (text) {
         if (slash && name === text)
-          text = undefined
+          pending = { start, name, closing: true }
       }
       else if (comment) {
-        comment = !token.startsWith('--')
+        if (token.startsWith('--'))
+          comment = false
       }
-      else if (tag) {
-        if (!slash)
-          text = name
+      else if (token === '<!--') {
+        comment = true
       }
-      else {
-        comment = token === '<!--'
+      else if (tag || token === '<') {
+        pending = { start, name, closing: !!slash }
       }
     }
+    offset += chunk.length
     tail = html.slice(-TAIL_LENGTH)
-    return script === OUTSIDE && !text && !comment
+    return script === OUTSIDE && !text && !comment && !pending
   }
 }

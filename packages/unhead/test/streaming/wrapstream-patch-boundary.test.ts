@@ -55,6 +55,24 @@ const documents = {
 }
 
 describe('wrapStream patch boundaries', () => {
+  it.each(['"', '\''])('keeps a closing script token inside a %s attribute out of script state', async (quote) => {
+    const code = 'const label = "a > b"; document.body.dataset.label = label;'
+    const markup = `<script data-label=${quote}</script>${quote}>${code}</script>`
+    // Include every split to cover opening and closing tags split inside attributes.
+    const reportedSplit = markup.indexOf('a >') + 3
+    const splits = [reportedSplit, ...Array.from({ length: markup.length - 1 }, (_, index) => index + 1)]
+    for (const split of splits) {
+      const html = await render([markup.slice(0, split), markup.slice(split)], 'Late title')
+      const dom = new JSDOM(html, { runScripts: 'dangerously' })
+      const { document } = dom.window
+
+      expect(document.querySelector('#app > script')?.textContent, `split ${split}`).toBe(code)
+      expect(document.body.dataset.label, `split ${split}`).toBe('a > b')
+      expect((dom.window as any).__unhead__._q, `split ${split}`).toEqual([[{ title: 'Late title' }]])
+      dom.window.close()
+    }
+  })
+
   it.each(Object.entries(documents))('adds no event handler to the %s at any split', async (_, markup) => {
     const bytes = encoder.encode(markup)
     for (const nonce of [undefined, 'bm9uY2U+/w==']) {
