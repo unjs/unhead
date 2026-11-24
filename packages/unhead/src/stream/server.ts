@@ -458,13 +458,13 @@ function renderStreamUpdates(head: Unhead<any>): string {
       input = unpackStreamMeta(input)
       const split = state.writesBodyTags && splitStreamedBodyTags(input, options?.tagPosition, state.seen, nextSeen)
       if (!split) {
-        inputs.push(input)
+        inputs.push(safe ? { ...input, _safe: true } : input)
         continue
       }
       const [patch, buffered, seen] = split
       nextSeen = seen
       if (patch)
-        inputs.push(patch)
+        inputs.push(safe ? { ...patch, _safe: true } : patch)
       if (buffered)
         (bodyTags ||= []).push([buffered, safe])
     }

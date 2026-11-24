@@ -136,11 +136,13 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
     // title: textContent is escaped in rendering (tagToString), no props needed
     case 'title':
       break
-    // virtual tags, not rendered to HTML — but sanitize to prevent injection if rendered
+    // virtual tag, not rendered to HTML
     case 'titleTemplate':
-    case 'templateParams':
       next = prev
       break
+    // Template parameters fill app scripts and directives, so untrusted input cannot set them.
+    case 'templateParams':
+      return false
     case 'htmlAttrs':
     case 'bodyAttrs':
       WhitelistAttributes[type].forEach((attr) => {
