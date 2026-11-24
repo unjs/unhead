@@ -467,4 +467,10 @@ describe('defineProduct', () => {
       ])
     })
   })
+
+  it('rejects the removed aggregateOffer property', () => {
+    // @ts-expect-error aggregateOffer moved into offers
+    const product: Product = { name: 'Mug', image: '/mug.png', aggregateOffer: { lowPrice: 10, priceCurrency: 'USD' } }
+    expect(product.name).toBe('Mug')
+  })
 })

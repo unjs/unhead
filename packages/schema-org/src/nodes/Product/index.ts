@@ -142,6 +142,10 @@ export interface ProductSimple extends Thing {
    */
   offers?: NodeRelations<Offer | AggregateOffer | number>
   /**
+   * Removed. `aggregateOffer` is not a Schema.org property. Pass the AggregateOffer in `offers`.
+   */
+  aggregateOffer?: never
+  /**
    * A Brand or Organization associated with the Product.
    */
   brand?: NodeRelation<Brand | Organization>
