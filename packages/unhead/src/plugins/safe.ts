@@ -111,7 +111,9 @@ function stripProtoKeys(obj: any): any {
 
 function acceptDataAttrs(value: Record<string, string>, allowId = true) {
   return Object.fromEntries(
-    Object.entries(value || {}).filter(([key]) => ((allowId && key === 'id') || key.startsWith('data-')) && SafeAttrName.test(key)),
+    // The client reads `unhead:payload` as trusted head configuration during hydration.
+    // A character reference could spell that ID, so a safe ID cannot contain `&`.
+    Object.entries(value || {}).filter(([key, val]) => ((allowId && key === 'id' && String(val) !== 'unhead:payload' && !String(val).includes('&')) || key.startsWith('data-')) && SafeAttrName.test(key)),
   )
 }
 
@@ -128,11 +130,13 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
     // title: textContent is escaped in rendering (tagToString), no props needed
     case 'title':
       break
-    // virtual tags, not rendered to HTML — but sanitize to prevent injection if rendered
+    // virtual tag, not rendered to HTML
     case 'titleTemplate':
-    case 'templateParams':
       next = prev
       break
+    // Template parameters fill app scripts and directives, so untrusted input cannot set them.
+    case 'templateParams':
+      return false
     case 'htmlAttrs':
     case 'bodyAttrs':
       WhitelistAttributes[type].forEach((attr) => {

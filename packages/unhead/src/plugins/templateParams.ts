@@ -10,11 +10,25 @@ const SupportedAttrs = {
 
 const contentAttrs = ['innerHTML', 'textContent']
 
+const isJsonScript = (tag: HeadTag) => tag.tag === 'script' && String(tag.props.type).endsWith('json')
+
+// A useHeadSafe() title may fill text and attribute values that stay text. In a script,
+// a style, a URL, an `http-equiv` directive or the referrer policy it would change page
+// behaviour, so those keep `%s` and `%pageTitle` as written.
+function takesSafeTitle(tag: HeadTag): boolean {
+  if (tag.tag === 'meta')
+    return !tag.props['http-equiv'] && String(tag.props.name).toLowerCase() !== 'referrer'
+  return tag.tag === 'title' || tag.tag === 'titleTemplate' || tag.tag === 'htmlAttrs' || isJsonScript(tag)
+}
+
 export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
     hooks: {
       'entries:normalize': (ctx) => {
+        // Template parameters fill app scripts and directives, so untrusted input cannot set them.
+        if (ctx.entry.options?._safe)
+          return
         const params = ctx.tags.filter(t => t.tag === 'templateParams' && t.mode === 'server')?.[0]?.props || {}
         if (Object.keys(params).length) {
           head._ssrPayload = {
@@ -31,6 +45,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
+        const safeTitle = !params.pageTitle && head._titleSafe
         // pre-process title
         params.pageTitle = processTemplateParams(
           // find templateParams
@@ -38,14 +53,21 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           params,
           sep,
         )
+        let withoutSafeTitle = params
+        if (safeTitle) {
+          // Unresolved tokens stay as written. Blanking would change URL structure, such as `/%s/host` into `//host`.
+          withoutSafeTitle = { ...params }
+          delete withoutSafeTitle.pageTitle
+        }
         for (const tag of tags) {
           if (tag.processTemplateParams === false) {
             continue
           }
+          const tagParams = takesSafeTitle(tag) ? params : withoutSafeTitle
           // @ts-expect-error untyped
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.props[v] === 'string') {
-            tag.props[v] = processTemplateParams(tag.props[v], params, sep)
+            tag.props[v] = processTemplateParams(tag.props[v], tagParams, sep)
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
@@ -53,7 +75,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
               // @ts-expect-error untyped
               if (typeof tag[p] === 'string')
                 // @ts-expect-error untyped
-                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && tag.props.type.endsWith('json'))
+                tag[p] = processTemplateParams(tag[p], tagParams, sep, isJsonScript(tag))
             }
           }
         }

@@ -155,6 +155,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
       const title = ctx.tagMap.get('title')
       const titleTemplate = ctx.tagMap.get('titleTemplate')
       head._title = title?.textContent
+      head._titleSafe = title?._safe === true
 
       if (titleTemplate) {
         const titleTemplateFn = titleTemplate?.textContent

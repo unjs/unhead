@@ -43,8 +43,9 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       'tags:resolve': function (ctx) {
         const title = ctx.tagMap.get('title') as HeadTag | undefined
         const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
-        let payload: ResolvableHead = {
+        let payload: ResolvableHead & { _safeTitle?: boolean } = {
           title: title?.mode === 'server' ? unhead._title : undefined,
+          _safeTitle: title?.mode === 'server' && unhead._titleSafe ? true : undefined,
           titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
         }
         if (Object.keys(unhead._ssrPayload || {}).length > 0) {
