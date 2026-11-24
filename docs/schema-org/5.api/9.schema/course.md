@@ -31,7 +31,7 @@ defineCourse({
 })
 ```
 
-For [Google's course list feature](https://developers.google.com/search/docs/appearance/structured-data/course), mark up at least three courses and add the required ItemList carousel properties. Each Course requires `name` and `description`. Google recommends `provider`.
+For [Google's course list feature](https://developers.google.com/search/docs/appearance/structured-data/course), mark up at least three courses and add the required ItemList carousel properties. Each Course requires `name` and `description`. Google's property table lists `provider` as recommended, but its content guidelines say each course must have a valid `name` and `provider`. Set `provider` on every course.
 
 ## Defaults and resolves
 
