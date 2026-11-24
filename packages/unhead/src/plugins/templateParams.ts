@@ -10,6 +10,17 @@ const SupportedAttrs: Partial<Record<string, string>> = {
 
 const contentAttrs: (keyof Pick<HeadTag, 'innerHTML' | 'textContent'>)[] = ['innerHTML', 'textContent']
 
+const isJsonScript = (tag: HeadTag) => tag.tag === 'script' && String(tag.attrs.type).endsWith('json')
+
+// A useHeadSafe() title may fill text and attribute values that stay text. In a script,
+// a style, a URL, an `http-equiv` directive or the referrer policy it would change page
+// behaviour, so those keep `%s` and `%pageTitle` as written.
+function takesSafeTitle(tag: HeadTag): boolean {
+  if (tag.tag === 'meta')
+    return !tag.attrs['http-equiv'] && String(tag.attrs.name).toLowerCase() !== 'referrer'
+  return tag.tag === 'title' || tag.tag === 'titleTemplate' || tag.tag === 'htmlAttrs' || isJsonScript(tag)
+}
+
 export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
@@ -20,6 +31,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
+        const safeTitle = !params.pageTitle && head._titleSafe
         // pre-process title
         params.pageTitle = processTemplateParams(
           // find templateParams
@@ -27,19 +39,26 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           params,
           sep,
         )
+        let withoutSafeTitle = params
+        if (safeTitle) {
+          // Unresolved tokens stay as written. Blanking would change URL structure, such as `/%s/host` into `//host`.
+          withoutSafeTitle = { ...params }
+          delete withoutSafeTitle.pageTitle
+        }
         for (const tag of tags) {
           if (tag.processTemplateParams === false) {
             continue
           }
+          const tagParams = takesSafeTitle(tag) ? params : withoutSafeTitle
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.attrs[v] === 'string') {
-            tag.attrs[v] = processTemplateParams(tag.attrs[v], params, sep)
+            tag.attrs[v] = processTemplateParams(tag.attrs[v], tagParams, sep)
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
             for (const p of contentAttrs) {
               if (typeof tag[p] === 'string')
-                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && String(tag.attrs.type).endsWith('json'))
+                tag[p] = processTemplateParams(tag[p], tagParams, sep, isJsonScript(tag))
             }
           }
         }

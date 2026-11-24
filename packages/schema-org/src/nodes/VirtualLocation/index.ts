@@ -10,7 +10,7 @@ export interface VirtualLocationSimple extends Thing {
 export interface VirtualLocation extends VirtualLocationSimple {}
 
 /**
- * Describes a HowTo guide, which contains a series of steps.
+ * Describes an online location, such as the URL of an online event. A string input becomes the `url`.
  */
 export const virtualLocationResolver = defineSchemaOrgResolver<VirtualLocation, VirtualLocation | string>({
   cast(node) {

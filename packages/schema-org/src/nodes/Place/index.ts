@@ -19,7 +19,7 @@ export interface PlaceSimple extends Thing {
 export interface Place extends PlaceSimple {}
 
 /**
- * Describes a HowTo guide, which contains a series of steps.
+ * Describes a physical place, such as an event venue, with a name and an address.
  */
 export const placeResolver = defineSchemaOrgResolver<Place>({
   defaults: {

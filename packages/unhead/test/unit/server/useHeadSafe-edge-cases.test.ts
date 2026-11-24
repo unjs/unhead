@@ -327,11 +327,10 @@ describe('useHeadSafe edge cases', () => {
       const head = createServerHeadWithContext({
         plugins: [TemplateParamsPlugin],
       })
+      // Safe input cannot set template params, so an app parameter fills the safe link.
+      head.push({ templateParams: { href: 'data:text/css,body{display:none}' } })
       useHeadSafe(head, {
         link: [{ rel: 'stylesheet', href: '%href' }],
-        templateParams: {
-          href: 'data:text/css,body{display:none}',
-        },
       })
       const ctx = renderSSRHead(head)
       expect(ctx.headTags).toBe('')

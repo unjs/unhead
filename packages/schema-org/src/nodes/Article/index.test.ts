@@ -475,4 +475,28 @@ describe('defineArticle', () => {
       image: 'https://res.cloudinary.com/kootingalpecancompany/images/w_1920,h_2560/f_auto,q_auto/v1648723707/IMG_0446/IMG_0446.jpg?_i=AA',
     })
   })
+
+  it('keeps a long headline that has no spaces', async () => {
+    const headline = '東'.repeat(120)
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineArticle({ ...defaultArticleInput, headline })])
+      const article = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'Article')
+      expect(article!.headline).toBe(headline)
+    })
+  })
+
+  it('resolves inline schema.org comments', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineArticle({
+        ...defaultArticleInput,
+        comment: [{ text: 'Nice post', author: { name: 'Ada' }, datePublished: mockDate }],
+      })])
+      const article = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'Article')
+      expect(article!.comment).toMatchObject({
+        '@type': 'Comment',
+        'text': 'Nice post',
+        'datePublished': '2021-11-10T10:10:10.000Z',
+      })
+    })
+  })
 })

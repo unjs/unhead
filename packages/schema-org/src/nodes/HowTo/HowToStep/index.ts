@@ -17,10 +17,6 @@ interface HowToStepBase extends Thing {
    */
   url?: string
   /**
-   * The instruction string
-   * ("e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
-   */
-  /**
    * The word or short phrase summarizing the step (for example, "Attach wires to post" or "Dig").
    * Don't use non-descriptive text (for example, "Step 1: [text]") or other form of step number (for example, "1. [text]").
    */
@@ -41,10 +37,18 @@ interface HowToStepBase extends Thing {
 
 type HowToStepContent
   = | {
+    /**
+     * The instruction string
+     * (e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
+     */
     text: string
     itemListElement?: NodeRelations<HowToDirection | string>
   }
   | {
+    /**
+     * The instruction string
+     * (e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
+     */
     text?: string
     itemListElement: NodeRelations<HowToDirection | string>
   }
@@ -53,7 +57,7 @@ export type HowToStepSimple = HowToStepBase & HowToStepContent
 export type HowToStep = HowToStepSimple
 
 /**
- * Describes a HowTo guide, which contains a series of steps.
+ * Describes a single step in a HowTo guide. A string input becomes the step `text`.
  */
 export const howToStepResolver = defineSchemaOrgResolver<HowToStep, HowToStep | string>({
   cast(node) {

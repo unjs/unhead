@@ -137,4 +137,20 @@ describe('defineLocalBusiness', () => {
       `)
     })
   })
+
+  it('resolves the menu url and accepts several cuisines', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineFoodEstablishment({
+          '@type': 'Restaurant',
+          'name': 'Noodle Bar',
+          'address': { streetAddress: '12 Main St' },
+          'hasMenu': '/menu',
+          'servesCuisine': ['Thai', 'Vietnamese'],
+        }),
+      ])
+      const restaurant = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Noodle Bar')
+      expect(restaurant).toMatchObject({ hasMenu: 'https://example.com/menu', servesCuisine: ['Thai', 'Vietnamese'] })
+    })
+  })
 })

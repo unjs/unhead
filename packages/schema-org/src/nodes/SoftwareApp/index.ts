@@ -73,11 +73,11 @@ interface SoftwareAppBase extends Thing {
 type SoftwareAppRating
   = | {
     aggregateRating: NodeRelation<AggregateRating>
-    review?: NodeRelation<Review>
+    review?: NodeRelations<Review>
   }
   | {
     aggregateRating?: NodeRelation<AggregateRating>
-    review: NodeRelation<Review>
+    review: NodeRelations<Review>
   }
 
 export type SoftwareAppSimple = SoftwareAppBase & SoftwareAppRating

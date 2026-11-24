@@ -1,5 +1,6 @@
 ---
 title: EmployerAggregateRating Schema
+since: 3.3.0
 description: Add Google employer rating structured data with defineEmployerAggregateRating(), including the reviewed organization and aggregate score.
 ---
 
