@@ -6,8 +6,8 @@
   },
   "clientFull": {
     "size": 26688,
-    "gz": 10469,
-    "br": 9514
+    "gz": 10470,
+    "br": 9489
   },
   "server": {
     "size": 12865,
@@ -21,8 +21,8 @@
   },
   "vueClientFull": {
     "size": 29675,
-    "gz": 11585,
-    "br": 10468
+    "gz": 11586,
+    "br": 10514
   },
   "vueServer": {
     "size": 13924,
@@ -36,8 +36,8 @@
   },
   "reactClientFull": {
     "size": 29939,
-    "gz": 11576,
-    "br": 10538
+    "gz": 11577,
+    "br": 10482
   },
   "reactServer": {
     "size": 13555,
