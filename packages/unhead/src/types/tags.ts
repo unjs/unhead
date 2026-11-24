@@ -98,6 +98,10 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   mode?: RuntimeMode
+  /**
+   * @internal
+   */
+  _safe?: boolean
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

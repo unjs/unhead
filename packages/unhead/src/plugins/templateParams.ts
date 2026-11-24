@@ -44,7 +44,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
-        const safeTitle = !params.pageTitle && (tagMap.get('title') as HeadTag & { _safe?: boolean } | undefined)?._safe
+        const safeTitle = !params.pageTitle && head._titleSafe
         // pre-process title
         params.pageTitle = processTemplateParams(
           // find templateParams

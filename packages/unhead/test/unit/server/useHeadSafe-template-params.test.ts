@@ -1,9 +1,10 @@
 import type { Unhead } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../../src'
+import { createHead as createClientHead } from '../../../src/client'
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
-import { createClientHeadWithContext, createServerHeadWithContext } from '../../util'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../util'
 
 const HOSTILE = ['x";alert(1);//', '\'', '`', '$' + '{a}'].join('')
 
@@ -12,6 +13,50 @@ async function contentOf(head: Unhead<any>, tag: string) {
 }
 
 describe('useHeadSafe titles in template parameters', () => {
+  it.each(['hydrated', 'cleared'] as const)('keeps a %s safe title out of active template consumers', async (scenario) => {
+    const server = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    useHeadSafe(server, { title: HOSTILE }, { mode: 'server' })
+    const dom = useDom(await renderSSRHead(server))
+    const head = scenario === 'hydrated'
+      ? createClientHead({ document: dom.window.document, plugins: [TemplateParamsPlugin], domOptions: { render: () => {} } })
+      : server
+    useHead(head, {
+      ...(scenario === 'cleared' ? { titleTemplate: () => null } : {}),
+      script: [
+        { type: 'text/javascript', textContent: 'window.t = "%s:%pageTitle"', processTemplateParams: true },
+        { type: 'module', innerHTML: 'export default "%s:%pageTitle"', processTemplateParams: true },
+        { type: 'application/json', textContent: '{"title":"%s"}', processTemplateParams: true },
+      ],
+      style: [
+        { textContent: '/* %s:%pageTitle */', processTemplateParams: true },
+        { innerHTML: '/* inner %s:%pageTitle */', processTemplateParams: true },
+      ],
+      link: [{ rel: 'stylesheet', href: '/%s/%pageTitle/site.css' }],
+      meta: [
+        { 'http-equiv': 'refresh', 'content': '0;url=/%s/%pageTitle' },
+        { name: 'description', content: '%s' },
+      ],
+      htmlAttrs: { lang: '%s' },
+    })
+
+    const tags = await head.resolveTags()
+    expect(tags.find(t => t.tag === 'title')?.textContent).toBe(scenario === 'hydrated' ? HOSTILE : undefined)
+    expect(tags.find(t => t.tag === 'script' && t.props.type === 'text/javascript')?.textContent).toBe('window.t = ":"')
+    expect(tags.find(t => t.props.type === 'module')?.innerHTML).toBe('export default ":"')
+    expect(tags.find(t => t.tag === 'style')?.textContent).toBe('/* : */')
+    expect(tags.find(t => t.tag === 'style' && t.innerHTML)?.innerHTML).toBe('/* inner : */')
+    expect(tags.find(t => t.tag === 'link')?.props.href).toBe('///site.css')
+    expect(tags.find(t => t.props['http-equiv'])?.props.content).toBe('0;url=//')
+    expect(tags.find(t => t.props.name === 'description')?.props.content).toBe(HOSTILE)
+    expect(tags.find(t => t.tag === 'htmlAttrs')?.props.lang).toBe(HOSTILE)
+    expect(JSON.parse(tags.find(t => t.tag === 'script' && t.props.type === 'application/json')!.textContent!)).toEqual({ title: HOSTILE })
+
+    const appTitle = useHead(head, { title: 'Guide' })
+    expect(await contentOf(head, 'script')).toContain('window.t = "Guide:Guide"')
+    appTitle.dispose()
+    expect(await contentOf(head, 'script')).toContain('window.t = ":"')
+  })
+
   it.each([
     ['script %pageTitle', { script: [{ type: 'text/javascript', textContent: 'window.t = "%pageTitle"', processTemplateParams: true }] }, 'script', 'window.t = ""'],
     ['script %s', { script: [{ type: 'text/javascript', textContent: 'window.t = "%s"', processTemplateParams: true }] }, 'script', 'window.t = ""'],

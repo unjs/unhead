@@ -231,6 +231,10 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
+  _titleSafe?: boolean
+  /**
+   * @internal
+   */
   _titleTemplate?: string
   /**
    * @internal
