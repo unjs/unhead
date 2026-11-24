@@ -177,7 +177,7 @@ export interface HowToStepSimple extends Thing {
   url?: string
   /**
    * The instruction string
-   * ("e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
+   * (e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
    */
   text: string
   /**

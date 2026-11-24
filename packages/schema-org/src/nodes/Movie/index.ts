@@ -21,6 +21,8 @@ import { videoResolver } from '../Video'
 export interface MovieSimple extends Thing {
   /**
    * An image that represents the movie.
+   *
+   * Google requires a high resolution image with a 6:9 aspect ratio for the movie carousel.
    */
   image: NodeRelations<string | ImageObject>
   /**
