@@ -25,7 +25,7 @@ afterEach(() => {
   globalThis.document = originalDocument
 })
 
-describe('streamed useHeadSafe titles', () => {
+describe.each([false, true])('streamed useHeadSafe titles, suppressed: %s', (suppressed) => {
   it.each(['inline', 'module', 'lazy'] as const)('stay out of app scripts when replaying %s entries', async (mode) => {
     const { head } = createStreamableHead()
     useHeadSafe(head, { title: TITLE })
@@ -57,12 +57,17 @@ describe('streamed useHeadSafe titles', () => {
       client = createClientStreamableHead({ plugins: [TemplateParamsPlugin] })!
     }
 
-    client.push({ script: [{ textContent: 'window.t = "%pageTitle"', processTemplateParams: true }] })
+    client.push({
+      ...(suppressed ? { titleTemplate: () => null } : {}),
+      script: [{ textContent: 'window.t = "%pageTitle"', processTemplateParams: true }],
+      meta: [{ 'http-equiv': 'refresh', 'content': '0;url=/%s' }],
+    })
     client.render()
 
     await vi.waitFor(() => expect({
       title: document.title,
       script: document.querySelector('script')?.textContent,
-    }).toEqual({ title: TITLE, script: 'window.t = ""' }))
+      refresh: document.querySelector('meta[http-equiv]')?.getAttribute('content'),
+    }).toEqual({ title: suppressed ? '' : TITLE, script: 'window.t = ""', refresh: '0;url=/' }))
   })
 })

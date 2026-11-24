@@ -332,6 +332,8 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _title?: string
+  /** Safety provenance of the raw title, before title template resolution. @internal */
+  _titleSafe?: boolean
   /**
    * @internal
    */

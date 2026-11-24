@@ -17,6 +17,38 @@ function contentOf(head: Unhead<any>, tag: string) {
 }
 
 describe('useHeadSafe titles in template parameters', () => {
+  it.each(['Guest', HOSTILE])('keeps a suppressed safe title out of executable fields: %s', (title) => {
+    for (const createHead of [createServerHeadWithContext, createClientHeadWithContext]) {
+      const head = createHead({ plugins: [TemplateParamsPlugin] })
+      useHead(head, {
+        titleTemplate: () => null,
+        script: [
+          { textContent: 'window.t = "%s"', processTemplateParams: true },
+          { innerHTML: 'window.p = "%pageTitle"', processTemplateParams: true },
+          { type: 'application/ld+json', textContent: '{"name":"%s"}', processTemplateParams: true },
+        ],
+        style: [{ textContent: '/* %s */', processTemplateParams: true }],
+        link: [{ rel: 'stylesheet', href: '/assets/%s/site.css' }],
+        meta: [
+          { 'http-equiv': 'refresh', 'content': '0;url=/%pageTitle' },
+          { name: 'description', content: 'Read %s' },
+        ],
+      })
+      useHeadSafe(head, { title })
+
+      const tags = tagsOf(head)
+      expect(tags.find(t => t.tag === 'title')).toBeUndefined()
+      const scripts = tags.filter(t => t.tag === 'script')
+      expect(scripts[0]?.textContent).toBe('window.t = ""')
+      expect(scripts[1]?.innerHTML).toBe('window.p = ""')
+      expect(JSON.parse(scripts[2]!.textContent!)).toEqual({ name: title })
+      expect(tags.find(t => t.tag === 'style')?.textContent).toBe('/*  */')
+      expect(tags.find(t => t.tag === 'link')?.props.href).toBe('/assets//site.css')
+      expect(tags.find(t => t.props['http-equiv'])?.props.content).toBe('0;url=/')
+      expect(tags.find(t => t.props.name === 'description')?.props.content).toBe(`Read ${title}`)
+    }
+  })
+
   it.each([
     ['script %pageTitle', { script: [{ textContent: 'window.t = "%pageTitle"', processTemplateParams: true }] }, 'script', 'window.t = ""'],
     ['script %s', { script: [{ textContent: 'window.t = "%s"', processTemplateParams: true }] }, 'script', 'window.t = ""'],
