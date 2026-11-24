@@ -110,4 +110,15 @@ describe('defineItemList', () => {
       expect(list!.itemListOrder).toBe('https://schema.org/ItemListOrderDescending')
     })
   })
+
+  it('keeps a free text list order', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineItemList({
+        itemListOrder: 'Ranked by popularity',
+        itemListElement: [defineListItem({ name: 'First', url: '/first' })],
+      })])
+      const list = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'ItemList')
+      expect(list!.itemListOrder).toBe('Ranked by popularity')
+    })
+  })
 })

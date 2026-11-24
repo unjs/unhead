@@ -34,7 +34,7 @@ export const mathSolverResolver = defineSchemaOrgResolver<MathSolver>({
   ],
   idPrefix: ['url', '#math-solver'],
   resolve(node, { meta }) {
-    // Google requires both types and a fixed learningResourceType for math solvers.
+    // Google requires learningResourceType, a LearningResource property, and its examples type the node as both.
     resolveDefaultType(node, ['MathSolver', 'LearningResource'])
     setIfEmpty(node, 'learningResourceType', 'Math Solver')
     node.url = resolveWithBase(meta.host, node.url)

@@ -32,7 +32,7 @@ defineMathSolver({
 })
 ```
 
-Google requires `potentialAction`, `url`, `usageInfo`, `potentialAction.target`, and the annotated `mathExpression-input` property. Google also requires the `LearningResource` type and `learningResourceType`. Unhead adds both.
+Google requires `potentialAction`, `url`, `usageInfo`, `potentialAction.target`, and the annotated `mathExpression-input` property. Google also requires `learningResourceType`, and its examples add the `LearningResource` type. Unhead adds both.
 
 ## Defaults and resolves
 
