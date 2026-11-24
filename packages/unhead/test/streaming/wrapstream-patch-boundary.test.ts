@@ -145,6 +145,8 @@ describe('createPatchBoundary', () => {
     '<p title="<script>">x</p></script>after',
     '<textarea><script></textarea></script>after',
     '<NoFrames>x</noframes ><!-- <title> -->after',
+    '<!-- a --!><p>x</p><!--!>y-->after',
+    '<script><!-- --!> <script></script> --></script>after',
   ])('reads %s the same at every chunk boundary', (html) => {
     for (let end = 0; end <= html.length; end++) {
       const prefix = html.slice(0, end)

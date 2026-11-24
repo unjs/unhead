@@ -1,5 +1,5 @@
 // Tokens that start or end script content, text elements and comments.
-const TOKEN_RE = /<!--|-->|<(\/?)(script|iframe|noembed|noframes|noscript|style|textarea|title|xmp)(?=[\t\n\f\r />])/gi
+const TOKEN_RE = /<!--|--!?>|<(\/?)(script|iframe|noembed|noframes|noscript|style|textarea|title|xmp)(?=[\t\n\f\r />])/gi
 // The longest token plus its lookahead character.
 const TAIL_LENGTH = 11
 
@@ -34,7 +34,7 @@ export function createPatchBoundary(): (text: string) => boolean {
       const name = tag?.toLowerCase()
       if (script !== OUTSIDE) {
         if (!tag)
-          script = token === '<!--' ? (script === DATA ? ESCAPED : script) : (script > DATA ? DATA : script)
+          script = token === '<!--' ? (script === DATA ? ESCAPED : script) : (token === '-->' && script > DATA ? DATA : script)
         else if (name === 'script')
           script = slash ? (script === DOUBLE_ESCAPED ? ESCAPED : OUTSIDE) : (script === ESCAPED ? DOUBLE_ESCAPED : script)
       }
@@ -47,7 +47,7 @@ export function createPatchBoundary(): (text: string) => boolean {
           text = undefined
       }
       else if (comment) {
-        comment = token !== '-->'
+        comment = !token.startsWith('--')
       }
       else if (tag) {
         if (!slash)
