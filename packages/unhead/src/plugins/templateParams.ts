@@ -13,10 +13,11 @@ const contentAttrs = ['innerHTML', 'textContent']
 const isJsonScript = (tag: HeadTag) => tag.tag === 'script' && String(tag.props.type).endsWith('json')
 
 // A useHeadSafe() title may fill text and attribute values that stay text. In a script,
-// a style, a URL or an `http-equiv` directive it would change page behaviour.
+// a style, a URL, an `http-equiv` directive or the referrer policy it would change page
+// behaviour, so those keep `%s` and `%pageTitle` as written.
 function takesSafeTitle(tag: HeadTag): boolean {
   if (tag.tag === 'meta')
-    return !tag.props['http-equiv']
+    return !tag.props['http-equiv'] && String(tag.props.name).toLowerCase() !== 'referrer'
   return tag.tag === 'title' || tag.tag === 'titleTemplate' || tag.tag === 'htmlAttrs' || isJsonScript(tag)
 }
 
@@ -52,7 +53,12 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           params,
           sep,
         )
-        const withoutSafeTitle = safeTitle ? { ...params, pageTitle: '' } : params
+        let withoutSafeTitle = params
+        if (safeTitle) {
+          // Unresolved tokens stay as written. Blanking would change URL structure, such as `/%s/host` into `//host`.
+          withoutSafeTitle = { ...params }
+          delete withoutSafeTitle.pageTitle
+        }
         for (const tag of tags) {
           if (tag.processTemplateParams === false) {
             continue

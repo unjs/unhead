@@ -41,12 +41,12 @@ describe('useHeadSafe titles in template parameters', () => {
 
     const tags = await head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe(scenario === 'hydrated' ? HOSTILE : undefined)
-    expect(tags.find(t => t.tag === 'script' && t.props.type === 'text/javascript')?.textContent).toBe('window.t = ":"')
-    expect(tags.find(t => t.props.type === 'module')?.innerHTML).toBe('export default ":"')
-    expect(tags.find(t => t.tag === 'style')?.textContent).toBe('/* : */')
-    expect(tags.find(t => t.tag === 'style' && t.innerHTML)?.innerHTML).toBe('/* inner : */')
-    expect(tags.find(t => t.tag === 'link')?.props.href).toBe('///site.css')
-    expect(tags.find(t => t.props['http-equiv'])?.props.content).toBe('0;url=//')
+    expect(tags.find(t => t.tag === 'script' && t.props.type === 'text/javascript')?.textContent).toBe('window.t = "%s:%pageTitle"')
+    expect(tags.find(t => t.props.type === 'module')?.innerHTML).toBe('export default "%s:%pageTitle"')
+    expect(tags.find(t => t.tag === 'style')?.textContent).toBe('/* %s:%pageTitle */')
+    expect(tags.find(t => t.tag === 'style' && t.innerHTML)?.innerHTML).toBe('/* inner %s:%pageTitle */')
+    expect(tags.find(t => t.tag === 'link')?.props.href).toBe('/%s/%pageTitle/site.css')
+    expect(tags.find(t => t.props['http-equiv'])?.props.content).toBe('0;url=/%s/%pageTitle')
     expect(tags.find(t => t.props.name === 'description')?.props.content).toBe(HOSTILE)
     expect(tags.find(t => t.tag === 'htmlAttrs')?.props.lang).toBe(HOSTILE)
     expect(JSON.parse(tags.find(t => t.tag === 'script' && t.props.type === 'application/json')!.textContent!)).toEqual({ title: HOSTILE })
@@ -54,15 +54,15 @@ describe('useHeadSafe titles in template parameters', () => {
     const appTitle = useHead(head, { title: 'Guide' })
     expect(await contentOf(head, 'script')).toContain('window.t = "Guide:Guide"')
     appTitle.dispose()
-    expect(await contentOf(head, 'script')).toContain('window.t = ":"')
+    expect(await contentOf(head, 'script')).toContain('window.t = "%s:%pageTitle"')
   })
 
   it.each([
-    ['script %pageTitle', { script: [{ type: 'text/javascript', textContent: 'window.t = "%pageTitle"', processTemplateParams: true }] }, 'script', 'window.t = ""'],
-    ['script %s', { script: [{ type: 'text/javascript', textContent: 'window.t = "%s"', processTemplateParams: true }] }, 'script', 'window.t = ""'],
-    ['style', { style: [{ textContent: '/* %s */', processTemplateParams: true }] }, 'style', '/*  */'],
-    ['http-equiv', { meta: [{ 'http-equiv': 'refresh', 'content': '%s' }] }, 'meta', ''],
-    ['link href', { link: [{ rel: 'stylesheet', href: '/assets/%s/site.css' }] }, 'link', '/assets//site.css'],
+    ['script %pageTitle', { script: [{ type: 'text/javascript', textContent: 'window.t = "%pageTitle"', processTemplateParams: true }] }, 'script', 'window.t = "%pageTitle"'],
+    ['script %s', { script: [{ type: 'text/javascript', textContent: 'window.t = "%s"', processTemplateParams: true }] }, 'script', 'window.t = "%s"'],
+    ['style', { style: [{ textContent: '/* %s */', processTemplateParams: true }] }, 'style', '/* %s */'],
+    ['http-equiv', { meta: [{ 'http-equiv': 'refresh', 'content': '%s' }] }, 'meta', '%s'],
+    ['link href', { link: [{ rel: 'stylesheet', href: '/assets/%s/site.css' }] }, 'link', '/assets/%s/site.css'],
   ] as const)('keeps a safe title out of an app %s', async (_, input, tag, expected) => {
     for (const createHead of [createServerHeadWithContext, createClientHeadWithContext]) {
       const head = createHead({ plugins: [TemplateParamsPlugin] })
@@ -77,7 +77,28 @@ describe('useHeadSafe titles in template parameters', () => {
     useSeoMeta(head, { refresh: '0;url=/%s' } as any)
     useHeadSafe(head, { title: HOSTILE })
 
-    expect((await head.resolveTags()).find(t => t.tag === 'meta')?.props).toMatchObject({ 'http-equiv': 'refresh', 'content': '0;url=/' })
+    expect((await head.resolveTags()).find(t => t.tag === 'meta')?.props).toMatchObject({ 'http-equiv': 'refresh', 'content': '0;url=/%s' })
+  })
+
+  it('keeps a root-relative URL on the same origin when a safe title is held back', async () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    useHead(head, {
+      link: [{ rel: 'stylesheet', href: '/%s/assets.example.test/site.css' }],
+      meta: [{ 'http-equiv': 'refresh', 'content': '0;url=/%s/example.test' }],
+    })
+    useHeadSafe(head, { title: 'guide' })
+    const tags = await head.resolveTags()
+
+    expect(tags.find(t => t.tag === 'link')?.props.href).toBe('/%s/assets.example.test/site.css')
+    expect(tags.find(t => t.tag === 'meta')?.props.content).toBe('0;url=/%s/example.test')
+  })
+
+  it('keeps a safe title out of an app referrer policy', async () => {
+    const head = createServerHeadWithContext({ plugins: [TemplateParamsPlugin] })
+    useHead(head, { meta: [{ name: 'referrer', content: '%s' }] })
+    useHeadSafe(head, { title: 'unsafe-url' })
+
+    expect((await head.resolveTags()).find(t => t.tag === 'meta')?.props.content).toBe('%s')
   })
 
   it('fills display fields and JSON scripts with a safe title', async () => {
