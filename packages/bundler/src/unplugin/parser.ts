@@ -128,6 +128,21 @@ function isRawTransferAllocationError(error: unknown): error is RangeError {
   return error instanceof RangeError && error.message === 'Array buffer allocation failed'
 }
 
+function withRawTransferFallback(parseSync: ParseSync): ParseSync {
+  return (filename: string, sourceText: string, parseOptions: any) => {
+    try {
+      return parseSync(filename, sourceText, parseOptions)
+    }
+    catch (error) {
+      if (isRawTransferAllocationError(error)) {
+        disableRawTransfer()
+        return getParser().parseSync(filename, sourceText, parseOptions)
+      }
+      throw error
+    }
+  }
+}
+
 export function isMissingParserError(error: unknown): error is MissingParserError {
   return error instanceof Error
     && '_tag' in error
@@ -136,20 +151,12 @@ export function isMissingParserError(error: unknown): error is MissingParserErro
 
 export function parseAndWalkSource(code: string, id: string, options: ParseAndWalkOptions, load: ParserLoader = loadParser): ReturnType<typeof parseAndWalk> {
   const rawTransferParser = getRawTransferParser(load)
-  try {
-    return parseAndWalk(code, id, {
-      ...options,
-      parseSync: rawTransferParser?.parseSync ?? getParser().parseSync,
-    })
-  }
-  catch (error) {
-    if (rawTransferParser && isRawTransferAllocationError(error)) {
-      disableRawTransfer()
-      return parseAndWalk(code, id, {
-        ...options,
-        parseSync: getParser().parseSync,
-      })
-    }
-    throw error
-  }
+  const parseSync = rawTransferParser
+    ? withRawTransferFallback(rawTransferParser.parseSync)
+    : getParser().parseSync
+
+  return parseAndWalk(code, id, {
+    ...options,
+    parseSync,
+  })
 }
