@@ -111,12 +111,21 @@ export function resolveRawTransferParser(load: ParserLoader): { parseSync: Parse
   }
 }
 
-function getRawTransferParser(): { parseSync: ParseSync } | undefined {
+function getRawTransferParser(load: ParserLoader = loadParser): { parseSync: ParseSync } | undefined {
   if (!rawTransferChecked) {
     rawTransferChecked = true
-    rawTransferParser = resolveRawTransferParser(loadParser)
+    rawTransferParser = resolveRawTransferParser(load)
   }
   return rawTransferParser
+}
+
+function disableRawTransfer(): void {
+  rawTransferChecked = true
+  rawTransferParser = undefined
+}
+
+function isRawTransferAllocationError(error: unknown): error is RangeError {
+  return error instanceof RangeError && error.message === 'Array buffer allocation failed'
 }
 
 export function isMissingParserError(error: unknown): error is MissingParserError {
@@ -125,9 +134,22 @@ export function isMissingParserError(error: unknown): error is MissingParserErro
     && error._tag === 'MissingParserError'
 }
 
-export function parseAndWalkSource(code: string, id: string, options: ParseAndWalkOptions): ReturnType<typeof parseAndWalk> {
-  return parseAndWalk(code, id, {
-    ...options,
-    parseSync: getRawTransferParser()?.parseSync ?? getParser().parseSync,
-  })
+export function parseAndWalkSource(code: string, id: string, options: ParseAndWalkOptions, load: ParserLoader = loadParser): ReturnType<typeof parseAndWalk> {
+  const rawTransferParser = getRawTransferParser(load)
+  try {
+    return parseAndWalk(code, id, {
+      ...options,
+      parseSync: rawTransferParser?.parseSync ?? getParser().parseSync,
+    })
+  }
+  catch (error) {
+    if (rawTransferParser && isRawTransferAllocationError(error)) {
+      disableRawTransfer()
+      return parseAndWalk(code, id, {
+        ...options,
+        parseSync: getParser().parseSync,
+      })
+    }
+    throw error
+  }
 }
