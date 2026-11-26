@@ -83,12 +83,8 @@ function activateHooks(pending: DeferredHead<unknown>['hooks']): ClientUnhead['h
     return createHooks<ClientHeadHooks>()
   if ('callHook' in pending)
     return pending
-  const active = createHooks<ClientHeadHooks>()
-  const { _hooks } = pending
   // Keep references and teardown callbacks registered during setup intact.
-  Reflect.deleteProperty(pending, 'hook')
-  Object.assign(pending, active, { _hooks })
-  return Object.setPrototypeOf(pending, Object.getPrototypeOf(active))
+  return Object.assign(pending, createHooks<ClientHeadHooks>(undefined, pending._hooks as any))
 }
 
 export async function activate<T>(

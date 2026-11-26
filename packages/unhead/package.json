@@ -184,12 +184,12 @@
     }
   },
   "dependencies": {
-    "hookable": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
     "esbuild": "catalog:",
+    "hookable": "catalog:",
     "rollup": "catalog:",
     "vite": "catalog:"
   }

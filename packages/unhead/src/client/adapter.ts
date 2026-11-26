@@ -1,13 +1,12 @@
-import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, HeadEntryOptions, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, HeadEntryOptions, HeadHookable, ResolvableHead, Unhead } from '../types'
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
-  hooks: HookableCore<ClientHeadHooks>
+  hooks: HeadHookable<ClientHeadHooks>
   dirty: boolean
   invalidate: () => void
 }
 
-export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>): ClientUnhead<T> {
+export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HeadHookable<ClientHeadHooks>): ClientUnhead<T> {
   const corePush = core.push
   const head = core as ClientUnhead<T>
   head.ssr = false

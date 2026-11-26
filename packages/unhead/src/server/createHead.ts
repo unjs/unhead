@@ -1,5 +1,4 @@
-import type { HookableCore } from 'hookable'
-import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, HeadHookable, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
@@ -9,7 +8,7 @@ import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
 export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPayload> {
-  hooks: HookableCore<ServerHeadHooks>
+  hooks: HeadHookable<ServerHeadHooks>
 }
 
 // hoisted so per-request `createHead()` calls (e.g. Nuxt) share one object;

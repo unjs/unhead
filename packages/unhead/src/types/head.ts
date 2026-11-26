@@ -1,5 +1,4 @@
-import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
+import type { ClientHeadHooks, DomRenderTagContext, HeadHookable, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -266,7 +265,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * Exposed hooks for easier extension.
    */
-  hooks?: HookableCore<HeadHooks>
+  hooks?: HeadHookable<HeadHooks>
   /**
    * Resolved options
    */
