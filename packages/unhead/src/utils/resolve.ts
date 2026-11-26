@@ -1,6 +1,6 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
-import { hasContent, isJsonScriptType, TagsWithInnerContent, UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, isJsonScriptType, TagsWithInnerContent, UniqueTags, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
@@ -77,20 +77,20 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
 
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
-  let contentIds: Record<string, Map<string, number>> | undefined
+  let contentIds: Record<string, Map<string, string>> | undefined
   const tags = ctx.tags.sort(sortTags)
   for (let i = 0; i < tags.length; i++) {
     const next = tags[i]
-    let k: string | number | undefined = next._d
+    let k = next._d
     if (!k) {
       // Unkeyed SSR inline content tags skip `${tag}:content:${content}` concat and dedupe by flat
-      // content string via a per-tag Map, using a Smi slot id in `tagMap` to preserve insertion order.
-      if (!next._h && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML)) {
+      // content string via a per-tag Map, using a short string slot key in `tagMap` to preserve order.
+      if (!next._h && !UniqueTags.has(next.tag) && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML)) {
         const c = String(next.textContent || next.innerHTML)
         const m = (contentIds ||= Object.create(null))[next.tag] ||= new Map()
         k = m.get(c)
         if (k === undefined)
-          m.set(c, k = i + 1)
+          m.set(c, k = `\0${i}`)
       }
       else {
         k = hashTag(next)
@@ -98,9 +98,9 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     if (!k)
       continue
-    const prev = ctx.tagMap.get(k as any)
+    const prev = ctx.tagMap.get(k)
     if (!prev) {
-      ctx.tagMap.set(k as any, next)
+      ctx.tagMap.set(k, next)
       continue
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
@@ -112,15 +112,15 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
           ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
           : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
-      ctx.tagMap.set(k as any, { ...next, props })
+      ctx.tagMap.set(k, { ...next, props })
     }
-    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k as string)) {
-      ctx.tagMap.set(k as any, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
+    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
+      ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
       hasFlatMeta = true
     }
     // @ts-expect-error untyped
     else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
-      ctx.tagMap.set(k as any, next)
+      ctx.tagMap.set(k, next)
     }
   }
   return hasFlatMeta
@@ -156,7 +156,7 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>,
 // compacts in place: `tags` must be owned by the caller (resolveTags owns its
 // freshly resolved array); deliberately not exported — the `unhead/utils`
 // subpath re-exports everything and this mutating variant is not public API
-function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
+function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
@@ -171,14 +171,19 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
         : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
-      // copy-on-write: resolved tags may be shared with the entry cache
-      t = { ...t }
-      if (innerHTML)
-        t.innerHTML = escape(innerHTML) as typeof innerHTML
-      if (t.textContent)
-        t.textContent = escape(t.textContent) as typeof t.textContent
-      if (t._d)
-        t._d = dedupeKey(t)
+      const nextInner = innerHTML ? escape(innerHTML) as typeof innerHTML : innerHTML
+      const nextText = t.textContent ? escape(t.textContent) as typeof t.textContent : t.textContent
+      const needsDedupeKey = !ssr && !t._d
+      if (nextInner !== innerHTML || nextText !== t.textContent || needsDedupeKey) {
+        // copy-on-write: resolved tags may be shared with the entry cache
+        t = { ...t }
+        if (innerHTML)
+          t.innerHTML = nextInner
+        if (t.textContent)
+          t.textContent = nextText
+        if (t._d || needsDedupeKey)
+          t._d = dedupeKey(t)
+      }
     }
     tags[w++] = t
   }
@@ -263,5 +268,5 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
-  return sanitizeTagsInPlace(ctx.tags)
+  return sanitizeTagsInPlace(ctx.tags, head.ssr)
 }

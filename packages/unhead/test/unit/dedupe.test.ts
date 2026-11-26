@@ -159,4 +159,18 @@ describe('sSR unkeyed content deduplication', () => {
     })
     expect(renderSSRHead(mergeHead).headTags).toBe('<script data-a="1" data-b="2">window.runs=(window.runs||0)+1</script>')
   })
+
+  it('keeps all ctx.tagMap keys as strings for tags:resolve hooks', () => {
+    const head = createHead({ disableDefaults: true })
+    let keyTypes: string[] = []
+    head.hooks.hook('tags:resolve', ({ tagMap }) => {
+      keyTypes = [...tagMap.keys()].map(k => typeof k)
+    })
+    head.push({
+      script: [{ innerHTML: 'console.log(1)' }],
+      style: [{ innerHTML: 'body{margin:0}' }],
+    })
+    renderSSRHead(head)
+    expect(keyTypes).toEqual(['string', 'string'])
+  })
 })
