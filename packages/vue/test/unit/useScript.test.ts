@@ -2,6 +2,7 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 import { createUnhead } from 'unhead'
+import { ValidatePlugin } from 'unhead/plugins'
 import { createServerRenderer } from 'unhead/server'
 
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
@@ -25,6 +26,23 @@ describe('vue e2e scripts', () => {
     const { headTags } = head.render()
     expect(resolved).toBe(true)
     expect(headTags).toContain('/fallback.js')
+  })
+
+  it('supports ValidatePlugin and idempotent unsubscribe on a bare createUnhead fallback registry', () => {
+    const head = createUnhead(createServerRenderer())
+    useScript('/fallback.js', { head, trigger: 'server' })
+    expect(() => head.use(ValidatePlugin())).not.toThrow()
+
+    const fn = vi.fn()
+    const off1 = head.hooks!.hook('tags:resolve', fn)
+    const off2 = head.hooks!.hook('tags:resolve', fn)
+    const offBad = head.hooks!.hook('tags:resolve', undefined as any)
+    offBad()
+    off1()
+    off1()
+    head.render()
+    expect(fn).toHaveBeenCalledOnce()
+    off2()
   })
 
   it.each(['promise', 'callback'] as const)('keeps another consumer\'s %s trigger when a manual consumer stops', async (kind) => {

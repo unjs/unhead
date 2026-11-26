@@ -105,12 +105,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     return {
       _hooks,
       hook(name: string, cb?: (...args: any[]) => any) {
+        if (!name || typeof cb !== 'function')
+          return () => {}
         const list = _hooks[name] ||= []
-        list.push(cb!)
+        list.push(cb)
         return () => {
-          const i = list.indexOf(cb!)
+          if (!cb)
+            return
+          const i = list.indexOf(cb)
           if (i >= 0)
             list.splice(i, 1)
+          cb = undefined
         }
       },
     } as unknown as NonNullable<Unhead<any>['hooks']>

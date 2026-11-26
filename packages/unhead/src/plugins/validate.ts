@@ -326,7 +326,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       inputShapeObserver.resolver,
     ]
     const hooks = head.hooks as any
-    if (hooks) {
+    if (hooks?.callHook) {
       const _callHook = hooks.callHook.bind(hooks)
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
