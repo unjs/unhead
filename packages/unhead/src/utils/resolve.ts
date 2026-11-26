@@ -1,7 +1,7 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
-import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
+import { hasContent, isJsonScriptType, TagsWithInnerContent, UsesMergeStrategy, ValidHeadTags } from './const'
+import { dedupeKey, dedupeKeyStatic, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
 declare const __UNHEAD_LAZY_RENDERER__: boolean
@@ -58,7 +58,7 @@ function cloneTagsInPlace(tags: HeadTag[]) {
   }
 }
 
-function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean, contentMaps?: Map<string, Map<string, HeadTag>>) {
   // reuse the pre-dedupe array; the map never holds more tags than went in
   const tags = ctx.tags
   let w = 0
@@ -70,14 +70,52 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
       tags[w++] = value
     }
   }
+  if (contentMaps) {
+    for (const inner of contentMaps.values()) {
+      for (const tag of inner.values())
+        tags[w++] = tag
+    }
+  }
   tags.length = w
-  if (sortFlatMeta)
+  if (sortFlatMeta || (contentMaps && contentMaps.size > 0))
     tags.sort(sortTags)
 }
 
-export function dedupeTags(ctx: ResolveTagsContext): boolean {
+function mergeTagProps(prev: HeadTag, next: HeadTag): HeadTag {
+  const props = { ...prev.props }
+  for (const p in next.props) {
+    // @ts-expect-error untyped - style is Map, class is Set at runtime
+    props[p] = p === 'style'
+      ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
+      : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+  }
+  return { ...next, props }
+}
+
+function dedupeTagsInto(ctx: ResolveTagsContext, contentMaps?: Map<string, Map<string, HeadTag>>): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
+    if (contentMaps && !next._d && !next._h && TagsWithInnerContent.has(next.tag)) {
+      const content = next.textContent || next.innerHTML
+      if (content) {
+        const key = typeof content === 'string' ? content : String(content)
+        let inner = contentMaps.get(next.tag)
+        if (!inner)
+          contentMaps.set(next.tag, inner = new Map())
+        const prev = inner.get(key)
+        if (!prev) {
+          inner.set(key, next)
+        }
+        else if (next.tagDuplicateStrategy === 'merge') {
+          inner.set(key, mergeTagProps(prev, next))
+        }
+        // @ts-expect-error untyped
+        else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
+          inner.set(key, next)
+        }
+        continue
+      }
+    }
     const k = next._d || hashTag(next)
     if (!k)
       continue
@@ -88,14 +126,7 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
-      }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k, mergeTagProps(prev, next))
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -107,6 +138,10 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
   }
   return hasFlatMeta
+}
+
+export function dedupeTags(ctx: ResolveTagsContext): boolean {
+  return dedupeTagsInto(ctx)
 }
 
 export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>, adoption = false): void {
@@ -151,16 +186,26 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
       const isJsonLike = isJsonScriptType(String(props.type))
-      const escape = (content: unknown): unknown => isJsonLike
-        ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
-        : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
-      // copy-on-write: resolved tags may be shared with the entry cache
-      t = { ...t }
-      if (innerHTML)
-        t.innerHTML = escape(innerHTML) as typeof innerHTML
-      if (t.textContent)
-        t.textContent = escape(t.textContent) as typeof t.textContent
-      t._d = dedupeKey(t)
+      const nextInner = innerHTML
+        ? (isJsonLike
+            ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(LT_RE, '\\u003C')
+            : typeof innerHTML === 'string' ? innerHTML.replace(SCRIPT_END_RE, '<\\/script') : innerHTML)
+        : innerHTML
+      const nextText = t.textContent
+        ? (isJsonLike
+            ? (typeof t.textContent === 'string' ? t.textContent : JSON.stringify(t.textContent)).replace(LT_RE, '\\u003C')
+            : typeof t.textContent === 'string' ? t.textContent.replace(SCRIPT_END_RE, '<\\/script') : t.textContent)
+        : t.textContent
+      if (nextInner !== innerHTML || nextText !== t.textContent) {
+        // copy-on-write: resolved tags may be shared with the entry cache
+        t = { ...t }
+        if (nextInner !== innerHTML)
+          t.innerHTML = nextInner as typeof innerHTML
+        if (nextText !== t.textContent)
+          t.textContent = nextText as typeof t.textContent
+        if (t._d)
+          t._d = dedupeKey(t)
+      }
     }
     tags[w++] = t
   }
@@ -222,8 +267,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           const t = tags[i]
           t._w = weightFn(t)
           t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
-          t._d = dedupeKey(t)
-          if (!t._d)
+          t._d = head.ssr ? dedupeKeyStatic(t) : dedupeKey(t)
+          if (!t._d && !(head.ssr && TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
         e._tags = tags
@@ -239,9 +284,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
       break
     }
   }
-  const hasFlatMeta = dedupeTags(ctx)
+  const contentMaps = head.ssr ? new Map<string, Map<string, HeadTag>>() : undefined
+  const hasFlatMeta = dedupeTagsInto(ctx, contentMaps)
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
-  valuesToTags(ctx, hasFlatMeta)
+  valuesToTags(ctx, hasFlatMeta, contentMaps)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)

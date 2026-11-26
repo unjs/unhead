@@ -1,7 +1,8 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
-import { dedupeKey, hashTag } from '../utils/dedupe'
+import { TagsWithInnerContent } from '../utils/const'
+import { dedupeKeyStatic, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { isEmptyProps } from '../utils/resolve'
@@ -76,8 +77,8 @@ export function precomputeEntryTags(input: any, entryIndex: number, propResolver
     const t = tags[i]
     t._w = capoTagWeight(t)
     t._p = (entryIndex << 10) + i
-    t._d = dedupeKey(t)
-    if (!t._d)
+    t._d = dedupeKeyStatic(t)
+    if (!t._d && !(TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
       t._h = hashTag(t)
   }
   return tags

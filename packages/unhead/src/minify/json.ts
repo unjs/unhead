@@ -1,5 +1,5 @@
-function isJsonWhitespace(char: string): boolean {
-  return char === ' ' || char === '\n' || char === '\r' || char === '\t'
+function isJsonWhitespace(c: number): boolean {
+  return c === 32 || c === 10 || c === 13 || c === 9
 }
 
 /**
@@ -7,34 +7,48 @@ function isJsonWhitespace(char: string): boolean {
  * Returns compact or invalid JSON unchanged.
  */
 export function minifyJSON(code: string): string {
-  let escaped = false
-  let inString = false
+  const len = code.length
   let segmentStart = 0
   let chunks: string[] | undefined
+  let i = 0
 
-  for (let i = 0; i < code.length; i++) {
-    const char = code[i]
-    if (inString) {
-      if (escaped)
-        escaped = false
-      else if (char === '\\')
-        escaped = true
-      else if (char === '"')
-        inString = false
+  while (i < len) {
+    const c = code.charCodeAt(i)
+    if (c === 34) { // '"'
+      let pos = i + 1
+      while (true) {
+        const end = code.indexOf('"', pos)
+        if (end === -1) {
+          i = len
+          break
+        }
+        if (code.charCodeAt(end - 1) !== 92) {
+          i = end + 1
+          break
+        }
+        let bs = end - 2
+        while (bs >= pos && code.charCodeAt(bs) === 92)
+          bs--
+        if (((end - 1 - bs) & 1) === 0) {
+          i = end + 1
+          break
+        }
+        pos = end + 1
+      }
       continue
     }
 
-    if (char === '"') {
-      inString = true
-      continue
-    }
-
-    if (isJsonWhitespace(char)) {
+    if (isJsonWhitespace(c)) {
       chunks ||= []
       if (segmentStart < i)
         chunks.push(code.slice(segmentStart, i))
-      segmentStart = i + 1
+      i++
+      while (i < len && isJsonWhitespace(code.charCodeAt(i)))
+        i++
+      segmentStart = i
+      continue
     }
+    i++
   }
 
   if (!chunks)
@@ -48,7 +62,7 @@ export function minifyJSON(code: string): string {
     return code
   }
 
-  if (segmentStart < code.length)
+  if (segmentStart < len)
     chunks.push(code.slice(segmentStart))
   return chunks.join('')
 }

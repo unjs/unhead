@@ -1,9 +1,12 @@
+const JS_NEED_RE = /[\s/]/
+const JS_LINETERM_RE = /[\n\r\u2028\u2029]/
+
 /**
  * Lightweight JS minifier in pure JS (no native deps).
  * Keeps uncertain syntax unchanged instead of guessing its lexical context.
  */
 export function minifyJS(code: string): string {
-  if (!/[\s/]/.test(code))
+  if (!JS_NEED_RE.test(code))
     return code
 
   // HTML comments have line-sensitive rules outside this scanner's scope.
@@ -11,108 +14,126 @@ export function minifyJS(code: string): string {
     return code
 
   let result = ''
-  // Never read the growing rope to find its last character.
-  let last = ''
-  let separator: '' | ' ' | '\n' = ''
+  // Track the last emitted character code so we never flatten the growing rope.
+  let lastCode = 0
+  let separator = 0 // 0=none, 1=' ', 2='\n'
   let i = 0
+  let segStart = 0
   const len = code.length
-  const append = (value: string) => {
-    result += value
-    last = value[value.length - 1]!
-  }
 
   while (i < len) {
-    const ch = code[i]!
+    const c = code.charCodeAt(i)
     // Comments act as token separators. Block comments can also carry ASI.
-    if (isWhitespace(ch) || (ch === '/' && (code[i + 1] === '/' || code[i + 1] === '*'))) {
+    if (isWhitespace(c) || (c === 47 && (code.charCodeAt(i + 1) === 47 || code.charCodeAt(i + 1) === 42))) {
+      if (i > segStart) {
+        result += code.slice(segStart, i)
+        lastCode = code.charCodeAt(i - 1)
+      }
       let hasNewline = false
-      if (ch === '/') {
-        const line = code[i + 1] === '/'
-        i += 2
-        while (i < len) {
-          const current = code[i]!
-          if (isLineTerminator(current)) {
-            hasNewline = true
-            if (line)
-              break
-          }
-          if (!line && current === '*' && code[i + 1] === '/')
-            break
-          i++
-        }
-        if (!line) {
-          if (i >= len)
-            return code
+      if (c === 47) {
+        if (code.charCodeAt(i + 1) === 47) {
           i += 2
+          while (i < len && !isLineTerminator(code.charCodeAt(i)))
+            i++
+          if (i < len)
+            hasNewline = true
+        }
+        else {
+          const end = code.indexOf('*/', i + 2)
+          if (end === -1)
+            return code
+          if (JS_LINETERM_RE.test(code.slice(i + 2, end)))
+            hasNewline = true
+          i = end + 2
         }
       }
       else {
-        while (i < len && isWhitespace(code[i]!)) {
-          hasNewline ||= isLineTerminator(code[i]!)
+        while (i < len) {
+          const w = code.charCodeAt(i)
+          if (!isWhitespace(w))
+            break
+          if (!hasNewline && isLineTerminator(w))
+            hasNewline = true
           i++
         }
       }
-      separator = hasNewline ? '\n' : separator || ' '
+      if (hasNewline)
+        separator = 2
+      else if (separator === 0)
+        separator = 1
+      segStart = i
       continue
     }
 
     // A slash needs parser context to distinguish division from a regex.
     // Templates need recursive expression lexing. Escaped identifiers also
     // need token decoding. Leave the entire input intact in these cases.
-    if (ch === '/' || ch === '`' || ch === '\\')
+    if (c === 47 || c === 96 || c === 92)
       return code
 
-    if (separator && last) {
-      if (separator === '\n') {
-        append('\n')
+    if (separator && lastCode) {
+      if (separator === 2) {
+        result += '\n'
+        lastCode = 10
       }
-      else if ((isIdentChar(last) && isIdentChar(ch))
-        || (last >= '0' && last <= '9' && ch === '.')
-        || (isOperatorChar(last) && isOperatorChar(ch))) {
-        append(' ')
+      else if ((isIdentChar(lastCode) && isIdentChar(c))
+        || (lastCode >= 48 && lastCode <= 57 && c === 46)
+        || (isOperatorChar(lastCode) && isOperatorChar(c))) {
+        result += ' '
+        lastCode = 32
       }
     }
-    separator = ''
+    separator = 0
 
-    if (ch === '\'' || ch === '"') {
-      const start = i++
-      while (i < len && code[i] !== ch) {
-        if (code[i] === '\\')
-          i++
-        i++
+    if (c === 39 || c === 34) {
+      const q = c === 39 ? '\'' : '"'
+      i++
+      while (true) {
+        const end = code.indexOf(q, i)
+        if (end === -1)
+          return code
+        let bs = end - 1
+        while (bs >= i && code.charCodeAt(bs) === 92)
+          bs--
+        if (((end - 1 - bs) & 1) === 0) {
+          i = end + 1
+          break
+        }
+        i = end + 1
       }
-      if (i >= len)
-        return code
-      append(code.slice(start, ++i))
+      lastCode = c
     }
     else {
-      append(ch)
+      lastCode = c
       i++
     }
   }
 
+  if (len > segStart)
+    result += code.slice(segStart, len)
+
   return result.trim()
 }
 
-function isWhitespace(ch: string): boolean {
+function isWhitespace(c: number): boolean {
   // Most source is ASCII. Keep the full Unicode rule for non-ASCII input.
-  return ch === ' ' || (ch >= '\t' && ch <= '\r') || (ch >= '\u0080' && /\s/.test(ch))
+  return c === 32 || (c >= 9 && c <= 13) || (c >= 0x80 && /\s/.test(String.fromCharCode(c)))
 }
 
-function isLineTerminator(ch: string): boolean {
-  return ch === '\n' || ch === '\r' || ch === '\u2028' || ch === '\u2029'
+function isLineTerminator(c: number): boolean {
+  return c === 10 || c === 13 || c === 0x2028 || c === 0x2029
 }
 
-function isIdentChar(ch: string): boolean {
+function isIdentChar(c: number): boolean {
   // Conservatively include every non-ASCII code unit, including surrogates.
-  return (ch >= 'a' && ch <= 'z')
-    || (ch >= 'A' && ch <= 'Z')
-    || (ch >= '0' && ch <= '9')
-    || ch === '_'
-    || ch === '$'
-    || ch.charCodeAt(0) >= 0x80
+  return (c >= 97 && c <= 122)
+    || (c >= 65 && c <= 90)
+    || (c >= 48 && c <= 57)
+    || c === 95
+    || c === 36
+    || c >= 0x80
 }
 
-function isOperatorChar(ch: string): boolean {
-  return '+-*=!<>?&|^~%.'.includes(ch)
+function isOperatorChar(c: number): boolean {
+  return c === 43 || c === 45 || c === 42 || c === 61 || c === 33 || c === 60 || c === 62 || c === 63 || c === 38 || c === 124 || c === 94 || c === 126 || c === 37 || c === 46
 }
