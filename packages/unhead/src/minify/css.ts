@@ -15,8 +15,8 @@ export function minifyCSS(code: string): string {
     return code
 
   let result = ''
-  // Track the last emitted character code so we never flatten V8's string rope.
-  let lastCode = 0
+  // Track the last emitted character code (-1 = none) so U+0000 is not mistaken for absence.
+  let lastCode = -1
   let i = 0
   let segStart = 0
   let parenDepth = 0
@@ -43,9 +43,9 @@ export function minifyCSS(code: string): string {
         lastCode = code.charCodeAt(i - 1)
       }
       i = end + 2
-      const next = i < len ? code.charCodeAt(i) : 0
+      const next = i < len ? code.charCodeAt(i) : -1
       // An empty comment keeps adjacent tokens separate without a combinator.
-      if (lastCode && !isCSSWhitespace(lastCode) && next && !isCSSWhitespace(next)) {
+      if (lastCode >= 0 && !isCSSWhitespace(lastCode) && next >= 0 && !isCSSWhitespace(next)) {
         result += '/**/'
         lastCode = 47
       }
@@ -71,17 +71,17 @@ export function minifyCSS(code: string): string {
       }
       while (i < len && isCSSWhitespace(code.charCodeAt(i)))
         i++
-      const next = i < len ? code.charCodeAt(i) : 0
+      const next = i < len ? code.charCodeAt(i) : -1
       // strip space before ! for !important
       if (next !== 33) {
         if (parenDepth > 0) {
           // Function arguments can contain selectors as well as calculations.
-          if (lastCode && next && lastCode !== 40 && next !== 41 && lastCode !== 44 && next !== 44) {
+          if (lastCode >= 0 && next >= 0 && lastCode !== 40 && next !== 41 && lastCode !== 44 && next !== 44) {
             result += ' '
             lastCode = 32
           }
         }
-        else if (lastCode && next && !isCSSPunctuation(lastCode) && lastCode !== 58 && lastCode !== 40 && !isCSSPunctuation(next)) {
+        else if (lastCode >= 0 && next >= 0 && !isCSSPunctuation(lastCode) && lastCode !== 58 && lastCode !== 40 && !isCSSPunctuation(next)) {
           result += ' '
           lastCode = 32
         }
@@ -112,7 +112,7 @@ export function minifyCSS(code: string): string {
       if (c2 >= 48 && c2 <= 57) {
         const prev = i > segStart ? code.charCodeAt(i - 1) : lastCode
         // Only rewrite a number at a value boundary, never an identifier.
-        if (!prev || prev === 58 || prev === 40 || prev === 44 || isCSSWhitespace(prev)) {
+        if (prev < 0 || prev === 58 || prev === 40 || prev === 44 || isCSSWhitespace(prev)) {
           if (i > segStart) {
             result += code.slice(segStart, i)
             lastCode = code.charCodeAt(i - 1)

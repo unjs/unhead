@@ -72,6 +72,7 @@ export function createPatchBoundary(): (text: string) => boolean {
     const html = tail ? tail + chunk : chunk
     const len = html.length
     let i = 0
+    let scriptDash = -2 // Cached next '-->' in current buffered input; -1 when absent.
 
     while (i < len) {
       if (inPending) {
@@ -142,10 +143,11 @@ export function createPatchBoundary(): (text: string) => boolean {
         }
         else {
           const lt = html.indexOf('<', i)
-          const dash = html.indexOf('-->', i)
-          if (dash >= 0 && (lt < 0 || dash < lt)) {
+          if (scriptDash !== -1 && scriptDash < i)
+            scriptDash = html.indexOf('-->', i)
+          if (scriptDash >= 0 && (lt < 0 || scriptDash < lt)) {
             script = DATA
-            i = dash + 3
+            i = scriptDash + 3
             continue
           }
           if (lt >= 0) {

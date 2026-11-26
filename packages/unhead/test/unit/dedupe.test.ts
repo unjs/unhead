@@ -1,3 +1,4 @@
+import { createHead, renderSSRHead } from '../../src/server'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
 
 describe('isMetaArrayDupeKey', () => {
@@ -109,5 +110,20 @@ describe('hashTag', () => {
   it('returns a string for non-string text content', () => {
     expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
     expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+  })
+})
+
+describe('sSR unkeyed content deduplication', () => {
+  it('preserves the first slot order when a later duplicate script replaces an earlier one', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({
+      script: [
+        { innerHTML: 'window.init=()=>{}' },
+        { innerHTML: 'window.init()' },
+        { innerHTML: 'window.init=()=>{}' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toBe('<script>window.init=()=>{}</script>\n<script>window.init()</script>')
   })
 })

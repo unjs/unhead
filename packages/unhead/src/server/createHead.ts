@@ -65,8 +65,12 @@ const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e
   }
 }
 
+// @ts-expect-error untyped
+const sortContentTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
+
 // Deduplicate unkeyed SSR content tags (style/script/noscript) directly by their flat content
 // string so V8 reuses its cached string hash instead of flattening `${tag}:content:${content}`.
+// Preserves the first occurrence's ordering slot when a duplicate replaces it.
 const ssrDedupe: NonNullable<CreateServerHeadOptions['_ssrDedupe']> = (tags) => {
   let content: HeadTag[] | undefined
   let w = 0
@@ -80,26 +84,57 @@ const ssrDedupe: NonNullable<CreateServerHeadOptions['_ssrDedupe']> = (tags) => 
   if (!content)
     return
   tags.length = w
-  if (content.length === 1)
-    return content
-  const byTag = new Map<string, Map<string, HeadTag>>()
-  for (let i = 0; i < content.length; i++) {
-    const next = content[i]
-    const key = String(next.textContent || next.innerHTML)
-    let inner = byTag.get(next.tag)
-    if (!inner)
-      byTag.set(next.tag, inner = new Map())
-    const prev = inner.get(key)
-    // @ts-expect-error untyped
-    if (!prev || (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w))
-      inner.set(key, next)
+  let slots: [w: number, p: number, tag: HeadTag][]
+  if (content.length === 1) {
+    const only = content[0]
+    slots = [[only._w!, only._p!, only]]
   }
-  const out: HeadTag[] = []
-  for (const inner of byTag.values()) {
-    for (const tag of inner.values())
-      out.push(tag)
+  else {
+    content.sort(sortContentTags)
+    const byTag = new Map<string, Map<string, [w: number, p: number, tag: HeadTag]>>()
+    slots = []
+    for (let i = 0; i < content.length; i++) {
+      const next = content[i]
+      const key = String(next.textContent || next.innerHTML)
+      let inner = byTag.get(next.tag)
+      if (!inner)
+        byTag.set(next.tag, inner = new Map())
+      const prev = inner.get(key)
+      if (!prev) {
+        const slot: [number, number, HeadTag] = [next._w!, next._p!, next]
+        inner.set(key, slot)
+        slots.push(slot)
+      }
+      // @ts-expect-error untyped
+      else if (next._w === prev[2]._w ? next._p! > prev[2]._p! : next._w < prev[2]._w) {
+        // Keep the original slot's (w, p) so replacing a duplicate does not reorder it past later tags.
+        prev[2] = next
+      }
+    }
   }
-  return out
+  return (resolved) => {
+    const merged: HeadTag[] = []
+    let r = 0
+    let s = 0
+    while (r < resolved.length && s < slots.length) {
+      const rt = resolved[r]
+      const [sw, sp, st] = slots[s]
+      if (sw < rt._w! || (sw === rt._w! && sp < rt._p!)) {
+        merged.push(st)
+        s++
+      }
+      else {
+        merged.push(rt)
+        r++
+      }
+    }
+    while (r < resolved.length)
+      merged.push(resolved[r++])
+    while (s < slots.length)
+      merged.push(slots[s++][2])
+    resolved.length = 0
+    resolved.push(...merged)
+  }
 }
 
 /**

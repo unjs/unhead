@@ -347,6 +347,7 @@ function matchesScriptName(html: string, start: number) {
 function closeScript(html: string, start: number) {
   let scriptData = 0 // 0=normal, 1=escaped, 2=double-escaped
   let cursor = start
+  let dash = -2 // Next '-->' at or after cursor; -1 when absent.
   while (cursor < html.length) {
     if (scriptData === 0) {
       const lt = html.indexOf('<', cursor)
@@ -361,7 +362,8 @@ function closeScript(html: string, start: number) {
     }
     else {
       const lt = html.indexOf('<', cursor)
-      const dash = html.indexOf('-->', cursor)
+      if (dash !== -1 && dash < cursor)
+        dash = html.indexOf('-->', cursor)
       if (dash >= 0 && (lt < 0 || dash < lt)) {
         scriptData = 0
         cursor = dash + 3

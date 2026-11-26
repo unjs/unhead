@@ -241,14 +241,11 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
       break
     }
   }
-  const contentTags = head.resolvedOptions._ssrDedupe?.(ctx.tags)
+  const mergeContent = head.resolvedOptions._ssrDedupe?.(ctx.tags)
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
-  if (contentTags) {
-    ctx.tags.push(...contentTags)
-    ctx.tags.sort(sortTags)
-  }
+  mergeContent?.(ctx.tags)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)

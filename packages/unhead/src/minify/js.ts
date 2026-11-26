@@ -14,8 +14,8 @@ export function minifyJS(code: string): string {
     return code
 
   let result = ''
-  // Track the last emitted character code so we never flatten the growing rope.
-  let lastCode = 0
+  // Track the last emitted character code (-1 = none) so we never flatten the growing rope.
+  let lastCode = -1
   let separator = 0 // 0=none, 1=' ', 2='\n'
   let i = 0
   let segStart = 0
@@ -71,7 +71,7 @@ export function minifyJS(code: string): string {
     if (c === 47 || c === 96 || c === 92)
       return code
 
-    if (separator && lastCode) {
+    if (separator && lastCode >= 0) {
       if (separator === 2) {
         result += '\n'
         lastCode = 10
