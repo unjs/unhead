@@ -217,6 +217,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   const skipSsrCache = head.ssr && !head._stream && !head._r && mayMutateTags
   if (head.ssr)
     head._r = true
+  if (mayMutateTags && ctx.tags.length)
+    cloneTagsInPlace(ctx.tags)
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     let shared = !!tags

@@ -125,8 +125,15 @@ function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag[
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (Array.isArray(tag.props.content)) {
-    for (const content of tag.props.content)
-      tags.push({ ...tag, props: { ...tag.props, content } })
+    const { class: cls, style } = tag.props as Record<string, any>
+    for (const content of tag.props.content) {
+      const props: Record<string, any> = { ...tag.props, content }
+      if (cls instanceof Set)
+        props.class = new Set(cls)
+      if (style instanceof Map)
+        props.style = new Map(style)
+      tags.push({ ...tag, props })
+    }
   }
   else {
     tags.push(tag)

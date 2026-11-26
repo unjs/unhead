@@ -326,4 +326,45 @@ describe('promisesPlugin', () => {
     expect(rendered.headTags).toContain('<title>ok</title>')
     expect(rendered.headTags).toContain('content="after-error"')
   })
+
+  it('preserves outer scan slots when a getter renders another head synchronously', async () => {
+    const inner = createServerHead({ disableDefaults: true, plugins: [PromisesPlugin] })
+    inner.push({ title: 'inner', meta: [{ name: 'description', content: 'inner-desc' }] })
+
+    const outer = createServerHead({ disableDefaults: true, plugins: [PromisesPlugin] })
+    outer.push({
+      title: Promise.resolve('outer'),
+      get meta() {
+        renderSSRHead(inner)
+        return [{ name: 'description', content: 'outer-desc' }]
+      },
+    } as any)
+
+    expect(renderSSRHead(outer).headTags).toBe('')
+    await flushPromises()
+    const rendered = renderSSRHead(outer)
+    expect(rendered.headTags).toContain('<title>outer</title>')
+    expect(rendered.headTags).toContain('content="outer-desc"')
+  })
+
+  it('clears written scratch slots when a later getter throws mid-object', async () => {
+    const head = createServerHead({ disableDefaults: true, plugins: [PromisesPlugin] })
+    head.push({
+      title: 'before-throw',
+      get meta() {
+        throw new Error('mid-throw')
+      },
+    } as any)
+
+    await expect(head.hooks.callHook('entries:resolve', {
+      entries: [...head.entries.values()],
+      tags: [],
+    })).rejects.toThrow('mid-throw')
+
+    const healthy = createServerHead({ disableDefaults: true, plugins: [PromisesPlugin] })
+    healthy.push({ title: Promise.resolve('clean') } as any)
+    expect(renderSSRHead(healthy).headTags).toBe('')
+    await flushPromises()
+    expect(renderSSRHead(healthy).headTags).toContain('<title>clean</title>')
+  })
 })

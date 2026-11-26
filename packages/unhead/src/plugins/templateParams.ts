@@ -75,7 +75,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
       'tags:afterResolve': ({ tagMap }) => {
         // we need to re-process in case then user had a function as the titleTemplate
         const title: HeadTag | undefined = tagMap.get('title')
-        if (title?.textContent && title.processTemplateParams !== false && title.textContent.includes('%')) {
+        if (typeof title?.textContent === 'string' && title.processTemplateParams !== false && title.textContent.includes('%')) {
           title.textContent = processTemplateParams(title.textContent, head._templateParams!, head._separator!)
         }
       },

@@ -12,19 +12,24 @@ const scratch: any[] = []
 let sp = 0
 let maxSp = 0
 
-function resetScratch() {
-  for (let i = 0; i < maxSp; i++)
-    scratch[i] = undefined
-  sp = maxSp = 0
+function runWithScratch<T>(fn: () => T): T {
+  const base = sp
+  const prevMax = maxSp
+  maxSp = base
+  try {
+    return fn()
+  }
+  finally {
+    const end = sp > maxSp ? sp : maxSp
+    for (let i = base; i < end; i++)
+      scratch[i] = undefined
+    sp = base
+    maxSp = prevMax
+  }
 }
 
 function walkPromisesRoot(v: any): any {
-  try {
-    return walkPromises(v)
-  }
-  finally {
-    resetScratch()
-  }
+  return runWithScratch(() => walkPromises(v))
 }
 
 function walkPromises(v: any): any {
@@ -103,7 +108,7 @@ export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
     key: 'promises',
     hooks: {
       'entries:resolve': (ctx) => {
-        try {
+        runWithScratch(() => {
           for (let index = ctx.entries.length - 1; index >= 0; index--) {
             const entry = ctx.entries[index]
             const input = entry.input
@@ -135,10 +140,7 @@ export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
               },
             )
           }
-        }
-        finally {
-          resetScratch()
-        }
+        })
       },
     },
   }

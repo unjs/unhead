@@ -257,6 +257,8 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   }
 
   for (const key in primitives) {
+    if (!Object.hasOwn(primitives, key))
+      continue
     const value = primitives[key]
     if (key === 'charset') {
       meta.push({ charset: value === null ? '_null' : value })

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { FlatMetaPlugin, TemplateParamsPlugin } from '../../../src/plugins'
+import { ValidatePlugin } from '../../../src/plugins/validate'
 import { createHead, renderSSRHead } from '../../../src/server'
-import { normalizeEntryToTags, walkResolver } from '../../../src/utils'
+import { normalizeEntryToTags, unpackMeta, walkResolver } from '../../../src/utils'
 
 describe('ssr resolve hotpaths', () => {
   it('does not mutate caller templateParams input across repeated SSR renders', () => {
@@ -91,5 +92,72 @@ describe('ssr resolve hotpaths', () => {
     const res = renderSSRHead(head)
     expect(res.headTags).toContain('<title>Plain</title>')
     expect(res.headTags).toContain('<meta name="description" content="desc">')
+  })
+
+  it('preserves numeric titles when TemplateParamsPlugin is active', () => {
+    const head = createHead({ disableDefaults: true, plugins: [TemplateParamsPlugin] })
+    head.push({ title: 42 as any })
+    expect(renderSSRHead(head).headTags).toBe('<title>42</title>')
+  })
+
+  it('keeps ValidatePlugin observing invalid primitive top-level shapes', () => {
+    const reported: string[] = []
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [ValidatePlugin({ onReport: rules => reported.push(...rules.map(r => r.id)) })],
+    })
+    head.push({ meta: 'bad' as any })
+    renderSSRHead(head)
+    expect(reported).toContain('invalid-input-shape')
+  })
+
+  it('skips inherited keys introduced via __proto__ in unpackMeta', () => {
+    const malicious = JSON.parse('{"__proto__":{"description":"wrong"},"title":"ok"}')
+    const tags = unpackMeta(malicious)
+    expect(tags.some(t => t.name === 'description')).toBe(false)
+  })
+
+  it('isolates class and style containers across array-valued content tags on SSR', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'tags:resolve': ({ tags }) => {
+          for (const tag of tags) {
+            if (tag.props.content === '/a') {
+              ;(tag.props.class as unknown as Set<string>).add('only-a')
+              ;(tag.props.style as unknown as Map<string, string>).set('display', 'block')
+            }
+          }
+        },
+      },
+    })
+    head.push({
+      meta: [{ property: 'og:image', content: ['/a', '/b'] as any, class: 'base', style: 'color:red' } as any],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('content="/a" class="base only-a" style="color:red;display:block"')
+    expect(headTags).toContain('content="/b" class="base" style="color:red"')
+  })
+
+  it('clones tags injected into ctx.tags by entries:resolve before mutating hooks run', () => {
+    const injected = { tag: 'meta' as const, props: { name: 'description', content: 'base' }, _w: 100, _p: 1, _d: 'meta:description' }
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'entries:resolve': ({ tags }) => {
+          tags.push(injected)
+        },
+        'tags:resolve': ({ tags }) => {
+          for (const tag of tags) {
+            if (tag.tag === 'meta' && tag.props.name === 'description')
+              tag.props.content = `${tag.props.content}!`
+          }
+        },
+      },
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="base!">')
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="base!">')
+    expect(injected.props.content).toBe('base')
   })
 })
