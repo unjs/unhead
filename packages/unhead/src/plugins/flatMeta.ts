@@ -6,21 +6,26 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'flatMeta',
   hooks: {
     'entries:normalize': (ctx) => {
-      let hasFlatMeta = false
-      const tags: HeadTag[] = []
-      const tagsToAdd: HeadTag[] = []
-      for (const t of ctx.tags) {
+      const input = ctx.tags
+      let tags: HeadTag[] | undefined
+      let tagsToAdd: HeadTag[] | undefined
+      for (let i = 0; i < input.length; i++) {
+        const t = input[i]
         if (t.tag !== '_flatMeta') {
-          tags.push(t)
+          tags?.push(t)
           continue
         }
-        hasFlatMeta = true
+        if (!tags) {
+          tags = input.slice(0, i)
+          tagsToAdd = []
+        }
         for (const props of unpackMeta(t.props))
-          tagsToAdd.push({ ...t, tag: 'meta', props })
+          tagsToAdd!.push({ ...t, tag: 'meta', props })
       }
-      if (!hasFlatMeta)
+      if (!tags)
         return
-      for (const tag of tagsToAdd) tags.push(tag)
+      for (let i = 0; i < tagsToAdd!.length; i++)
+        tags.push(tagsToAdd![i])
       ctx.tags = tags
     },
   },

@@ -37,13 +37,25 @@ const MetaPackingUnpack: Record<string, UnpackOptions> = /* @__PURE__ */ {
   },
 }
 
+const fixKeyCaseCache = /* @__PURE__ */ new Map<string, string>()
+
 function fixKeyCase(key: string): string {
+  const cached = fixKeyCaseCache.get(key)
+  if (cached !== undefined)
+    return cached
   const prefixIndex = key.search(HYPHEN_OR_CAP_RE)
-  if (prefixIndex === -1)
-    return key.toLowerCase()
-  const prefix = key.slice(0, prefixIndex).toLowerCase()
-  const replacement = META_NAMESPACES.includes(prefix) || PROPERTY_NAMESPACES.includes(prefix) ? ':$1' : '-$1'
-  return key.replace(CAPS_RE, replacement).toLowerCase()
+  let result: string
+  if (prefixIndex === -1) {
+    result = key.toLowerCase()
+  }
+  else {
+    const prefix = key.slice(0, prefixIndex).toLowerCase()
+    const replacement = META_NAMESPACES.includes(prefix) || PROPERTY_NAMESPACES.includes(prefix) ? ':$1' : '-$1'
+    result = key.replace(CAPS_RE, replacement).toLowerCase()
+  }
+  if (fixKeyCaseCache.size < 256)
+    fixKeyCaseCache.set(key, result)
+  return result
 }
 
 function resolveAlias(key: string, fixed: string): string {
@@ -166,7 +178,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   const meta: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
-  for (const [key, value] of Object.entries(input)) {
+  for (const key in input) {
+    if (!Object.hasOwn(input, key))
+      continue
+    const value = (input as Record<string, any>)[key]
     if (Array.isArray(value)) {
       if (key === 'themeColor') {
         value.forEach((v) => {
@@ -182,7 +197,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
           const urlProps: UnheadMeta[] = []
           const otherProps: UnheadMeta[] = []
 
-          for (const [propKey, propValue] of Object.entries(v)) {
+          for (const propKey in v) {
+            if (!Object.hasOwn(v, propKey))
+              continue
+            const propValue = (v as Record<string, any>)[propKey]
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
             const items = unpackMeta({ [metaKey]: propValue })
             ;(propKey === 'url' ? urlProps : otherProps).push(...items)
@@ -217,11 +235,11 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
           } as MetaGeneric as UnheadMeta)
         }
 
-        for (const [propKey, propValue] of Object.entries(value)) {
-          if (propKey !== 'url' && propKey !== 'secureUrl') {
+        for (const propKey in value) {
+          if (propKey !== 'url' && propKey !== 'secureUrl' && Object.hasOwn(value, propKey)) {
             meta.push({
               [metaKey]: `${prefix}:${type}:${propKey}`,
-              content: propValue,
+              content: value[propKey],
             } as MetaGeneric as UnheadMeta)
           }
         }
@@ -238,7 +256,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
     }
   }
 
-  for (const [key, value] of Object.entries(primitives)) {
+  for (const key in primitives) {
+    if (!Object.hasOwn(primitives, key))
+      continue
+    const value = primitives[key]
     if (key === 'charset') {
       meta.push({ charset: value === null ? '_null' : value })
       continue

@@ -209,7 +209,6 @@ function createInputShapeObserver(): {
     }
     return value
   }
-  resolver._static = true
 
   return {
     resolver,
