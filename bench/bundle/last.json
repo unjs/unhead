@@ -1,53 +1,53 @@
 {
   "client": {
-    "size": 13529,
-    "gz": 5560,
-    "br": 5047
+    "size": 13286,
+    "gz": 5528,
+    "br": 5042
   },
   "clientFull": {
-    "size": 26688,
-    "gz": 10470,
-    "br": 9489
+    "size": 25979,
+    "gz": 10300,
+    "br": 9366
   },
   "server": {
-    "size": 12865,
-    "gz": 5222,
-    "br": 4731
+    "size": 12760,
+    "gz": 5216,
+    "br": 4737
   },
   "vueClient": {
-    "size": 14593,
-    "gz": 6049,
-    "br": 5498
+    "size": 14350,
+    "gz": 6013,
+    "br": 5474
   },
   "vueClientFull": {
-    "size": 29675,
-    "gz": 11586,
-    "br": 10514
+    "size": 29147,
+    "gz": 11484,
+    "br": 10461
   },
   "vueServer": {
-    "size": 13924,
-    "gz": 5686,
-    "br": 5159
+    "size": 13819,
+    "gz": 5682,
+    "br": 5167
   },
   "reactClient": {
-    "size": 14718,
-    "gz": 6056,
-    "br": 5490
+    "size": 14475,
+    "gz": 6017,
+    "br": 5472
   },
   "reactClientFull": {
-    "size": 29939,
-    "gz": 11577,
-    "br": 10482
+    "size": 29224,
+    "gz": 11414,
+    "br": 10332
   },
   "reactServer": {
-    "size": 13555,
-    "gz": 5493,
-    "br": 4987
+    "size": 13450,
+    "gz": 5492,
+    "br": 4979
   },
   "schemaOrg": {
-    "size": 42324,
-    "gz": 14539,
-    "br": 13034
+    "size": 38038,
+    "gz": 13140,
+    "br": 11834
   },
   "schemaOrgImports": {
     "size": 98,
@@ -60,14 +60,14 @@
     "br": 407
   },
   "clientSelfContained": {
-    "size": 14254,
-    "gz": 5903,
-    "br": 5325
+    "size": 14015,
+    "gz": 5872,
+    "br": 5324
   },
   "serverSelfContained": {
-    "size": 13592,
+    "size": 13486,
     "gz": 5544,
-    "br": 5017
+    "br": 5005
   },
   "vueStreamingClient": {
     "size": 1365,
@@ -75,9 +75,9 @@
     "br": 654
   },
   "streamingBootstrap": {
-    "size": 13071,
-    "gz": 5400,
-    "br": 4920
+    "size": 12828,
+    "gz": 5361,
+    "br": 4889
   },
   "vueClientLazy": {
     "size": 1914,
@@ -85,8 +85,8 @@
     "br": 882
   },
   "vueClientLazyRuntime": {
-    "size": 17448,
-    "gz": 7083,
-    "br": 6449
+    "size": 17201,
+    "gz": 7055,
+    "br": 6421
   }
 }
