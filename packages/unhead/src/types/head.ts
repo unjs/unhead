@@ -294,6 +294,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _h: number
+  /**
+   * Set after the first SSR resolve so repeated renders on the same head cache entry tags.
+   *
+   * @internal
+   */
+  _r?: true
   // client-specific (optional)
   /**
    * @internal

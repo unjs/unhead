@@ -38,6 +38,9 @@ describe('ssr resolve hotpaths', () => {
 
     expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="base-1">')
     expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="base-2">')
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="base-3">')
+    // Repeated renders on the same SSR head reuse cached normalized tags while staying isolated.
+    expect(head.entries.get(1)?._tags).toBeDefined()
   })
 
   it('defensively clones tags when entries:normalize adds a tags:resolve hook mid-render', () => {

@@ -209,11 +209,14 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
     callHook(head, 'entries:resolve', { entries, ...ctx })
   }
   syncEntryHookCache(head, hooks)
-  // On non-streaming SSR with tag-mutating hooks already registered, freshly normalized
-  // tags are owned exclusively by this render: skipping `e._tags` avoids cloning every
-  // tag right after allocating it, while repeated SSR renders stay isolated by re-normalizing.
+  // On the first non-streaming SSR resolve with tag-mutating hooks already registered,
+  // freshly normalized tags are owned exclusively by this render: skipping `e._tags`
+  // avoids cloning every tag right after allocating it. If the same SSR head renders
+  // again (`head._r`), cache `e._tags` normally so repeated renders reuse normalized tags.
   const mayMutateTags = hasTagMutatingHooks(hooks)
-  const skipSsrCache = head.ssr && !head._stream && mayMutateTags
+  const skipSsrCache = head.ssr && !head._stream && !head._r && mayMutateTags
+  if (head.ssr)
+    head._r = true
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     let shared = !!tags
