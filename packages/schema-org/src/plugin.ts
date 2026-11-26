@@ -2,7 +2,7 @@ import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { hasOwn, processTemplateParams, unpackMeta } from 'unhead/utils'
+import { hasOwn, processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
@@ -52,8 +52,27 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
       else if (props.property === 'og:image')
         resolvedMeta.image = props.content
     }
+    function collectFlatMeta(props: Record<string, unknown>) {
+      if (typeof props.description === 'string')
+        resolvedMeta.description = props.description
+      for (const entry of [props.ogImage, props.ogImageUrl]) {
+        if (typeof entry === 'string') {
+          resolvedMeta.image = entry
+        }
+        else if (Array.isArray(entry)) {
+          for (const item of entry) {
+            const url = typeof item === 'string' ? item : (item as Record<string, unknown> | null)?.url
+            if (typeof url === 'string')
+              resolvedMeta.image = url
+          }
+        }
+        else if (entry && typeof entry === 'object' && typeof (entry as Record<string, unknown>).url === 'string') {
+          resolvedMeta.image = (entry as Record<string, unknown>).url as string
+        }
+      }
+    }
     function collectTag(tag: HeadTag) {
-      if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
+      if (isSchemaOrgTag(tag)) {
         // this is a bit expensive, load in seperate chunk
         const nodes = tag.props.nodes
         if (nodes) {
@@ -79,8 +98,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
       // useSeoMeta() packs its meta into one `_flatMeta` tag. FlatMetaPlugin may
       // unpack it before or after this hook, so read both shapes.
       else if (tag.tag === '_flatMeta') {
-        for (const props of unpackMeta(tag.props))
-          collectMeta(props as Record<string, unknown>)
+        collectFlatMeta(tag.props as Record<string, unknown>)
       }
       else if (tag.tag === 'htmlAttrs' && typeof tag.props.lang === 'string') {
         resolvedMeta.inLanguage = tag.props.lang
@@ -129,7 +147,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           for (const k in ctx.tags) {
             const tag = ctx.tags[k]
             // nodes can resolve to nullish at runtime (reactive no-op input), match by key too
-            if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
+            if (isSchemaOrgTag(tag)) {
               delete tag.props.nodes
               const graphMeta = { ...(meta?.() || {}), ...config, ...resolvedMeta }
               if (canonical && !graphMeta.url)
@@ -142,15 +160,18 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
               }
               // eslint-disable-next-line node/prefer-global/process
               const minify = options?.minify || process.env.NODE_ENV === 'production'
-              tag.innerHTML = JSON.stringify({
+              const payload = {
                 '@context': 'https://schema.org',
                 '@graph': resolvedGraph,
-              }, (_, value) => {
-                // process template params here
-                if (typeof value === 'string')
-                  return processTemplateParams(value, head._templateParams!, head._separator!)
-                return value
-              }, minify ? 0 : 2)
+              }
+              const space = minify ? 0 : 2
+              const raw = JSON.stringify(payload, undefined, space)
+              tag.innerHTML = raw.includes('%')
+                ? JSON.stringify(payload, (_, value) =>
+                    typeof value === 'string'
+                      ? processTemplateParams(value, head._templateParams!, head._separator!)
+                      : value, space)
+                : raw
               return
             }
           }

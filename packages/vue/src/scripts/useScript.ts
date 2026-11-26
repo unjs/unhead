@@ -8,7 +8,6 @@ import type {
 } from 'unhead/types'
 import type { Ref, WatchHandle } from 'vue'
 import type { ResolvableProperties } from '../types'
-import { HookableCore } from 'hookable'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, getCurrentScope, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
@@ -101,7 +100,21 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // we may be re-using an existing script
   // sync the status, need to register before useScript
-  const hooks = head.hooks ??= new HookableCore()
+  const hooks = head.hooks ??= (() => {
+    const _hooks: Record<string, ((...args: any[]) => any)[]> = {}
+    return {
+      _hooks,
+      hook(name: string, cb?: (...args: any[]) => any) {
+        const list = _hooks[name] ||= []
+        list.push(cb!)
+        return () => {
+          const i = list.indexOf(cb!)
+          if (i >= 0)
+            list.splice(i, 1)
+        }
+      },
+    } as unknown as NonNullable<Unhead<any>['hooks']>
+  })()
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || hooks.hook('script:updated', ({ script: s }) => {
     // @ts-expect-error untyped

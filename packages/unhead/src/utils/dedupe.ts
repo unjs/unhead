@@ -1,19 +1,13 @@
 import type { HeadTag } from '../types'
-import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
+import { TagsWithInnerContent, UniqueTags } from './const'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
+const META_ARRAYABLE_RE = /^(?:(?:theme-color|google-site-verification|author|og:locale:alternate|(?:article|book):(?:author|tag))$|(?:og:(?:image|video|audio)|twitter:image)(?::|$))/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
 export function isMetaArrayDupeKey(v: string) {
   const i = v.indexOf(':')
-  if (i === -1)
-    return false
-  const key = v.slice(i + 1)
-  return MetaTagsArrayable.has(key)
-    || key.startsWith('og:image:')
-    || key.startsWith('og:video:')
-    || key.startsWith('og:audio:')
-    || key.startsWith('twitter:image:')
+  return i !== -1 && META_ARRAYABLE_RE.test(v.slice(i + 1))
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
