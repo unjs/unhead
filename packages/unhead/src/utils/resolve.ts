@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
 import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-import { normalizeEntryToTags } from './normalize'
+import { cloneTagProps, normalizeEntryToTags } from './normalize'
 
 declare const __UNHEAD_LAZY_RENDERER__: boolean
 
@@ -57,12 +57,7 @@ function hasTagMutatingHooks(hooks: Record<string, any>): boolean {
 function cloneTagsInPlace(tags: HeadTag[], start = 0) {
   for (let i = start; i < tags.length; i++) {
     const t = tags[i]
-    const props: Record<string, any> = { ...t.props }
-    if (props.class instanceof Set)
-      props.class = new Set(props.class)
-    if (props.style instanceof Map)
-      props.style = new Map(props.style)
-    tags[i] = { ...t, props }
+    tags[i] = { ...t, props: cloneTagProps(t.props) }
   }
 }
 
@@ -213,23 +208,20 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   // freshly normalized tags are owned exclusively by this render: skipping `e._tags`
   // avoids cloning every tag right after allocating it. If the same SSR head renders
   // again (`head._r`), cache `e._tags` normally so repeated renders reuse normalized tags.
-  const mayMutateTags = hasTagMutatingHooks(hooks)
-  const skipSsrCache = head.ssr && !head._stream && !head._r && mayMutateTags
-  if (head.ssr)
+  const skipSsrCache = head.ssr && !head._stream && !head._r && hasTagMutatingHooks(hooks)
+  if (skipSsrCache) {
     head._r = true
-  if (mayMutateTags && ctx.tags.length)
-    cloneTagsInPlace(ctx.tags)
+    if (ctx.tags.length)
+      cloneTagsInPlace(ctx.tags)
+  }
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
-    let shared = !!tags
+    let fresh = false
     if (!tags) {
       // Only the server head sets `_precomputed`: it returns the entry's shared precomputed
       // tags while they are valid (see server/createHead.ts), so client bundles skip the check.
       tags = head.resolvedOptions._precomputed?.(e, weightFn, hooks)
-      if (tags) {
-        shared = true
-      }
-      else {
+      if (!tags) {
         tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
         if (e.options && !isEmptyProps(e.options)) {
           for (const t of tags)
@@ -250,20 +242,20 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           if (!t._d && !(ck && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
-        if (!skipSsrCache) {
+        if (skipSsrCache)
+          fresh = true
+        else
           e._tags = tags
-          shared = true
-        }
       }
     }
     const start = ctx.tags.length
     ctx.tags.push(...tags)
-    if (shared && mayMutateTags)
+    if (skipSsrCache && !fresh)
       cloneTagsInPlace(ctx.tags, start)
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
-  if (!mayMutateTags && hasTagMutatingHooks(hooks))
+  if (!skipSsrCache && hasTagMutatingHooks(hooks))
     cloneTagsInPlace(ctx.tags)
   const hasFlatMeta = dedupeTags(ctx, head.resolvedOptions._contentKey?.())
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)

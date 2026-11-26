@@ -44,7 +44,7 @@ function walkPromises(v: any): any {
     let hasThenable = false
     for (let i = 0; i < v.length; i++) {
       const item = v[i]
-      const resolved = typeof item === 'object' && item !== null ? walkPromises(item) : item
+      const resolved = item && typeof item === 'object' ? walkPromises(item) : item
       scratch[sp++] = resolved
       if (!hasThenable && isThenable(resolved))
         hasThenable = true
@@ -63,7 +63,7 @@ function walkPromises(v: any): any {
       if (!Object.hasOwn(v, key))
         continue
       const val = v[key]
-      const resolved = typeof val === 'object' && val !== null ? walkPromises(val) : val
+      const resolved = val && typeof val === 'object' ? walkPromises(val) : val
       scratch[sp++] = key
       scratch[sp++] = resolved
       if (!hasThenable && isThenable(resolved))
@@ -81,17 +81,9 @@ function walkPromises(v: any): any {
       keys.push(scratch[i])
       values.push(scratch[i + 1])
     }
-    return Promise.all(values).then((resolved) => {
-      const out: Record<string, any> = {}
-      for (let i = 0; i < keys.length; i++) {
-        const k = keys[i]
-        if (k === '__proto__')
-          Object.defineProperty(out, k, { value: resolved[i], enumerable: true, writable: true, configurable: true })
-        else
-          out[k] = resolved[i]
-      }
-      return out
-    })
+    return Promise.all(values).then(resolved => Object.fromEntries(
+      keys.map((key, index) => [key, resolved[index]]),
+    ))
   }
 
   return v

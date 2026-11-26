@@ -53,11 +53,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   for (const prop in input) {
     if (isUnsafeKey(prop))
       continue
+    const isData = prop.startsWith('data-')
     const isConfig = TagConfigKeys.has(prop)
     let key = prop
-    let isData: boolean | undefined
     if (isHtmlTag && !isConfig && (!prop || NON_LOWERCASE_ATTR_RE.test(prop))) {
-      isData = prop.startsWith('data-')
       if (!isData)
         key = prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase())
       if (!key || INVALID_ATTR_NAME_RE.test(key))
@@ -83,17 +82,11 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       }
     }
     else if (value !== undefined) {
-      if (typeof value === 'number' || (typeof value === 'string' && value && value !== 'true')) {
-        tag.props[key] = value as any
-      }
-      else {
-        // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
-        // Only for real HTML element tags, not internal virtual tags like _flatMeta
-        const str = String(value)
-        isData ??= prop.startsWith('data-')
-        const preserveString = isData || (tag.tag === 'meta' && key === 'content') || (tag.tag === 'script' && typeof value === 'string' && (key === 'type' || key === 'language'))
-        tag.props[key] = str === 'true' || str === '' ? (preserveString ? str : true) : !value && isData && str === 'false' ? 'false' : value
-      }
+      // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
+      // Only for real HTML element tags, not internal virtual tags like _flatMeta
+      const str = String(value)
+      const preserveString = isData || (tag.tag === 'meta' && key === 'content') || (tag.tag === 'script' && typeof value === 'string' && (key === 'type' || key === 'language'))
+      tag.props[key] = str === 'true' || str === '' ? (preserveString ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }
   }
   return tag
@@ -114,6 +107,16 @@ export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any
   return walkResolver(resolve(undefined, input), resolve, undefined, propResolvers.every(r => r._static))
 }
 
+// Internal copy helper shared with resolve.ts (not re-exported by utils/index.ts).
+export function cloneTagProps(source: Record<string, any>): Record<string, any> {
+  const props: Record<string, any> = { ...source }
+  if (props.class instanceof Set)
+    props.class = new Set(props.class)
+  if (props.style instanceof Map)
+    props.style = new Map(props.style)
+  return props
+}
+
 // pushes onto `tags`: an array `content` expands to one tag per value
 function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag['props'] | string) {
   if (typeof _input !== 'object' && tagName !== 'templateParams') {
@@ -125,13 +128,9 @@ function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag[
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (Array.isArray(tag.props.content)) {
-    const { class: cls, style } = tag.props as Record<string, any>
     for (const content of tag.props.content) {
-      const props: Record<string, any> = { ...tag.props, content }
-      if (cls instanceof Set)
-        props.class = new Set(cls)
-      if (style instanceof Map)
-        props.style = new Map(style)
+      const props = cloneTagProps(tag.props)
+      props.content = content
       tags.push({ ...tag, props })
     }
   }
