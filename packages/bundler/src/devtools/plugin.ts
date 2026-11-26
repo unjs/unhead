@@ -1,4 +1,5 @@
 import type { HeadPluginInput } from 'unhead/types'
+import { dedupeKey } from 'unhead/utils'
 
 /**
  * Unhead plugin that propagates source location metadata from entry options to tags.
@@ -60,7 +61,7 @@ export function devtoolsPlugin(): HeadPluginInput {
               textContent: tag.textContent,
               position: tag.tagPosition,
               priority: tag._w,
-              dedupeKey: tag._d,
+              dedupeKey: tag._d || dedupeKey(tag),
               source: tag._source,
               mode: 'server',
             })

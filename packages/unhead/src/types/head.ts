@@ -127,6 +127,11 @@ export interface CreateHeadOptions {
    * @internal
    */
   _precomputed?: (entry: HeadEntry<any>, tagWeight: (tag: HeadTag) => number, hooks: Record<string, unknown[] | undefined>) => HeadTag[] | undefined
+  /**
+   * Server-only content key factory so client bundles tree-shake SSR content deduplication.
+   * @internal
+   */
+  _contentKey?: () => (tag: HeadTag) => string | undefined
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {

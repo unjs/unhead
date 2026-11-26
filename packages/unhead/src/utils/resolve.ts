@@ -75,10 +75,10 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
     tags.sort(sortTags)
 }
 
-export function dedupeTags(ctx: ResolveTagsContext): boolean {
+export function dedupeTags(ctx: ResolveTagsContext, contentKey?: (tag: HeadTag) => string | undefined): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || hashTag(next)
+    const k = next._d || contentKey?.(next) || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -139,7 +139,7 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>,
 // compacts in place: `tags` must be owned by the caller (resolveTags owns its
 // freshly resolved array); deliberately not exported — the `unhead/utils`
 // subpath re-exports everything and this mutating variant is not public API
-function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
+function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
@@ -160,7 +160,8 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
         t.innerHTML = escape(innerHTML) as typeof innerHTML
       if (t.textContent)
         t.textContent = escape(t.textContent) as typeof t.textContent
-      t._d = dedupeKey(t)
+      if (t._d || !ssr)
+        t._d = dedupeKey(t)
     }
     tags[w++] = t
   }
@@ -218,12 +219,13 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           callHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
+        const ck = head.resolvedOptions._contentKey
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
           t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
-          t._d = dedupeKey(t)
-          if (!t._d)
+          t._d = dedupeKey(t, !!ck)
+          if (!t._d && !(ck && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
         e._tags = tags
@@ -239,11 +241,11 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
       break
     }
   }
-  const hasFlatMeta = dedupeTags(ctx)
+  const hasFlatMeta = dedupeTags(ctx, head.resolvedOptions._contentKey?.())
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
-  return sanitizeTagsInPlace(ctx.tags)
+  return sanitizeTagsInPlace(ctx.tags, head.ssr)
 }

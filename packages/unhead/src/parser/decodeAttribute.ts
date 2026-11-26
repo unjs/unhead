@@ -38,6 +38,8 @@ const LEGACY_CODE_POINTS = /* @__PURE__ */ [
 ]
 
 export function decodeAttribute(value: string): string {
+  if (!value.includes('&'))
+    return value
   return value.replace(REFERENCE, (reference, offset: number) => {
     if (reference[1] === '#') {
       const hex = reference[2].toLowerCase() === 'x'
