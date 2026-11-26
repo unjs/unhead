@@ -127,6 +127,11 @@ export interface CreateHeadOptions {
    * @internal
    */
   _precomputed?: (entry: HeadEntry<any>, tagWeight: (tag: HeadTag) => number, hooks: Record<string, unknown[] | undefined>) => HeadTag[] | undefined
+  /**
+   * Server-only content deduplication helper so client bundles do not pay its cost.
+   * @internal
+   */
+  _ssrDedupe?: (tags: HeadTag[]) => HeadTag[] | undefined
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {

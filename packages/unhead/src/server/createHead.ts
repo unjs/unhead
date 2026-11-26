@@ -2,7 +2,7 @@ import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
 import { TagsWithInnerContent } from '../utils/const'
-import { dedupeKeyStatic, hashTag } from '../utils/dedupe'
+import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { isEmptyProps } from '../utils/resolve'
@@ -65,6 +65,43 @@ const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e
   }
 }
 
+// Deduplicate unkeyed SSR content tags (style/script/noscript) directly by their flat content
+// string so V8 reuses its cached string hash instead of flattening `${tag}:content:${content}`.
+const ssrDedupe: NonNullable<CreateServerHeadOptions['_ssrDedupe']> = (tags) => {
+  let content: HeadTag[] | undefined
+  let w = 0
+  for (let i = 0; i < tags.length; i++) {
+    const next = tags[i]
+    if (!next._d && !next._h && !next.tagDuplicateStrategy && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML))
+      (content ||= []).push(next)
+    else
+      tags[w++] = next
+  }
+  if (!content)
+    return
+  tags.length = w
+  if (content.length === 1)
+    return content
+  const byTag = new Map<string, Map<string, HeadTag>>()
+  for (let i = 0; i < content.length; i++) {
+    const next = content[i]
+    const key = String(next.textContent || next.innerHTML)
+    let inner = byTag.get(next.tag)
+    if (!inner)
+      byTag.set(next.tag, inner = new Map())
+    const prev = inner.get(key)
+    // @ts-expect-error untyped
+    if (!prev || (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w))
+      inner.set(key, next)
+  }
+  const out: HeadTag[] = []
+  for (const inner of byTag.values()) {
+    for (const tag of inner.values())
+      out.push(tag)
+  }
+  return out
+}
+
 /**
  * Normalizes entry input into resolved tags for the entry at `entryIndex`,
  * weighted with `capoTagWeight`.
@@ -77,8 +114,8 @@ export function precomputeEntryTags(input: any, entryIndex: number, propResolver
     const t = tags[i]
     t._w = capoTagWeight(t)
     t._p = (entryIndex << 10) + i
-    t._d = dedupeKeyStatic(t)
-    if (!t._d && !(TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
+    t._d = dedupeKey(t, !t.tagDuplicateStrategy)
+    if (!t._d && !(!t.tagDuplicateStrategy && TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
       t._h = hashTag(t)
   }
   return tags
@@ -116,6 +153,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     _tagWeight: tagWeight,
     // precomputed tags carry capo weights, so another weight never uses them
     _precomputed: tagWeight === capoTagWeight ? precomputedTags : undefined,
+    _ssrDedupe: ssrDedupe,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,

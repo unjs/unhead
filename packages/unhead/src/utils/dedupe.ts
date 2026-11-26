@@ -10,7 +10,7 @@ export function isMetaArrayDupeKey(v: string) {
   return i !== -1 && META_ARRAYABLE_RE.test(v.slice(i + 1))
 }
 
-export function dedupeKeyStatic<T extends HeadTag>(tag: T): string | undefined {
+export function dedupeKey<T extends HeadTag>(tag: T, skipContent?: boolean): string | undefined {
   const { props, tag: t, key } = tag
   if (UniqueTags.has(t))
     return t
@@ -37,14 +37,7 @@ export function dedupeKeyStatic<T extends HeadTag>(tag: T): string | undefined {
   // after key/id so an explicit key still allows multiple links with the same rel + href
   if (t === 'link' && props.rel && props.href)
     return `link:${props.rel}:${props.href}`
-}
-
-export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
-  const k = dedupeKeyStatic(tag)
-  if (k !== undefined)
-    return k
-  const { tag: t } = tag
-  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
+  return !skipContent && TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag): string {
