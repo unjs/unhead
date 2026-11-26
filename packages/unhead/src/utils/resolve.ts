@@ -26,6 +26,14 @@ export function isEmptyProps(props: Record<string, any>): boolean {
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
+// sentinel map for custom HeadHookable registries without `_hooks`: disables
+// hook-presence fast paths so every entry/tag hook still dispatches
+const OPAQUE_HOOKS = {
+  'entries:resolve': [1],
+  'entries:normalize': [1],
+  'tags:': [1],
+} satisfies Record<string, unknown[]>
+
 function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
   if (head._h !== count) {
@@ -177,9 +185,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   const lazyRenderer = typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
-  const rawHooks = (head.hooks as any)?._hooks
-  const opaqueHooks = !!head.hooks && !rawHooks
-  const hooks = rawHooks || {}
+  const hooks = (head.hooks as any)?._hooks || (head.hooks ? OPAQUE_HOOKS : {})
   syncEntryHookCache(head, hooks)
   for (const e of head.entries.values()) {
     if (e._pending !== undefined) {
@@ -197,17 +203,17 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   // may mutate it (push/splice) to change which entries resolve.
   let entries: HeadEntry<any>[] | undefined
   // syncEntryHookCache just set `_h` to the count of entries:resolve and entries:normalize listeners
-  if (head._h || opaqueHooks) {
+  if (head._h) {
     entries = [...head.entries.values()]
     callHook(head, 'entries:resolve', { entries, ...ctx })
   }
   syncEntryHookCache(head, hooks)
   for (const e of entries || head.entries.values()) {
-    let tags = opaqueHooks ? undefined : e._tags
+    let tags = e._tags
     if (!tags) {
       // Only the server head sets `_precomputed`: it returns the entry's shared precomputed
       // tags while they are valid (see server/createHead.ts), so client bundles skip the check.
-      tags = opaqueHooks ? undefined : head.resolvedOptions._precomputed?.(e, weightFn, hooks)
+      tags = head.resolvedOptions._precomputed?.(e, weightFn, hooks)
       if (!tags) {
         tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
         if (e.options && !isEmptyProps(e.options)) {
@@ -215,7 +221,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
             Object.assign(t, e.options)
         }
         // re-read per entry: an earlier listener may have (un)registered hooks
-        if (opaqueHooks || hooks['entries:normalize']?.length) {
+        if (hooks['entries:normalize']?.length) {
           const normalizeCtx = { tags, entry: e }
           callHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
@@ -228,7 +234,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           if (!t._d)
             t._h = hashTag(t)
         }
-        if (!opaqueHooks)
+        if (hooks !== OPAQUE_HOOKS)
           e._tags = tags
       }
     }
@@ -236,15 +242,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
-  if (opaqueHooks) {
-    cloneTagsInPlace(ctx.tags)
-  }
-  else {
-    for (const name in hooks) {
-      if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
-        cloneTagsInPlace(ctx.tags)
-        break
-      }
+  for (const name in hooks) {
+    if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
+      cloneTagsInPlace(ctx.tags)
+      break
     }
   }
   const hasFlatMeta = dedupeTags(ctx)
