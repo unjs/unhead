@@ -1,6 +1,6 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
-import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, isJsonScriptType, TagsWithInnerContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
@@ -77,13 +77,30 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
 
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
-  for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || hashTag(next)
+  let contentIds: Record<string, Map<string, number>> | undefined
+  const tags = ctx.tags.sort(sortTags)
+  for (let i = 0; i < tags.length; i++) {
+    const next = tags[i]
+    let k: string | number | undefined = next._d
+    if (!k) {
+      // Unkeyed SSR inline content tags skip `${tag}:content:${content}` concat and dedupe by flat
+      // content string via a per-tag Map, using a Smi slot id in `tagMap` to preserve insertion order.
+      if (!next._h && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML)) {
+        const c = String(next.textContent || next.innerHTML)
+        const m = (contentIds ||= Object.create(null))[next.tag] ||= new Map()
+        k = m.get(c)
+        if (k === undefined)
+          m.set(c, k = i + 1)
+      }
+      else {
+        k = hashTag(next)
+      }
+    }
     if (!k)
       continue
-    const prev = ctx.tagMap.get(k)
+    const prev = ctx.tagMap.get(k as any)
     if (!prev) {
-      ctx.tagMap.set(k, next)
+      ctx.tagMap.set(k as any, next)
       continue
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
@@ -95,15 +112,15 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
           ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
           : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k as any, { ...next, props })
     }
-    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
-      ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
+    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k as string)) {
+      ctx.tagMap.set(k as any, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
       hasFlatMeta = true
     }
     // @ts-expect-error untyped
     else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
-      ctx.tagMap.set(k, next)
+      ctx.tagMap.set(k as any, next)
     }
   }
   return hasFlatMeta
@@ -219,13 +236,12 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           callHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
-        const ssrDedupe = head.resolvedOptions._ssrDedupe
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
           t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
-          t._d = dedupeKey(t, !!ssrDedupe && !t.tagDuplicateStrategy)
-          if (!t._d && !(ssrDedupe && !t.tagDuplicateStrategy && (t.textContent || t.innerHTML)))
+          t._d = dedupeKey(t, head.ssr)
+          if (!t._d && !(head.ssr && TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
         e._tags = tags
@@ -241,11 +257,9 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
       break
     }
   }
-  const mergeContent = head.resolvedOptions._ssrDedupe?.(ctx.tags)
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
-  mergeContent?.(ctx.tags)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)

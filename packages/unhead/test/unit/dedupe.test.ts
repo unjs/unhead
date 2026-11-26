@@ -126,4 +126,37 @@ describe('sSR unkeyed content deduplication', () => {
     const { headTags } = renderSSRHead(head)
     expect(headTags).toBe('<script>window.init=()=>{}</script>\n<script>window.init()</script>')
   })
+
+  it('preserves the first slot order when a keyed script is replaced around an unkeyed script', () => {
+    const head = createHead({ disableDefaults: true, tagWeight: () => 100 })
+    head.push({
+      script: [
+        { key: 'init', innerHTML: 'window.init=()=>{}' },
+        { innerHTML: 'window.init()' },
+        { key: 'init', innerHTML: 'window.init=()=>{}', tagDuplicateStrategy: 'replace' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toBe('<script data-hid="init">window.init=()=>{}</script>\n<script>window.init()</script>')
+  })
+
+  it('deduplicates identical unkeyed scripts when only one specifies tagDuplicateStrategy', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({
+      script: [
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-a': '1' },
+        { innerHTML: 'window.runs=(window.runs||0)+1', tagDuplicateStrategy: 'replace' },
+      ],
+    })
+    expect(renderSSRHead(head).headTags).toBe('<script>window.runs=(window.runs||0)+1</script>')
+
+    const mergeHead = createHead({ disableDefaults: true })
+    mergeHead.push({
+      script: [
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-a': '1' },
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-b': '2', 'tagDuplicateStrategy': 'merge' },
+      ],
+    })
+    expect(renderSSRHead(mergeHead).headTags).toBe('<script data-a="1" data-b="2">window.runs=(window.runs||0)+1</script>')
+  })
 })

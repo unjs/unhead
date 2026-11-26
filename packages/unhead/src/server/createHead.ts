@@ -65,78 +65,6 @@ const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e
   }
 }
 
-// @ts-expect-error untyped
-const sortContentTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
-
-// Deduplicate unkeyed SSR content tags (style/script/noscript) directly by their flat content
-// string so V8 reuses its cached string hash instead of flattening `${tag}:content:${content}`.
-// Preserves the first occurrence's ordering slot when a duplicate replaces it.
-const ssrDedupe: NonNullable<CreateServerHeadOptions['_ssrDedupe']> = (tags) => {
-  let content: HeadTag[] | undefined
-  let w = 0
-  for (let i = 0; i < tags.length; i++) {
-    const next = tags[i]
-    if (!next._d && !next._h && !next.tagDuplicateStrategy && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML))
-      (content ||= []).push(next)
-    else
-      tags[w++] = next
-  }
-  if (!content)
-    return
-  tags.length = w
-  let slots: [w: number, p: number, tag: HeadTag][]
-  if (content.length === 1) {
-    const only = content[0]
-    slots = [[only._w!, only._p!, only]]
-  }
-  else {
-    content.sort(sortContentTags)
-    const byTag = new Map<string, Map<string, [w: number, p: number, tag: HeadTag]>>()
-    slots = []
-    for (let i = 0; i < content.length; i++) {
-      const next = content[i]
-      const key = String(next.textContent || next.innerHTML)
-      let inner = byTag.get(next.tag)
-      if (!inner)
-        byTag.set(next.tag, inner = new Map())
-      const prev = inner.get(key)
-      if (!prev) {
-        const slot: [number, number, HeadTag] = [next._w!, next._p!, next]
-        inner.set(key, slot)
-        slots.push(slot)
-      }
-      // @ts-expect-error untyped
-      else if (next._w === prev[2]._w ? next._p! > prev[2]._p! : next._w < prev[2]._w) {
-        // Keep the original slot's (w, p) so replacing a duplicate does not reorder it past later tags.
-        prev[2] = next
-      }
-    }
-  }
-  return (resolved) => {
-    const merged: HeadTag[] = []
-    let r = 0
-    let s = 0
-    while (r < resolved.length && s < slots.length) {
-      const rt = resolved[r]
-      const [sw, sp, st] = slots[s]
-      if (sw < rt._w! || (sw === rt._w! && sp < rt._p!)) {
-        merged.push(st)
-        s++
-      }
-      else {
-        merged.push(rt)
-        r++
-      }
-    }
-    while (r < resolved.length)
-      merged.push(resolved[r++])
-    while (s < slots.length)
-      merged.push(slots[s++][2])
-    resolved.length = 0
-    resolved.push(...merged)
-  }
-}
-
 /**
  * Normalizes entry input into resolved tags for the entry at `entryIndex`,
  * weighted with `capoTagWeight`.
@@ -149,8 +77,8 @@ export function precomputeEntryTags(input: any, entryIndex: number, propResolver
     const t = tags[i]
     t._w = capoTagWeight(t)
     t._p = (entryIndex << 10) + i
-    t._d = dedupeKey(t, !t.tagDuplicateStrategy)
-    if (!t._d && !(!t.tagDuplicateStrategy && TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
+    t._d = dedupeKey(t, true)
+    if (!t._d && !(TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
       t._h = hashTag(t)
   }
   return tags
@@ -188,7 +116,6 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     _tagWeight: tagWeight,
     // precomputed tags carry capo weights, so another weight never uses them
     _precomputed: tagWeight === capoTagWeight ? precomputedTags : undefined,
-    _ssrDedupe: ssrDedupe,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,
