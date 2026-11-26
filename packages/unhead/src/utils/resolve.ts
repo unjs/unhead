@@ -26,6 +26,14 @@ export function isEmptyProps(props: Record<string, any>): boolean {
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
+// sentinel map for custom HeadHookable registries without `_hooks`: disables
+// hook-presence fast paths so every entry/tag hook still dispatches
+const OPAQUE_HOOKS = {
+  'entries:resolve': [1],
+  'entries:normalize': [1],
+  'tags:': [1],
+} satisfies Record<string, unknown[]>
+
 function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
   if (head._h !== count) {
@@ -177,7 +185,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   const lazyRenderer = typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
-  const hooks = (head.hooks as any)?._hooks || {}
+  const hooks = (head.hooks as any)?._hooks || (head.hooks ? OPAQUE_HOOKS : {})
   syncEntryHookCache(head, hooks)
   for (const e of head.entries.values()) {
     if (e._pending !== undefined) {
@@ -226,7 +234,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           if (!t._d)
             t._h = hashTag(t)
         }
-        e._tags = tags
+        if (hooks !== OPAQUE_HOOKS)
+          e._tags = tags
       }
     }
     ctx.tags.push(...tags)

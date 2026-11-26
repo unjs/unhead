@@ -433,7 +433,7 @@ function renderStreamUpdates(head: Unhead<any>): string {
   // entries intact for the next chunk.
   try {
     // Only pay for normalization when something is listening.
-    if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
+    if (head.hooks && (!(head.hooks as any)._hooks || (head.hooks as any)._hooks['ssr:streamChunk']?.length)) {
       const normalized = normalizePendingTags(head)
       normalizedEntries = normalized.entries
       callHook(head, 'ssr:streamChunk', { tags: normalized.tags })

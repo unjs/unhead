@@ -1,9 +1,11 @@
 import type { Unhead } from '../types'
 
-// Kept apart from `createHooks`, so a chunk that only calls hooks does not import hookable
+// Kept apart from `createHooks`, so a chunk that only calls hooks does not bundle hook registration
 export function callHook(head: Unhead<any, any>, hook: string, ctx: any) {
-  const hooks = (head.hooks as any)?._hooks?.[hook]
-  if (!hooks?.length)
+  const hooks = head.hooks as any
+  if (!hooks)
     return
-  return head.hooks?.callHook(hook as any, ctx)
+  if (hooks._hooks && !hooks._hooks[hook]?.length)
+    return
+  return hooks.callHook?.(hook, ctx)
 }

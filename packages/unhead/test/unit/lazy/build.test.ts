@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest'
 async function build(env: string) {
   const bundle = await rolldown({
     input: resolve(__dirname, '../../../src/lazy/index.ts'),
-    external: ['hookable'],
     transform: { define: { 'process.env.NODE_ENV': JSON.stringify(env) } },
   })
   const { output } = await bundle.generate({ format: 'esm', minify: true })
