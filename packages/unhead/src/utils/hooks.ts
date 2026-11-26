@@ -1,6 +1,6 @@
-import type { CoreHeadHooks, HeadHookable, HookCallback } from '../types'
+import type { CoreHeadHooks, HeadHookable, HeadHookCallback } from '../types'
 
-function runHooks(hooks: HookCallback[], args: unknown[], start: number): Promise<void> | void {
+function runHooks(hooks: HeadHookCallback[], args: unknown[], start: number): Promise<void> | void {
   for (let i = start; i < hooks.length; i++) {
     try {
       const result = hooks[i](...args)
@@ -15,10 +15,10 @@ function runHooks(hooks: HookCallback[], args: unknown[], start: number): Promis
 
 export function createHooks<T extends CoreHeadHooks>(
   hooks?: Partial<T>,
-  storage?: Record<string, HookCallback[] | undefined>,
+  storage?: Record<string, HeadHookCallback[] | undefined>,
 ): HeadHookable<T> {
-  const _hooks: Record<string, HookCallback[] | undefined> = storage || Object.create(null)
-  const removeHook = (name: string, fn: HookCallback) => {
+  const _hooks: Record<string, HeadHookCallback[] | undefined> = storage || Object.create(null)
+  const removeHook = (name: string, fn: HeadHookCallback) => {
     const list = _hooks[name]
     if (list) {
       const i = list.indexOf(fn)
@@ -28,14 +28,14 @@ export function createHooks<T extends CoreHeadHooks>(
         _hooks[name] = undefined
     }
   }
-  const instance: HeadHookable<T> & { _hooks: Record<string, HookCallback[] | undefined> } = {
+  const instance: HeadHookable<T> & { _hooks: Record<string, HeadHookCallback[] | undefined> } = {
     _hooks,
     hook(name, fn) {
       if (!name || typeof fn !== 'function')
         return () => {}
       const list = (_hooks[name] ||= [])
       list.push(fn)
-      let active: HookCallback | undefined = fn
+      let active: HeadHookCallback | undefined = fn
       return () => {
         if (active) {
           removeHook(name, active)

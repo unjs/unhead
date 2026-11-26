@@ -5,13 +5,13 @@ import type { HeadTag } from './tags'
 export type HookResult = Promise<void> | void
 export type SyncHookResult = void
 
-export type HookCallback = (...args: any) => Promise<void> | void
-export type HookKeys<T> = keyof T & string
-type InferHookCallback<HT, HN extends keyof HT> = HT[HN] extends HookCallback ? HT[HN] : never
+export type HeadHookCallback = (...args: any) => Promise<void> | void
+export type HeadHookKeys<T> = keyof T & string
+type InferHookCallback<HT, HN extends keyof HT> = HT[HN] extends HeadHookCallback ? HT[HN] : never
 
 export interface HeadHookable<
-  HooksT extends Record<string, any> = Record<string, HookCallback>,
-  HookNameT extends HookKeys<HooksT> = HookKeys<HooksT>,
+  HooksT extends Record<string, any> = Record<string, HeadHookCallback>,
+  HookNameT extends HeadHookKeys<HooksT> = HeadHookKeys<HooksT>,
 > {
   hook: <NameT extends HookNameT>(name: NameT, fn: InferHookCallback<HooksT, NameT>) => () => void
   removeHook: <NameT extends HookNameT>(name: NameT, fn: InferHookCallback<HooksT, NameT>) => void

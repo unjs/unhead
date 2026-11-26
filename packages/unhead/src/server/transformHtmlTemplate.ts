@@ -36,8 +36,10 @@ function freezeExtractedInput<T>(value: T): T {
 }
 
 function hasHooks(head: Unhead<any>): boolean {
-  const hooks = (head.hooks as any)?._hooks || {}
-  for (const key in hooks) {
+  const hooks = (head.hooks as any)?._hooks
+  if (head.hooks && !hooks)
+    return true
+  for (const key in hooks || {}) {
     if (hooks[key]?.length)
       return true
   }
