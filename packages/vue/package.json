@@ -169,13 +169,13 @@
   },
   "dependencies": {
     "@unhead/bundler": "workspace:*",
-    "hookable": "catalog:",
     "unhead": "workspace:*",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@vue/compiler-sfc-vapor": "catalog:",
     "@vue/server-renderer": "catalog:",
+    "hookable": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",

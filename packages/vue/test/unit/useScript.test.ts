@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
+import { createUnhead } from 'unhead'
+import { ValidatePlugin } from 'unhead/plugins'
+import { createServerRenderer } from 'unhead/server'
 
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { createApp, effectScope, h, ref, watch } from 'vue'
@@ -8,6 +11,40 @@ import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('dispatches plugin hooks registered on a bare createUnhead fallback registry', () => {
+    const head = createUnhead(createServerRenderer())
+    useScript('/fallback.js', { head, trigger: 'server' })
+    let resolved = false
+    head.use({
+      key: 'probe',
+      hooks: {
+        'tags:resolve': () => {
+          resolved = true
+        },
+      },
+    })
+    const { headTags } = head.render()
+    expect(resolved).toBe(true)
+    expect(headTags).toContain('/fallback.js')
+  })
+
+  it('supports ValidatePlugin and idempotent unsubscribe on a bare createUnhead fallback registry', () => {
+    const head = createUnhead(createServerRenderer())
+    useScript('/fallback.js', { head, trigger: 'server' })
+    expect(() => head.use(ValidatePlugin())).not.toThrow()
+
+    const fn = vi.fn()
+    const off1 = head.hooks!.hook('tags:resolve', fn)
+    const off2 = head.hooks!.hook('tags:resolve', fn)
+    const offBad = head.hooks!.hook('tags:resolve', undefined as any)
+    offBad()
+    off1()
+    off1()
+    head.render()
+    expect(fn).toHaveBeenCalledOnce()
+    off2()
+  })
+
   it.each(['promise', 'callback'] as const)('keeps another consumer\'s %s trigger when a manual consumer stops', async (kind) => {
     const head = createHead({ document })
     const owner = effectScope()
