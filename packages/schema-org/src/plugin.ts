@@ -55,20 +55,22 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
     function collectFlatMeta(props: Record<string, unknown>) {
       if (typeof props.description === 'string')
         resolvedMeta.description = props.description
-      for (const entry of [props.ogImage, props.ogImageUrl]) {
-        if (typeof entry === 'string') {
-          resolvedMeta.image = entry
+      // Match unpackMeta ordering: array/object ogImage entries resolve before primitive strings,
+      // and primitive ogImage/ogImageUrl strings resolve in property insertion order.
+      const ogImage = props.ogImage
+      if (Array.isArray(ogImage)) {
+        for (const item of ogImage) {
+          const url = typeof item === 'string' ? item : (item as Record<string, unknown> | null)?.url
+          if (typeof url === 'string')
+            resolvedMeta.image = url
         }
-        else if (Array.isArray(entry)) {
-          for (const item of entry) {
-            const url = typeof item === 'string' ? item : (item as Record<string, unknown> | null)?.url
-            if (typeof url === 'string')
-              resolvedMeta.image = url
-          }
-        }
-        else if (entry && typeof entry === 'object' && typeof (entry as Record<string, unknown>).url === 'string') {
-          resolvedMeta.image = (entry as Record<string, unknown>).url as string
-        }
+      }
+      else if (ogImage && typeof ogImage === 'object' && typeof (ogImage as Record<string, unknown>).url === 'string') {
+        resolvedMeta.image = (ogImage as Record<string, unknown>).url as string
+      }
+      for (const key in props) {
+        if ((key === 'ogImage' || key === 'ogImageUrl') && typeof props[key] === 'string')
+          resolvedMeta.image = props[key] as string
       }
     }
     function collectTag(tag: HeadTag) {

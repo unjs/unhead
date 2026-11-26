@@ -56,4 +56,18 @@ describe('schema.org meta from useSeoMeta', () => {
 
     expect(node(parseGraph(renderSSRHead(head).bodyTags), 'WebPage').description).toBe('Page description')
   })
+
+  it('preserves property order between ogImageUrl and ogImage aliases', () => {
+    const head = createHead()
+    useHead(head, { templateParams: { schemaOrg: { host: 'https://example.com', path: '/post' } } })
+    useSchemaOrg(head, [defineWebPage(), defineArticle({ headline: 'Post' })])
+    useSeoMeta(head, {
+      ogImageUrl: 'https://example.com/default.jpg',
+      ogImage: 'https://example.com/page.jpg',
+    })
+
+    const graph = parseGraph(renderSSRHead(head).bodyTags)
+    expect(node(graph, 'Article').thumbnailUrl).toBe('https://example.com/page.jpg')
+    expect(node(graph, 'ImageObject').url).toBe('https://example.com/page.jpg')
+  })
 })
