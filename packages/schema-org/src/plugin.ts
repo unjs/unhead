@@ -65,7 +65,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             resolvedMeta.image = url
         }
       }
-      else if (ogImage && typeof ogImage === 'object' && typeof (ogImage as Record<string, unknown>).url === 'string') {
+      else if (ogImage && typeof ogImage === 'object' && typeof (ogImage as Record<string, unknown>).url === 'string' && (ogImage as Record<string, unknown>).url !== '') {
         resolvedMeta.image = (ogImage as Record<string, unknown>).url as string
       }
       for (const key in props) {

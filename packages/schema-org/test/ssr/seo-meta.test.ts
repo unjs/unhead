@@ -70,4 +70,21 @@ describe('schema.org meta from useSeoMeta', () => {
     expect(node(graph, 'Article').thumbnailUrl).toBe('https://example.com/page.jpg')
     expect(node(graph, 'ImageObject').url).toBe('https://example.com/page.jpg')
   })
+
+  it('skips an empty ogImage.url object without overwriting an earlier default image', () => {
+    const head = createHead()
+    useHead(head, {
+      templateParams: {
+        schemaOrg: { host: 'https://example.com', path: '/post', image: 'https://example.com/default.jpg' },
+      },
+    })
+    useSchemaOrg(head, [defineWebPage(), defineArticle({ headline: 'Post' })])
+    useSeoMeta(head, {
+      ogImage: { url: '' },
+    })
+
+    const graph = parseGraph(renderSSRHead(head).bodyTags)
+    expect(node(graph, 'Article').thumbnailUrl).toBe('https://example.com/default.jpg')
+    expect(node(graph, 'ImageObject').url).toBe('https://example.com/default.jpg')
+  })
 })
