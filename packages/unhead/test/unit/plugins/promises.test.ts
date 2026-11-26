@@ -292,4 +292,38 @@ describe('promisesPlugin', () => {
 
     expect(dom.window.document.title).toBe('second')
   })
+
+  it('recovers its scan state when a synchronous getter throws', async () => {
+    const head = createServerHead({
+      disableDefaults: true,
+      plugins: [PromisesPlugin],
+    })
+    head.push({
+      get title() {
+        throw new Error('boom')
+      },
+    } as any)
+
+    await expect(head.hooks.callHook('entries:resolve', {
+      entries: [...head.entries.values()],
+      tags: [],
+    })).rejects.toThrow('boom')
+
+    const healthy = createServerHead({
+      disableDefaults: true,
+      plugins: [PromisesPlugin],
+    })
+    healthy.push({
+      title: 'ok',
+      meta: [
+        { name: 'description', content: Promise.resolve('after-error') },
+      ],
+    } as any)
+
+    expect(renderSSRHead(healthy).headTags).toBe('')
+    await flushPromises()
+    const rendered = renderSSRHead(healthy)
+    expect(rendered.headTags).toContain('<title>ok</title>')
+    expect(rendered.headTags).toContain('content="after-error"')
+  })
 })

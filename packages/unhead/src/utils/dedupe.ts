@@ -3,7 +3,6 @@ import { TagsWithInnerContent, UniqueTags } from './const'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_ARRAYABLE_RE = /^(?:(?:theme-color|google-site-verification|author|og:locale:alternate|(?:article|book):(?:author|tag))$|(?:og:(?:image|video|audio)|twitter:image)(?::|$))/
-const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
 export function isMetaArrayDupeKey(v: string) {
   const i = v.indexOf(':')
@@ -24,11 +23,9 @@ export function dedupeKey<T extends HeadTag>(tag: T, skipContent?: boolean): str
   if (props.charset)
     return 'charset'
   if (t === 'meta') {
-    for (const n of META_KEY_ATTRS) {
-      const v = props[n]
-      if (v !== undefined)
-        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
-    }
+    const v = props.name !== undefined ? props.name : props.property !== undefined ? props.property : props['http-equiv']
+    if (v !== undefined)
+      return key && (typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) ? `meta:${v}:key:${key}` : `meta:${v}`
   }
   if (key)
     return `${t}:key:${key}`
