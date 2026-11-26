@@ -1,6 +1,6 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { callHook } from './callHook'
-import { hasContent, isJsonScriptType, TagsWithInnerContent, UniqueTags, UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
 
@@ -75,27 +75,10 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
     tags.sort(sortTags)
 }
 
-export function dedupeTags(ctx: ResolveTagsContext): boolean {
+export function dedupeTags(ctx: ResolveTagsContext, contentKey?: (tag: HeadTag) => string | undefined): boolean {
   let hasFlatMeta = false
-  let contentIds: Record<string, Map<string, string>> | undefined
-  const tags = ctx.tags.sort(sortTags)
-  for (let i = 0; i < tags.length; i++) {
-    const next = tags[i]
-    let k = next._d
-    if (!k) {
-      // Unkeyed SSR inline content tags skip `${tag}:content:${content}` concat and dedupe by flat
-      // content string via a per-tag Map, using a short string slot key in `tagMap` to preserve order.
-      if (!next._h && !UniqueTags.has(next.tag) && TagsWithInnerContent.has(next.tag) && (next.textContent || next.innerHTML)) {
-        const c = String(next.textContent || next.innerHTML)
-        const m = (contentIds ||= Object.create(null))[next.tag] ||= new Map()
-        k = m.get(c)
-        if (k === undefined)
-          m.set(c, k = `\0${i}`)
-      }
-      else {
-        k = hashTag(next)
-      }
-    }
+  for (const next of ctx.tags.sort(sortTags)) {
+    const k = next._d || contentKey?.(next) || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -171,19 +154,14 @@ function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
         : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
-      const nextInner = innerHTML ? escape(innerHTML) as typeof innerHTML : innerHTML
-      const nextText = t.textContent ? escape(t.textContent) as typeof t.textContent : t.textContent
-      const needsDedupeKey = !ssr && !t._d
-      if (nextInner !== innerHTML || nextText !== t.textContent || needsDedupeKey) {
-        // copy-on-write: resolved tags may be shared with the entry cache
-        t = { ...t }
-        if (innerHTML)
-          t.innerHTML = nextInner
-        if (t.textContent)
-          t.textContent = nextText
-        if (t._d || needsDedupeKey)
-          t._d = dedupeKey(t)
-      }
+      // copy-on-write: resolved tags may be shared with the entry cache
+      t = { ...t }
+      if (innerHTML)
+        t.innerHTML = escape(innerHTML) as typeof innerHTML
+      if (t.textContent)
+        t.textContent = escape(t.textContent) as typeof t.textContent
+      if (t._d || !ssr)
+        t._d = dedupeKey(t)
     }
     tags[w++] = t
   }
@@ -241,12 +219,13 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           callHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
+        const ck = head.resolvedOptions._contentKey
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
           t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
-          t._d = dedupeKey(t, head.ssr)
-          if (!t._d && !(head.ssr && TagsWithInnerContent.has(t.tag) && (t.textContent || t.innerHTML)))
+          t._d = dedupeKey(t, !!ck)
+          if (!t._d && !(ck && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
         e._tags = tags
@@ -262,7 +241,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
       break
     }
   }
-  const hasFlatMeta = dedupeTags(ctx)
+  const hasFlatMeta = dedupeTags(ctx, head.resolvedOptions._contentKey?.())
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)

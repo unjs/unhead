@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
-import { TagsWithInnerContent } from '../utils/const'
+import { TagsWithInnerContent, UniqueTags } from '../utils/const'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
@@ -65,6 +65,24 @@ const precomputedTags: NonNullable<CreateServerHeadOptions['_precomputed']> = (e
   }
 }
 
+const createContentKey: NonNullable<CreateServerHeadOptions['_contentKey']> = () => {
+  const byTag: Record<string, Map<string, string>> = Object.create(null)
+  let id = 0
+  return (tag) => {
+    if (tag._h || UniqueTags.has(tag.tag) || !TagsWithInnerContent.has(tag.tag))
+      return
+    const content = tag.textContent || tag.innerHTML
+    if (!content)
+      return
+    const c = String(content)
+    const m = byTag[tag.tag] ||= new Map()
+    let k = m.get(c)
+    if (k === undefined)
+      m.set(c, k = `\0${id++}`)
+    return k
+  }
+}
+
 /**
  * Normalizes entry input into resolved tags for the entry at `entryIndex`,
  * weighted with `capoTagWeight`.
@@ -116,6 +134,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     _tagWeight: tagWeight,
     // precomputed tags carry capo weights, so another weight never uses them
     _precomputed: tagWeight === capoTagWeight ? precomputedTags : undefined,
+    _contentKey: createContentKey,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,

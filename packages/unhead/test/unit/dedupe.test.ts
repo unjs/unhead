@@ -1,5 +1,8 @@
+import { createHead as createClientHead, renderDOMHead } from '../../src/client'
+import { TemplateParamsPlugin } from '../../src/plugins'
 import { createHead, renderSSRHead } from '../../src/server'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { useDom } from '../util'
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {
@@ -172,5 +175,22 @@ describe('sSR unkeyed content deduplication', () => {
     })
     renderSSRHead(head)
     expect(keyTypes).toEqual(['string', 'string'])
+  })
+
+  it('recomputes client script dedupe keys after template param substitution so SSR scripts are reused', () => {
+    const dom = useDom({
+      headTags: '<script>window.__user = "Ada"</script>',
+    })
+    const head = createClientHead({
+      document: dom.window.document,
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      templateParams: { name: 'Ada' },
+      script: [{ innerHTML: 'window.__user = "%name"', processTemplateParams: true }],
+    })
+    renderDOMHead(head)
+    expect(dom.window.document.head.querySelectorAll('script')).toHaveLength(1)
+    expect(dom.window.document.head.querySelector('script')?.textContent).toBe('window.__user = "Ada"')
   })
 })
