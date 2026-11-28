@@ -89,6 +89,7 @@ catalog:
 
   oxc-parser: ^0.149.0
   oxc-walker: ^1.1.1
+  parse5: ^8.0.1
   pathe: ^2.0.3
   react: ^19.3.0
   react-dom: ^19.3.0

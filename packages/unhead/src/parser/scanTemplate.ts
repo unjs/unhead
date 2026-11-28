@@ -1,3 +1,6 @@
+import type { SerializableHead } from '../types'
+import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from './index'
+import type { HeadSlot, HeadSlots } from './streamingMetadata'
 import { hasOwn } from '../utils/hasOwn'
 import { decodeAttribute } from './decodeAttribute'
 
@@ -741,4 +744,101 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
   if (result.bodyClose === undefined)
     delete result.outlet
   return result
+}
+
+export interface StreamingHtmlTemplate extends PreparedHtmlTemplateWithIndexes {
+  readonly headSlots?: HeadSlots
+  readonly charset?: string
+}
+
+function readStreamingAttributes(raw: Record<string, string> | undefined, escapeAmpersands = true) {
+  const attrs: Record<string, string> = {}
+  for (const key in raw) {
+    const value = decodeAttribute(raw[key])
+    attrs[key] = escapeAmpersands ? value.replaceAll('&', '&amp;') : value
+  }
+  return attrs
+}
+
+/** Extract streaming metadata without moving static template markup. */
+/* @__PURE__ */
+export function parseHtmlForStreamingExtraction(template: string | PreparedTemplate): StreamingHtmlTemplate {
+  const html = typeof template === 'string' ? template : template.html
+  const prepared = typeof template !== 'string' ? template : undefined
+  const { root, body, headElements, headClose, bodyClose, outlet, canAppendAtEnd } = scanTemplate(html, !!prepared, true)
+  const indexes = prepared?.indexes ?? {
+    htmlTagStart: root?.start ?? -1,
+    htmlTagEnd: root?.end ?? -1,
+    headTagEnd: headClose ?? -1,
+    bodyTagStart: body?.start ?? -1,
+    bodyTagEnd: body?.end ?? -1,
+    bodyCloseTagStart: bodyClose ?? -1,
+  }
+  const input: SerializableHead = {}
+  if (root) {
+    const attrs = readStreamingAttributes(root.attributes, false)
+    if (Object.keys(attrs).length)
+      input.htmlAttrs = attrs
+  }
+  if (body) {
+    const attrs = readStreamingAttributes(body.attributes, false)
+    if (Object.keys(attrs).length)
+      input.bodyAttrs = attrs
+  }
+
+  let ranges: HeadSlot[] | undefined
+  let count = 0
+  let charset: string | undefined
+  if (indexes.headTagEnd >= 0) {
+    for (const { tag, close } of headElements) {
+      const attrs = readStreamingAttributes(tag.attributes)
+      const kind = tag.name === 'title' && close
+        ? 'title'
+        : tag.name !== 'meta' || hasOwn(attrs, 'http-equiv')
+          ? undefined
+          : attrs.charset ? 'charset' : attrs.name === 'description' ? 'description' : undefined
+      if (!kind)
+        continue
+      const slots = ranges ||= []
+      const firstSlot = !slots.some(slot => slot.kind === kind)
+      const offset = tag.start
+      const end = close?.end ?? tag.end
+      if (firstSlot)
+        count++
+      else
+        slots.push({ kind: undefined, offset, end })
+      if (kind === 'title') {
+        const title = decodeAttribute(html.slice(tag.end, close!.start).replace(/\r\n?/g, '\n').replaceAll('\0', '\uFFFD'), false)
+          .replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '')
+        if (title)
+          input.title ||= title
+        if (firstSlot) {
+          slots.push({
+            kind,
+            offset,
+            end,
+            openTag: Object.keys(attrs).length ? html.slice(offset, tag.end) : undefined,
+            emptyMarkup: title ? undefined : html.slice(offset, end),
+          })
+        }
+      }
+      else {
+        if (kind === 'charset' && !firstSlot)
+          continue
+        if (kind === 'charset')
+          charset = attrs.charset
+        ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
+        if (firstSlot)
+          slots.push({ kind, offset, end })
+      }
+    }
+  }
+  return {
+    html,
+    input,
+    indexes,
+    bodyOutlet: prepared ? prepared.bodyOutlet : outlet,
+    canAppendAtEnd: prepared ? prepared.canAppendAtEnd : canAppendAtEnd,
+    ...(ranges && { headSlots: { ranges, count }, charset }),
+  }
 }

@@ -37,7 +37,7 @@ const LEGACY_CODE_POINTS = /* @__PURE__ */ [
   0x178,
 ]
 
-export function decodeAttribute(value: string): string {
+export function decodeAttribute(value: string, inAttribute = true): string {
   if (!value.includes('&'))
     return value
   return value.replace(REFERENCE, (reference, offset: number) => {
@@ -52,6 +52,14 @@ export function decodeAttribute(value: string): string {
     }
 
     const name = reference.slice(1) as keyof typeof namedReferences
+    if (!inAttribute) {
+      for (let end = name.length; end > 0; end--) {
+        const prefix = name.slice(0, end) as keyof typeof namedReferences
+        if (Object.hasOwn(namedReferences, prefix))
+          return namedReferences[prefix] + name.slice(end)
+      }
+      return reference
+    }
     if (!Object.hasOwn(namedReferences, name)
       || (!reference.endsWith(';') && AMBIGUOUS_ATTRIBUTE_END.test(value[offset + reference.length] ?? ''))) {
       return reference

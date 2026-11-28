@@ -402,6 +402,8 @@ function readAttributes(raw: Record<string, string> | undefined, escapeAmpersand
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },
+  headContent?: string,
+  end?: number,
 ): string {
   const { html, indexes } = template
   const parts: string[] = []
@@ -416,8 +418,7 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
-    parts.push(html.substring(lastIndex, indexes.headTagEnd))
-    parts.push(headHtml.headTags)
+    parts.push(headContent ?? html.substring(lastIndex, indexes.headTagEnd), headHtml.headTags)
     lastIndex = indexes.headTagEnd
   }
 
@@ -442,7 +443,7 @@ export function applyHeadToHtml(
   }
   else {
     // No closing body tag found, just append the rest
-    parts.push(html.substring(lastIndex))
+    parts.push(html.substring(lastIndex, end))
   }
 
   return parts.join('')
