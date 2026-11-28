@@ -1,3 +1,4 @@
+import { setImmediate } from 'node:timers/promises'
 import { runInNewContext } from 'node:vm'
 import { JSDOM } from 'jsdom'
 import { createStreamableHead, wrapStream } from 'unhead/stream/server'
@@ -29,15 +30,19 @@ function render(chunks: (string | Uint8Array)[], title = TITLE, lateBody = false
 
 // Every live event handler in the parsed document.
 function handlers(html: string) {
-  const { document } = new JSDOM(html).window
-  return [...document.querySelectorAll('*')].flatMap(element => [...element.attributes]
+  const { window } = new JSDOM(html)
+  const result = [...window.document.querySelectorAll('*')].flatMap(element => [...element.attributes]
     .filter(attribute => attribute.name.startsWith('on'))
     .map(attribute => `${element.localName}.${attribute.name}=${attribute.value}`))
+  window.close()
+  return result
 }
 
 function delivered(html: string, title = TITLE) {
-  const { document } = new JSDOM(html).window
-  return [...document.querySelectorAll('script')].some(script => script.textContent!.includes(title))
+  const { window } = new JSDOM(html)
+  const result = [...window.document.querySelectorAll('script')].some(script => script.textContent!.includes(title))
+  window.close()
+  return result
 }
 
 const documents = {
@@ -83,6 +88,8 @@ describe('wrapStream patch boundaries', () => {
         const chunks = [bytes.subarray(0, split), bytes.subarray(split)]
         expect(handlers(await render(chunks, TITLE, false, nonce)), `split at byte ${split}, nonce ${nonce}`).toEqual(expected)
         expect(handlers(await render([chunks[0]!], TITLE, false, nonce)), `end at byte ${split}, nonce ${nonce}`).toEqual(handlers(markup.slice(0, split)))
+        // Let JSDOM finish queued document tasks before creating more windows.
+        await setImmediate()
       }
     }
   }, 30_000)

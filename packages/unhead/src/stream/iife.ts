@@ -5,14 +5,19 @@
  *
  * @module unhead/stream/iife
  */
+import type { HeadRenderer } from '../types'
 import type { StreamingGlobal } from './types'
-import { createDomRenderer } from '../client/renderDOMHead'
+import { createDomRenderer, renderStreamingDOMHead } from '../client/renderDOMHead'
 import { createUnhead } from '../unhead'
 import { attachStreamHead } from './queue'
 
 const DEFAULT_STREAM_KEY = '__unhead__'
 
-function init(options: { streamKey?: string } = {}) {
+interface StreamingOptions {
+  streamKey?: string
+}
+
+function initStreamingHead(render: HeadRenderer<boolean>, options: StreamingOptions = {}) {
   const { streamKey = DEFAULT_STREAM_KEY } = options
   const win = typeof window !== 'undefined' ? window as any : undefined
   if (!win)
@@ -23,11 +28,17 @@ function init(options: { streamKey?: string } = {}) {
     return queue._head
 
   const doc = typeof document !== 'undefined' ? document : undefined
-  const head = createUnhead(createDomRenderer(), { document: doc })
+  const head = createUnhead(render, { document: doc })
 
   const stream = win[streamKey] = queue || { _q: [] }
   attachStreamHead(stream, head)
   return head
 }
 
-export { init }
+export function init(options?: StreamingOptions) {
+  return initStreamingHead(createDomRenderer(), options)
+}
+
+export function initWithDeferredEvents(options?: StreamingOptions) {
+  return initStreamingHead(renderStreamingDOMHead, options)
+}
