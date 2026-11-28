@@ -49,16 +49,22 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           if (tag.processTemplateParams === false) {
             continue
           }
-          const tagParams = takesSafeTitle(tag) ? params : withoutSafeTitle
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.attrs[v] === 'string') {
-            tag.attrs[v] = processTemplateParams(tag.attrs[v], tagParams, sep)
+            if (tag.attrs[v].includes('%')) {
+              const tagParams = safeTitle && !takesSafeTitle(tag) ? withoutSafeTitle : params
+              tag.attrs[v] = processTemplateParams(tag.attrs[v], tagParams, sep)
+            }
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
+            let tagParams: TemplateParams | undefined
             for (const p of contentAttrs) {
-              if (typeof tag[p] === 'string')
-                tag[p] = processTemplateParams(tag[p], tagParams, sep, isJsonScript(tag))
+              const content = tag[p]
+              if (typeof content === 'string' && content.includes('%')) {
+                tagParams ??= safeTitle && !takesSafeTitle(tag) ? withoutSafeTitle : params
+                tag[p] = processTemplateParams(content, tagParams, sep, isJsonScript(tag))
+              }
             }
           }
         }
@@ -69,7 +75,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
       'tags:afterResolve': ({ tagMap }) => {
         // we need to re-process in case then user had a function as the titleTemplate
         const title: HeadTag | undefined = tagMap.get('title')
-        if (title?.textContent && title.processTemplateParams !== false) {
+        if (typeof title?.textContent === 'string' && title.processTemplateParams !== false && title.textContent.includes('%')) {
           title.textContent = processTemplateParams(title.textContent, head._templateParams!, head._separator!)
         }
       },

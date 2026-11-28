@@ -6,85 +6,68 @@ export type MetaKeyType = 'name' | 'property' | 'http-equiv'
 const META_NAMESPACES: readonly string[] = ['twitter', 'fediverse']
 const PROPERTY_NAMESPACES: readonly string[] = ['og', 'book', 'article', 'profile', 'fb', 'payment']
 const MEDIA_KEYS: readonly string[] = ['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']
-const HTTP_EQUIV_KEYS: readonly string[] = ['contentType', 'defaultStyle', 'xUaCompatible']
-
-const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
-  articleExpirationTime: 'article:expiration_time',
-  articleModifiedTime: 'article:modified_time',
-  articlePublishedTime: 'article:published_time',
-  bookReleaseDate: 'book:release_date',
-  fbAppId: 'fb:app_id',
-  ogAudioSecureUrl: 'og:audio:secure_url',
-  ogAudioUrl: 'og:audio',
-  ogImageSecureUrl: 'og:image:secure_url',
-  ogImageUrl: 'og:image',
-  ogSiteName: 'og:site_name',
-  ogVideoSecureUrl: 'og:video:secure_url',
-  ogVideoUrl: 'og:video',
-  paymentExpiresAt: 'payment:expires_at',
-  paymentSuccessUrl: 'payment:success_url',
-  profileFirstName: 'profile:first_name',
-  profileLastName: 'profile:last_name',
-  profileUsername: 'profile:username',
-  msapplicationConfig: 'msapplication-Config',
-  msapplicationTileColor: 'msapplication-TileColor',
-  msapplicationTileImage: 'msapplication-TileImage',
-}
+const HTTP_EQUIV_KEYS: readonly string[] = ['contentType', 'defaultStyle', 'xUaCompatible', 'refresh', 'contentSecurityPolicy']
 
 const CAPS_RE = /([A-Z])/g
 const HYPHEN_OR_CAP_RE = /[-A-Z]/
 const OG_TWITTER_RE = /^(?:og|twitter)/
+const MSAPP_ALIAS_RE = /^msapplication(?:Config|TileColor|TileImage)$/
+const OG_MEDIA_URL_RE = /^og(?:Audio|Image|Video)Url$/
+const UNDERSCORE_ALIAS_RE = /^(?:article(?:Expiration|Modified|Published)Time|bookReleaseDate|fbAppId|og(?:SiteName|(?:Audio|Image|Video)SecureUrl)|payment(?:ExpiresAt|SuccessUrl)|profile(?:First|Last)Name)$/
 
 interface UnpackOptions {
   entrySeparator?: string
   keyValueSeparator?: string
-  wrapValue?: string
   resolve?: (ctx: { key: string, value: any }) => string | void
 }
 
-interface MetaPackingEntry {
-  metaKey?: string
-  unpack?: UnpackOptions
-}
-
-const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
+const MetaPackingUnpack: Record<string, UnpackOptions> = /* @__PURE__ */ {
   appleItunesApp: {
-    unpack: {
-      entrySeparator: ', ',
-      resolve: ({ key, value }) => `${fixKeyCase(key)}=${value}`,
-    },
-  },
-  refresh: {
-    metaKey: 'http-equiv',
-    unpack: {
-      entrySeparator: ';',
-      resolve: ({ key, value }) => key === 'seconds' ? `${value}` : undefined,
-    },
+    entrySeparator: ', ',
+    resolve: ({ key, value }) => `${fixKeyCase(key)}=${value}`,
   },
   robots: {
-    unpack: {
-      entrySeparator: ', ',
-      resolve: ({ key, value }) =>
-        typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`,
-    },
+    entrySeparator: ', ',
+    resolve: ({ key, value }) =>
+      typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`,
   },
   contentSecurityPolicy: {
-    metaKey: 'http-equiv',
-    unpack: {
-      entrySeparator: '; ',
-      resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}`,
-    },
+    entrySeparator: '; ',
+    resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}`,
   },
-  charset: {},
 }
 
+const fixKeyCaseCache = /* @__PURE__ */ new Map<string, string>()
+
 function fixKeyCase(key: string): string {
+  const cached = fixKeyCaseCache.get(key)
+  if (cached !== undefined)
+    return cached
   const prefixIndex = key.search(HYPHEN_OR_CAP_RE)
-  if (prefixIndex === -1)
-    return key.toLowerCase()
-  const prefix = key.slice(0, prefixIndex).toLowerCase()
-  const replacement = META_NAMESPACES.includes(prefix) || PROPERTY_NAMESPACES.includes(prefix) ? ':$1' : '-$1'
-  return key.replace(CAPS_RE, replacement).toLowerCase()
+  let result: string
+  if (prefixIndex === -1) {
+    result = key.toLowerCase()
+  }
+  else {
+    const prefix = key.slice(0, prefixIndex).toLowerCase()
+    const replacement = META_NAMESPACES.includes(prefix) || PROPERTY_NAMESPACES.includes(prefix) ? ':$1' : '-$1'
+    result = key.replace(CAPS_RE, replacement).toLowerCase()
+  }
+  if (fixKeyCaseCache.size < 256)
+    fixKeyCaseCache.set(key, result)
+  return result
+}
+
+function resolveAlias(key: string, fixed: string): string {
+  if (MSAPP_ALIAS_RE.test(key))
+    return `msapplication-${key.slice(13)}`
+  if (OG_MEDIA_URL_RE.test(key))
+    return fixed.slice(0, -4)
+  if (UNDERSCORE_ALIAS_RE.test(key)) {
+    const lastColon = fixed.lastIndexOf(':')
+    return `${fixed.slice(0, lastColon)}_${fixed.slice(lastColon + 1)}`
+  }
+  return fixed
 }
 
 function sanitizeObject(input: Record<string, any>) {
@@ -122,7 +105,7 @@ function transformObject(obj: any): any {
 }
 
 function unpackToString(value: Record<string, any>, options: UnpackOptions = {}): string {
-  const { entrySeparator = '', keyValueSeparator = '', wrapValue, resolve } = options
+  const { entrySeparator = '', keyValueSeparator = '', resolve } = options
   return Object.entries(value).map(([key, val]) => {
     if (resolve) {
       const resolved = resolve({ key, value: val })
@@ -134,9 +117,7 @@ function unpackToString(value: Record<string, any>, options: UnpackOptions = {})
       ? unpackToString(val, options)
       : typeof val === 'number'
         ? val.toString()
-        : typeof val === 'string' && wrapValue
-          ? `${wrapValue}${val.replace(new RegExp(wrapValue, 'g'), `\\${wrapValue}`)}${wrapValue}`
-          : val
+        : val
 
     return `${key}${keyValueSeparator}${processedVal}`
   }).join(entrySeparator)
@@ -160,7 +141,7 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
 }
 
 function metaKeyType(key: string, fixed?: string): MetaKeyType {
-  if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || HTTP_EQUIV_KEYS.includes(key)) {
+  if (HTTP_EQUIV_KEYS.includes(key)) {
     return 'http-equiv'
   }
 
@@ -178,7 +159,7 @@ export function resolveMetaKeyType(key: string): MetaKeyType {
 }
 
 export function resolveMetaKeyValue(key: string): string {
-  return META_ALIASES[key] || fixKeyCase(key)
+  return resolveAlias(key, fixKeyCase(key))
 }
 
 export function resolvePackedMetaObjectValue(value: any, key: string): string {
@@ -189,7 +170,7 @@ export function resolvePackedMetaObjectValue(value: any, key: string): string {
     keyValueSeparator: '=',
     entrySeparator: ', ',
     resolve: ({ value, key }) => value === null ? '' : (typeof value === 'boolean' ? key : undefined),
-    ...MetaPackingSchema[key]?.unpack,
+    ...MetaPackingUnpack[key],
   })
 }
 
@@ -197,7 +178,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   const meta: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
-  for (const [key, value] of Object.entries(input)) {
+  for (const key in input) {
+    if (!Object.hasOwn(input, key))
+      continue
+    const value = (input as Record<string, any>)[key]
     if (Array.isArray(value)) {
       if (key === 'themeColor') {
         value.forEach((v) => {
@@ -213,10 +197,13 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
           const urlProps: UnheadMeta[] = []
           const otherProps: UnheadMeta[] = []
 
-          for (const [propKey, propValue] of Object.entries(v)) {
+          for (const propKey in v) {
+            if (!Object.hasOwn(v, propKey))
+              continue
+            const propValue = (v as Record<string, any>)[propKey]
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
-            const meta = unpackMeta({ [metaKey]: propValue })
-            ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
+            const items = unpackMeta({ [metaKey]: propValue })
+            ;(propKey === 'url' ? urlProps : otherProps).push(...items)
           }
           meta.push(...urlProps, ...otherProps)
         }
@@ -248,11 +235,11 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
           } as MetaGeneric as UnheadMeta)
         }
 
-        for (const [propKey, propValue] of Object.entries(value)) {
-          if (propKey !== 'url' && propKey !== 'secureUrl') {
+        for (const propKey in value) {
+          if (propKey !== 'url' && propKey !== 'secureUrl' && Object.hasOwn(value, propKey)) {
             meta.push({
               [metaKey]: `${prefix}:${type}:${propKey}`,
-              content: propValue,
+              content: value[propKey],
             } as MetaGeneric as UnheadMeta)
           }
         }
@@ -269,13 +256,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
     }
   }
 
-  for (let i = 0; i < meta.length; i++) {
-    const tag = meta[i]
-    if ('content' in tag && tag.content === '_null')
-      meta[i] = { ...tag, content: null }
-  }
-
-  for (const [key, value] of Object.entries(primitives)) {
+  for (const key in primitives) {
+    if (!Object.hasOwn(primitives, key))
+      continue
+    const value = primitives[key]
     if (key === 'charset') {
       meta.push({ charset: value === null ? '_null' : value })
       continue
@@ -283,16 +267,16 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
 
     const fixed = fixKeyCase(key)
     const attr = metaKeyType(key, fixed)
-    const keyValue = META_ALIASES[key] || fixed
+    const keyValue = resolveAlias(key, fixed)
     const processedValue = value === null
-      ? '_null'
+      ? null
       : typeof value === 'object'
         ? resolvePackedMetaObjectValue(value, key)
         : typeof value === 'number'
           ? value.toString()
           : value
 
-    meta.push({ [attr]: keyValue, content: processedValue === '_null' ? null : processedValue } as MetaGeneric as UnheadMeta)
+    meta.push({ [attr]: keyValue, content: processedValue } as MetaGeneric as UnheadMeta)
   }
   return meta
 }

@@ -2,7 +2,7 @@ import type { HeadEntry, ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from
 import { callHook } from './callHook'
 import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-import { normalizeEntryToTags } from './normalize'
+import { cloneTagProps, normalizeEntryToTags } from './normalize'
 import { bindTagAliases, callTagHook, resolveTagAttrs, syncTagAliases } from './tagHooks'
 
 declare const __UNHEAD_LAZY_RENDERER__: boolean
@@ -45,16 +45,20 @@ export interface ResolveTagsOptions {
   tagWeight?: (tag: HeadTag) => number
 }
 
-// clone each resolved tag so hooks can't mutate the entry cache; class/style
-// are containers and need their own copies
-function cloneTagsInPlace(tags: HeadTag[]) {
-  for (let i = 0; i < tags.length; i++) {
+function hasTagMutatingHooks(hooks: Record<string, any>): boolean {
+  for (const name in hooks) {
+    if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name))
+      return true
+  }
+  return false
+}
+
+// clone resolved tags from `start` so hooks can't mutate the entry cache;
+// class/style are containers and need their own copies
+function cloneTagsInPlace(tags: HeadTag[], start = 0) {
+  for (let i = start; i < tags.length; i++) {
     const t = tags[i]
-    const attrs: Record<string, any> = { ...t.attrs }
-    if (attrs.class instanceof Set)
-      attrs.class = new Set(attrs.class)
-    if (attrs.style instanceof Map)
-      attrs.style = new Map(attrs.style)
+    const attrs = cloneTagProps(t.attrs)
     tags[i] = { ...t, attrs, props: attrs }
   }
 }
@@ -76,10 +80,10 @@ function valuesToTags(ctx: ResolveTagsContext<HeadTag>, sortFlatMeta: boolean) {
     tags.sort(sortTags)
 }
 
-export function dedupeTags(ctx: ResolveTagsContext): boolean {
+export function dedupeTags(ctx: ResolveTagsContext, contentKey?: (tag: HeadTag) => string | undefined): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || hashTag(next)
+    const k = next._d || contentKey?.(next) || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -142,7 +146,7 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>,
 // compacts in place: `tags` must be owned by the caller (resolveTags owns its
 // freshly resolved array); deliberately not exported — the `unhead/utils`
 // subpath re-exports everything and this mutating variant is not public API
-function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
+function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, attrs } = t
@@ -163,7 +167,8 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
         t.innerHTML = escape(innerHTML) as typeof innerHTML
       if (t.textContent)
         t.textContent = escape(t.textContent) as typeof t.textContent
-      t._d = dedupeKey(t)
+      if (t._d || !ssr)
+        t._d = dedupeKey(t)
     }
     // Bind the public output after all sanitization copies. Copy cache tags,
     // while preserving the identity of tags already exposed to listeners.
@@ -209,8 +214,19 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
     syncTagAliases(ctx.tags)
   }
   syncEntryHookCache(head, hooks)
+  // On the first non-streaming SSR resolve with tag-mutating hooks already registered,
+  // freshly normalized tags are owned exclusively by this render: skipping `e._tags`
+  // avoids cloning every tag right after allocating it. If the same SSR head renders
+  // again (`head._r`), cache `e._tags` normally so repeated renders reuse normalized tags.
+  const skipSsrCache = head.ssr && !head._stream && !head._r && hasTagMutatingHooks(hooks)
+  if (skipSsrCache) {
+    head._r = true
+    if (ctx.tags.length)
+      cloneTagsInPlace(ctx.tags)
+  }
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
+    let fresh = false
     if (!tags) {
       // Only the server head sets `_precomputed`: it returns the entry's shared precomputed
       // tags while they are valid (see server/createHead.ts), so client bundles skip the check.
@@ -227,33 +243,36 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
           callTagHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
+        const ck = head.resolvedOptions._contentKey
         for (let i = 0; i < tags.length; i++) {
           const t = tags[i]
           t._w = weightFn(t)
           t._p = ((lazyRenderer ? (e._order ?? e._i) : e._i) << 10) + i
-          t._d = dedupeKey(t)
-          if (!t._d)
+          t._d = dedupeKey(t, !!ck)
+          if (!t._d && !(ck && (t.textContent || t.innerHTML)))
             t._h = hashTag(t)
         }
-        e._tags = tags
+        if (skipSsrCache)
+          fresh = true
+        else
+          e._tags = tags
       }
     }
+    const start = ctx.tags.length
     ctx.tags.push(...tags)
+    if (skipSsrCache && !fresh)
+      cloneTagsInPlace(ctx.tags, start)
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
-  for (const name in hooks) {
-    if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
-      cloneTagsInPlace(ctx.tags)
-      break
-    }
-  }
-  const hasFlatMeta = dedupeTags(ctx)
+  if (!skipSsrCache && hasTagMutatingHooks(hooks))
+    cloneTagsInPlace(ctx.tags)
+  const hasFlatMeta = dedupeTags(ctx, head.resolvedOptions._contentKey?.())
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
   callTagHook(head, 'tags:beforeResolve', ctx)
   callTagHook(head, 'tags:resolve', ctx)
   callTagHook(head, 'tags:afterResolve', ctx)
   syncTagAliases(ctx.tags)
-  return sanitizeTagsInPlace(ctx.tags)
+  return sanitizeTagsInPlace(ctx.tags, head.ssr)
 }

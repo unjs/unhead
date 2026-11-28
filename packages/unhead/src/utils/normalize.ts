@@ -47,7 +47,7 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
   if (!input)
     return tag
   if (tag.tag === 'templateParams') {
-    tag.attrs = tag.props = input
+    tag.attrs = tag.props = { ...input }
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
@@ -56,9 +56,9 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
     if (isUnsafeKey(prop))
       continue
     const isData = prop.startsWith('data-')
-    const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
+    const isConfig = TagConfigKeys.has(prop)
     let key = prop
-    if (isHtmlAttr && (!prop || NON_LOWERCASE_ATTR_RE.test(prop))) {
+    if (isHtmlTag && !isConfig && (!prop || NON_LOWERCASE_ATTR_RE.test(prop))) {
       if (!isData)
         key = prop.replace(ASCII_UPPER_RE, letter => letter.toLowerCase())
       if (!key || INVALID_ATTR_NAME_RE.test(key))
@@ -71,7 +71,7 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
     else if (prop === 'class' || prop === 'style') {
       tag.attrs[prop] = normalizeStyleClassProps(prop, value) as any
     }
-    else if (TagConfigKeys.has(prop)) {
+    else if (isConfig) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
         if (isJsonScriptType(type)) {
@@ -95,31 +95,45 @@ export function normalizeProps(inputTag: HeadTagInput, input: Record<string, any
 }
 
 export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any {
-  let resolve: PropResolver | undefined
-  if (propResolvers.length) {
-    resolve = (key, val) => {
-      for (let i = 0; i < propResolvers.length; i++)
-        val = propResolvers[i](key, val)
-      return val
-    }
-    // Resolve the root before walking so ref-wrapped functions are unwrapped.
-    input = resolve(undefined, input)
-  }
-  return walkResolver(input, resolve)
+  const len = propResolvers.length
+  if (!len)
+    return walkResolver(input)
+  const resolve: PropResolver = len === 1
+    ? propResolvers[0]
+    : (key, val) => {
+        for (let i = 0; i < len; i++)
+          val = propResolvers[i](key, val)
+        return val
+      }
+  // Resolve the root before walking so ref-wrapped functions are unwrapped.
+  return walkResolver(resolve(undefined, input), resolve, undefined, propResolvers.every(r => r._static))
+}
+
+// Internal copy helper shared with resolve.ts (not re-exported by utils/index.ts).
+export function cloneTagProps(source: Record<string, any>): Record<string, any> {
+  const props: Record<string, any> = { ...source }
+  if (props.class instanceof Set)
+    props.class = new Set(props.class)
+  if (props.style instanceof Map)
+    props.style = new Map(props.style)
+  return props
 }
 
 // pushes onto `tags`: an array `content` expands to one tag per value
 function normalizeTag(tags: HeadTag[], tagName: HeadTag['tag'], _input: HeadTag['attrs'] | string) {
-  const input = typeof _input === 'object'
-    ? _input
-    : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
+  if (typeof _input !== 'object' && tagName !== 'templateParams') {
+    const attrs = {}
+    tags.push({ tag: tagName, attrs, props: attrs, [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input } as HeadTag)
+    return
+  }
   // normalizeProps already stringifies an object `innerHTML` of a JSON script and drops any other
-  const tag = normalizeProps({ tag: tagName, attrs: {} }, input)
+  const tag = normalizeProps({ tag: tagName, attrs: {} }, typeof _input === 'object' ? _input : { textContent: _input })
   if (tag.key && DupeableTags.has(tag.tag))
     tag.attrs['data-hid'] = tag._h = tag.key
   if (Array.isArray(tag.attrs.content)) {
     for (const content of tag.attrs.content) {
-      const attrs = { ...tag.attrs, content }
+      const attrs = cloneTagProps(tag.attrs)
+      attrs.content = content
       tags.push({ ...tag, attrs, props: attrs })
     }
   }

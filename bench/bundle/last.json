@@ -1,53 +1,53 @@
 {
   "client": {
-    "size": 13529,
-    "gz": 5560,
-    "br": 5047
+    "size": 13961,
+    "gz": 5754,
+    "br": 5245
   },
   "clientFull": {
-    "size": 26688,
-    "gz": 10469,
-    "br": 9514
+    "size": 26875,
+    "gz": 10633,
+    "br": 9631
   },
   "server": {
-    "size": 12865,
-    "gz": 5222,
-    "br": 4731
+    "size": 13948,
+    "gz": 5604,
+    "br": 5104
   },
   "vueClient": {
-    "size": 14593,
-    "gz": 6049,
-    "br": 5498
+    "size": 15025,
+    "gz": 6245,
+    "br": 5687
   },
   "vueClientFull": {
-    "size": 29675,
-    "gz": 11585,
-    "br": 10468
+    "size": 30043,
+    "gz": 11826,
+    "br": 10754
   },
   "vueServer": {
-    "size": 13924,
-    "gz": 5686,
-    "br": 5159
+    "size": 15038,
+    "gz": 6082,
+    "br": 5543
   },
   "reactClient": {
-    "size": 14718,
-    "gz": 6056,
-    "br": 5490
+    "size": 15153,
+    "gz": 6239,
+    "br": 5675
   },
   "reactClientFull": {
-    "size": 29939,
-    "gz": 11576,
-    "br": 10538
+    "size": 30120,
+    "gz": 11739,
+    "br": 10630
   },
   "reactServer": {
-    "size": 13555,
-    "gz": 5493,
-    "br": 4987
+    "size": 14638,
+    "gz": 5879,
+    "br": 5340
   },
   "schemaOrg": {
-    "size": 42324,
-    "gz": 14539,
-    "br": 13034
+    "size": 39367,
+    "gz": 13563,
+    "br": 12259
   },
   "schemaOrgImports": {
     "size": 98,
@@ -60,24 +60,24 @@
     "br": 407
   },
   "clientSelfContained": {
-    "size": 14254,
-    "gz": 5903,
-    "br": 5325
+    "size": 14768,
+    "gz": 6094,
+    "br": 5570
   },
   "serverSelfContained": {
-    "size": 13592,
-    "gz": 5544,
-    "br": 5017
+    "size": 14719,
+    "gz": 5905,
+    "br": 5380
   },
   "vueStreamingClient": {
-    "size": 1365,
-    "gz": 730,
-    "br": 654
+    "size": 1396,
+    "gz": 746,
+    "br": 669
   },
   "streamingBootstrap": {
-    "size": 13071,
-    "gz": 5400,
-    "br": 4920
+    "size": 13503,
+    "gz": 5588,
+    "br": 5122
   },
   "vueClientLazy": {
     "size": 1914,
@@ -85,8 +85,8 @@
     "br": 882
   },
   "vueClientLazyRuntime": {
-    "size": 17448,
-    "gz": 7083,
-    "br": 6449
+    "size": 17877,
+    "gz": 7286,
+    "br": 6626
   }
 }

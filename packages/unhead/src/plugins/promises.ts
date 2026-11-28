@@ -2,64 +2,88 @@ import type { HeadEntry } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 function isThenable(v: any): v is PromiseLike<any> {
-  return typeof v?.then === 'function'
+  return typeof v === 'object' && v !== null && typeof v.then === 'function'
 }
 
-const maxSyncPrefix = 256
+// Reusable synchronous stack with an integer cursor so we never shrink
+// `scratch.length` (which causes V8 to reallocate its backing array) and
+// never allocate intermediate arrays on the common promise-free path.
+const scratch: any[] = []
+let sp = 0
+let maxSp = 0
 
-function walkPromiseValues(v: Record<string, any>, index: number, keys?: string[]): any[] | undefined {
-  const slots = keys ?? v
-  if (index === slots.length)
-    return
-
-  if (index === maxSyncPrefix) {
-    // eslint-disable-next-line unicorn/no-new-array -- Bound recursion for unusually large inputs.
-    const values = new Array(slots.length)
-    let hasThenable = false
-    for (; index < slots.length; index++) {
-      const value = walkPromises(v[keys ? keys[index] : index])
-      values[index] = value
-      hasThenable ||= isThenable(value)
-    }
-    return hasThenable ? values : undefined
+function runWithScratch<T>(fn: () => T): T {
+  const base = sp
+  const prevMax = maxSp
+  maxSp = base
+  try {
+    return fn()
   }
-
-  const value = walkPromises(v[keys ? keys[index] : index])
-  if (isThenable(value)) {
-    // eslint-disable-next-line unicorn/no-new-array -- Allocate only after the first thenable.
-    const values = new Array(slots.length)
-    values[index] = value
-    for (let rest = index + 1; rest < slots.length; rest++)
-      values[rest] = walkPromises(v[keys ? keys[rest] : rest])
-    return values
+  finally {
+    const end = sp > maxSp ? sp : maxSp
+    for (let i = base; i < end; i++)
+      scratch[i] = undefined
+    sp = base
+    maxSp = prevMax
   }
+}
 
-  const values = walkPromiseValues(v, index + 1, keys)
-  if (values)
-    values[index] = value
-  return values
+function walkPromisesRoot(v: any): any {
+  return runWithScratch(() => walkPromises(v))
 }
 
 function walkPromises(v: any): any {
-  if (typeof v === 'function')
+  if (typeof v !== 'object' || v === null)
     return v
 
-  if (isThenable(v))
-    return Promise.resolve(v).then(walkPromises)
+  if (typeof v.then === 'function')
+    return Promise.resolve(v).then(walkPromisesRoot)
 
   if (Array.isArray(v)) {
-    const values = walkPromiseValues(v, 0)
-    return values ? Promise.all(values) : v
+    const start = sp
+    let hasThenable = false
+    for (let i = 0; i < v.length; i++) {
+      const item = v[i]
+      const resolved = item && typeof item === 'object' ? walkPromises(item) : item
+      scratch[sp++] = resolved
+      if (!hasThenable && isThenable(resolved))
+        hasThenable = true
+    }
+    const end = sp
+    if (end > maxSp)
+      maxSp = end
+    sp = start
+    return hasThenable ? Promise.all(scratch.slice(start, end)) : v
   }
 
-  if (v?.constructor === Object) {
-    const keys = Object.keys(v)
-    const values = walkPromiseValues(v, 0, keys)
-    if (values) {
-      return Promise.all(values).then(resolved => Object.fromEntries(
-        keys.map((key, index) => [key, resolved[index]]),
-      ))
+  if (v.constructor === Object) {
+    const start = sp
+    let hasThenable = false
+    for (const key in v) {
+      if (!Object.hasOwn(v, key))
+        continue
+      const val = v[key]
+      const resolved = val && typeof val === 'object' ? walkPromises(val) : val
+      scratch[sp++] = key
+      scratch[sp++] = resolved
+      if (!hasThenable && isThenable(resolved))
+        hasThenable = true
     }
+    const end = sp
+    if (end > maxSp)
+      maxSp = end
+    sp = start
+    if (!hasThenable)
+      return v
+    const keys: string[] = []
+    const values: any[] = []
+    for (let i = start; i < end; i += 2) {
+      keys.push(scratch[i])
+      values.push(scratch[i + 1])
+    }
+    return Promise.all(values).then(resolved => Object.fromEntries(
+      keys.map((key, index) => [key, resolved[index]]),
+    ))
   }
 
   return v
@@ -76,37 +100,39 @@ export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
     key: 'promises',
     hooks: {
       'entries:resolve': (ctx) => {
-        for (let index = ctx.entries.length - 1; index >= 0; index--) {
-          const entry = ctx.entries[index]
-          const input = entry.input
-          if (pending.get(entry) === input) {
-            ctx.entries.splice(index, 1)
-            continue
-          }
+        runWithScratch(() => {
+          for (let index = ctx.entries.length - 1; index >= 0; index--) {
+            const entry = ctx.entries[index]
+            const input = entry.input
+            if (pending.get(entry) === input) {
+              ctx.entries.splice(index, 1)
+              continue
+            }
 
-          const result = walkPromises(input)
-          if (!isThenable(result)) {
-            pending.delete(entry)
-            continue
-          }
-
-          pending.set(entry, input)
-          ctx.entries.splice(index, 1)
-          void Promise.resolve(result).then(
-            (resolved) => {
-              if (pending.get(entry) !== input)
-                return
+            const result = walkPromises(input)
+            if (!isThenable(result)) {
               pending.delete(entry)
-              entry.input = resolved
-              delete entry._tags
-              head.invalidate?.()
-            },
-            () => {
-              if (pending.get(entry) === input)
+              continue
+            }
+
+            pending.set(entry, input)
+            ctx.entries.splice(index, 1)
+            void Promise.resolve(result).then(
+              (resolved) => {
+                if (pending.get(entry) !== input)
+                  return
                 pending.delete(entry)
-            },
-          )
-        }
+                entry.input = resolved
+                delete entry._tags
+                head.invalidate?.()
+              },
+              () => {
+                if (pending.get(entry) === input)
+                  pending.delete(entry)
+              },
+            )
+          }
+        })
       },
     },
   }
