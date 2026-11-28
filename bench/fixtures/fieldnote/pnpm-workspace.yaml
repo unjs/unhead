@@ -1,9 +1,9 @@
 nodeLinker: hoisted
 packageImportMethod: copy
 overrides:
-  '@unhead/bundler': 3.4.3
-  '@unhead/vue': 3.4.3
-  unhead: 3.4.3
+  '@unhead/bundler': 3.5.2
+  '@unhead/vue': 3.5.2
+  unhead: 3.5.2
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
