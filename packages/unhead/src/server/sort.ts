@@ -16,7 +16,9 @@ export function capoTagWeight(tag: HeadTag): number {
     weight = 10
   }
   else if (tag.tag === 'meta') {
-    weight = tag.props['http-equiv'] === 'content-security-policy' ? -30 : tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
+    const pragma = tag.props['http-equiv']
+    const isCsp = typeof pragma === 'string' && pragma.toLowerCase() === 'content-security-policy'
+    weight = isCsp ? -30 : tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
   }
   else if (tag.tag === 'link' && tag.props.rel) {
     const rel = tag.props.rel

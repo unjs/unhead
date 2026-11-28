@@ -1,6 +1,9 @@
 import type { SerializableHead } from '../types'
+import type { PolicySlot } from './policy'
 import { hasOwn } from '../utils/hasOwn'
+import { normalizeProps } from '../utils/normalize'
 import { decodeAttribute } from './decodeAttribute'
+import { CSP_DIRECTIVE, findRenderedPolicy, policyIdentity } from './policy'
 import { closeTextElement, scanTemplate } from './scanTemplate'
 
 const TAG_HTML = 0
@@ -50,6 +53,11 @@ export interface PreparedHtmlTemplateWithIndexes {
   bodyOutlet?: Readonly<{ start: number, end: number }>
   /** @internal */
   canAppendAtEnd?: true
+  /**
+   * Source position for a single policy that a managed head policy can replace.
+   * @internal
+   */
+  policySlot?: PolicySlot
 }
 
 declare const PreparedTemplateBrand: unique symbol
@@ -275,8 +283,18 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   const { root, headElements, body, indexes, partial } = readTemplate(html, deferBodyClose, true, prepared)
   const input: SerializableHead = {}
   const parts: string[] = []
+  let lastPolicyStart = -1
+  let policyCount = 0
+  let policySlot: PreparedHtmlTemplateWithIndexes['policySlot']
   let cursor = 0
   let removed = 0
+
+  for (const { tag } of headElements) {
+    if (isMetaPragma(tag, CSP_DIRECTIVE)) {
+      lastPolicyStart = tag.start
+      policyCount++
+    }
+  }
 
   function replace(start: number, end: number, replacement = '') {
     parts.push(html.slice(cursor, start), replacement)
@@ -296,6 +314,11 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   if (indexes.headTagEnd >= 0) {
     for (const { tag: startTag, close: endTag, start } of headElements) {
       const tagName = startTag.name
+      // Source URL resolution and policy enforcement depend on document order.
+      if (startTag.start < lastPolicyStart
+        && (tagName === 'base' || tagName === 'link' || tagName === 'script' || tagName === 'style')) {
+        continue
+      }
       switch (tagName) {
         case 'title':
         case 'script':
@@ -314,10 +337,25 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
           replace(start, endTag.end)
           break
         }
-        case 'meta':
-          (input.meta ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['meta']>[number])
+        case 'meta': {
+          // Source policies apply cumulatively and must survive generic metadata deduplication.
+          if (isMetaPragma(startTag, CSP_DIRECTIVE)) {
+            if (policyCount === 1) {
+              const identity = policyIdentity(normalizeProps({ tag: 'meta', props: {} }, readAttributes(startTag.attributes)))
+              if (identity)
+                policySlot = Object.freeze({ identity, start: startTag.start - removed, end: startTag.end - removed })
+            }
+            continue
+          }
+          // Encoding detection scans the original document prefix.
+          if (lastPolicyStart >= 0 && (startTag.attributes?.charset !== undefined || isMetaPragma(startTag, 'content-type'))) {
+            continue
+          }
+          const attrs = readAttributes(startTag.attributes)
+          ;(input.meta ||= []).push(attrs as unknown as NonNullable<SerializableHead['meta']>[number])
           replace(start, startTag.end)
           break
+        }
         case 'link':
           (input.link ||= []).push(readAttributes(startTag.attributes) as unknown as NonNullable<SerializableHead['link']>[number])
           replace(start, startTag.end)
@@ -348,6 +386,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
   return {
     html: parts.length ? parts.join('') + html.slice(cursor) : html,
     input,
+    policySlot,
     indexes: partial ? withDeferredBodyClose(html, indexes, removed, body!.end) : indexes,
   }
 }
@@ -394,6 +433,11 @@ function readAttributes(raw: Record<string, string> | undefined, escapeAmpersand
   return attrs
 }
 
+function isMetaPragma(tag: { name: string, attributes?: Record<string, string> }, value: string): boolean {
+  const pragma = tag.attributes?.['http-equiv']
+  return tag.name === 'meta' && typeof pragma === 'string' && decodeAttribute(pragma).toLowerCase() === value
+}
+
 /**
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
@@ -416,8 +460,31 @@ export function applyHeadToHtml(
 
   // 2. Content up to </head> tag and inject headTags
   if (indexes.headTagEnd >= 0) {
+    let headTags = headHtml.headTags
+    const slot = template.policySlot
+    const replacement = slot && findRenderedPolicy(headHtml, slot.identity)
+    if (slot && replacement) {
+      // Only move a matching serialized tag that the parser finds in the document head.
+      const headOpen = '<head>'
+      const headClose = '</head>'
+      const rendered = headOpen + headTags + headClose
+      const scan = scanTemplate(rendered, true, true)
+      if (scan.headClose === rendered.length - headClose.length) {
+        const start = replacement.start + headOpen.length
+        const end = replacement.end + headOpen.length
+        const policy = scan.headElements.find(({ tag }) => tag.start === start && tag.end === end && isMetaPragma(tag, CSP_DIRECTIVE))
+        if (policy && decodeAttribute(policy.tag.attributes?.content || '').trim()) {
+          parts.push(html.substring(lastIndex, slot.start), headTags.slice(replacement.start, replacement.end))
+          lastIndex = slot.end
+          const trailingLineBreak = headTags[replacement.end] === '\n'
+          const removeStart = !trailingLineBreak && headTags[replacement.start - 1] === '\n' ? replacement.start - 1 : replacement.start
+          const removeEnd = replacement.end + (trailingLineBreak ? 1 : 0)
+          headTags = headTags.slice(0, removeStart) + headTags.slice(removeEnd)
+        }
+      }
+    }
     parts.push(html.substring(lastIndex, indexes.headTagEnd))
-    parts.push(headHtml.headTags)
+    parts.push(headTags)
     lastIndex = indexes.headTagEnd
   }
 

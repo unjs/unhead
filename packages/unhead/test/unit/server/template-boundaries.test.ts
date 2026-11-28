@@ -308,6 +308,133 @@ it('leaves tags after the document head in their original position', () => {
   )
 })
 
+it.each(['content-security-policy', 'Content-Security-Policy', 'Content-Securit&#121;-Policy'])('keeps the source policy directive in its head position: %s', (pragma) => {
+  const head = createServerHeadWithContext()
+  head.push({ title: 'Page' })
+  const policy = `<meta http-equiv="${pragma}" content="default-src 'self'">`
+  const fallback = '<noscript>JavaScript is disabled.</noscript>'
+  const template = `<html><head>${policy}${fallback}</head><body></body></html>`
+
+  expect(transformHtmlTemplate(head, template)).toContain(`<head>${policy}${fallback}<title>Page</title></head>`)
+})
+
+it.each([false, true])('replaces a template policy at its source position, prepared: %s', (prepared) => {
+  const template = '<html><head><!--before--><meta http-equiv="Content-Security-Policy" content="default-src \'none\'"><!--after--></head><body></body></html>'
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'script-src https://scripts.example' }] })
+
+  const html = transformHtmlTemplate(head, prepared ? prepareTemplate(template) : template)
+  const policies = new JSDOM(html).window.document.querySelectorAll('meta[http-equiv="content-security-policy"]')
+
+  expect(Array.from(policies, policy => policy.getAttribute('content'))).toEqual(['script-src https://scripts.example'])
+  expect(html).toContain('<!--before--><meta http-equiv="content-security-policy" content="script-src https://scripts.example"><!--after-->')
+})
+
+it.each([false, true])('keeps an independently keyed policy additive, default override: %s', (override) => {
+  const source = '<meta http-equiv="content-security-policy" content="default-src \'self\'">'
+  const replacement = '<meta http-equiv="content-security-policy" content="default-src \'none\'">'
+  const template = prepareTemplate(`<html><head><!--before-->${source}<!--after--></head><body></body></html>`)
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'key': 'images', 'http-equiv': 'content-security-policy', 'content': 'img-src https://assets.example' }] })
+  if (override)
+    head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'default-src \'none\'' }] })
+
+  const html = transformHtmlTemplate(head, template)
+  const policies = new JSDOM(html).window.document.querySelectorAll('meta[http-equiv="content-security-policy"]')
+
+  expect(html).toContain(`<!--before-->${override ? replacement : source}<!--after-->`)
+  expect(Array.from(policies, policy => policy.getAttribute('content'))).toEqual([
+    override ? 'default-src \'none\'' : 'default-src \'self\'',
+    'img-src https://assets.example',
+  ])
+})
+
+it('keeps the source policy when a render hook rewrites the managed policy', () => {
+  const source = '<meta http-equiv="content-security-policy" content="default-src \'self\'">'
+  const extra = '<meta http-equiv="content-security-policy" content="img-src https://assets.example">'
+  const template = `<html><head>${source}<!--source policy--></head><body></body></html>`
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'http-equiv': 'content-security-policy', 'content': 'default-src \'none\'' }] })
+  head.hooks.hook('ssr:rendered', ({ html }) => {
+    html.headTags = extra
+  })
+
+  expect(transformHtmlTemplate(head, template)).toContain(`${source}<!--source policy-->${extra}</head>`)
+})
+
+it.each([false, true])('keeps distinct source policies at their own positions, prepared: %s', (prepared) => {
+  const first = '<meta http-equiv="content-security-policy" content="script-src \'self\'">'
+  const second = '<meta http-equiv="content-security-policy" content="img-src \'self\'">'
+  const template = `<html><head>${first}<!--between-->${second}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+
+  const html = transformHtmlTemplate(head, prepared ? prepareTemplate(template) : template)
+
+  expect(html).toContain(`<head>${first}<!--between-->${second}</head>`)
+})
+
+it.each([
+  { content: 'img-src https://assets.example', tagPosition: 'bodyClose' as const },
+  { content: '' },
+])('keeps the source policy without an applicable managed head replacement: %j', (managed) => {
+  const policy = '<meta http-equiv="content-security-policy" content="default-src \'self\'">'
+  const template = `<html><head>${policy}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ 'http-equiv': 'content-security-policy', ...managed }] })
+
+  const html = transformHtmlTemplate(head, template)
+
+  expect(html).toContain(`<head>${policy}`)
+})
+
+it('keeps source bootstrap scripts before the policies that followed them', () => {
+  const bootstrap = '<script src="/bootstrap.js"></script>'
+  const policy = '<meta http-equiv="content-security-policy" content="script-src \'self\'">'
+  const template = `<html><head>${bootstrap}${policy}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+
+  const html = transformHtmlTemplate(head, template)
+
+  expect(html).toContain(`<head>${bootstrap}${policy}</head>`)
+})
+
+it.each([
+  { encoding: '<meta charset="utf-8">', prepared: false },
+  { encoding: '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">', prepared: true },
+])('keeps the encoding and resource order before a source policy, prepared: $prepared', ({ encoding, prepared }) => {
+  const prefix = `${encoding}<base href="/assets/"><script src="bootstrap.js"></script><link rel="stylesheet" href="page.css"><style>main { color: black }</style>`
+  const policy = '<meta http-equiv="content-security-policy" content="default-src \'self\'">'
+  const template = `<html><head><meta name="description" content="Source">${prefix}${policy}</head><body></body></html>`
+  const head = createServerHeadWithContext()
+  head.push({ meta: [{ name: 'description', content: 'Managed' }] })
+
+  const html = transformHtmlTemplate(head, prepared ? prepareTemplate(template) : template)
+
+  expect(html).toContain(`<head>${prefix}${policy}<meta name="description" content="Managed"></head>`)
+})
+
+it('places a managed policy directive before stylesheets regardless of case', () => {
+  const head = createServerHeadWithContext()
+  head.push({
+    link: [{ rel: 'stylesheet', href: '/page.css' }],
+    meta: [{ 'http-equiv': 'Content-Security-Policy', 'content': 'default-src \'self\'' }],
+  })
+
+  const html = transformHtmlTemplateRaw(head, '<html><head></head><body></body></html>')
+
+  expect(Array.from(new JSDOM(html).window.document.head.children, element => element.localName))
+    .toEqual(['meta', 'link'])
+})
+
+it.each([false, true])('uses the outlet outside a select, prepared: %s', (prepared) => {
+  const select = '<select><option>Example<!--app-html--></option></select>'
+  const template = `<html><head></head><body>${select}<main><!--app-html--></main></body></html>`
+  const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), prepared ? prepareTemplate(template) : template)
+
+  expect(shell).toContain(`<body>${select}<main>`)
+  expect(end).toBe('</main></body></html>')
+})
+
 it('keeps the parsed attributes of an extracted data script', () => {
   const head = createServerHeadWithContext()
   const html = '<html><head><script data-label="A &amp;amp; B" type=application/json/>{"label":"example"}</script></head><body></body></html>'
