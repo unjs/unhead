@@ -24,6 +24,10 @@ export interface WebSiteSimple extends Thing {
    */
   name: string
   /**
+   * Other names for the website, such as an acronym, in order of preference. Google uses them for site names.
+   */
+  alternateName?: Arrayable<string>
+  /**
    * A description of the website (e.g., the site's tagline).
    */
   description?: string

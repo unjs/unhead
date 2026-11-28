@@ -16,6 +16,9 @@
   UnheadProvider: function
 ./helmet:
   Helmet: function
+./lazy:
+  createHead: function
+  UnheadProvider: function
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function

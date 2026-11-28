@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "3.4.3",
+  "version": "3.5.4",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -80,6 +80,10 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -128,6 +132,9 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "lazy": [
+        "dist/lazy"
       ]
     }
   },
@@ -162,15 +169,16 @@
   },
   "dependencies": {
     "@unhead/bundler": "workspace:*",
-    "hookable": "catalog:",
     "unhead": "workspace:*",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@vue/compiler-sfc-vapor": "catalog:",
     "@vue/server-renderer": "catalog:",
+    "hookable": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:",
+    "vue-router": "catalog:",
     "vue-vapor": "catalog:"
   }
 }

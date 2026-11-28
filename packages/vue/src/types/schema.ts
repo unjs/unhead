@@ -143,7 +143,7 @@ export interface ReactiveHead {
   bodyAttrs?: ResolvableBodyAttributes
 }
 
-export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
+export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: Pick<VueHeadClient<any>, 'push' | 'ssr' | 'use'> }
 
 export type UseHeadInput<_Deprecated = never> = HeadInput<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }

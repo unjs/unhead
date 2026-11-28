@@ -2,11 +2,13 @@ import type { UnpluginOptions } from 'unplugin'
 import type { ConfigEnv, RenderBuiltAssetUrl, ResolvedConfig, UserConfig } from 'vite'
 import { createHash } from 'node:crypto'
 import { posix } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createUnplugin } from 'unplugin'
 import { parseStreamKey } from './key'
 
 export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
 export const VIRTUAL_IIFE_ID = 'virtual:@unhead/streaming-iife.js'
+const VIRTUAL_QUEUE_ID = 'virtual:@unhead/streaming-queue'
 const RESOLVED_ID = `\0${VIRTUAL_CLIENT_ID}`
 const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
 const VIRTUAL_RE = /virtual:@unhead\/streaming/
@@ -37,11 +39,12 @@ export interface StreamingPluginOptions {
    *   module; in production emitted as a real asset chunk via `emitFile`.
    * - 'inline': Inline the IIFE directly in HTML. Largest HTML, smallest TTFB,
    *   always safe in production. Recommended for streaming SSR.
-   * - 'module': ES module dynamic import of the client bootstrap. Vite rewrites the
+   * - 'module': ES module import of the client bootstrap. Vite rewrites the
    *   import path through its module graph so it survives production builds.
+   * - 'manual': Keep the boundary transforms. The app supplies the client head.
    * @default 'async'
    */
-  mode?: 'async' | 'inline' | 'module'
+  mode?: 'async' | 'inline' | 'module' | 'manual'
   /**
    * CSP nonce forwarded on every injected `<script>` tag. Pass a string or a
    * function returning a string (useful when the nonce rotates per request).
@@ -72,7 +75,7 @@ export interface StreamingPluginOptions {
 }
 
 interface InternalState {
-  mode: 'async' | 'inline' | 'module'
+  mode: NonNullable<StreamingPluginOptions['mode']>
   /** True once Vite-specific hooks have identified this as a Vite run. */
   isVite: boolean
   /** Production build detected via vite configResolved. */
@@ -129,24 +132,13 @@ function configureIifeCode(code: string, streamKey: string): string {
 }
 
 function buildClientStub(framework: string, streamKey: string, warnOnMissing: boolean): string {
-  // Minified client bootstrap. Reads from `window[streamKey]`, swaps `_head`
-  // for a real Unhead instance, replays queued entries, rebinds `.push`.
-  // Uses the `StreamingGlobal` shape declared in `./types.ts`; keep in sync.
   const key = JSON.stringify(streamKey)
   const warnBranch = warnOnMissing
     ? `else{console.warn('[unhead] streaming client loaded but window['+${key}+'] is undefined; did the server call wrapStream()/renderSSRHeadShell()?')}`
     : ''
-  // `_q` items and the server's live `push` argument are BATCHES of entries,
-  // so each batch is spread into individual `h.push` calls. Pushing the batch
-  // array itself normalizes its indexes into tags named `0`, `1`, ... and
-  // every streamed tag is lost.
-  // Entries are marked `_streamed` to match the iife, so devtools can tell
-  // them apart from client pushes.
-  // `_wrapped` is set because `createHead` here is already the adapter-wrapped
-  // client head; without it `createStreamableHead` wraps it a second time and
-  // every client push renders twice.
   return `import{createHead}from${JSON.stringify(`${framework}/client`)}
-const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});h._wrapped=!0;const p=b=>{for(const e of b){const a=h.push(e,{_streamed:!0}),t=h.entries.get(a._i);if(t)t._streamed=!0}};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
+import{attachStreamHead}from'${VIRTUAL_QUEUE_ID}'
+const s=window[${key}];if(s){if(!s._head){const h=createHead({document});h._wrapped=!0;attachStreamHead(s,h)}}${warnBranch}`
 }
 
 /**
@@ -296,10 +288,10 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     enforce: 'pre',
 
     async buildStart() {
-      if (!state.isVite)
+      if (!state.isVite || mode === 'manual')
         return
       // In dev, `module` mode never needs the iife asset: its descriptor is
-      // a dynamic import resolved through the virtual client module, and a
+      // resolved through the virtual client module, and a
       // manifest pass (`transformIndexHtml(undefined, ctx)`) only happens
       // at build time.
       if (mode === 'module' && !state.isBuild)
@@ -309,7 +301,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
       // `async` mode always ships the iife as a real asset chunk in
       // production so `<script async src="...">` points at a file that
       // ships with the build. `module` mode emits it too, purely as a
-      // fallback for the manifest pass, where its usual dynamic-import
+      // fallback for the manifest pass, where its usual module
       // descriptor can't work (see the `module`-mode branch below). In dev
       // / other bundlers the virtual module path is resolved on-the-fly.
       if ((mode === 'async' || mode === 'module') && state.isBuild && typeof (this as any).emitFile === 'function') {
@@ -330,6 +322,8 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
     resolveId: {
       filter: { id: VIRTUAL_RE },
       handler(id) {
+        if (id === VIRTUAL_QUEUE_ID)
+          return fileURLToPath(import.meta.resolve('unhead/stream/client'))
         if (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`)
           return RESOLVED_ID
         if (state.isVite && (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`))
@@ -415,6 +409,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
         // rewritten by downstream HTML transforms.
         order: 'pre',
         handler(this: any, html?: string, ctx?: { path?: string, bundle?: Record<string, any> }) {
+          if (mode === 'manual')
+            return
+
           // Vite's manifest pass (vitejs/ecosystem#15) calls this hook with
           // no HTML, ahead of any per-request render, to collect the
           // returned tags into a build manifest for frameworks (e.g. Nuxt)
@@ -457,10 +454,11 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
             }]
           }
 
+          // Vite adds the configured base when it resolves this static import.
           return [{
             tag: 'script',
-            attrs: nonceAttr,
-            children: `import("${state.isBuild ? `/${VIRTUAL_CLIENT_ID}` : joinBase(VIRTUAL_CLIENT_ID)}")`,
+            attrs: { ...nonceAttr, type: 'module' },
+            children: `import ${JSON.stringify(`/${VIRTUAL_CLIENT_ID}`)}`,
             injectTo: 'head-prepend',
           }]
         },

@@ -32,8 +32,7 @@ Unhead renders this JSON-LD for a product with an offer and a rating. It resolve
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
         "price": 50,
-        "priceCurrency": "AUD",
-        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+        "priceCurrency": "AUD"
       }
     },
     {
@@ -83,7 +82,7 @@ The `Product` TypeScript interface requires `name` and `image` when you pass an 
 
 - **offers** `NodeRelations<Offer | number>`
 
-  Add [Offer](https://schema.org/Offer) properties.
+  Add [Offer](https://schema.org/Offer) properties. Unhead has no default `availability` or `priceValidUntil`. Google recommends both, so pass them when you know them.
 
 Google's merchant and product variant documentation also uses `audience`, `category`, `color`, GTIN variants, `hasAdultConsideration`, `hasCertification`, `inProductGroupWithID`, `isVariantOf`, `material`, `pattern`, `size`, and `subjectOf`. Unhead types their nested CategoryCode, Certification, PeopleAudience, ProductGroup, SizeSpecification, and 3DModel values.
 
@@ -126,7 +125,7 @@ defineProduct({
   name: 'Ergonomic Desk Chair',
   image: '/product.png',
   offers: [
-    { price: 50 },
+    { price: 50, availability: 'InStock' },
   ],
   aggregateRating: {
     ratingValue: 88,

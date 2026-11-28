@@ -1,7 +1,7 @@
 {
   "name": "@unhead/react",
   "type": "module",
-  "version": "3.4.3",
+  "version": "3.5.4",
   "description": "Full-stack <head> manager built for React.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -60,6 +60,10 @@
     "./helmet": {
       "types": "./dist/helmet.d.ts",
       "default": "./dist/helmet.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -96,6 +100,9 @@
       ],
       "helmet": [
         "dist/helmet"
+      ],
+      "lazy": [
+        "dist/lazy"
       ]
     }
   },

@@ -1,28 +1,3 @@
-/*!
- * @license MIT named character reference data from html5lib
- * https://github.com/html5lib/html5lib-python/blob/01b7dea9a378d69ae66767183a42e602d7a468cd/html5lib/constants.py
- *
- * Copyright (c) 2006-2013 James Graham and other contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
 import namedReferences from './namedReferences.json'
 
 const REFERENCE = /&(?:#(?:x[a-f\d]+|\d+);?|[a-z\d]+;?)/gi
@@ -63,6 +38,8 @@ const LEGACY_CODE_POINTS = /* @__PURE__ */ [
 ]
 
 export function decodeAttribute(value: string): string {
+  if (!value.includes('&'))
+    return value
   return value.replace(REFERENCE, (reference, offset: number) => {
     if (reference[1] === '#') {
       const hex = reference[2].toLowerCase() === 'x'

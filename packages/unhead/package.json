@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "3.4.3",
+  "version": "3.5.4",
   "description": "Full-stack <head> manager built for any framework.",
   "author": {
     "name": "Harlan Wilton",
@@ -94,6 +94,10 @@
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
     },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
+    },
     "./vite": {
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
@@ -152,6 +156,9 @@
       "stream/iife": [
         "dist/stream/iife.d.ts"
       ],
+      "lazy": [
+        "dist/lazy.d.ts"
+      ],
       "vite": [
         "dist/vite.d.ts"
       ]
@@ -159,6 +166,7 @@
   },
   "files": [
     "*.d.ts",
+    "THIRD-PARTY-NOTICES",
     "dist"
   ],
   "scripts": {

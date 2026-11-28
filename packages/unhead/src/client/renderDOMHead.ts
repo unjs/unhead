@@ -1,15 +1,18 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
+import { callHook } from '../utils/callHook'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
-import { callHook } from '../utils/hooks'
 import { CLASS_SEPARATOR_RE, normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
+// Source-based tests and the lazy build use the full renderer.
+declare const __UNHEAD_LAZY_RENDERER__: boolean
+
 type DomEventHandler = (this: Element, e: Event) => any
 
-// [target, source, boundHandler, cleanup]: a tuple over an object keeps the renderer small.
+// [target, source, cleanup]: a tuple over an object keeps the renderer small.
 // The event type needs no slot: the key holds the prop name it comes from.
-type DomEventSideEffect = [EventTarget, DomEventHandler, EventListener, () => void]
+type DomEventSideEffect = [EventTarget, DomEventHandler, () => void]
 
 type DomStateInternal = DomState & {
   _d: Document
@@ -34,6 +37,13 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
   return false
 }
 
+function clearEffects(effects: DomState['_s']) {
+  for (const key in effects) {
+    effects[key]()
+    delete effects[key]
+  }
+}
+
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
   // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
@@ -54,44 +64,40 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}, adopt?: boolean): boolean {
+  const adoption = (typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__) && adopt
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
     return false
   const defaultView = dom.defaultView
   head._du = true
-  let didRender = false
   try {
     const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return false
     let state = activeState
-    if (state?._d !== dom) {
-      if (state) {
-        for (const k in state._s) state._s[k]()
-        for (const k in state._p) state._p[k]()
-        state._s = state._p = {}
-        state._e.clear()
-        state._l.clear()
-      }
+    if (state && state._d !== dom) {
+      clearEffects(state._s)
+      clearEffects(state._p)
+      state._e.clear()
+      state._l.clear()
       state = undefined
     }
-    if (!state) {
-      state = createDomState(head, dom)
+    if (state) {
+      // Adoption adds SSR cleanups to the active effects. A live render retires unused ones.
+      state._p = adoption ? {} : state._s
+      if (!adoption)
+        state._s = {}
     }
-    else {
-      // hand the previous render's side effects to _p (cleanup pool) by reference; track()
-      // reclaims the ones that are still live and the rest are disposed after this pass
-      state._p = state._s
-    }
-    state._s = {}
-    const renderState = state
+    const renderState = state || createDomState(head, dom)
     const previous = renderState._p
 
-    function track(key: string, fn: () => void) {
-      renderState._s[key] = fn
+    function track(key: string, fn: () => void, reuse?: boolean) {
+      if (adoption && state && renderState._s[key])
+        return
+      renderState._s[key] = (reuse && previous[key]) || fn
       delete previous[key]
     }
 
@@ -100,23 +106,34 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const prev = renderState._l.get(key)
       // same target/source: keep the existing listener, just re-track its cleanup
       if (prev && prev[0] === target && prev[1] === source) {
-        track(key, previous[key] || prev[3])
+        track(key, prev[2], true)
         return
       }
-      prev?.[3]()
+      prev?.[2]()
       const dk = `data-${k}`
       const handler = ((e: Event) => source.call($el, e)) as EventListener
       const cleanup = () => {
         target.removeEventListener(ev, handler)
         if ($el.getAttribute(dk) === '')
           $el.removeAttribute(dk)
-        if (renderState._l.get(key)?.[2] === handler)
+        if (renderState._l.get(key)?.[2] === cleanup)
           renderState._l.delete(key)
       }
       target.addEventListener(ev, handler)
-      renderState._l.set(key, [target, source, handler, cleanup])
+      renderState._l.set(key, [target, source, cleanup])
       $el.setAttribute(dk, '')
       track(key, cleanup)
+    }
+
+    function trackContent(id: string, $el: Element, prop: 'textContent' | 'innerHTML', suffix: string, value: unknown) {
+      if (value != null && value !== '') {
+        if (!adoption && value !== $el[prop])
+          $el[prop] = value as string
+        track(`${id}:${suffix}`, () => {
+          if ($el[prop] === value)
+            $el[prop] = ''
+        })
+      }
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
@@ -125,35 +142,20 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
         // clear what we set, never SSR-adopted or externally mutated content.
-        const text = tag.textContent
-        if (text != null && text !== '') {
-          if (text !== $el.textContent)
-            $el.textContent = text as string
-          track(`${id}:text`, () => {
-            if ($el.textContent === text)
-              $el.textContent = ''
-          })
-        }
-        const html = tag.innerHTML
-        if (html != null && html !== '') {
-          if (html !== $el.innerHTML)
-            $el.innerHTML = html as string
-          track(`${id}:html`, () => {
-            if ($el.innerHTML === html)
-              $el.innerHTML = ''
-          })
-        }
-        const elKey = `${id}:el`
-        track(elKey, previous[elKey] || (() => {
-          $el?.remove()
+        trackContent(id, $el, 'textContent', 'text', tag.textContent)
+        trackContent(id, $el, 'innerHTML', 'html', tag.innerHTML)
+        track(`${id}:el`, () => {
+          $el.remove()
           renderState._e.delete(id)
-        }))
+        }, true)
       }
       for (const k in tag.props) {
         const v = tag.props[k]
-        if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
+        if (k.startsWith('on') && typeof v === 'function') {
+          if (adoption)
+            continue
           const ev = k.slice(2)
-          if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
+          if (($el as HTMLScriptElement).dataset?.[`${k}fired`])
             (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
           trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
           continue
@@ -161,24 +163,25 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
-            const key = `${ck}:${c}`
-            track(key, previous[key] || (() => $el.classList.remove(c)))
-            if (!$el.classList.contains(c))
+            track(`${ck}:${c}`, () => $el.classList.remove(c), true)
+            if (!adoption && !$el.classList.contains(c))
               $el.classList.add(c)
           }
         }
         else if (k === 'style' && v) {
           for (const [sk, sv] of v as Iterable<[string, string]>) {
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+            track(`${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk), true)
+            if (!adoption)
+              ($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         else if (v !== false as any && v !== null) {
-          const value = v === true as any ? '' : String(v)
-          if ($el.getAttribute(k) !== value)
-            $el.setAttribute(k, value)
-          track(ck, previous[ck] || (() => $el.removeAttribute(k)))
+          if (!adoption) {
+            const value = v === true as any ? '' : String(v)
+            if ($el.getAttribute(k) !== value)
+              $el.setAttribute(k, value)
+          }
+          track(ck, () => $el.removeAttribute(k), true)
         }
       }
     }
@@ -186,7 +189,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const pending: DomRenderTagContext[] = []
     const frag: Partial<Record<string, DocumentFragment>> = {}
     head.dirty = false
-    const rawTags = resolveTags(head, options)
+    const rawTags = resolveTags(head, options, adoption)
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
@@ -198,8 +201,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         dupeKeyCounter[tag._d] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {
-        dom.title = tag.textContent as string
-        track('title:', previous['title:'] || (() => dom.title = renderState._t))
+        if (!adoption)
+          dom.title = tag.textContent as string
+        track('title:', () => dom.title = renderState._t, true)
         continue
       }
       ctx.$el = renderState._e.get(id)
@@ -210,6 +214,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     // Scan when a missing tag may match late server HTML.
     if (pending.length) {
+      const needsContentKey = pending.some(({ id }) => id?.includes(':content:'))
       const tracked = new Set<Element>()
       // managed elements are released through their own `:el` cleanup
       for (const [key, $el] of renderState._e) {
@@ -239,7 +244,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (!dedupe) {
           if (props.innerHTML === undefined)
             next.innerHTML = el.innerHTML
-          dedupe = dedupeKey(next) || hashTag(next)
+          dedupe = dedupeKey(next)
+          // Only a content-based identity can appear after reading innerHTML.
+          if (dedupe && !needsContentKey)
+            continue
+          dedupe ||= hashTag(next)
         }
         let k = dedupe
         let c = 1
@@ -250,6 +259,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     for (const ctx of pending) {
       const found = renderState._e.get(ctx.id)
+      if (adoption && !found)
+        continue
       ctx.$el = found || dom.createElement(ctx.tag.tag)
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
       if (!found)
@@ -261,13 +272,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    for (const k in previous) {
-      previous[k]()
-      delete previous[k]
-    }
+    clearEffects(previous)
     head._dom = renderState
-    didRender = true
-    callHook(head, 'dom:rendered', { renders: tags })
+    if (!adoption)
+      callHook(head, 'dom:rendered', { renders: tags })
   }
   catch (e) {
     head.dirty = true
@@ -276,7 +284,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   finally {
     head._du = false
   }
-  if (didRender && (head.dirty || hasPendingEntries(head)))
+  if (!adoption && (head.dirty || hasPendingEntries(head)))
     _renderDOMHead(head, options)
-  return didRender
+  return true
 }
+
+// Internal: the lazy runtime renders through this. An adoption render records the cleanups
+// of server elements without replaying historical DOM writes.
+export { _renderDOMHead as renderLazyDOMHead }

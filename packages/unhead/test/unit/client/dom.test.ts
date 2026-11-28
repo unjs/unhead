@@ -135,6 +135,20 @@ describe('dom', () => {
     expect(reads).toBe(0)
   })
 
+  it('adopts an unclaimed SSR style by its current content on a later render', () => {
+    const document = useDom({ headTags: '<style>.before{}</style>' }).window.document
+    const style = document.head.querySelector('style')!
+    const head = useDOMHead({ document })
+    head.push({ meta: [{ name: 'description', content: 'First render' }] })
+
+    style.textContent = '.after{}'
+    head.push({ style: [{ textContent: '.after{}' }] })
+
+    const styles = document.head.querySelectorAll('style')
+    expect(styles).toHaveLength(1)
+    expect(styles[0]).toBe(style)
+  })
+
   it('reuses keyed and identified SSR styles without reading their innerHTML', () => {
     const style = [
       { key: 'precomputed-style', textContent: '.keyed{color:red}' },

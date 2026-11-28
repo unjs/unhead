@@ -48,8 +48,13 @@ type ValidLocalBusinessSubTypes = 'AnimalShelter'
   | 'TouristInformationCenter'
   | 'TravelAgency'
 
+/**
+ * Google asks for the most specific LocalBusiness sub-type, such as `Plumber`, so any Schema.org type name is accepted.
+ */
+type LocalBusinessType = 'Organization' | 'LocalBusiness' | ValidLocalBusinessSubTypes | (string & Record<never, never>)
+
 export interface LocalBusinessSimple extends Organization {
-  '@type'?: ['Organization', 'LocalBusiness'] | ['Organization', 'LocalBusiness', ValidLocalBusinessSubTypes] | ValidLocalBusinessSubTypes
+  '@type'?: Arrayable<LocalBusinessType>
   /**
    * The primary public telephone number of the business.
    */
@@ -63,7 +68,7 @@ export interface LocalBusinessSimple extends Organization {
    */
   'faxNumber'?: string
   /**
-   * The price range of the business, represented by a string of dollar symbols (e.g., $, $$, or $$$ ).
+   * The price range of the business, such as `$$` or `$10-15`. Google requires it to be shorter than 100 characters.
    */
   'priceRange'?: string
   /**

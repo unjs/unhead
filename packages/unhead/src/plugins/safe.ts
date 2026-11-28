@@ -1,6 +1,7 @@
 import type { ResolvableHead } from '../types/schema'
 import type { HeadTag } from '../types/tags'
 import { hasContent, HasElementTags, ValidHeadTags } from '../utils/const'
+import { hasOwn } from '../utils/hasOwn'
 import { normalizeEntryToTags } from '../utils/normalize'
 import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
@@ -9,9 +10,8 @@ const WhitelistAttributes = {
   htmlAttrs: /* @__PURE__ */ new Set(['class', 'style', 'lang', 'dir']),
   bodyAttrs: /* @__PURE__ */ new Set(['class', 'style']),
   meta: /* @__PURE__ */ new Set(['name', 'property', 'charset', 'content', 'media']),
-  noscript: /* @__PURE__ */ new Set([] as string[]),
   style: /* @__PURE__ */ new Set(['media', 'nonce', 'title', 'blocking']),
-  script: /* @__PURE__ */ new Set(['type', 'textContent', 'nonce', 'blocking']),
+  script: /* @__PURE__ */ new Set(['type', 'nonce', 'blocking']),
   link: /* @__PURE__ */ new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type']),
 } as const
 
@@ -22,7 +22,7 @@ const AsciiWhitespace = /[\t\n\f\r ]+/
 
 const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
 const HtmlEntityDec = /&#(\d+);?/g
-const HtmlEntityNamed = /&(tab|newline|colon|semi|lpar|rpar|sol|bsol|comma|period|excl|num|dollar|percnt|amp|apos|ast|plus|lt|gt|equals|quest|at|lsqb|rsqb|lcub|rcub|vert|hat|grave|tilde|nbsp);?/gi
+const HtmlEntityNamed = /&([a-z]+);?/gi
 // eslint-disable-next-line no-control-regex
 const ControlChars = /[\x00-\x20]+/g
 
@@ -69,9 +69,14 @@ function safeFromCodePoint(codePoint: number): string {
 }
 
 function decodeHtmlEntities(str: string): string {
+  if (!str.includes('&'))
+    return str
   return str.replace(HtmlEntityHex, (_, hex) => safeFromCodePoint(Number.parseInt(hex, 16)))
     .replace(HtmlEntityDec, (_, dec) => safeFromCodePoint(Number(dec)))
-    .replace(HtmlEntityNamed, (_, name) => NamedEntityMap[name.toLowerCase()] || '')
+    .replace(HtmlEntityNamed, (m, name) => {
+      const lower = name.toLowerCase()
+      return hasOwn(NamedEntityMap, lower) ? NamedEntityMap[lower] : m
+    })
 }
 
 // Strip ASCII control chars (0x00-0x1F), whitespace, and percent-decode, then check for dangerous schemes
@@ -128,6 +133,15 @@ function hasBlockedRel(rel: string): boolean {
   return !tokens.some(Boolean) || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
 }
 
+function pickAllowed(prev: Record<string, any>, allowed: Set<string>, check: (v: unknown) => unknown = Boolean) {
+  const next: Record<string, any> = {}
+  allowed.forEach((key) => {
+    if (check(prev[key]))
+      next[key] = prev[key]
+  })
+  return next
+}
+
 function makeTagSafe(tag: HeadTag): HeadTag | false {
   let next: Record<string, any> = {}
   const { tag: type, props: prev } = tag
@@ -136,38 +150,27 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
     // title: textContent is escaped in rendering (tagToString), no props needed
     case 'title':
       break
-    // virtual tags, not rendered to HTML — but sanitize to prevent injection if rendered
+    // virtual tag, not rendered to HTML
     case 'titleTemplate':
-    case 'templateParams':
       next = prev
       break
+    // Template parameters fill app scripts and directives, so untrusted input cannot set them.
+    case 'templateParams':
+      return false
     case 'htmlAttrs':
     case 'bodyAttrs':
-      WhitelistAttributes[type].forEach((attr) => {
-        if (prev[attr]) {
-          next[attr] = prev[attr]
-        }
-      })
+      next = pickAllowed(prev, WhitelistAttributes[type])
       // don't allow id on html/body (DOM clobbering)
       delete tag.innerHTML
       delete tag.textContent
       tag.props = { ...acceptDataAttrs(prev, false), ...next }
       return !Object.keys(tag.props).length ? false : tag
     case 'style':
-      next = acceptDataAttrs(prev)
-      WhitelistAttributes.style.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
-        }
-      })
+      next = pickAllowed(prev, WhitelistAttributes.style)
       break
     // meta is safe, except for http-equiv
     case 'meta':
-      WhitelistAttributes.meta.forEach((key) => {
-        if (hasContent(prev[key])) {
-          next[key] = prev[key]
-        }
-      })
+      next = pickAllowed(prev, WhitelistAttributes.meta, hasContent)
       break
     // link tags we block preloading, prerendering, prefetching, dns-prefetch, preconnect, manifest, etc
     case 'link':
@@ -199,13 +202,6 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
         return false
       }
       break
-    case 'noscript':
-      WhitelistAttributes.noscript.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
-        }
-      })
-      break
     // we only allow JSON in scripts
     case 'script':
       if (!tag.textContent || typeof prev.type !== 'string' || !prev.type.endsWith('json')) {
@@ -219,11 +215,7 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
       catch {
         return false
       }
-      WhitelistAttributes.script.forEach((s) => {
-        if (s !== 'textContent' && prev[s]) {
-          next[s] = prev[s]
-        }
-      })
+      next = pickAllowed(prev, WhitelistAttributes.script)
       break
   }
 

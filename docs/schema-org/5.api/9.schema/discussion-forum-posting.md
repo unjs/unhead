@@ -1,5 +1,6 @@
 ---
 title: DiscussionForumPosting Schema
+since: 3.3.0
 description: Add Google discussion forum structured data with defineDiscussionForumPosting(), including authors, comments, media, and interaction counts.
 ---
 

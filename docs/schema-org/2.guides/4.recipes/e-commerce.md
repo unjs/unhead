@@ -97,7 +97,7 @@ If you provide `priceValidUntil`, keep it current. Google warns that a [product 
 
 ## Multiple offers and product variants
 
-The following approach associates several offers with one Product. It does not create Google's ProductGroup variant markup; use custom nodes if you need `ProductGroup` and `hasVariant`.
+The following approach associates several offers with one Product. It does not create Google's variant markup. For variant markup, see [ProductGroup variants](#productgroup-variants).
 
 ```ts
 import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -137,6 +137,35 @@ useSchemaOrg([
         url: 'https://example.com/tshirt-small-blue'
       }
     ]
+  })
+])
+```
+
+### ProductGroup variants
+
+For [Google's variant markup](https://developers.google.com/search/docs/appearance/structured-data/product-variants), link each variant Product to its ProductGroup with `isVariantOf`. Give each variant a unique `sku` or GTIN. Unhead types the nested ProductGroup and expands `variesBy` values to Schema.org URLs.
+
+```ts
+import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
+
+useSchemaOrg([
+  defineProduct({
+    name: 'Small Red T-Shirt',
+    image: 'https://example.com/images/tshirt-red.jpg',
+    sku: 'TSHIRT-S-RED',
+    color: 'Red',
+    size: 'S',
+    isVariantOf: {
+      name: 'Cotton T-Shirt',
+      productGroupID: 'TSHIRT',
+      url: 'https://example.com/tshirt',
+      variesBy: ['color', 'size'],
+    },
+    offers: {
+      price: 19.99,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
   })
 ])
 ```
@@ -303,4 +332,3 @@ A typical ecommerce site can use this structure:
 
 - [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization
 - [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs): Navigation for product pages
-- [FAQ Page](/docs/schema-org/guides/recipes/faq): Product FAQs

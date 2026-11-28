@@ -4,6 +4,7 @@ import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { createClientHeadAdapter } from '../client/adapter'
 import { createHooks } from '../utils/hooks'
 
+export { attachStreamHead } from './queue'
 export type { StreamingGlobal, UnheadStreamQueue }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'
@@ -38,9 +39,8 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
     return wrapped
   }
 
-  const coreRender = core.render
   const hooks = createHooks<ClientHeadHooks>(rest.hooks)
-  const head = createClientHeadAdapter(core as Unhead<T, boolean>, hooks, () => coreRender() as boolean)
+  const head = createClientHeadAdapter(core as Unhead<T, boolean>, hooks)
 
   // Mark as wrapped to avoid double-wrapping
   ;(head as any)._wrapped = true

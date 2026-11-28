@@ -73,6 +73,10 @@ const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 // Mirrors the token syntax TemplateParamsPlugin substitutes (`%siteName`,
 // `%site.name`); a trailing `%` is not part of the syntax.
 const TEMPLATE_PARAM_TOKEN_RE = /%\w+(?:\.\w+)?/
+// Matches valid UTF-8 percent-encoded sequences (RFC 3629 / RFC 3986):
+// 1-byte ASCII (%00-%7F) and 2/3/4-byte UTF-8 sequences (e.g. %C3%A9, %E2%80%94, %F0%9F%98%80).
+// Non-ASCII hex prefixes without valid continuation bytes (e.g. %de in `%description%`) stay intact.
+const PERCENT_ENCODED_RE = /%(?:[0-7][0-9a-f]|(?:c[2-9a-f]|d[0-9a-f])%[89ab][0-9a-f]|(?:e0%[ab][0-9a-f]|e[1-9abcef]%[89ab][0-9a-f]|ed%[89][0-9a-f])%[89ab][0-9a-f]|(?:f0%[9ab][0-9a-f]|f[1-3]%[89ab][0-9a-f]|f4%8[0-9a-f])(?:%[89ab][0-9a-f]){2})/gi
 const AT_PREFIX_RE = /^at\s+/
 // Data blocks, import maps, and speculation rules must stay inline.
 const JAVASCRIPT_TYPES = new Set([
@@ -138,6 +142,20 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
 
 function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
+}
+
+function stripPercentEncoded(value: string): string {
+  return value.includes('%') ? value.replace(PERCENT_ENCODED_RE, ' ') : value
+}
+
+function hasUnresolvedTemplateParam(value: string): boolean {
+  return value.includes('%') && TEMPLATE_PARAM_RE.test(stripPercentEncoded(value))
+}
+
+function findTemplateParamToken(value: string): string | undefined {
+  if (!value.includes('%'))
+    return undefined
+  return TEMPLATE_PARAM_TOKEN_RE.exec(stripPercentEncoded(value))?.[0]
 }
 
 function extractOrigin(url: string): string | undefined {
@@ -209,7 +227,6 @@ function createInputShapeObserver(): {
     }
     return value
   }
-  resolver._static = true
 
   return {
     resolver,
@@ -326,7 +343,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       inputShapeObserver.resolver,
     ]
     const hooks = head.hooks as any
-    if (hooks) {
+    if (hooks?.callHook) {
       const _callHook = hooks.callHook.bind(hooks)
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
@@ -514,7 +531,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             if (tag.tag === 'meta' && metaKey) {
               const content = String(props.content ?? '')
-              if (content && TEMPLATE_PARAM_RE.test(content))
+              if (content && hasUnresolvedTemplateParam(content))
                 report('unresolved-template-param', `Unresolved template param in ${metaKey}: "${content}".`, 'warn', tag)
             }
 
@@ -528,7 +545,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                   report(diag.ruleId as ValidationRuleId, diag.message, 'warn', tag)
               }
               const text = String(tag.textContent ?? '')
-              if (TEMPLATE_PARAM_RE.test(text))
+              if (hasUnresolvedTemplateParam(text))
                 report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
               if (!text.trim())
                 report('empty-title', `Title tag is empty. If using titleTemplate, ensure it produces output.`, 'warn', tag)
@@ -666,17 +683,19 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tpTag)
             }
             else {
-              const tokenTag = tags.find((t: HeadTag) => {
-                if (t.tag === 'title' || t.tag === 'titleTemplate')
-                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.textContent ?? ''))
-                if (t.tag === 'meta')
-                  return TEMPLATE_PARAM_TOKEN_RE.test(String(t.props.content ?? ''))
-                return false
-              })
-              if (tokenTag) {
-                const text = String(tokenTag.tag === 'meta' ? tokenTag.props.content : tokenTag.textContent)
-                const token = TEMPLATE_PARAM_TOKEN_RE.exec(text!)![0]
-                report('missing-template-params-plugin', `A template param "${token}" is used but TemplateParamsPlugin is not registered, so it renders literally. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tokenTag)
+              for (const t of tags) {
+                const raw = t.tag === 'title' || t.tag === 'titleTemplate'
+                  ? t.textContent
+                  : t.tag === 'meta'
+                    ? t.props.content
+                    : undefined
+                if (raw == null)
+                  continue
+                const token = findTemplateParamToken(String(raw))
+                if (token) {
+                  report('missing-template-params-plugin', `A template param "${token}" is used but TemplateParamsPlugin is not registered, so it renders literally. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', t)
+                  break
+                }
               }
             }
           }

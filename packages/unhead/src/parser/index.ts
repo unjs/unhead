@@ -387,7 +387,7 @@ export function parseHtmlForUnheadExtraction(template: string | PreparedTemplate
     html: parts.length ? parts.join('') + html.slice(cursor) : html,
     input,
     policySlot,
-    indexes: partial ? withDeferredBodyClose(html, indexes, removed) : indexes,
+    indexes: partial ? withDeferredBodyClose(html, indexes, removed, body!.end) : indexes,
   }
 }
 
@@ -395,12 +395,17 @@ function withDeferredBodyClose(
   html: string,
   indexes: PreparedHtmlTemplateWithIndexes['indexes'],
   removed: number,
+  rawBodyEnd: number,
 ): PreparedHtmlTemplateWithIndexes['indexes'] {
+  let resolved: number | undefined
   return {
     ...indexes,
     get bodyCloseTagStart() {
-      const offset = scanTemplate(html, false).bodyClose ?? -1
-      return offset >= 0 ? offset - removed : -1
+      if (resolved === undefined) {
+        const offset = scanTemplate(html, false, false, rawBodyEnd).bodyClose ?? -1
+        resolved = offset >= 0 ? offset - removed : -1
+      }
+      return resolved
     },
   }
 }
