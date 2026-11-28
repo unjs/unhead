@@ -1,8 +1,9 @@
-import type { HeadEntry, HeadTag, Unhead } from '../types'
+import type { HeadEntry, ResolvedHeadTag as HeadTag, HeadTagInput, Unhead } from '../types'
 import { callHook } from './callHook'
 import { hasContent, isJsonScriptType, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { cloneTagProps, normalizeEntryToTags } from './normalize'
+import { bindTagAliases, callTagHook, resolveTagAttrs, syncTagAliases } from './tagHooks'
 
 declare const __UNHEAD_LAZY_RENDERER__: boolean
 
@@ -10,7 +11,7 @@ const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
 
 // @ts-expect-error untyped
-const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
+const sortTags = (a: HeadTagInput, b: HeadTagInput) => a._w === b._w ? a._p - b._p : a._w - b._w
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
@@ -35,9 +36,9 @@ function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   }
 }
 
-export interface ResolveTagsContext {
-  tagMap: Map<string, HeadTag>
-  tags: HeadTag[]
+export interface ResolveTagsContext<T extends HeadTagInput = HeadTagInput> {
+  tagMap: Map<string, T>
+  tags: T[]
 }
 
 export interface ResolveTagsOptions {
@@ -57,11 +58,12 @@ function hasTagMutatingHooks(hooks: Record<string, any>): boolean {
 function cloneTagsInPlace(tags: HeadTag[], start = 0) {
   for (let i = start; i < tags.length; i++) {
     const t = tags[i]
-    tags[i] = { ...t, props: cloneTagProps(t.props) }
+    const attrs = cloneTagProps(t.attrs)
+    tags[i] = { ...t, attrs, props: attrs }
   }
 }
 
-function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+function valuesToTags(ctx: ResolveTagsContext<HeadTag>, sortFlatMeta: boolean) {
   // reuse the pre-dedupe array; the map never holds more tags than went in
   const tags = ctx.tags
   let w = 0
@@ -91,14 +93,16 @@ export function dedupeTags(ctx: ResolveTagsContext, contentKey?: (tag: HeadTag) 
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
-      for (const p in next.props) {
+      const prevAttrs = resolveTagAttrs(prev)
+      const nextAttrs = resolveTagAttrs(next)
+      const attrs = { ...prevAttrs }
+      for (const p in nextAttrs) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || []) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        attrs[p] = p === 'style'
+          ? new Map([...(prevAttrs.style || []) as any, ...nextAttrs[p] as any])
+          : p === 'class' ? new Set([...(prevAttrs.class || []) as any, ...nextAttrs[p] as any]) : nextAttrs[p]
       }
-      ctx.tagMap.set(k, { ...next, props })
+      ctx.tagMap.set(k, { ...next, attrs, props: attrs })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
       ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
@@ -145,15 +149,15 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>,
 function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
   let w = 0
   for (let t of tags) {
-    const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
+    const { innerHTML, tag, attrs } = t
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(attrs) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!hasContent(attrs.content) && !attrs['http-equiv'] && !attrs.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
-      const isJsonLike = isJsonScriptType(String(props.type))
+      const isJsonLike = isJsonScriptType(String(attrs.type))
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
         : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
@@ -166,21 +170,25 @@ function sanitizeTagsInPlace(tags: HeadTag[], ssr = false): HeadTag[] {
       if (t._d || !ssr)
         t._d = dedupeKey(t)
     }
-    tags[w++] = t
+    // Bind the public output after all sanitization copies. Copy cache tags,
+    // while preserving the identity of tags already exposed to listeners.
+    tags[w++] = bindTagAliases(t, true)
   }
   tags.length = w
   return tags
 }
 
 // public contract: returns a new array and leaves the input untouched
-export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  return sanitizeTagsInPlace([...tags])
+export function sanitizeTags(tags: HeadTagInput[]): HeadTag[] {
+  const resolved = [...tags]
+  syncTagAliases(resolved)
+  return sanitizeTagsInPlace(resolved)
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, adoption = false): HeadTag[] {
   const lazyRenderer = typeof __UNHEAD_LAZY_RENDERER__ === 'undefined' || __UNHEAD_LAZY_RENDERER__
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
-  const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
+  const ctx: ResolveTagsContext<HeadTag> = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
   syncEntryHookCache(head, hooks)
   for (const e of head.entries.values()) {
@@ -202,6 +210,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   if (head._h) {
     entries = [...head.entries.values()]
     callHook(head, 'entries:resolve', { entries, ...ctx })
+    // Entry listeners may insert legacy tags before the defensive clone.
+    syncTagAliases(ctx.tags)
   }
   syncEntryHookCache(head, hooks)
   // On the first non-streaming SSR resolve with tag-mutating hooks already registered,
@@ -230,7 +240,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
         // re-read per entry: an earlier listener may have (un)registered hooks
         if (hooks['entries:normalize']?.length) {
           const normalizeCtx = { tags, entry: e }
-          callHook(head, 'entries:normalize', normalizeCtx)
+          callTagHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }
         const ck = head.resolvedOptions._contentKey
@@ -260,8 +270,9 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions, ado
   const hasFlatMeta = dedupeTags(ctx, head.resolvedOptions._contentKey?.())
   resolveTitleTemplate(ctx, head, lazyRenderer && adoption)
   valuesToTags(ctx, hasFlatMeta)
-  callHook(head, 'tags:beforeResolve', ctx)
-  callHook(head, 'tags:resolve', ctx)
-  callHook(head, 'tags:afterResolve', ctx)
+  callTagHook(head, 'tags:beforeResolve', ctx)
+  callTagHook(head, 'tags:resolve', ctx)
+  callTagHook(head, 'tags:afterResolve', ctx)
+  syncTagAliases(ctx.tags)
   return sanitizeTagsInPlace(ctx.tags, head.ssr)
 }

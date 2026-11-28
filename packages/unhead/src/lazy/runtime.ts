@@ -85,6 +85,8 @@ function activateHooks(pending: DeferredHead<unknown>['hooks']): ClientUnhead['h
     return pending
   const active = createHooks<ClientHeadHooks>()
   const { _hooks } = pending
+  // The dispatcher closes over active, so both objects must share the registry.
+  Object.assign(active, { _hooks })
   // Keep references and teardown callbacks registered during setup intact.
   Reflect.deleteProperty(pending, 'hook')
   Object.assign(pending, active, { _hooks })

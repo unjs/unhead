@@ -110,21 +110,21 @@ describe('capo', () => {
     const resolvedTags = resolveTags(head)
     // VIEWPORT
     expect(resolvedTags[0].tag).toEqual('meta')
-    expect(resolvedTags[0].props.name).toEqual('viewport')
+    expect(resolvedTags[0].attrs.name).toEqual('viewport')
     // TITLE
     expect(resolvedTags[1].tag).toEqual('title')
     // PRECONNECT
     expect(resolvedTags[2].tag).toEqual('link')
-    expect(resolvedTags[2].props.rel).toEqual('preconnect')
+    expect(resolvedTags[2].attrs.rel).toEqual('preconnect')
     // ASYNC SCRIPT
     expect(resolvedTags[3].tag).toEqual('script')
-    expect(resolvedTags[3].props.async).toEqual(true)
+    expect(resolvedTags[3].attrs.async).toEqual(true)
     // IMPORTED CSS
     expect(resolvedTags[4].tag).toEqual('style')
     expect(resolvedTags[4].innerHTML).toEqual('@import "imported.css"')
     // SYNC SCRIPT
     expect(resolvedTags[5].tag).toEqual('script')
-    expect(resolvedTags[5].props.src).toEqual('sync-script.js')
+    expect(resolvedTags[5].attrs.src).toEqual('sync-script.js')
     // INLINE SCRIPT
     expect(resolvedTags[6].tag).toEqual('script')
     expect(resolvedTags[6].innerHTML).toEqual('console.log("inline script")')
@@ -132,30 +132,30 @@ describe('capo', () => {
     expect(resolvedTags[7].tag).toEqual('style')
     expect(resolvedTags[7].innerHTML).toEqual('.sync-style { color: red }')
     expect(resolvedTags[8].tag).toEqual('link')
-    expect(resolvedTags[8].props.rel).toEqual('stylesheet')
+    expect(resolvedTags[8].attrs.rel).toEqual('stylesheet')
     // PRELOAD
     expect(resolvedTags[9].tag).toEqual('link')
-    expect(resolvedTags[9].props.rel).toEqual('modulepreload')
+    expect(resolvedTags[9].attrs.rel).toEqual('modulepreload')
     expect(resolvedTags[10].tag).toEqual('link')
-    expect(resolvedTags[10].props.rel).toEqual('preload')
+    expect(resolvedTags[10].attrs.rel).toEqual('preload')
     // DEFER SCRIPT
     expect(resolvedTags[11].tag).toEqual('script')
-    expect(resolvedTags[11].props.defer).toEqual(true)
+    expect(resolvedTags[11].attrs.defer).toEqual(true)
     // MODULE SCRIPT
     expect(resolvedTags[12].tag).toEqual('script')
-    expect(resolvedTags[12].props.type).toEqual('module')
+    expect(resolvedTags[12].attrs.type).toEqual('module')
     // DNS-PREFETCH
     expect(resolvedTags[13].tag).toEqual('link')
-    expect(resolvedTags[13].props.rel).toEqual('dns-prefetch')
+    expect(resolvedTags[13].attrs.rel).toEqual('dns-prefetch')
     // PREFETCH
     expect(resolvedTags[14].tag).toEqual('link')
-    expect(resolvedTags[14].props.rel).toEqual('prefetch')
+    expect(resolvedTags[14].attrs.rel).toEqual('prefetch')
     // PRERENDER
     expect(resolvedTags[15].tag).toEqual('link')
-    expect(resolvedTags[15].props.rel).toEqual('prerender')
+    expect(resolvedTags[15].attrs.rel).toEqual('prerender')
     // META
     expect(resolvedTags[16].tag).toEqual('meta')
-    expect(resolvedTags[16].props.name).toEqual('description')
+    expect(resolvedTags[16].attrs.name).toEqual('description')
   })
 
   it('importmap precedes modulepreload and module scripts', async () => {
@@ -185,16 +185,16 @@ describe('capo', () => {
     const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
     // IMPORTMAP must come first
     expect(scriptAndLinkTags[0].tag).toEqual('script')
-    expect(scriptAndLinkTags[0].props.type).toEqual('importmap')
+    expect(scriptAndLinkTags[0].attrs.type).toEqual('importmap')
     // normalize should have serialized the object to a JSON string
     expect(typeof scriptAndLinkTags[0].textContent).toBe('string')
     expect(scriptAndLinkTags[0].textContent).toContain('#entry')
     // MODULEPRELOAD
     expect(scriptAndLinkTags[1].tag).toEqual('link')
-    expect(scriptAndLinkTags[1].props.rel).toEqual('modulepreload')
+    expect(scriptAndLinkTags[1].attrs.rel).toEqual('modulepreload')
     // MODULE SCRIPT
     expect(scriptAndLinkTags[2].tag).toEqual('script')
-    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+    expect(scriptAndLinkTags[2].attrs.type).toEqual('module')
   })
 
   it('speculationrules sorts late alongside prefetch/prerender', async () => {
@@ -220,16 +220,16 @@ describe('capo', () => {
     const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
     // sync script (50) first
     expect(scriptAndLinkTags[0].tag).toEqual('script')
-    expect(scriptAndLinkTags[0].props.src).toEqual('sync.js')
+    expect(scriptAndLinkTags[0].attrs.src).toEqual('sync.js')
     // stylesheet (60)
     expect(scriptAndLinkTags[1].tag).toEqual('link')
-    expect(scriptAndLinkTags[1].props.rel).toEqual('stylesheet')
+    expect(scriptAndLinkTags[1].attrs.rel).toEqual('stylesheet')
     // module script (80)
     expect(scriptAndLinkTags[2].tag).toEqual('script')
-    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+    expect(scriptAndLinkTags[2].attrs.type).toEqual('module')
     // speculationrules (90) last, after modules
     expect(scriptAndLinkTags[3].tag).toEqual('script')
-    expect(scriptAndLinkTags[3].props.type).toEqual('speculationrules')
+    expect(scriptAndLinkTags[3].attrs.type).toEqual('speculationrules')
   })
 
   it('importmap precedes async module scripts', async () => {
@@ -252,9 +252,9 @@ describe('capo', () => {
 
     const resolvedTags = resolveTags(head)
     const scriptTags = resolvedTags.filter(t => t.tag === 'script')
-    expect(scriptTags[0].props.type).toEqual('importmap')
-    expect(scriptTags[1].props.type).toEqual('module')
-    expect(scriptTags[1].props.async).toEqual(true)
+    expect(scriptTags[0].attrs.type).toEqual('importmap')
+    expect(scriptTags[1].attrs.type).toEqual('module')
+    expect(scriptTags[1].attrs.async).toEqual(true)
   })
 
   it('inline script with textContent sorts in the sync bucket', async () => {
@@ -272,8 +272,8 @@ describe('capo', () => {
     const resolvedTags = resolveTags(head)
     const scriptTags = resolvedTags.filter(t => t.tag === 'script')
     // async (30) should come before sync inline (50)
-    expect(scriptTags[0].props.src).toEqual('prefetch.js')
-    expect(scriptTags[0].props.async).toEqual(true)
+    expect(scriptTags[0].attrs.src).toEqual('prefetch.js')
+    expect(scriptTags[0].attrs.async).toEqual(true)
     expect(scriptTags[1].textContent).toEqual('console.log("inline")')
   })
 })

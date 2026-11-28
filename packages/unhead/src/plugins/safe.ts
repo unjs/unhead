@@ -1,5 +1,5 @@
 import type { ResolvableHead } from '../types/schema'
-import type { HeadTag } from '../types/tags'
+import type { ResolvedHeadTag as HeadTag } from '../types/tags'
 import { hasContent, HasElementTags, ValidHeadTags } from '../utils/const'
 import { hasOwn } from '../utils/hasOwn'
 import { normalizeEntryToTags } from '../utils/normalize'
@@ -144,7 +144,7 @@ function pickAllowed(prev: Record<string, any>, allowed: Set<string>, check: (v:
 
 function makeTagSafe(tag: HeadTag): HeadTag | false {
   let next: Record<string, any> = {}
-  const { tag: type, props: prev } = tag
+  const { tag: type, attrs: prev } = tag
 
   switch (type) {
     // title: textContent is escaped in rendering (tagToString), no props needed
@@ -163,8 +163,8 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
       // don't allow id on html/body (DOM clobbering)
       delete tag.innerHTML
       delete tag.textContent
-      tag.props = { ...acceptDataAttrs(prev, false), ...next }
-      return !Object.keys(tag.props).length ? false : tag
+      tag.attrs = tag.props = { ...acceptDataAttrs(prev, false), ...next }
+      return !Object.keys(tag.attrs).length ? false : tag
     case 'style':
       next = pickAllowed(prev, WhitelistAttributes.style)
       break
@@ -226,9 +226,9 @@ function makeTagSafe(tag: HeadTag): HeadTag | false {
     delete tag.textContent
   }
 
-  tag.props = { ...acceptDataAttrs(prev), ...next }
+  tag.attrs = tag.props = { ...acceptDataAttrs(prev), ...next }
 
-  if (!Object.keys(tag.props).length && !tag.tag.endsWith('Attrs') && !tag.textContent) {
+  if (!Object.keys(tag.attrs).length && !tag.tag.endsWith('Attrs') && !tag.textContent) {
     return false
   }
 

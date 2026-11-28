@@ -1,4 +1,4 @@
-import type { HeadTag } from '../types'
+import type { ResolvedHeadTag as HeadTag } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 // @ts-expect-error untyped

@@ -85,21 +85,21 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           let title = head._titleTemplate || head._title
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
-          if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
+          if (typeof ogTitle?.attrs['data-infer'] !== 'undefined') {
             if (typeof title === 'function') {
               // @ts-expect-error untyped
               title = title(head._title)
             }
             title = hasContent(title) ? String(title) : undefined
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            ogTitle.attrs!.content = options.ogTitle ? options.ogTitle(title) : title || ''
             ogTitle.processTemplateParams = true
           }
 
-          const descriptionValue = tagMap.get('meta:description')?.props?.content
+          const descriptionValue = tagMap.get('meta:description')?.attrs?.content
           const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
           const ogDescription = tagMap.get('meta:og:description')
-          if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
+          if (typeof ogDescription?.attrs['data-infer'] !== 'undefined') {
+            ogDescription.attrs!.content = options.ogDescription ? options.ogDescription(description) : description || ''
             ogDescription.processTemplateParams = true
           }
         },
@@ -111,14 +111,14 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
             const tag = ctx.tags[i]!
             if (tag.tag !== 'meta')
               continue
-            if (tag.props.name === 'twitter:card' && typeof tag.props['data-infer'] !== 'undefined') {
+            if (tag.attrs.name === 'twitter:card' && typeof tag.attrs['data-infer'] !== 'undefined') {
               cardIndex = i
               continue
             }
-            const key = tag.props.property || tag.props.name
+            const key = tag.attrs.property || tag.attrs.name
             if (!IMAGE_META_KEYS.has(key))
               continue
-            hasImage ||= hasImageContent(tag.props.content)
+            hasImage ||= hasImageContent(tag.attrs.content)
             // a client tag adopts the server element of the same key and removes it when the entry goes
             if (serverImages.length)
               serverImages = serverImages.filter(el => elementMetaKey(el) !== key)
@@ -131,9 +131,9 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
             hasImage = serverImages.length > 0
           }
           const card = ctx.tags[cardIndex]!
-          const props = { ...card.props, content: hasImage ? 'summary_large_image' : 'summary' }
-          delete props['data-infer']
-          ctx.tags[cardIndex] = { ...card, props }
+          const attrs = { ...card.attrs, content: hasImage ? 'summary_large_image' : 'summary' }
+          delete attrs['data-infer']
+          ctx.tags[cardIndex] = { ...card, attrs, props: attrs }
         },
       },
     }
