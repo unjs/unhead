@@ -88,7 +88,10 @@ export interface JobPostingSimple extends Thing {
 
 export interface EducationalOccupationalCredential extends Thing {
   '@type'?: 'EducationalOccupationalCredential'
-  'credentialCategory'?: string
+  /**
+   * Google lists `high school`, `associate degree`, `bachelor degree`, `professional certificate`, and `postgraduate degree`.
+   */
+  'credentialCategory'?: 'high school' | 'associate degree' | 'bachelor degree' | 'professional certificate' | 'postgraduate degree' | (string & Record<never, never>)
 }
 
 export interface OccupationalExperienceRequirements extends Thing {
@@ -107,10 +110,17 @@ type JobLocation
     jobLocationType?: never
     applicantLocationRequirements?: NodeRelations<JobLocationRequirement>
   }
+  // A fully remote job needs applicantLocationRequirements.
   | {
     jobLocation?: NodeRelations<Place>
     jobLocationType: 'TELECOMMUTE'
     applicantLocationRequirements: NodeRelations<JobLocationRequirement>
+  }
+  // Google accepts a jobLocation in its place when the job also offers a physical workplace.
+  | {
+    jobLocation: NodeRelations<Place>
+    jobLocationType: 'TELECOMMUTE'
+    applicantLocationRequirements?: NodeRelations<JobLocationRequirement>
   }
 
 export type JobPosting = JobPostingSimple & JobLocation

@@ -3,6 +3,8 @@ import { createBootstrapScript, createStreamableHead, prepareStreamingTemplate, 
 import { describe, expect, it } from 'vitest'
 
 const NONCES = ['request-a', 'request-b', 'request-"&quot;&tail=<tag>', undefined]
+// A late patch carries no quotes, so it omits a nonce outside CSP base64 syntax. No policy can match one.
+const PATCH_NONCES = ['request-a', 'request-b', null, null]
 const TEMPLATE = '<html><head></head><body><!--app-html--></body></html>'
 
 describe('streaming request nonces', () => {
@@ -39,7 +41,7 @@ describe('streaming request nonces', () => {
 
     for (const [index, html] of results.entries()) {
       const document = new JSDOM(html).window.document
-      expect([...document.scripts].map(script => script.getAttribute('nonce'))).toEqual([NONCES[index] ?? null, NONCES[index] ?? null])
+      expect([...document.scripts].map(script => script.getAttribute('nonce'))).toEqual([NONCES[index] ?? null, PATCH_NONCES[index]])
       const executed = new JSDOM(html, { runScripts: 'dangerously' }).window
       expect(executed.__unhead__?._q).toEqual([[{ title: 'Late title' }]])
       executed.close()

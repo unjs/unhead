@@ -1,7 +1,7 @@
 import type { Arrayable, InteractionCounter, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, PropertyValue, ResolvableDate, Thing } from '../../types'
 import type { DefinedRegion } from '../DefinedRegion'
 import type { ImageObject } from '../Image'
-import type { MerchantReturnPolicy } from '../MerchantReturnPolicy'
+import type { MerchantReturnPolicy, MerchantReturnPolicyLink } from '../MerchantReturnPolicy'
 import type { MonetaryAmount, QuantitativeValue } from '../MonetaryAmount'
 import type { UnitPriceSpecification } from '../Offer'
 import type { PostalAddress } from '../PostalAddress'
@@ -14,6 +14,7 @@ import {
   isHomePage,
   isSiteIdentityId,
   prefixId,
+  resolvableDateToDate,
   resolvableDateToIso,
   resolveDefaultType,
   resolveWithBase,
@@ -43,7 +44,7 @@ export interface MemberProgramTier extends Thing {
   'name': string
   'hasTierBenefit': Arrayable<OptionalSchemaOrgPrefix<'TierBenefitLoyaltyPoints' | 'TierBenefitLoyaltyPrice'>>
   'hasTierRequirement'?: NodeRelation<CreditCard | MonetaryAmount | UnitPriceSpecification | string>
-  'membershipPointsEarned'?: NodeRelation<QuantitativeValue>
+  'membershipPointsEarned'?: number | NodeRelation<QuantitativeValue>
   'isTierOf'?: NodeRelation<MemberProgram>
   'url'?: string
 }
@@ -151,7 +152,7 @@ export interface OrganizationSimple extends Thing {
    */
   description?: string
   /**
-   * Data Universal Numbering System identifier.
+   * Data Universal Numbering System identifier. Google prefers `iso6523Code` with the `0060:` prefix.
    */
   duns?: string
   /**
@@ -176,9 +177,9 @@ export interface OrganizationSimple extends Thing {
    */
   email?: string
   /**
-   * The date the organization was founded.
+   * The date the organization was founded. Date objects are written as YYYY-MM-DD.
    */
-  foundingDate?: string
+  foundingDate?: ResolvableDate
   /**
    * Global Location Number.
    */
@@ -186,7 +187,7 @@ export interface OrganizationSimple extends Thing {
   /**
    * Merchant return policies used by the organization.
    */
-  hasMerchantReturnPolicy?: NodeRelations<MerchantReturnPolicy>
+  hasMerchantReturnPolicy?: NodeRelations<MerchantReturnPolicy | MerchantReturnPolicyLink>
   /**
    * Membership programs offered by the organization.
    */
@@ -196,7 +197,7 @@ export interface OrganizationSimple extends Thing {
    */
   hasShippingService?: NodeRelations<ShippingService>
   /**
-   * ISO 6523 organization identifier.
+   * ISO 6523 organization identifier, in `ICD:identifier` format (e.g., `0060:123456789` for a DUNS number).
    */
   iso6523Code?: string
   /**
@@ -204,7 +205,7 @@ export interface OrganizationSimple extends Thing {
    */
   legalName?: string
   /**
-   * Legal Entity Identifier.
+   * Legal Entity Identifier. Google prefers `iso6523Code` with the `0199:` prefix.
    */
   leiCode?: string
   /**
@@ -262,22 +263,23 @@ export const memberProgramTierResolver = defineSchemaOrgResolver<MemberProgramTi
     if (node.hasTierRequirement) {
       const requirement = node.hasTierRequirement
       if (typeof requirement === 'object') {
-        const types = asArray(requirement['@type'])
-        if (types.includes('CreditCard')) {
-          node.hasTierRequirement = resolveRelation(requirement as NodeRelation<CreditCard>, ctx, creditCardResolver)
-        }
-        else if (types.includes('MonetaryAmount') || 'currency' in requirement) {
+        const types = asArray(requirement['@type']).filter(Boolean)
+        if (types.includes('MonetaryAmount') || (!types.length && 'currency' in requirement)) {
           node.hasTierRequirement = resolveRelation(requirement as NodeRelation<MonetaryAmount>, ctx, monetaryAmountResolver)
         }
-        else {
+        else if (types.includes('UnitPriceSpecification') || (!types.length && 'price' in requirement)) {
           node.hasTierRequirement = resolveRelation(requirement as NodeRelation<UnitPriceSpecification>, ctx, unitPriceSpecificationResolver)
+        }
+        else {
+          node.hasTierRequirement = resolveRelation(requirement as NodeRelation<CreditCard>, ctx, creditCardResolver)
         }
       }
     }
     // MemberProgram and MemberProgramTier may reference each other.
     // eslint-disable-next-line ts/no-use-before-define
     node.isTierOf = resolveRelation(node.isTierOf, ctx, memberProgramResolver)
-    node.membershipPointsEarned = resolveRelation(node.membershipPointsEarned, ctx, quantitativeValueResolver)
+    if (typeof node.membershipPointsEarned === 'object')
+      node.membershipPointsEarned = resolveRelation(node.membershipPointsEarned, ctx, quantitativeValueResolver)
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
     return node
@@ -383,11 +385,14 @@ export const organizationResolver
     idPrefix: ['host', IdentityId],
     resolve(node, ctx) {
       resolveDefaultType(node, 'Organization')
+      if (node.foundingDate)
+        node.foundingDate = resolvableDateToDate(node.foundingDate)
       node.address = resolveRelation(node.address, ctx, addressResolver)
       node.agentInteractionStatistic = resolveRelation(node.agentInteractionStatistic, ctx, interactionCounterResolver)
       node.contactPoint = resolveRelation(node.contactPoint, ctx, contactPointResolver)
       node.hasMemberProgram = resolveRelation(node.hasMemberProgram, ctx, memberProgramResolver)
-      node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy, ctx, merchantReturnPolicyResolver)
+      // A link-only policy resolves through the same resolver: every field it reads is optional at runtime.
+      node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy as NodeRelations<MerchantReturnPolicy> | undefined, ctx, merchantReturnPolicyResolver)
       node.hasShippingService = resolveRelation(node.hasShippingService, ctx, shippingServiceResolver)
       if (node.identifier) {
         const resolveIdentifier = (identifier: NodeRelation<PropertyValue | string>) => typeof identifier === 'string'

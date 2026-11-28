@@ -22,7 +22,16 @@ Describes an individual image (usually in the context of an embedded media objec
 
 ## Google image metadata
 
-For licensable images, add `creator`, `creditText`, `copyrightNotice`, and at least one of `license` or `acquireLicensePage`. Unhead resolves a nested creator as a Person or Organization and makes license URLs absolute.
+Google's image metadata feature requires `contentUrl`. Google also accepts `url` in its place. Unhead copies `url` to `contentUrl` when `contentUrl` is empty.
+
+You must also add at least one of these properties:
+
+- `creator`
+- `creditText`
+- `copyrightNotice`
+- `license`
+
+Google recommends the other three properties and `acquireLicensePage`. Unhead resolves a nested creator as a Person or Organization and makes license URLs absolute.
 
 ## Defaults
 

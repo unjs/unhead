@@ -570,7 +570,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     script.onLoaded(resolve)
   }
   // need to make sure it's not already registered
-  const warmupStrategy = !loader && (_warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false))
+  const warmupStrategy = !loader && (_warmupStrategy ?? ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false))
   if (warmupStrategy) {
     script._warmupStrategy = warmupStrategy
     script.warmup(warmupStrategy)

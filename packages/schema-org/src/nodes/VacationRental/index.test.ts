@@ -87,4 +87,20 @@ describe('defineVacationRental', () => {
       `)
     })
   })
+
+  it('keeps string coordinates with five decimal places', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineVacationRental({
+          name: 'Beach House',
+          identifier: 'rental-1',
+          image: '/rental.jpg',
+          containsPlace: { occupancy: { value: 2 } },
+          geo: { latitude: '37.42000', longitude: '-122.08400' },
+        }),
+      ])
+      const rental = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Beach House')
+      expect(rental!.geo).toEqual({ '@type': 'GeoCoordinates', 'latitude': '37.42000', 'longitude': '-122.08400' })
+    })
+  })
 })

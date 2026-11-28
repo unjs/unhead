@@ -121,6 +121,8 @@ function tsSourcePlugin() {
       return id.startsWith('.') || isAbsolute(id) ? null : { id, external: true }
     },
     load(id: string) {
+      if (id.endsWith('.json'))
+        return `export default ${readFileSync(id, 'utf8')}`
       if (!id.endsWith('.ts') && !id.endsWith('.mts'))
         return null
 
@@ -187,5 +189,52 @@ describe('plugins tree shaking', () => {
     const logs = await collectFirstSideEffectLogs(resolve(packageRoot, 'src/plugins/index.ts'))
 
     expect(logs).toEqual([])
+  })
+
+  it('does not report top-level side effects in client, server, and utils barrels', async () => {
+    for (const entry of ['src/client/index.ts', 'src/server/index.ts', 'src/utils/index.ts']) {
+      const logs = await collectFirstSideEffectLogs(resolve(packageRoot, entry))
+      expect(logs, entry).toEqual([])
+    }
+  })
+
+  it('tree-shakes meta cache and promises scratch when unused', async () => {
+    const pluginCode = await bundlePluginConsumer('defineHeadPlugin')
+    expect(pluginCode).not.toContain('runWithScratch')
+    expect(pluginCode).not.toContain('walkPromises')
+
+    const tempDir = mkdtempSync(join(tmpdir(), 'unhead-utils-tree-shaking-'))
+    try {
+      const entry = resolve(tempDir, 'entry.ts')
+      writeFileSync(
+        entry,
+        `import { resolveTags } from 'unhead/utils'\nglobalThis.__resolveTags = resolveTags\n`,
+      )
+      const output = await viteBuild({
+        configFile: false,
+        logLevel: 'silent',
+        root: tempDir,
+        resolve: {
+          alias: {
+            'unhead/utils': resolve(packageRoot, 'src/utils/index.ts'),
+          },
+        },
+        build: {
+          minify: false,
+          write: false,
+          rollupOptions: {
+            input: entry,
+            treeshake: true,
+            output: { format: 'es' },
+          },
+        },
+      })
+      const code = getOutputCode(output)
+      expect(code).not.toContain('fixKeyCaseCache')
+      expect(code).not.toContain('unpackMeta')
+    }
+    finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
   })
 })

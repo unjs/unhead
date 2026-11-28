@@ -90,11 +90,22 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     const renderState = state || createDomState(head, dom)
     const previous = renderState._p
 
-    function track(key: string, fn: () => void) {
+    function track(key: string, fn: () => void, reuse?: boolean) {
       if (adoption && state && renderState._s[key])
         return
-      renderState._s[key] = fn
+      renderState._s[key] = (reuse && previous[key]) || fn
       delete previous[key]
+    }
+
+    function trackContent(id: string, $el: Element, prop: 'textContent' | 'innerHTML', suffix: string, value: unknown) {
+      if (value != null && value !== '') {
+        if (!adoption && value !== $el[prop])
+          $el[prop] = value as string
+        track(`${id}:${suffix}`, () => {
+          if ($el[prop] === value)
+            $el[prop] = ''
+        })
+      }
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
@@ -103,29 +114,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
         // clear what we set, never SSR-adopted or externally mutated content.
-        const text = tag.textContent
-        if (text != null && text !== '') {
-          if (!adoption && text !== $el.textContent)
-            $el.textContent = text as string
-          track(`${id}:text`, () => {
-            if ($el.textContent === text)
-              $el.textContent = ''
-          })
-        }
-        const html = tag.innerHTML
-        if (html != null && html !== '') {
-          if (!adoption && html !== $el.innerHTML)
-            $el.innerHTML = html as string
-          track(`${id}:html`, () => {
-            if ($el.innerHTML === html)
-              $el.innerHTML = ''
-          })
-        }
-        const elKey = `${id}:el`
-        track(elKey, previous[elKey] || (() => {
+        trackContent(id, $el, 'textContent', 'text', tag.textContent)
+        trackContent(id, $el, 'innerHTML', 'html', tag.innerHTML)
+        track(`${id}:el`, () => {
           $el.remove()
           renderState._e.delete(id)
-        }))
+        }, true)
       }
       for (const k in tag.props) {
         const v = tag.props[k]
@@ -137,16 +131,14 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
-            const key = `${ck}:${c}`
-            track(key, previous[key] || (() => $el.classList.remove(c)))
+            track(`${ck}:${c}`, () => $el.classList.remove(c), true)
             if (!adoption && !$el.classList.contains(c))
               $el.classList.add(c)
           }
         }
         else if (k === 'style' && v) {
           for (const [sk, sv] of v as Iterable<[string, string]>) {
-            const key = `${ck}:${sk}`
-            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
+            track(`${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk), true)
             if (!adoption)
               ($el as HTMLElement).style.setProperty(sk, sv)
           }
@@ -157,7 +149,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
             if ($el.getAttribute(k) !== value)
               $el.setAttribute(k, value)
           }
-          track(ck, previous[ck] || (() => $el.removeAttribute(k)))
+          track(ck, () => $el.removeAttribute(k), true)
         }
       }
     }
@@ -179,7 +171,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       if (tag.tag === 'title') {
         if (!adoption)
           dom.title = tag.textContent as string
-        track('title:', previous['title:'] || (() => dom.title = renderState._t))
+        track('title:', () => dom.title = renderState._t, true)
         continue
       }
       ctx.$el = renderState._e.get(id)

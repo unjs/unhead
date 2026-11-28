@@ -1,6 +1,6 @@
 import type { Arrayable, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
-import { resolveDefaultType, resolveWithBase } from '../../utils'
+import { resolveDefaultType, resolveWithBase, setIfEmpty } from '../../utils'
 
 export interface SolveMathAction extends Thing {
   '@type'?: 'SolveMathAction'
@@ -16,14 +16,17 @@ export interface MathSolverSimple extends Thing {
   'usageInfo': string
   'assesses'?: Arrayable<string>
   'inLanguage'?: Arrayable<string>
-  'learningResourceType'?: 'Math Solver'
+  /**
+   * Google requires this fixed value. Defaults to `Math Solver`.
+   */
+  'learningResourceType'?: 'Math Solver' | 'Math solver'
 }
 
 export interface MathSolver extends MathSolverSimple {}
 
 export const mathSolverResolver = defineSchemaOrgResolver<MathSolver>({
   defaults: {
-    '@type': 'MathSolver',
+    '@type': ['MathSolver', 'LearningResource'],
   },
   inheritMeta: [
     'inLanguage',
@@ -31,7 +34,9 @@ export const mathSolverResolver = defineSchemaOrgResolver<MathSolver>({
   ],
   idPrefix: ['url', '#math-solver'],
   resolve(node, { meta }) {
-    resolveDefaultType(node, 'MathSolver')
+    // Google requires learningResourceType, a LearningResource property, and its examples type the node as both.
+    resolveDefaultType(node, ['MathSolver', 'LearningResource'])
+    setIfEmpty(node, 'learningResourceType', 'Math Solver')
     node.url = resolveWithBase(meta.host, node.url)
     node.usageInfo = resolveWithBase(meta.host, node.usageInfo)
     const actions = Array.isArray(node.potentialAction) ? node.potentialAction : [node.potentialAction]
