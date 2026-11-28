@@ -95,7 +95,6 @@ Offer price specifications cover active prices, struck-through prices, unit pric
 - **name**: page title from resolved metadata
 - **image**: resolved page image
 - **description**: resolved page description
-- **brand**: id reference of the identity
 - **mainEntityOfPage**: ID reference of the WebPage
 
 ## Resolves

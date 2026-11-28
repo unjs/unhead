@@ -10,7 +10,7 @@ describe.each(['https://example.com/', 'https://example.com/app/'])('schema.org 
         defineBook({
           name: 'Book',
           url,
-          workExample: { isbn: '9787543321724', bookFormat: 'Paperback' },
+          workExample: { isbn: '9787543321724', bookFormat: 'Paperback', inLanguage: 'en' },
         }),
         defineEvent({
           name: 'Concert',

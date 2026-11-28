@@ -1,11 +1,7 @@
 import type { NodeRelation, Thing } from '../../types'
 import type { Organization } from '../Organization'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import {
-  IdentityId,
-  idReference,
-  setIfEmpty,
-} from '../../utils'
+
 import { organizationResolver } from '../Organization'
 
 /**
@@ -48,14 +44,6 @@ export const courseResolver = defineSchemaOrgResolver<Course>({
     node.provider = resolveRelation(node.provider, ctx, organizationResolver, {
       root: true,
     })
-    return node
-  },
-  resolveRootNode(node, { find }) {
-    const identity = find(IdentityId)
-
-    if (identity)
-      setIfEmpty(node, 'provider', idReference(identity))
-
     return node
   },
 })

@@ -69,7 +69,7 @@ export interface BookEditionSimple extends Thing {
   /**
    * The main language of the content in the edition. Use one of the two-letter codes from the list of ISO 639-1 alpha-2 codes.
    */
-  inLanguage?: string
+  inLanguage: string
   /**
    * The ISBN-13 of the edition. If you have ISBN-10, convert it into ISBN-13.
    */
@@ -110,9 +110,6 @@ export const bookEditionResolver = defineSchemaOrgResolver<BookEdition>({
   defaults: {
     '@type': 'Book',
   },
-  inheritMeta: [
-    'inLanguage',
-  ],
   resolve(node, ctx) {
     if (node.bookFormat)
       node.bookFormat = withBase(node.bookFormat, 'https://schema.org/') as BookFormat
@@ -158,13 +155,6 @@ export const bookResolver = defineSchemaOrgResolver<Book>({
 
     if (node.url && ctx.meta.host)
       node.url = withBase(node.url, ctx.meta.host)
-    return node
-  },
-  resolveRootNode(node, { find }) {
-    const identity = find(IdentityId)
-
-    if (identity)
-      setIfEmpty(node, 'author', idReference(identity))
     return node
   },
 })

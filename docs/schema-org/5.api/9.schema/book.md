@@ -20,7 +20,7 @@ description: Use defineBook() and defineBookEdition() to describe a book work, i
 
 - `@type` defaults to `Book`, and `@id` defaults to `${canonicalUrl}#book`.
 - `name`, `description`, and `url` can be inherited from resolved page metadata.
-- `workExample` values use the BookEdition resolver, and a root Book uses the primary identity as its author when no author is supplied.
+- `workExample` values use the BookEdition resolver. Unhead does not fill in `author` or an edition's `inLanguage`. Google requires both.
 - BookEdition values expand `bookFormat` to a full Schema.org URL and serialize Date objects as calendar dates.
 
 ## Types

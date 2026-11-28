@@ -5,7 +5,7 @@ navigation:
   title: Organization
 ---
 
-[Organization structured data](https://developers.google.com/search/docs/appearance/structured-data/organization) can help Google understand administrative details and disambiguate a company or brand. Unhead also references the identity from related nodes such as Article, WebSite, and Product.
+[Organization structured data](https://developers.google.com/search/docs/appearance/structured-data/organization) can help Google understand administrative details and disambiguate a company or brand. Unhead also references the identity from related nodes such as Article, WebSite, and Service.
 
 ## JSON-LD Example
 

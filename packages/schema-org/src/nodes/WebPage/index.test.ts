@@ -389,7 +389,6 @@ describe('defineWebPage', () => {
       const webPage = await findNode<WebPage>(head, PrimaryWebPageId)!
       expect(webPage.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
-      expect(webPage.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
 
       expect(await injectSchemaOrg(head)).toMatchInlineSnapshot(`
         [
@@ -410,9 +409,6 @@ describe('defineWebPage', () => {
                 ],
               },
             ],
-            "primaryImageOfPage": {
-              "@id": "https://example.com/#logo",
-            },
             "url": "https://example.com/",
           },
           {
@@ -462,9 +458,6 @@ describe('defineWebPage', () => {
               ],
             },
           ],
-          "primaryImageOfPage": {
-            "@id": "https://example.com/#logo",
-          },
           "url": "https://example.com/",
         }
       `)
@@ -493,7 +486,6 @@ describe('defineWebPage', () => {
       const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage?.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
-      expect(webPage?.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
     })
   })
 
@@ -519,7 +511,6 @@ describe('defineWebPage', () => {
       const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage?.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
-      expect(webPage?.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
     })
   })
 
