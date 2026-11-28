@@ -84,4 +84,48 @@ describe('defineDataset', () => {
       })
     })
   })
+
+  it('inherits page metadata on the root dataset only', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineDataset({
+          name: 'Climate observations',
+          description: 'Climate observations by station',
+          hasPart: {
+            name: 'Daily temperatures',
+            description: 'Daily temperature readings',
+          },
+          isPartOf: {
+            name: 'Climate archive',
+            description: 'All climate observations',
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const dataset = graph.find(node => node['@type'] === 'Dataset')!
+
+      expect(dataset).toMatchObject({
+        url: 'https://example.com/climate',
+        datePublished: '2020-01-01',
+        dateModified: '2021-01-01',
+      })
+      expect(dataset.hasPart).toEqual({
+        '@type': 'Dataset',
+        'name': 'Daily temperatures',
+        'description': 'Daily temperature readings',
+      })
+      expect(dataset.isPartOf).toEqual({
+        '@type': 'Dataset',
+        'name': 'Climate archive',
+        'description': 'All climate observations',
+      })
+    }, {
+      path: '/climate',
+      title: 'Page title',
+      description: 'Page description',
+      datePublished: '2020-01-01',
+      dateModified: '2021-01-01',
+    })
+  })
 })

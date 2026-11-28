@@ -24,9 +24,13 @@ description: Use defineVideo() to add VideoObject structured data with thumbnail
 
 - **description** `string`
 
-  A description of the video. Google recommends this property. Unhead falls back to `caption`, then to `No description`.
+  A description of the video. Google recommends this property. Unhead falls back to `caption`. If the video has neither, the output has no `description`.
 
   Route metadata on the `description` key can provide this value; see [Defaults](#defaults).
+
+- **creator** or **author** `NodeRelations<Person | Organization>`
+
+  The person or organization that made the video. Google recommends one of them. Unhead resolves each value to a root Person or Organization node and links it by `@id`. Set `@type: 'Organization'` for an organization.
 
 - **thumbnail** `ImageObject`
 
@@ -74,11 +78,17 @@ description: Use defineVideo() to add VideoObject structured data with thumbnail
 
 - **@type**: `VideoObject`
 - **@id**: `${canonicalHost}#/schema/video/{n}`
-- **name**: `title` from resolved page metadata
-- **description**: resolved page description, then `caption`, then `No description`
-- **image**: `image` from resolved page metadata
-- **inLanguage**: `inLanguage` from resolved page metadata
-- **uploadDate**: `datePublished` from resolved page metadata
+- **description**: `caption`
+
+A video registered with `useSchemaOrg()` also takes these values from resolved page metadata:
+
+- **name**: `title`
+- **description**: `description`, when the video has no `description` or `caption`
+- **image**: `image`
+- **inLanguage**: `inLanguage`
+- **uploadDate**: `datePublished`
+
+A nested video, such as a Movie `trailer` or a Recipe `video`, does not inherit page metadata. Page metadata describes the page, so set the video's own `name` and `uploadDate`.
 
 ## Resolves
 
@@ -114,9 +124,17 @@ export interface VideoSimple extends Thing {
    */
   name?: string
   /**
-   * A description of the video (falling back to the caption, then to 'No description').
+   * A description of the video. Falls back to the caption.
    */
   description?: string
+  /**
+   * The person or organization that created the video.
+   */
+  creator?: NodeRelations<Identity>
+  /**
+   * The author of the video. Google accepts it in place of `creator`.
+   */
+  author?: NodeRelations<Identity>
   /**
    * A reference-by-ID to an imageObject.
    */

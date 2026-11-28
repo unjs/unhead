@@ -136,9 +136,15 @@ export interface ProductSimple extends Thing {
    */
   image: NodeRelations<ImageObject | string>
   /**
-   *  An array of references-by-ID to one or more Offer or aggregateOffer pieces.
+   * One or more Offer or AggregateOffer pieces.
+   * An entry with `@type: 'AggregateOffer'` or a `lowPrice` resolves as an AggregateOffer.
+   * Google merchant listings need an Offer; product snippets accept either.
    */
-  offers?: NodeRelations<Offer | number>
+  offers?: NodeRelations<Offer | AggregateOffer | number>
+  /**
+   * Removed. `aggregateOffer` is not a Schema.org property. Pass the AggregateOffer in `offers`.
+   */
+  aggregateOffer?: never
   /**
    * A Brand or Organization associated with the Product.
    */
@@ -179,10 +185,6 @@ export interface ProductSimple extends Thing {
    * An AggregateRating object.
    */
   aggregateRating?: NodeRelation<AggregateRating>
-  /**
-   * An AggregateOffer object.
-   */
-  aggregateOffer?: NodeRelation<AggregateOffer>
   /**
    * A reference to an Organization piece, representing the brand which produces the Product.
    */
@@ -340,7 +342,6 @@ export const productResolver = defineSchemaOrgResolver<Product>({
   ],
   idPrefix: ['url', ProductId],
   resolve(node, ctx) {
-    node.aggregateOffer = resolveRelation(node.aggregateOffer, ctx, aggregateOfferResolver)
     node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
     node.audience = resolveRelation(node.audience, ctx, peopleAudienceResolver)
     if (node.category) {
@@ -361,7 +362,23 @@ export const productResolver = defineSchemaOrgResolver<Product>({
     node.hasCertification = resolveRelation(node.hasCertification, ctx, certificationResolver)
     node.isVariantOf = resolveRelation(node.isVariantOf, ctx, productGroupResolver)
     node.manufacturer = resolveRelation(node.manufacturer, ctx, organizationResolver)
-    node.offers = resolveRelation(node.offers, ctx, offerResolver)
+    if (node.offers) {
+      const resolveOffer = (offer: NodeRelation<Offer | AggregateOffer | number>) => {
+        const isAggregateOffer = typeof offer === 'object'
+          && offer !== null
+          && (asArray((offer as Thing)['@type']).includes('AggregateOffer') || (offer as AggregateOffer).lowPrice != null)
+        return isAggregateOffer
+          ? resolveRelation(offer as AggregateOffer, ctx, aggregateOfferResolver)
+          : resolveRelation(offer as NodeRelation<Offer | number>, ctx, offerResolver)
+      }
+      if (Array.isArray(node.offers)) {
+        const offers = node.offers.map(resolveOffer)
+        node.offers = offers.length === 1 ? offers[0] : offers
+      }
+      else {
+        node.offers = resolveOffer(node.offers)
+      }
+    }
     node.review = resolveRelation(node.review, ctx, reviewResolver)
     node.seller = resolveRelation(node.seller, ctx, organizationResolver)
     node.size = typeof node.size === 'string'

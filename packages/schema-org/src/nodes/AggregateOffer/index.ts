@@ -8,26 +8,28 @@ import {
 import { offerResolver } from '../Offer'
 
 export interface AggregateOfferSimple extends Thing {
+  '@type'?: 'AggregateOffer'
   /**
    * The lowest price of the group, omitting any currency symbols, and using '.' to indicate a decimal place.
    */
-  lowPrice: number | string
+  'lowPrice': number | string
   /**
-   *  The highest price of the group, omitting any currency symbols, and using '.' to indicate a decimal place.
+   * The highest price of the group, omitting any currency symbols, and using '.' to indicate a decimal place.
+   * Google recommends it.
    */
-  highPrice: number | string
+  'highPrice'?: number | string
   /**
    * The currency used to describe the product price, in a three-letter ISO 4217 format.
    */
-  priceCurrency?: string
+  'priceCurrency'?: string
   /**
-   * The number of offers in the group
+   * The number of offers in the group. Google recommends it.
    */
-  offerCount?: number | string
+  'offerCount'?: number | string
   /**
    * An array of Offer pieces, referenced by ID.
    */
-  offers?: NodeRelations<Offer>
+  'offers'?: NodeRelations<Offer>
 }
 
 export interface AggregateOffer extends AggregateOfferSimple {}

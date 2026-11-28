@@ -3,6 +3,27 @@ import { defineAggregateOffer, useSchemaOrg } from '../..'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineAggregateOffer', () => {
+  it('accepts a lowPrice without a highPrice', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineAggregateOffer({
+          lowPrice: 100,
+          offerCount: 4,
+        }),
+      ])
+
+      const [aggregateOffer] = await injectSchemaOrg(head)
+
+      expect(aggregateOffer).toEqual({
+        '@id': 'https://example.com/#/schema/aggregate-offer/1',
+        '@type': 'AggregateOffer',
+        'lowPrice': 100,
+        'offerCount': 4,
+        'priceCurrency': 'AUD',
+      })
+    })
+  })
+
   it('can be registered simple', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

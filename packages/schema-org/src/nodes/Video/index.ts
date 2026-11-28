@@ -1,6 +1,6 @@
-import type { Arrayable, Id, InteractionCounter, NodeRelation, NodeRelations, ResolvableDate, Thing } from '../../types'
+import type { Arrayable, Id, Identity, InteractionCounter, NodeRelation, NodeRelations, ResolvableDate, Thing } from '../../types'
 import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import { interactionCounterResolver } from '../../core/common'
 import {
   asArray,
@@ -9,6 +9,8 @@ import {
   setIfEmpty,
 } from '../../utils'
 import { imageResolver, isImageObject } from '../Image'
+import { organizationResolver } from '../Organization'
+import { personResolver } from '../Person'
 
 export interface Clip extends Thing {
   '@type'?: 'Clip'
@@ -37,9 +39,17 @@ export interface VideoSimple extends Thing {
    */
   name?: string
   /**
-   * A description of the video (falling back to the caption, then to 'No description').
+   * A description of the video. Falls back to the caption.
    */
   description?: string
+  /**
+   * The person or organization that created the video.
+   */
+  creator?: NodeRelations<Identity>
+  /**
+   * The author of the video. Google accepts it in place of `creator`.
+   */
+  author?: NodeRelations<Identity>
   /**
    * A reference-by-ID to an imageObject.
    */
@@ -180,13 +190,6 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
   defaults: {
     '@type': 'VideoObject',
   },
-  inheritMeta: [
-    { meta: 'title', key: 'name' },
-    'description',
-    'image',
-    'inLanguage',
-    { meta: 'datePublished', key: 'uploadDate' },
-  ],
   idPrefix: 'host',
   resolve(video, ctx) {
     if (video.uploadDate)
@@ -201,8 +204,12 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
     if (video.caption && !video.description)
       video.description = video.caption
 
-    if (!video.description)
-      video.description = 'No description'
+    const identityResolvers = {
+      organization: organizationResolver,
+      person: personResolver,
+    }
+    video.creator = resolveIdentityRelation(video.creator, ctx, identityResolvers, { root: true })
+    video.author = resolveIdentityRelation(video.author, ctx, identityResolvers, { root: true })
 
     if (video.thumbnailUrl && (typeof video.thumbnailUrl === 'string' || Array.isArray(video.thumbnailUrl))) {
       const images = asArray(video.thumbnailUrl).map(image => resolveWithBase(ctx.meta.host, image))
@@ -218,7 +225,17 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
 
     return video
   },
-  resolveRootNode(video, { find, meta }) {
+  // Page metadata describes the page. Only a video registered at the root of the graph
+  // inherits it; a nested video, such as a Movie trailer, keeps only the values given.
+  resolveRootNode(video, ctx) {
+    const { find, meta } = ctx
+    setIfEmpty(video, 'name', meta.title || undefined)
+    setIfEmpty(video, 'description', meta.description || undefined)
+    setIfEmpty(video, 'inLanguage', meta.inLanguage || undefined)
+    setIfEmpty(video, 'uploadDate', resolvableDateToIso(meta.datePublished) || undefined)
+    if (video.image === undefined && meta.image)
+      video.image = resolveRelation(meta.image, ctx, imageResolver, { root: true })
+
     if (video.image && !video.thumbnailUrl) {
       const firstImage = asArray(video.image)[0]
       if (typeof firstImage === 'string')

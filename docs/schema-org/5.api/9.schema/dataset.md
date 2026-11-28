@@ -67,6 +67,8 @@ Google uses Dataset markup for [Dataset Search discovery](https://developers.goo
 - **dateModified**: resolved page modification date
 - **datePublished**: resolved page publication date
 
+Only the dataset registered with `useSchemaOrg()` inherits page metadata. A dataset nested in `hasPart` or `isPartOf` keeps only the values you set.
+
 ## Examples
 
 ### Minimal

@@ -1,3 +1,4 @@
+import type { Product } from '.'
 import type { WebSite } from '../WebSite'
 import { expect } from 'vitest'
 import { defineAggregateRating, definePerson, defineProduct, defineWebSite, useSchemaOrg } from '../../'
@@ -276,7 +277,7 @@ describe('defineProduct', () => {
 
       const graphNodes = await injectSchemaOrg(head)
 
-      expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","availability":"https://schema.org/InStock","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","bestRating":5,"worstRating":1,"ratingValue":4},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
+      expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","availability":"https://schema.org/InStock","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","ratingValue":4,"bestRating":5,"worstRating":1},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
     })
   })
 
@@ -399,6 +400,85 @@ describe('defineProduct', () => {
           },
         },
       })
+    })
+  })
+
+  it('resolves an offers entry with a lowPrice as an AggregateOffer', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'Desk chair',
+          image: '/chair.png',
+          offers: {
+            lowPrice: 120,
+          },
+        }),
+      ])
+
+      const product = await findNode<Product>(head, '#product')
+
+      expect(product.offers).toEqual({
+        '@type': 'AggregateOffer',
+        'lowPrice': 120,
+        'priceCurrency': 'AUD',
+      })
+    })
+  })
+
+  it('resolves typed Offer and AggregateOffer entries side by side', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'Desk chair',
+          image: '/chair.png',
+          offers: [
+            {
+              price: 150,
+            },
+            {
+              '@type': 'AggregateOffer',
+              'lowPrice': 120,
+              'highPrice': 180,
+              'offers': [{ price: 120 }, { price: 180 }],
+            },
+          ],
+        }),
+      ])
+
+      const product = await findNode<Product>(head, '#product')
+
+      expect(product.offers).toEqual([
+        {
+          '@type': 'Offer',
+          'price': 150,
+          'priceCurrency': 'AUD',
+        },
+        {
+          '@type': 'AggregateOffer',
+          'lowPrice': 120,
+          'highPrice': 180,
+          'offerCount': 2,
+          'offers': [
+            { '@type': 'Offer', 'price': 120, 'priceCurrency': 'AUD' },
+            { '@type': 'Offer', 'price': 180, 'priceCurrency': 'AUD' },
+          ],
+          'priceCurrency': 'AUD',
+        },
+      ])
+    })
+  })
+
+  it('rejects the removed aggregateOffer property', () => {
+    // @ts-expect-error aggregateOffer moved into offers
+    const product: Product = { name: 'Mug', image: '/mug.png', aggregateOffer: { lowPrice: 10, priceCurrency: 'USD' } }
+    expect(product.name).toBe('Mug')
+  })
+
+  it('treats an offer with an undefined lowPrice as an Offer', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineProduct({ name: 'Mug', image: '/mug.png', offers: { price: 150, lowPrice: undefined } })])
+      const product = (await injectSchemaOrg(head)).find((n: any) => n.name === 'Mug')
+      expect((product as any).offers['@type']).toBe('Offer')
     })
   })
 })
