@@ -565,6 +565,37 @@ describe('lazy head createHead', () => {
 })
 
 describe('adoption at the first render', () => {
+  it.each([false, true])('defers stale attribute and style cleanup until the live render (claimed style: %s)', async (claimedStyle) => {
+    const input = {
+      bodyAttrs: { style: { color: 'red' } },
+      meta: [{ name: 'description', content: 'server', style: claimedStyle ? 'color: red' : undefined }],
+    }
+    const dom = ssrDom(input)
+    const document = dom.window.document
+    document.body.style.color = 'blue'
+    document.body.style.background = 'green'
+    const meta = document.querySelector('meta')!
+    meta.setAttribute('style', 'color: red; background: green')
+    meta.setAttribute('data-stale', 'server')
+    const before = dom.serialize()
+    const snapshots: string[] = []
+    const head = createLazyHead({ document, hooks: {
+      'dom:beforeRender': () => { snapshots.push(dom.serialize()) },
+    } })
+    head.push(input)
+    head.finishHydration()
+    await head.load()
+    await vi.waitFor(() => expect(snapshots.length).toBeGreaterThanOrEqual(2))
+
+    expect(snapshots[1]).toBe(before)
+    expect(meta.hasAttribute('data-stale')).toBe(false)
+    expect(meta.style.color).toBe(claimedStyle ? 'red' : '')
+    expect(meta.style.background).toBe('')
+    expect(document.body.style.color).toBe('red')
+    expect(document.body.style.background).toBe('green')
+    dom.window.close()
+  })
+
   it.each(['head', 'bodyOpen', 'bodyClose'] as const)('never inserts or executes a disposed buffered script: %s', async (tagPosition) => {
     const dom = new JSDOM('<!DOCTYPE html><title>Server</title>', { runScripts: 'dangerously' })
     const doc = dom.window.document
