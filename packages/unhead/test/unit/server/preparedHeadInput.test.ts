@@ -135,9 +135,22 @@ describe('prepareHeadInput', () => {
     expect(html.htmlAttrs).toContain('lang="fr"')
     expect(head.entries.get(1)!._tags).not.toBe(head.entries.get(1)!._precomputedTags)
 
-    const resolved = render(prepared, { hooks: { 'entries:resolve': () => {} } })
+    const resolved = render(prepared, {
+      plugins: [],
+      hooks: { 'entries:resolve': () => {} },
+    })
     expect(resolved.head.entries.get(1)!._tags).toBeDefined()
     expect(resolved.head.entries.get(1)!._tags).not.toBe(resolved.head.entries.get(1)!._precomputedTags)
+    // With tag-mutating plugins active, entries:resolve still bypasses precomputed tags
+    // without contaminating the shared array or mutating caller input across renders.
+    const mutated = render(prepared, {
+      hooks: {
+        'entries:resolve': ({ entries }) => {
+          entries[0].input = { ...entries[0].input, htmlAttrs: { lang: 'es' } }
+        },
+      },
+    })
+    expect(mutated.html.htmlAttrs).toContain('lang="es"')
     expect(render(prepared).html).toEqual(render(appHead()).html)
   })
 

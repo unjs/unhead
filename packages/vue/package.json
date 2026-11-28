@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "3.4.3",
+  "version": "3.5.4",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -169,13 +169,13 @@
   },
   "dependencies": {
     "@unhead/bundler": "workspace:*",
-    "hookable": "catalog:",
     "unhead": "workspace:*",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@vue/compiler-sfc-vapor": "catalog:",
     "@vue/server-renderer": "catalog:",
+    "hookable": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",

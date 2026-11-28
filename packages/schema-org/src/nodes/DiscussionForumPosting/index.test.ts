@@ -52,7 +52,7 @@ describe('defineDiscussionForumPosting', () => {
             "headline": "Very Popular Thread",
             "interactionStatistic": {
               "@type": "InteractionCounter",
-              "interactionType": "LikeAction",
+              "interactionType": "https://schema.org/LikeAction",
               "userInteractionCount": 27,
             },
             "text": "I went to the concert.",
@@ -60,6 +60,37 @@ describe('defineDiscussionForumPosting', () => {
           },
         ]
       `)
+    })
+  })
+
+  it('resolves relative urls and interaction counters', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineDiscussionForumPosting({
+          headline: 'Thread',
+          text: 'Hello',
+          author: { name: 'Katie Pope' },
+          datePublished: '2026-07-01T08:00:00+00:00',
+          url: '/forum/threads/1',
+          isPartOf: '/forum',
+          interactionStatistic: { interactionType: 'LikeAction', userInteractionCount: 3 },
+          comment: {
+            text: 'Hi',
+            author: { name: 'Saul Douglas' },
+            datePublished: '2026-07-01T09:00:00+00:00',
+            url: '/forum/threads/1#c1',
+            interactionStatistic: { interactionType: 'LikeAction', userInteractionCount: 1 },
+          },
+        }),
+      ])
+      const post = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'DiscussionForumPosting')
+      const counter = (count: number) => ({ '@type': 'InteractionCounter', 'interactionType': 'https://schema.org/LikeAction', 'userInteractionCount': count })
+      expect(post).toMatchObject({
+        url: 'https://example.com/forum/threads/1',
+        isPartOf: 'https://example.com/forum',
+        interactionStatistic: counter(3),
+        comment: { url: 'https://example.com/forum/threads/1#c1', interactionStatistic: counter(1) },
+      })
     })
   })
 })

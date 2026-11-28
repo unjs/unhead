@@ -155,4 +155,3 @@ To use the site identity as the author, call `defineOrganization()` or `definePe
 
 - [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization/person
 - [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs): Add navigation breadcrumbs
-- [FAQ Page](/docs/schema-org/guides/recipes/faq): Add FAQ structured data

@@ -1,17 +1,22 @@
 ---
 title: Question Schema
-description: Use defineQuestion() to add Question and Answer structured data and connect FAQPage mainEntity references.
+description: Use defineQuestion() to add Question and Answer structured data and connect QAPage or FAQPage mainEntity references.
 ---
 
 ## Schema.org Question
 
 - **Type**: `defineQuestion<T extends Record<string, any>>(input?: Question & T)`{lang="ts"}
 
-  Describes an individual question. It is commonly used on an `FAQPage`.
+  Describes an individual question on a `QAPage` or an `FAQPage`.
+
+::note
+Google stopped showing FAQ rich results on May 7, 2026. `FAQPage` markup stays valid Schema.org. Google still uses `Question` for [Q&A pages](https://developers.google.com/search/docs/appearance/structured-data/qapage) and [Education Q&A](/docs/schema-org/api/schema/quiz). See the [FAQ recipe](/docs/schema-org/guides/recipes/faq) for details.
+::
 
 ## Useful Links
 
 - [Schema.org Question](https://schema.org/Question)
+- [QAPage - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/qapage)
 - [Recipe: FAQ](/docs/schema-org/guides/recipes/faq)
 
 ## Question and answer properties
@@ -54,7 +59,7 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-sche
 
 [WebPage](/docs/schema-org/api/schema/webpage)
 
-- Each question appends an entry to `mainEntity` when the WebPage includes the `FAQPage` type
+- Each question appends an entry to `mainEntity` when the WebPage includes the `FAQPage` or `QAPage` type
 
 ## Types
 

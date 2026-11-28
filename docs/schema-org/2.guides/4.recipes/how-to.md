@@ -215,5 +215,4 @@ Keep the visible instructions consistent with the schema. For example:
 ## Related Recipes
 
 - [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization/person
-- [FAQ Page](/docs/schema-org/guides/recipes/faq): Add FAQ structured data
 - [Blog Posts](/docs/schema-org/guides/recipes/blog): Article structured data

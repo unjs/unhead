@@ -64,4 +64,28 @@ describe('defineBook', () => {
       `)
     })
   })
+
+  it('keeps a year-only edition date', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineBook({
+        name: 'Emma',
+        author: definePerson({ name: 'Jane Austen' }),
+        workExample: [defineBookEdition({ isbn: '9780141439587', bookFormat: 'https://schema.org/Hardcover', inLanguage: 'en', datePublished: '1815' })],
+      })])
+      const book = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'Book')
+      expect((book as any).workExample.datePublished).toBe('1815')
+    })
+  })
+
+  it('types an inline author as a Person', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [defineBook({
+        name: 'Emma',
+        author: { name: 'Jane Austen' },
+        workExample: [defineBookEdition({ isbn: '9780141439587', bookFormat: 'https://schema.org/Hardcover', inLanguage: 'en' })],
+      })])
+      const graph = await injectSchemaOrg(head)
+      expect(graph[0].author).toEqual({ '@type': 'Person', 'name': 'Jane Austen' })
+    })
+  })
 })

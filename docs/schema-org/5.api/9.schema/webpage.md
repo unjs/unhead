@@ -34,7 +34,7 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 - **isPartOf**: WebSite reference
 
 - **about**: Identity reference on the homepage when an identity is registered
-- **primaryImageOfPage**: Logo reference when an Organization logo is registered
+- **primaryImageOfPage**: Logo reference when an Organization logo is registered. Pass `false` to opt out.
 
 ## Sub-Types
 
@@ -49,6 +49,10 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 - `QAPage`
 - `RealEstateListing`
 - `SearchResultsPage`
+
+::note
+Google stopped showing FAQ rich results on May 7, 2026. `FAQPage` stays a valid Schema.org type. See the [FAQ recipe](/docs/schema-org/guides/recipes/faq) for details.
+::
 
 ## Relation Transforms
 
@@ -90,6 +94,8 @@ Unhead can infer a page subtype from the final URL path segment:
 - `/checkout` → `CheckoutPage`
 - `/contact`, `/get-in-touch`, `/contact-us` → `ContactPage`
 - `/faq` → `FAQPage`
+
+A `/faq` path still produces `FAQPage`. Google no longer shows a rich result for that type.
 
 ## Example
 
@@ -135,6 +141,7 @@ export interface WebPageSimple extends Thing {
   isPartOf?: NodeRelation<WebSite>
   /**
    * A reference-by-ID to the Organization node.
+   * Note: Only for the home page.
    */
   about?: NodeRelation<Organization>
   /**
@@ -159,8 +166,10 @@ export interface WebPageSimple extends Thing {
   dateModified?: ResolvableDate
   /**
    * A reference-by-ID to a node representing the page's featured image.
+   *
+   * Pass `false` to opt out of the automatic `primaryImageOfPage` logo inheritance.
    */
-  primaryImageOfPage?: NodeRelation<ImageObject | string>
+  primaryImageOfPage?: NodeRelation<ImageObject | string> | false | null
   /**
    * A reference-by-ID to a node representing the page's breadcrumb structure.
    */
@@ -194,6 +203,6 @@ export interface WebPageSimple extends Thing {
    *
    * Note it's on by default for most page types.
    */
-  potentialAction?: Arrayable<(ReadAction | unknown)>
+  potentialAction?: Arrayable<ReadAction | Thing>
 }
 ```

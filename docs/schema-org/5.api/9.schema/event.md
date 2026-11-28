@@ -45,8 +45,7 @@ Unhead renders this JSON-LD for an in-person event with a venue, an organizer, a
         "availability": "https://schema.org/InStock",
         "price": 0,
         "priceCurrency": "AUD",
-        "url": "https://example.com/tickets",
-        "priceValidUntil": "2027-12-30T00:00:00.000Z"
+        "url": "https://example.com/tickets"
       },
       "organizer": {
         "@id": "https://example.com/#/schema/organization/1"
@@ -139,6 +138,7 @@ Import `definePlace` and `defineOrganization` with `defineEvent` in this example
 - `@type` defaults to `Event`, and `@id` defaults to `${canonicalUrl}#event`.
 - `name`, `description`, `image`, and `inLanguage` can be inherited from resolved page metadata.
 - `organizer`, `performer`, and `offers` use their corresponding nested resolvers.
+- `offers` has no default `availability` or `priceValidUntil`. If tickets are not on sale yet, omit `availability`. Set `validFrom` only when you know the on-sale date.
 - `eventAttendanceMode` and `eventStatus` are expanded to full Schema.org URLs.
 - Event date fields accept JavaScript Date objects. Midnight values are serialized as calendar dates unless `eventStatus` is `EventMovedOnline`; dates for moved-online events are serialized as ISO 8601 date-times.
 

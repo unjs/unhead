@@ -60,14 +60,12 @@ describe('defineAggregateOffer', () => {
             "offers": [
               {
                 "@type": "Offer",
-                "availability": "https://schema.org/InStock",
                 "price": "1.00",
                 "priceCurrency": "AUD",
                 "priceValidUntil": "2023-12-30T00:00:00.000Z",
               },
               {
                 "@type": "Offer",
-                "availability": "https://schema.org/InStock",
                 "price": "2.00",
                 "priceCurrency": "AUD",
                 "priceValidUntil": "2023-12-30T00:00:00.000Z",

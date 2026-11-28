@@ -56,7 +56,6 @@ describe('defineProduct', () => {
             "name": "test",
             "offers": {
               "@type": "Offer",
-              "availability": "https://schema.org/InStock",
               "price": 50,
               "priceCurrency": "AUD",
               "priceValidUntil": "2023-12-30T00:00:00.000Z",
@@ -145,7 +144,7 @@ describe('defineProduct', () => {
     }, { description: 'page description' })
   })
 
-  it('null opts out of offer defaults (priceValidUntil, priceCurrency)', async () => {
+  it('null opts out of the offer priceCurrency default and is never rendered', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
         defineProduct({
@@ -277,7 +276,7 @@ describe('defineProduct', () => {
 
       const graphNodes = await injectSchemaOrg(head)
 
-      expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","bestRating":5,"worstRating":1,"ratingValue":4},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
+      expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","availability":"https://schema.org/InStock","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","bestRating":5,"worstRating":1,"ratingValue":4},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
     })
   })
 
