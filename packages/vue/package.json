@@ -151,8 +151,8 @@
   },
   "peerDependencies": {
     "vite": ">=6.4.6",
-    "vue": ">=3.5.18",
-    "webpack": ">=5.0.0"
+    "vue": ">=3.5.46",
+    "webpack": ">=5.113.0"
   },
   "peerDependenciesMeta": {
     "vite": {

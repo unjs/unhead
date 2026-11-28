@@ -2,16 +2,16 @@
   "name": "nuxt-unhead-benchmark",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@12.21.0",
+  "packageManager": "pnpm@12.23.0",
   "dependencies": {
-    "@iconify-json/lucide": "1.2.158",
+    "@iconify-json/lucide": "1.2.159",
     "@nuxt/icon": "2.6.3",
-    "@nuxt/ui": "4.13.0",
-    "@unhead/bundler": "3.4.3",
-    "@unhead/vue": "3.4.3",
-    "nuxt": "4.6.4",
+    "@nuxt/ui": "4.13.1",
+    "@unhead/bundler": "3.5.2",
+    "@unhead/vue": "3.5.2",
+    "nuxt": "4.7.0",
     "tailwindcss": "4.3.5",
-    "unhead": "3.4.3",
-    "vue": "3.5.44"
+    "unhead": "3.5.2",
+    "vue": "3.5.46"
   }
 }
