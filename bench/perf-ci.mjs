@@ -17,7 +17,7 @@ const packageDist = (pkg, name) => import(pathToFileURL(`${process.cwd()}/packag
 const dist = name => packageDist('unhead', name)
 const schemaOrgDist = name => packageDist('schema-org', name)
 const { useHead, useSeoMeta } = await dist('index.mjs')
-const { createHead, renderSSRHead } = await dist('server.mjs')
+const { createHead, renderSSRHead, transformHtmlTemplate } = await dist('server.mjs')
 const { processTemplateParams, unpackMeta } = await dist('utils.mjs')
 const {
   defineOrganization,
@@ -343,6 +343,89 @@ async function measureAllocAsync(fn, { warmup = 20, reps = 5, runs = 50 } = {}) 
   return stats(samples)
 }
 
+async function inlineStringBenches() {
+  const styleBlock = Array.from({ length: 40 }, (_, i) =>
+    `.component-${i} { display: flex; padding: 0.5rem 1.25rem; margin: 0.25rem; color: #1a1a1a; background: #ffffff; } /* rule ${i} */\n`).join('')
+  const jsBlock = Array.from({ length: 60 }, (_, i) =>
+    `function initWidget${i}(el, opts) { var count = opts.count + 1; if (count > 0 && el) { el.dataset.ready = "true"; el.innerHTML = "<span>ok</span>"; } } // widget ${i}\n`).join('')
+  const jsonPayloadObj = {
+    '@context': 'https://schema.org',
+    '@graph': Array.from({ length: 60 }, (_, i) => ({
+      '@type': 'Article',
+      '@id': `https://example.com/posts/article-${i}#article`,
+      'headline': `Engineering Post ${i} About SSR Performance`,
+      'description': 'Optimizing inline script and style string assembly.',
+      'keywords': ['performance', 'ssr', 'unhead', `topic-${i}`],
+    })),
+  }
+  const jsonCompact = JSON.stringify(jsonPayloadObj)
+  const jsonPretty = JSON.stringify(jsonPayloadObj, null, 2)
+
+  // 1. HTML template extraction + deferred </body> scan with large inline styles & scripts
+  const headStyles = Array.from({ length: 6 }, (_, i) => `<style data-id="c-${i}">${styleBlock}</style>`).join('\n    ')
+  const headScripts = Array.from({ length: 4 }, (_, i) => `<script data-id="s-${i}">${jsBlock}</script>`).join('\n    ')
+  const bodyCards = Array.from({ length: 120 }, (_, i) =>
+    `<div class="card card-${i}" data-index="${i}"><h3>Title ${i}</h3><p>Paragraph text for item ${i}.</p></div>`).join('\n      ')
+  const bodyPayload = `<script type="application/json" id="__NUXT_DATA__">${jsonCompact}${jsonCompact}</script>`
+  const templateHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Bench</title>${headStyles}${headScripts}<script type="application/ld+json">${jsonCompact}</script></head><body><div id="app"><!--app-html--></div>${bodyCards}${bodyPayload}</body></html>`
+
+  const runTransform = () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ title: 'Req', script: [{ src: '/end.js', tagPosition: 'bodyClose' }] })
+    return transformHtmlTemplate(head, templateHtml)
+  }
+
+  // 2. Unkeyed inline styles & scripts SSR render
+  const inlineHeadInput = {
+    title: 'Inline Bench',
+    style: Array.from({ length: 8 }, (_, i) => ({ innerHTML: `${styleBlock}/* ${i} */` })),
+    script: [
+      ...Array.from({ length: 4 }, (_, i) => ({ innerHTML: `${jsBlock}// ${i}` })),
+      { type: 'application/ld+json', innerHTML: jsonCompact },
+    ],
+  }
+  const runInlineSsr = () => {
+    const head = createHead({ disableDefaults: true })
+    head.push(inlineHeadInput)
+    return renderSSRHead(head)
+  }
+
+  const transformTimes = measureTimes(runTransform, { warmup: 10, reps: 25, runs: 25 })
+  const transformAlloc = await measureAlloc(runTransform, { warmup: 10, reps: 5, runs: 20 })
+  const inlineSsrTimes = measureTimes(runInlineSsr, { warmup: 20, reps: 25, runs: 120 })
+  const inlineSsrAlloc = await measureAlloc(runInlineSsr, { warmup: 20, reps: 5, runs: 80 })
+
+  const benches = [
+    { id: 'template-inline-cpu', name: 'HTML template transform with inline scripts/styles (CPU)', kind: 'time', value: transformTimes.cpu.value, rme: transformTimes.cpu.rme },
+    { id: 'template-inline-alloc', name: 'HTML template transform allocated / render', kind: 'alloc', value: transformAlloc.value, rme: transformAlloc.rme },
+    { id: 'ssr-inline-unkeyed-cpu', name: 'SSR render unkeyed inline styles/scripts (CPU)', kind: 'time', value: inlineSsrTimes.cpu.value, rme: inlineSsrTimes.cpu.rme },
+    { id: 'ssr-inline-unkeyed-alloc', name: 'SSR render unkeyed inline styles/scripts (allocated)', kind: 'alloc', value: inlineSsrAlloc.value, rme: inlineSsrAlloc.rme },
+  ]
+
+  // 3. Runtime minifiers (CSS + JS + JSON)
+  try {
+    const { minifyCSS, minifyJS, minifyJSON } = await dist('minify.mjs')
+    const runMinify = () => {
+      minifyCSS(styleBlock)
+      minifyJS(jsBlock)
+      minifyJSON(jsonCompact)
+      minifyJSON(jsonPretty)
+    }
+    const minifyTimes = measureTimes(runMinify, { warmup: 15, reps: 25, runs: 30 })
+    const minifyAlloc = await measureAlloc(runMinify, { warmup: 15, reps: 5, runs: 20 })
+    benches.push(
+      { id: 'minify-inline-cpu', name: 'Runtime minify CSS/JS/JSON (CPU)', kind: 'time', value: minifyTimes.cpu.value, rme: minifyTimes.cpu.rme },
+      { id: 'minify-inline-alloc', name: 'Runtime minify CSS/JS/JSON (allocated)', kind: 'alloc', value: minifyAlloc.value, rme: minifyAlloc.rme },
+    )
+  }
+  catch (e) {
+    if (e?.code !== 'MODULE_NOT_FOUND' && e?.code !== 'ERR_MODULE_NOT_FOUND')
+      throw e
+  }
+
+  return benches
+}
+
 // Streaming SSR: an end-to-end wrapStream drain (shell + 50 app chunks + closing
 // HTML) and the per-suspense-boundary head patch render. Both import the same
 // shipped dist as the other benches. Tolerate absence on older base refs.
@@ -361,6 +444,12 @@ async function streamingBenches() {
 
   const STREAM_TEMPLATE = '<!DOCTYPE html><html><head><title>Bench</title></head><body><div id="app"><!--app-html--></div></body></html>'
   const STREAM_CHUNK = new TextEncoder().encode('<div class="product"><h2>Wireless Headphones</h2><p>Premium sound quality with noise cancellation.</p><span class="price">$79.99</span></div>')
+  const encoder = new TextEncoder()
+  const INLINE_STREAM_CHUNKS = [
+    encoder.encode(Array.from({ length: 80 }, (_, i) => `<div class="card-${i}" data-id="${i}"><h3>Item ${i}</h3><p>Description ${i}</p></div>`).join('')),
+    encoder.encode(`<style>${'.card{display:flex;padding:8px;color:#111;background:#fff}'.repeat(200)}</style>`),
+    encoder.encode(`<script type="application/json" id="__NUXT_DATA__">${JSON.stringify({ items: Array.from({ length: 300 }, (_, i) => ({ id: i, title: `Item "${i}"`, desc: 'A realistic JSON payload with many quotes.' })) })}</script>`),
+  ]
 
   const makeAppStream = (chunks) => {
     let i = 0
@@ -374,6 +463,18 @@ async function streamingBenches() {
     })
   }
 
+  const makeInlineStream = () => {
+    let i = 0
+    return new ReadableStream({
+      pull(controller) {
+        if (i < INLINE_STREAM_CHUNKS.length)
+          controller.enqueue(INLINE_STREAM_CHUNKS[i++])
+        else
+          controller.close()
+      },
+    })
+  }
+
   const drainWrappedStream = async () => {
     const { head } = createStreamableHead()
     head.push({
@@ -381,6 +482,17 @@ async function streamingBenches() {
       meta: [{ name: 'description', content: 'streaming perf' }],
     })
     const reader = wrapStream(head, makeAppStream(50), STREAM_TEMPLATE).getReader()
+    while (!(await reader.read()).done)
+      ;
+  }
+
+  const drainInlineStream = async () => {
+    const { head } = createStreamableHead()
+    head.push({
+      title: 'Streaming inline bench',
+      meta: [{ name: 'description', content: 'streaming inline perf' }],
+    })
+    const reader = wrapStream(head, makeInlineStream(), STREAM_TEMPLATE).getReader()
     while (!(await reader.read()).done)
       ;
   }
@@ -403,6 +515,7 @@ async function streamingBenches() {
 
   const wrapTimes = await measureTimesAsync(drainWrappedStream, { warmup: 50, reps: 30, runs: 100 })
   const wrapAlloc = await measureAllocAsync(drainWrappedStream)
+  const inlineWrapTimes = await measureTimesAsync(drainInlineStream, { warmup: 15, reps: 25, runs: 40 })
   const chunkTimes = measureTimes(renderSuspenseChunk, { reps: 30, runs: 120 })
   const chunkAlloc = await measureAlloc(renderSuspenseChunk)
 
@@ -410,6 +523,7 @@ async function streamingBenches() {
     { id: 'stream-wrap-cpu', name: 'Streaming wrapStream drain (CPU)', kind: 'time', value: wrapTimes.cpu.value, rme: wrapTimes.cpu.rme },
     { id: 'stream-wrap-wall', name: 'Streaming wrapStream drain (wall)', kind: 'time', value: wrapTimes.wall.value, rme: wrapTimes.wall.rme, informational: true },
     { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value, rme: wrapAlloc.rme, informational: true },
+    { id: 'stream-wrap-inline-cpu', name: 'Streaming wrapStream with inline script/style (CPU)', kind: 'time', value: inlineWrapTimes.cpu.value, rme: inlineWrapTimes.cpu.rme },
     { id: 'stream-chunk-cpu', name: 'Streaming suspense chunk (CPU)', kind: 'time', value: chunkTimes.cpu.value, rme: chunkTimes.cpu.rme },
     { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value, rme: chunkAlloc.rme },
   ]
@@ -497,6 +611,7 @@ const result = {
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
     ...await seoMetaSsrBenches(),
     ...await titleTemplateBenches(),
+    ...await inlineStringBenches(),
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },

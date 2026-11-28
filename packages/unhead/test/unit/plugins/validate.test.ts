@@ -236,6 +236,43 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'unresolved-template-param')).toBeTruthy()
     })
 
+    it.each([
+      ['og:image', 'http://localhost:3000/_og/d/c_Default%2Ctitle_Count%2Bevery%2Bitem.%2Cs_abc123.png'],
+      ['og:url', 'https://example.com/caf%C3%A9/r%C3%A9sum%C3%A9'],
+      ['og:image', 'https://example.com/emoji/%F0%9F%9A%80/dash/%E2%80%94.png'],
+      ['og:image', 'https://example.com/_og/d/title_50%25off%25now.png'],
+      ['og:image', 'https://example.com/%25siteName%25.png'],
+      ['og:image', 'https://example.com/_og/d/c_Default%2Ctitle_Count%2Bevery%2Bitem.png?discount=100%'],
+      ['twitter:image', 'https://example.com/a%2Bfoo%2Bbar.png'],
+      ['description', 'See https://example.com/a%2Bfoo%2Bbar'],
+    ])('does not treat percent-encoded escapes in %s (%s) as template params', (metaKey, content) => {
+      const { head, rules } = createValidationHead()
+      const meta = metaKey.startsWith('og:')
+        ? { property: metaKey, content }
+        : { name: metaKey, content }
+      head.push({ meta: [meta] })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'unresolved-template-param')).toBeFalsy()
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
+    })
+
+    it.each([
+      ['https://example.com/%siteName%/a.png', '%siteName'],
+      ['https://example.com/%description%.png', '%description'],
+      ['https://example.com/%dead%/a.png', '%dead'],
+      ['https://example.com/%site.name%/a.png', '%site.name'],
+      ['https://example.com/_og/d/c_Default%2Ctitle_%siteName%.png', '%siteName'],
+      ['https://example.com/%2B%description%.png', '%description'],
+    ])('still warns on unresolved template params in URL %s', (content, expectedToken) => {
+      const { head, rules } = createValidationHead()
+      head.push({ meta: [{ property: 'og:image', content }] })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'unresolved-template-param')).toBeTruthy()
+      const missingPluginRule = rules.find(r => r.id === 'missing-template-params-plugin')
+      expect(missingPluginRule).toBeTruthy()
+      expect(missingPluginRule!.message).toContain(`"${expectedToken}"`)
+    })
+
     it('warns on empty title', () => {
       const { head, rules } = createValidationHead()
       head.push({ title: '' })

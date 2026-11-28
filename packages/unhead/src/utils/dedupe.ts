@@ -1,22 +1,15 @@
 import type { HeadTag } from '../types'
-import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
+import { TagsWithInnerContent, UniqueTags } from './const'
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
-const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
+const META_ARRAYABLE_RE = /^(?:(?:theme-color|google-site-verification|author|og:locale:alternate|(?:article|book):(?:author|tag))$|(?:og:(?:image|video|audio)|twitter:image)(?::|$))/
 
 export function isMetaArrayDupeKey(v: string) {
   const i = v.indexOf(':')
-  if (i === -1)
-    return false
-  const key = v.slice(i + 1)
-  return MetaTagsArrayable.has(key)
-    || key.startsWith('og:image:')
-    || key.startsWith('og:video:')
-    || key.startsWith('og:audio:')
-    || key.startsWith('twitter:image:')
+  return i !== -1 && META_ARRAYABLE_RE.test(v.slice(i + 1))
 }
 
-export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
+export function dedupeKey<T extends HeadTag>(tag: T, skipContent?: boolean): string | undefined {
   const { props, tag: t, key } = tag
   if (UniqueTags.has(t))
     return t
@@ -30,11 +23,9 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   if (props.charset)
     return 'charset'
   if (t === 'meta') {
-    for (const n of META_KEY_ATTRS) {
-      const v = props[n]
-      if (v !== undefined)
-        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
-    }
+    const v = props.name !== undefined ? props.name : props.property !== undefined ? props.property : props['http-equiv']
+    if (v !== undefined)
+      return key && (typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) ? `meta:${v}:key:${key}` : `meta:${v}`
   }
   if (key)
     return `${t}:key:${key}`
@@ -43,7 +34,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   // after key/id so an explicit key still allows multiple links with the same rel + href
   if (t === 'link' && props.rel && props.href)
     return `link:${props.rel}:${props.href}`
-  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
+  return !skipContent && TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag): string {

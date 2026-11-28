@@ -1,9 +1,23 @@
 import type { GenericLink } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useScript } from '../../../src/composables'
-import { createHead as createServerHead } from '../../../src/server'
+import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
 describe('warmup', () => {
+  it.each([undefined, 'client'] as const)('omits SSR warmup when disabled with trigger %s', (trigger) => {
+    const head = createServerHead({ disableDefaults: true })
+    useScript(head, '/warm-client.js', { trigger, warmupStrategy: false })
+
+    expect(renderSSRHead(head).headTags).toBe('')
+  })
+
+  it.each([undefined, 'client'] as const)('preloads by default with trigger %s', (trigger) => {
+    const head = createServerHead({ disableDefaults: true })
+    useScript(head, '/warm-client.js', { trigger })
+
+    expect(renderSSRHead(head).headTags).toBe('<link href="/warm-client.js" rel="preload" fetchpriority="low" as="script">')
+  })
+
   it('server', () => {
     const head = createServerHead({
       disableDefaults: true,

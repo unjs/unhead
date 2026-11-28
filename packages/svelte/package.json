@@ -1,7 +1,7 @@
 {
   "name": "@unhead/svelte",
   "type": "module",
-  "version": "3.4.3",
+  "version": "3.5.4",
   "description": "Full-stack <head> manager built for Svelte.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -56,6 +56,10 @@
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "default": "./dist/lazy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -89,6 +93,9 @@
       ],
       "stream/vite": [
         "dist/stream/vite"
+      ],
+      "lazy": [
+        "dist/lazy"
       ]
     }
   },

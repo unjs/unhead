@@ -5,7 +5,7 @@ import { bindStreamHead } from '../stream/queue'
 export function attachLazyStreamHead(
   queue: StreamingGlobal,
   head: Unhead<any>,
-  push: (input: SerializableHead) => number | undefined,
+  push: (input: SerializableHead, safe?: true) => number | undefined,
 ) {
   const backlog = queue._q
   const { _head: previousHead, push: previousPush } = queue

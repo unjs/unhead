@@ -65,13 +65,13 @@ interface VacationRentalBase extends Thing {
 type VacationRentalLocation
   = | {
     geo: NodeRelation<GeoCoordinates>
-    latitude?: number
-    longitude?: number
+    latitude?: number | string
+    longitude?: number | string
   }
   | {
     geo?: NodeRelation<GeoCoordinates>
-    latitude: number
-    longitude: number
+    latitude: number | string
+    longitude: number | string
   }
 
 export type VacationRentalSimple = VacationRentalBase & VacationRentalLocation

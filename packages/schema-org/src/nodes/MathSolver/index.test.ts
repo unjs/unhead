@@ -45,4 +45,24 @@ describe('defineMathSolver', () => {
       `)
     })
   })
+
+  it('adds the LearningResource type and resource type Google requires', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineMathSolver({
+          potentialAction: {
+            'target': '/solve?q={math_expression_string}',
+            'mathExpression-input': 'required name=math_expression_string',
+          },
+          url: '/',
+          usageInfo: '/privacy',
+        }),
+      ])
+      const solver = (await injectSchemaOrg(head))[0]
+      expect(solver).toMatchObject({
+        '@type': ['MathSolver', 'LearningResource'],
+        'learningResourceType': 'Math Solver',
+      })
+    })
+  })
 })

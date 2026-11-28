@@ -1,4 +1,8 @@
+import { createHead as createClientHead, renderDOMHead } from '../../src/client'
+import { TemplateParamsPlugin } from '../../src/plugins'
+import { createHead, renderSSRHead } from '../../src/server'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { useDom } from '../util'
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {
@@ -109,5 +113,84 @@ describe('hashTag', () => {
   it('returns a string for non-string text content', () => {
     expect(hashTag({ tag: 'meta', props: {}, textContent: 1 as any })).toBe('1')
     expect(hashTag({ tag: 'meta', props: {}, textContent: true as any })).toBe('true')
+  })
+})
+
+describe('sSR unkeyed content deduplication', () => {
+  it('preserves the first slot order when a later duplicate script replaces an earlier one', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({
+      script: [
+        { innerHTML: 'window.init=()=>{}' },
+        { innerHTML: 'window.init()' },
+        { innerHTML: 'window.init=()=>{}' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toBe('<script>window.init=()=>{}</script>\n<script>window.init()</script>')
+  })
+
+  it('preserves the first slot order when a keyed script is replaced around an unkeyed script', () => {
+    const head = createHead({ disableDefaults: true, tagWeight: () => 100 })
+    head.push({
+      script: [
+        { key: 'init', innerHTML: 'window.init=()=>{}' },
+        { innerHTML: 'window.init()' },
+        { key: 'init', innerHTML: 'window.init=()=>{}', tagDuplicateStrategy: 'replace' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toBe('<script data-hid="init">window.init=()=>{}</script>\n<script>window.init()</script>')
+  })
+
+  it('deduplicates identical unkeyed scripts when only one specifies tagDuplicateStrategy', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({
+      script: [
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-a': '1' },
+        { innerHTML: 'window.runs=(window.runs||0)+1', tagDuplicateStrategy: 'replace' },
+      ],
+    })
+    expect(renderSSRHead(head).headTags).toBe('<script>window.runs=(window.runs||0)+1</script>')
+
+    const mergeHead = createHead({ disableDefaults: true })
+    mergeHead.push({
+      script: [
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-a': '1' },
+        { 'innerHTML': 'window.runs=(window.runs||0)+1', 'data-b': '2', 'tagDuplicateStrategy': 'merge' },
+      ],
+    })
+    expect(renderSSRHead(mergeHead).headTags).toBe('<script data-a="1" data-b="2">window.runs=(window.runs||0)+1</script>')
+  })
+
+  it('keeps all ctx.tagMap keys as strings for tags:resolve hooks', () => {
+    const head = createHead({ disableDefaults: true })
+    let keyTypes: string[] = []
+    head.hooks.hook('tags:resolve', ({ tagMap }) => {
+      keyTypes = [...tagMap.keys()].map(k => typeof k)
+    })
+    head.push({
+      script: [{ innerHTML: 'console.log(1)' }],
+      style: [{ innerHTML: 'body{margin:0}' }],
+    })
+    renderSSRHead(head)
+    expect(keyTypes).toEqual(['string', 'string'])
+  })
+
+  it('recomputes client script dedupe keys after template param substitution so SSR scripts are reused', () => {
+    const dom = useDom({
+      headTags: '<script>window.__user = "Ada"</script>',
+    })
+    const head = createClientHead({
+      document: dom.window.document,
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      templateParams: { name: 'Ada' },
+      script: [{ innerHTML: 'window.__user = "%name"', processTemplateParams: true }],
+    })
+    renderDOMHead(head)
+    expect(dom.window.document.head.querySelectorAll('script')).toHaveLength(1)
+    expect(dom.window.document.head.querySelector('script')?.textContent).toBe('window.__user = "Ada"')
   })
 })

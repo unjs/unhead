@@ -113,8 +113,6 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `headline` is cut to a maximum of 110 characters at the last complete word that fits.
-
 - `thumbnailUrl` will be set to the first image
 
 - `dateModified` or `datePublished` can be resolved from Date objects
@@ -183,7 +181,6 @@ export interface ArticleSimple extends Thing {
   ['@type']?: Arrayable<ValidArticleSubTypes>
   /**
    * The headline of the article (falling back to the title of the WebPage).
-   * Headlines should not exceed 110 characters.
    */
   headline?: string
   /**

@@ -4,14 +4,8 @@ import type { HeadSlot, HeadSlots } from './streamingMetadata'
 import { hasOwn } from '../utils/hasOwn'
 import { decodeAttribute } from './decodeAttribute'
 
-const WHITESPACE = /[\t\n\f\r ]*/y
-const TAG_NAME = /<(\/?)([a-z][^\t\n\f\r /<>="'`]*)(?=[\t\n\f\r />])/iy
-const ATTRIBUTE_NAME = /=[^\t\n\f\r /=>]*|[^\t\n\f\r /=>]+/y
-const UNQUOTED_VALUE = /[^\t\n\f\r >]*/y
 const COMMENT_END = /--!?>/g
 const OUTLET = /^<!--\s*(?:app-html|ssr-outlet)\s*-->$/
-const ASCII_ALPHA = /[a-z]/i
-const TAG_DELIMITER = /[\t\n\f\r />]/
 const ASCII_UPPER = /[A-Z]/g
 const NON_WHITESPACE = /[^\t\n\f\r ]/
 
@@ -196,10 +190,23 @@ export interface TemplateScan {
   headElements: HeadElement[]
 }
 
-function skipSpace(html: string, start: number) {
-  WHITESPACE.lastIndex = start
-  WHITESPACE.exec(html)
-  return WHITESPACE.lastIndex
+function isWsCode(c: number): boolean {
+  return c === 32 || c === 9 || c === 10 || c === 12 || c === 13
+}
+
+function isTagDelimCode(c: number): boolean {
+  return c === 62 || c === 32 || c === 47 || c === 10 || c === 9 || c === 13 || c === 12
+}
+
+function isAsciiAlphaCode(c: number): boolean {
+  return (c >= 97 && c <= 122) || (c >= 65 && c <= 90)
+}
+
+function skipSpace(html: string, cursor: number): number {
+  const len = html.length
+  while (cursor < len && isWsCode(html.charCodeAt(cursor)))
+    cursor++
+  return cursor
 }
 
 function asciiLower(value: string) {
@@ -207,39 +214,76 @@ function asciiLower(value: string) {
 }
 
 function readTag(html: string, start: number, collectAttributes = false): SourceTag | undefined {
-  TAG_NAME.lastIndex = start
-  const match = TAG_NAME.exec(html)
-  if (!match)
+  const len = html.length
+  let cursor = start + 1
+  if (cursor >= len)
     return
 
-  const name = asciiLower(match[2])
-  const closing = !!match[1]
+  let closing = false
+  if (html.charCodeAt(cursor) === 47) { // '/'
+    closing = true
+    cursor++
+  }
+
+  const nameStart = cursor
+  const firstCode = html.charCodeAt(cursor)
+  if (!isAsciiAlphaCode(firstCode))
+    return
+
+  let nameHasUpper = firstCode >= 65 && firstCode <= 90
+  cursor++
+  while (cursor < len) {
+    const c = html.charCodeAt(cursor)
+    if (isTagDelimCode(c))
+      break
+    if (c === 60 || c === 61 || c === 34 || c === 39 || c === 96)
+      return
+    if (c >= 65 && c <= 90)
+      nameHasUpper = true
+    cursor++
+  }
+  if (cursor >= len || !isTagDelimCode(html.charCodeAt(cursor)))
+    return
+
+  const rawName = html.slice(nameStart, cursor)
+  const name = nameHasUpper ? asciiLower(rawName) : rawName
   const attributes: Record<string, string> | undefined = !closing && (collectAttributes || name === 'annotation-xml' || name === 'font') ? {} : undefined
-  let cursor = TAG_NAME.lastIndex
-  while (cursor < html.length) {
+
+  while (cursor < len) {
     cursor = skipSpace(html, cursor)
-    const char = html[cursor]
-    if (char === '>')
+    const code = html.charCodeAt(cursor)
+    if (code === 62) // '>'
       return { name, start, end: cursor + 1, closing, selfClosing: false, attributes }
-    if (char === '/') {
-      if (html[cursor + 1] === '>')
+    if (code === 47) { // '/'
+      if (html.charCodeAt(cursor + 1) === 62)
         return { name, start, end: cursor + 2, closing, selfClosing: true, attributes }
       cursor++
       continue
     }
 
-    ATTRIBUTE_NAME.lastIndex = cursor
-    const nameMatch = ATTRIBUTE_NAME.exec(html)
-    if (!nameMatch)
+    const attrNameStart = cursor
+    let attrHasUpper = false
+    if (code === 61) // '='
+      cursor++
+    while (cursor < len) {
+      const c = html.charCodeAt(cursor)
+      if (isWsCode(c) || c === 47 || c === 61 || c === 62)
+        break
+      if (c >= 65 && c <= 90)
+        attrHasUpper = true
+      cursor++
+    }
+    if (cursor === attrNameStart)
       return
+    const attrNameEnd = cursor
 
-    cursor = skipSpace(html, ATTRIBUTE_NAME.lastIndex)
+    cursor = skipSpace(html, cursor)
     let value = ''
-    if (html[cursor] === '=') {
+    if (html.charCodeAt(cursor) === 61) { // '='
       cursor = skipSpace(html, cursor + 1)
-      const quote = html[cursor]
-      if (quote === '"' || quote === '\'') {
-        const end = html.indexOf(quote, cursor + 1)
+      const quote = html.charCodeAt(cursor)
+      if (quote === 34 || quote === 39) {
+        const end = html.indexOf(quote === 34 ? '"' : '\'', cursor + 1)
         if (end < 0)
           return
         if (attributes)
@@ -247,18 +291,31 @@ function readTag(html: string, start: number, collectAttributes = false): Source
         cursor = end + 1
       }
       else {
-        UNQUOTED_VALUE.lastIndex = cursor
-        const match = UNQUOTED_VALUE.exec(html)!
+        const valStart = cursor
+        while (cursor < len) {
+          const c = html.charCodeAt(cursor)
+          if (isWsCode(c) || c === 62)
+            break
+          cursor++
+        }
         if (attributes)
-          value = match[0]
-        cursor = UNQUOTED_VALUE.lastIndex
+          value = html.slice(valStart, cursor)
       }
     }
 
     if (attributes) {
-      const key = asciiLower(nameMatch[0]).replaceAll('\0', '\uFFFD')
-      if (key !== '__proto__' && !hasOwn(attributes, key))
-        attributes[key] = value.replace(/\r\n?/g, '\n').replaceAll('\0', '\uFFFD')
+      let key = html.slice(attrNameStart, attrNameEnd)
+      if (attrHasUpper)
+        key = asciiLower(key)
+      if (key.includes('\0'))
+        key = key.replaceAll('\0', '\uFFFD')
+      if (key !== '__proto__' && !hasOwn(attributes, key)) {
+        if (value.includes('\r'))
+          value = value.replace(/\r\n?/g, '\n')
+        if (value.includes('\0'))
+          value = value.replaceAll('\0', '\uFFFD')
+        attributes[key] = value
+      }
     }
   }
 }
@@ -281,31 +338,58 @@ function isHtmlIntegration(parent: ForeignElement, child: string) {
 }
 
 function matchesScriptName(html: string, start: number) {
-  return TAG_DELIMITER.test(html[start + 6] ?? '') && asciiLower(html.slice(start, start + 6)) === 'script'
+  return isTagDelimCode(html.charCodeAt(start + 6))
+    && (html.charCodeAt(start) | 32) === 115
+    && (html.charCodeAt(start + 1) | 32) === 99
+    && (html.charCodeAt(start + 2) | 32) === 114
+    && (html.charCodeAt(start + 3) | 32) === 105
+    && (html.charCodeAt(start + 4) | 32) === 112
+    && (html.charCodeAt(start + 5) | 32) === 116
 }
 
 function closeScript(html: string, start: number) {
-  let scriptData: 'normal' | 'escaped' | 'double-escaped' = 'normal'
-  for (let cursor = start; cursor < html.length; cursor++) {
-    if (scriptData !== 'normal' && html.startsWith('-->', cursor)) {
-      scriptData = 'normal'
-      cursor += 2
+  let scriptData = 0 // 0=normal, 1=escaped, 2=double-escaped
+  let cursor = start
+  let dash = -2 // Next '-->' at or after cursor; -1 when absent.
+  while (cursor < html.length) {
+    if (scriptData === 0) {
+      const lt = html.indexOf('<', cursor)
+      if (lt < 0)
+        return
+      const c1 = html.charCodeAt(lt + 1)
+      if (c1 === 47 && matchesScriptName(html, lt + 2))
+        return readTag(html, lt)
+      if (c1 === 33 && html.charCodeAt(lt + 2) === 45 && html.charCodeAt(lt + 3) === 45)
+        scriptData = 1
+      cursor = lt + 1
     }
-    else if (html[cursor] !== '<') {
-      continue
-    }
-    else if (html[cursor + 1] === '/' && matchesScriptName(html, cursor + 2)) {
-      if (scriptData !== 'double-escaped')
-        return readTag(html, cursor)
-      scriptData = 'escaped'
-      cursor += 7
-    }
-    else if (scriptData === 'normal' && html.startsWith('<!--', cursor)) {
-      scriptData = 'escaped'
-    }
-    else if (scriptData === 'escaped' && matchesScriptName(html, cursor + 1)) {
-      scriptData = 'double-escaped'
-      cursor += 6
+    else {
+      const lt = html.indexOf('<', cursor)
+      if (dash !== -1 && dash < cursor)
+        dash = html.indexOf('-->', cursor)
+      if (dash >= 0 && (lt < 0 || dash < lt)) {
+        scriptData = 0
+        cursor = dash + 3
+      }
+      else if (lt >= 0) {
+        const c1 = html.charCodeAt(lt + 1)
+        if (c1 === 47 && matchesScriptName(html, lt + 2)) {
+          if (scriptData !== 2)
+            return readTag(html, lt)
+          scriptData = 1
+          cursor = lt + 8
+        }
+        else if (scriptData === 1 && matchesScriptName(html, lt + 1)) {
+          scriptData = 2
+          cursor = lt + 7
+        }
+        else {
+          cursor = lt + 1
+        }
+      }
+      else {
+        return
+      }
     }
   }
 }
@@ -314,10 +398,25 @@ function closeScript(html: string, start: number) {
 export function closeTextElement(html: string, name: string, start: number) {
   if (name === 'script')
     return closeScript(html, start)
-  const pattern = new RegExp(`</${name}(?=[\\t\\n\\f\\r />])`, 'gi')
-  pattern.lastIndex = start
-  const close = pattern.exec(html)
-  return close ? readTag(html, close.index) : undefined
+  const nlen = name.length
+  let pos = start
+  while (true) {
+    const idx = html.indexOf('</', pos)
+    if (idx < 0)
+      return
+    if (isTagDelimCode(html.charCodeAt(idx + 2 + nlen))) {
+      let match = true
+      for (let i = 0; i < nlen; i++) {
+        if ((html.charCodeAt(idx + 2 + i) | 32) !== name.charCodeAt(i)) {
+          match = false
+          break
+        }
+      }
+      if (match)
+        return readTag(html, idx)
+    }
+    pos = idx + 2
+  }
 }
 
 function selectToken(name: string, closing: boolean): 'skip' | 'scan' | 'stop' {
@@ -408,14 +507,14 @@ function closeForeignElement(stack: ForeignElement[], name: string): boolean {
  * Read only the boundaries needed by the template helpers. Keep proven prefix
  * offsets if the scan reaches markup whose parsing context it cannot verify.
  */
-export function scanTemplate(html: string, stopAtBody: boolean, collectHead = false): TemplateScan {
+export function scanTemplate(html: string, stopAtBody: boolean, collectHead = false, resumeBodyEnd?: number): TemplateScan {
   const result: TemplateScan = { headElements: [] }
   const foreign: ForeignElement[] = []
   const scopes: string[] = []
-  let phase: 'root' | 'before-head' | 'head' | 'after-head' | 'body' = 'root'
+  let phase: 'root' | 'before-head' | 'head' | 'after-head' | 'body' = resumeBodyEnd !== undefined ? 'body' : 'root'
   let explicitHead = false
   let templateDepth = 0
-  let cursor = html.charCodeAt(0) === 0xFEFF ? 1 : 0
+  let cursor = resumeBodyEnd ?? (html.charCodeAt(0) === 0xFEFF ? 1 : 0)
 
   while (true) {
     const start = html.indexOf('<', cursor)
@@ -425,10 +524,22 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       break
     }
 
-    const text = html.slice(cursor, start)
-    if (phase !== 'body' && !scopes.length && NON_WHITESPACE.test(text)
-      && (!text.includes('&') || NON_WHITESPACE.test(decodeAttribute(text)))) {
-      phase = 'body'
+    let textHasNonWs = false
+    const textStart = cursor
+    if (phase !== 'body') {
+      let hasAmp = false
+      for (let i = cursor; i < start; i++) {
+        const c = html.charCodeAt(i)
+        if (!isWsCode(c)) {
+          textHasNonWs = true
+          if (c === 38)
+            hasAmp = true
+        }
+      }
+      if (!scopes.length && textHasNonWs
+        && (!hasAmp || NON_WHITESPACE.test(decodeAttribute(html.slice(cursor, start))))) {
+        phase = 'body'
+      }
     }
 
     if (html.startsWith('<!--', start)) {
@@ -452,8 +563,8 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       continue
     }
 
-    const next = html[start + 1]
-    if (next === '!' || next === '?' || (next === '/' && !ASCII_ALPHA.test(html[start + 2] ?? ''))) {
+    const nextCode = html.charCodeAt(start + 1)
+    if (nextCode === 33 || nextCode === 63 || (nextCode === 47 && !isAsciiAlphaCode(html.charCodeAt(start + 2)))) {
       // Doctypes and bogus comments both return to the data state at the
       // first greater-than sign. Real comments and CDATA are handled above.
       const end = html.indexOf('>', start + 2)
@@ -465,7 +576,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
 
     const tag = readTag(html, start, collectHead && (phase !== 'body'))
     if (!tag) {
-      if (next === undefined || next === '/' || ASCII_ALPHA.test(next))
+      if (start + 1 >= html.length || nextCode === 47 || isAsciiAlphaCode(nextCode))
         break
       if (!scopes.length && !foreign.length)
         phase = 'body'
@@ -560,7 +671,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       if (HEAD_VOID.has(name)) {
         phase = phase === 'after-head' ? phase : 'head'
         if (phase === 'head' && explicitHead && collectHead)
-          result.headElements.push({ tag, start: NON_WHITESPACE.test(text) ? start : start - text.length })
+          result.headElements.push({ tag, start: textHasNonWs ? start : textStart })
         continue
       }
       if (HEAD_TEXT.has(name)) {
@@ -570,7 +681,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
         cursor = close.end
         phase = phase === 'after-head' ? phase : 'head'
         if (phase === 'head' && explicitHead && collectHead)
-          result.headElements.push({ tag, close, start: NON_WHITESPACE.test(text) ? start : start - text.length })
+          result.headElements.push({ tag, close, start: textHasNonWs ? start : textStart })
         continue
       }
     }
@@ -581,7 +692,7 @@ export function scanTemplate(html: string, stopAtBody: boolean, collectHead = fa
       phase = 'body'
     }
 
-    if (closing && name === 'body' && !scopes.length && result.body) {
+    if (closing && name === 'body' && !scopes.length && (result.body || resumeBodyEnd !== undefined)) {
       result.bodyClose = start
       break
     }

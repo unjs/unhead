@@ -1,6 +1,6 @@
 import type { WebSite } from '../WebSite'
 import { describe, expect, it } from 'vitest'
-import { defineEvent, defineOrganization, definePerson, definePlace, defineWebSite, useSchemaOrg } from '../../'
+import { defineEvent, defineOffer, defineOrganization, definePerson, definePlace, defineWebSite, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../test'
 import { IdentityId, idReference } from '../../utils'
 import { PrimaryWebSiteId } from '../WebSite'
@@ -446,7 +446,6 @@ describe('defineEvent', () => {
             "name": "The Adventures of Kira and Morrison",
             "offers": {
               "@type": "Offer",
-              "availability": "https://schema.org/InStock",
               "price": 30,
               "priceCurrency": "USD",
               "priceValidUntil": "2023-12-30T00:00:00.000Z",
@@ -517,6 +516,27 @@ describe('defineEvent', () => {
       `)
     }, {
       currency: 'USD',
+    })
+  })
+
+  it('publishes only the offer facts the user passes', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Summer Festival',
+          startDate: '2028-06-01',
+          offers: [
+            { price: 25, priceCurrency: 'EUR' },
+            defineOffer({ price: 40, validFrom: '2028-01-01' }),
+          ],
+        }),
+      ])
+
+      const event = (await injectSchemaOrg(head)).find((n: any) => n['@type'] === 'Event')
+      expect(event!.offers).toEqual([
+        { '@type': 'Offer', 'price': 25, 'priceCurrency': 'EUR' },
+        { '@type': 'Offer', 'price': 40, 'priceCurrency': 'AUD', 'validFrom': '2028-01-01' },
+      ])
     })
   })
 })

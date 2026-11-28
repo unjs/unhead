@@ -128,6 +128,12 @@ describe('minifyCSS', () => {
     expect(minifyCSS(`a { color: red }${character}`)).toBe(`a{color:red}${character}`)
   })
 
+  it('preserves descendant separator around U+0000', () => {
+    expect(minifyCSS('.a\0 .b { color: red }')).toBe('.a\0 .b{color:red}')
+    expect(minifyCSS('.a \0.b { color: red }')).toBe('.a \0.b{color:red}')
+    expect(minifyCSS('.a\0/**/.b { color: red }')).toBe('.a\0/**/.b{color:red}')
+  })
+
   it.each([' ', '\t', '\n', '\f', '\r'])('collapses CSS whitespace: %j', (character) => {
     expect(minifyCSS(`${character}a${character}{${character}opacity:${character}0.5;${character}}${character}`)).toBe('a{opacity:.5}')
     expect(minifyCSS(`a { font-family: foo/**/${character}bar }`)).toBe('a{font-family:foo bar}')

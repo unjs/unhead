@@ -54,7 +54,7 @@ import type { WebSite } from '../../nodes/WebSite'
 import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { computed, isRef } from 'vue'
+import { computed, effectScope, getCurrentScope, isRef, shallowRef } from 'vue'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -292,15 +292,33 @@ export function defineService<Input extends object | undefined = undefined>(inpu
   return provideResolver(input, serviceResolver)
 }
 
-export type UseSchemaOrgInput = Arrayable<MaybeRefOrGetter<DeepResolvableProperties<Thing | Record<string, unknown>> | null | undefined | false>>
+export type UseSchemaOrgInput = MaybeRefOrGetter<Arrayable<MaybeRefOrGetter<DeepResolvableProperties<Thing | Record<string, unknown>> | null | undefined | false>>>
 
 export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())
-  const entry = useHead(normalizeSchemaOrgInput(input) as unknown as UseHeadInput, options)
-  const corePatch = entry.patch
-  const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>
-  publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
-  return publicEntry
+  // Box the input so shallowRef does not reuse an incoming ref as its own state.
+  const currentInput = unhead.ssr ? undefined : shallowRef<{ input: UseSchemaOrgInput }>({ input })
+  const headInput = (currentInput
+    ? () => normalizeSchemaOrgInput(currentInput.value.input)
+    : normalizeSchemaOrgInput(input)) as unknown as UseHeadInput
+  // Own the client watcher so disposal also cancels queued updates.
+  // Preserve useHead's no-op behavior when the caller's scope has stopped.
+  const scope = currentInput && getCurrentScope()?.active !== false ? effectScope() : undefined
+  const entry = scope ? scope.run(() => useHead(headInput, options))! : useHead(headInput, options)
+  // Keep useHead's watcher patch separate from the public schema input patch.
+  return {
+    ...entry,
+    dispose() {
+      scope?.stop()
+      entry.dispose()
+    },
+    patch(input) {
+      if (currentInput)
+        currentInput.value = { input }
+      else
+        entry.patch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
+    },
+  }
 }

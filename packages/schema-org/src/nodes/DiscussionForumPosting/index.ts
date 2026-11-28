@@ -12,9 +12,11 @@ import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
 import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
+import { interactionCounterResolver } from '../../core/common'
 import {
   idReference,
   resolvableDateToIso,
+  resolveWithBase,
   setIfEmpty,
 } from '../../utils'
 import { imageResolver } from '../Image'
@@ -87,6 +89,9 @@ export const discussionCommentResolver = defineSchemaOrgResolver<DiscussionComme
       node.image = resolveRelation(node.image as NodeRelations<ImageObject | string>, ctx, imageResolver)
     if (node.video)
       node.video = resolveRelation(node.video as NodeRelations<VideoObject>, ctx, videoResolver)
+    node.interactionStatistic = resolveRelation(node.interactionStatistic, ctx, interactionCounterResolver)
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
     return node
   },
 })
@@ -113,6 +118,11 @@ export const discussionForumPostingResolver = defineSchemaOrgResolver<Discussion
       node.image = resolveRelation(node.image as NodeRelations<ImageObject | string>, ctx, imageResolver)
     if (node.video)
       node.video = resolveRelation(node.video as NodeRelations<VideoObject>, ctx, videoResolver)
+    node.interactionStatistic = resolveRelation(node.interactionStatistic, ctx, interactionCounterResolver)
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
+    if (typeof node.isPartOf === 'string')
+      node.isPartOf = resolveWithBase(ctx.meta.host, node.isPartOf)
     return node
   },
   resolveRootNode(node, { find }) {

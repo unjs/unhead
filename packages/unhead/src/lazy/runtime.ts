@@ -34,10 +34,10 @@ function connectStream<T>(head: ClientUnhead<T>, stream: StreamingGlobal, queue:
   queue.closeStream = discard
   // Stream patches replace hydration defaults and remain below newer client entries.
   let index = -(1 << 20)
-  attachLazyStreamHead(stream, head, (input) => {
+  attachLazyStreamHead(stream, head, (input, safe) => {
     if (wasDiscarded())
       return
-    const entry = head.push(input as T, { _index: index++, _streamed: true })
+    const entry = head.push(input as T, { _index: index++, _streamed: true, _safe: safe })
     replayShell()
     // A user hook can leave the route in the middle of replay.
     if (wasDiscarded())
@@ -114,7 +114,7 @@ export async function activate<T>(
   let render: HeadRenderer<boolean> = () => false
   const core = createUnhead<T, boolean>(head => render(head), { document, propResolvers: options.propResolvers, _tagWeight: tagWeight })
   const hooks = shell.hooks = activateHooks(shell.hooks)
-  const head = createClientHeadAdapter(core, hooks, head => render(head))
+  const head = createClientHeadAdapter(core, hooks)
   head._b = true
   const hydrated = new Map<number, HeadEntry<T>>()
   // Apply one hydration policy to replayed entries and entries registered after load.

@@ -24,6 +24,8 @@ pnpm build
 - `bench/` contains vitest benchmarks and the CI perf/bundle-size harnesses.
 - `docs/` is the documentation site content.
 
+For a new feature guide or API page, add its first release to the frontmatter, for example `since: 3.5.0`.
+
 ## Development
 
 ```bash

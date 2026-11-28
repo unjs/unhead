@@ -18,7 +18,9 @@ import { PrimaryWebPageId } from '../WebPage'
 import { answerResolver } from './Answer'
 
 /**
- * A specific question - e.g. from a user seeking answers online, or collected in a Frequently Asked Questions (FAQ) document.
+ * A specific question, for example from a user seeking answers online or from a Frequently Asked Questions (FAQ) page.
+ *
+ * Google stopped showing FAQ rich results on May 7, 2026. Q&A pages and Education Q&A still use Question.
  */
 export interface QuestionSimple extends Thing {
   /**
@@ -70,7 +72,9 @@ export interface QuestionSimple extends Thing {
 export interface Question extends QuestionSimple {}
 
 /**
- * Describes a Question. Most commonly used in FAQPage or QAPage content.
+ * Describes a Question. Most commonly used in QAPage or FAQPage content.
+ *
+ * Google no longer shows FAQ rich results. FAQPage markup stays valid Schema.org.
  */
 export const questionResolver = defineSchemaOrgResolver<Question>({
   defaults: {
